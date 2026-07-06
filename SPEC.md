@@ -45,7 +45,8 @@ internal model, it uses "chunk".
 
 Three source kinds feed the same `text_segment` table — movie & TV subtitles (TMDB +
 OpenSubtitles search or manual `.srt` upload), pasted text, and source-less ad-hoc vocab
-entries ("Add a word") — plus YouTube/streaming via the companion extension. The
+entries ("Add a word") — plus YouTube/streaming via the companion extension and text
+messages forwarded to the Telegram bot (which replies with a session deep link). The
 mid-source screen is a search bar over the track and a scrollable segment list; that is
 the entire mid-source UI. Tap-to-select opens a floating gloss sheet in PREVIEW mode
 (looking is free; nothing persists until an explicit commit): fast one-line gloss +

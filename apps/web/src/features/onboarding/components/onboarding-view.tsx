@@ -16,10 +16,11 @@ type Step = 'pick' | 'welcome'
 
 interface OnboardingViewProps {
   // 'web' (default) is the standalone route: finishing navigates to /sessions.
-  // 'extensionPair' embeds the same wizard in the extension pairing tab: the
-  // two-step sequence is identical, but finishing calls `onFinish` (which posts
-  // the pairing-done signal) instead of navigating.
-  variant?: 'web' | 'extensionPair'
+  // 'extensionPair' / 'telegramPair' embed the same wizard in their pairing
+  // pages: the two-step sequence is identical, but finishing calls `onFinish`
+  // (which posts the pairing-done signal / resumes the stashed Telegram
+  // import) instead of navigating.
+  variant?: 'web' | 'extensionPair' | 'telegramPair'
   onFinish?: () => void
 }
 
@@ -44,13 +45,14 @@ export const OnboardingView = ({ variant = 'web', onFinish }: OnboardingViewProp
   }
 
   // Only reachable on the welcome step, after completeOnboarding flipped
-  // is_onboarded. In the web variant the gate now lets /sessions through; in the
-  // extensionPair variant we hand control back to the pairing page (which posts
-  // the pairing-done signal to close the tab). Posting from here — the "Get
-  // started" button — and NOT from the native-language save keeps the two-step
-  // sequence intact and guarantees is_onboarded is already true.
+  // is_onboarded. In the web variant the gate now lets /sessions through; in
+  // the pairing variants we hand control back to the pairing page (which posts
+  // the pairing-done signal / resumes the Telegram import). Calling it from
+  // here — the "Get started" button — and NOT from the native-language save
+  // keeps the two-step sequence intact and guarantees is_onboarded is already
+  // true.
   const handleFinish = () => {
-    if (variant === 'extensionPair') {
+    if (variant !== 'web') {
       onFinish?.()
       return
     }

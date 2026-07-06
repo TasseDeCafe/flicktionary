@@ -1022,6 +1022,60 @@ export type Database = {
           },
         ]
       }
+      telegram_pair_nonces: {
+        Row: {
+          chat_id: number
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          expires_at: string
+          nonce: string
+          telegram_user_id: number | null
+        }
+        Insert: {
+          chat_id: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at: string
+          nonce?: string
+          telegram_user_id?: number | null
+        }
+        Update: {
+          chat_id?: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          telegram_user_id?: number | null
+        }
+        Relationships: []
+      }
+      telegram_pending_imports: {
+        Row: {
+          chat_id: number
+          created_at: string
+          expires_at: string
+          message_text: string
+          suggested_title: string
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          expires_at: string
+          message_text: string
+          suggested_title: string
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          expires_at?: string
+          message_text?: string
+          suggested_title?: string
+        }
+        Relationships: []
+      }
       text_segments: {
         Row: {
           end_ms: number | null
@@ -1220,6 +1274,7 @@ export type Database = {
           referral: string | null
           stripe_customer_id: string | null
           tap_to_translate_enabled: boolean
+          telegram_chat_id: number | null
           ui_language: string | null
           ui_theme: string | null
           utm_campaign: string | null
@@ -1239,6 +1294,7 @@ export type Database = {
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
+          telegram_chat_id?: number | null
           ui_language?: string | null
           ui_theme?: string | null
           utm_campaign?: string | null
@@ -1258,6 +1314,7 @@ export type Database = {
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
+          telegram_chat_id?: number | null
           ui_language?: string | null
           ui_theme?: string | null
           utm_campaign?: string | null

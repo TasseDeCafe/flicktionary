@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AccountRemovedRouteImport } from './routes/account/removed'
+import { Route as AuthenticatedTelegramPairRouteImport } from './routes/_authenticated/telegram-pair'
 import { Route as AuthenticatedExtensionPairRouteImport } from './routes/_authenticated/extension-pair'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin-settings'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_app'
@@ -90,6 +91,12 @@ const AccountRemovedRoute = AccountRemovedRouteImport.update({
   path: '/account/removed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTelegramPairRoute =
+  AuthenticatedTelegramPairRouteImport.update({
+    id: '/telegram-pair',
+    path: '/telegram-pair',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExtensionPairRoute =
   AuthenticatedExtensionPairRouteImport.update({
     id: '/extension-pair',
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/user-guide': typeof UserGuideRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
+  '/telegram-pair': typeof AuthenticatedTelegramPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -333,6 +341,7 @@ export interface FileRoutesByTo {
   '/user-guide': typeof UserGuideRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
+  '/telegram-pair': typeof AuthenticatedTelegramPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -377,6 +386,7 @@ export interface FileRoutesById {
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/extension-pair': typeof AuthenticatedExtensionPairRoute
+  '/_authenticated/telegram-pair': typeof AuthenticatedTelegramPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/_authenticated/_app/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/user-guide'
     | '/admin-settings'
     | '/extension-pair'
+    | '/telegram-pair'
     | '/account/removed'
     | '/login/'
     | '/onboarding'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/user-guide'
     | '/admin-settings'
     | '/extension-pair'
+    | '/telegram-pair'
     | '/account/removed'
     | '/login'
     | '/onboarding'
@@ -504,6 +516,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
     | '/_authenticated/extension-pair'
+    | '/_authenticated/telegram-pair'
     | '/account/removed'
     | '/login/'
     | '/_authenticated/_app/onboarding'
@@ -609,6 +622,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/removed'
       preLoaderRoute: typeof AccountRemovedRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/telegram-pair': {
+      id: '/_authenticated/telegram-pair'
+      path: '/telegram-pair'
+      fullPath: '/telegram-pair'
+      preLoaderRoute: typeof AuthenticatedTelegramPairRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/extension-pair': {
       id: '/_authenticated/extension-pair'
@@ -914,6 +934,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedExtensionPairRoute: typeof AuthenticatedExtensionPairRoute
+  AuthenticatedTelegramPairRoute: typeof AuthenticatedTelegramPairRoute
   AuthenticatedPricingCheckoutSuccessRoute: typeof AuthenticatedPricingCheckoutSuccessRoute
   AuthenticatedPricingFreeTrialExplanationRoute: typeof AuthenticatedPricingFreeTrialExplanationRoute
   AuthenticatedProfileDangerZoneRoute: typeof AuthenticatedProfileDangerZoneRoute
@@ -925,6 +946,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedExtensionPairRoute: AuthenticatedExtensionPairRoute,
+  AuthenticatedTelegramPairRoute: AuthenticatedTelegramPairRoute,
   AuthenticatedPricingCheckoutSuccessRoute:
     AuthenticatedPricingCheckoutSuccessRoute,
   AuthenticatedPricingFreeTrialExplanationRoute:

@@ -846,6 +846,14 @@ msgstr "Confirm deletion"
 msgid "Conjunction"
 msgstr "Conjunction"
 
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Connect Telegram"
+msgstr "Connect Telegram"
+
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Connecting your Telegram chat..."
+msgstr "Connecting your Telegram chat..."
+
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Contact us"
 msgstr "Contact us"
@@ -1430,6 +1438,10 @@ msgstr "Failed to advance the practice clock"
 msgid "Failed to complete onboarding"
 msgstr "Failed to complete onboarding"
 
+#: apps/web/src/features/telegram-pair/api/telegram-pair-hooks.ts
+msgid "Failed to connect Telegram"
+msgstr "Failed to connect Telegram"
+
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Failed to create card"
 msgstr "Failed to create card"
@@ -1627,6 +1639,10 @@ msgstr "Failed to request suggestions"
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
+
+#: apps/web/src/features/telegram-pair/api/telegram-pair-hooks.ts
+msgid "Failed to resume your Telegram import"
+msgstr "Failed to resume your Telegram import"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to retry enrichment"
@@ -1953,6 +1969,12 @@ msgstr "Hard"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Has multiple forms"
 msgstr "Has multiple forms"
+
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Head back to your Telegram chat — if you sent a text, your reading link "
+"is on its way."
+msgstr "Head back to your Telegram chat — if you sent a text, your reading link "
+"is on its way."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Headword"
@@ -3529,6 +3551,10 @@ msgstr "Send"
 msgid "Send Message"
 msgstr "Send Message"
 
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Send the bot another message to get a fresh link."
+msgstr "Send the bot another message to get a fresh link."
+
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "Sending an email"
 msgstr "Sending an email"
@@ -3984,6 +4010,10 @@ msgstr "Target language"
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Telegram connected!"
+msgstr "Telegram connected!"
+
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 msgid "Tell us what you think or describe any issues you encountered..."
@@ -4103,6 +4133,10 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
+
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "This connection link has already been used or has expired."
+msgstr "This connection link has already been used or has expired."
 
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/review/components/per-form-card-editor.tsx

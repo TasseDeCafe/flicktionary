@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node'
 import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from './config/environment-config'
 import { buildApp } from './app'
-import { getEnvironmentName } from './utils/environment-utils'
+import { getEnvironmentName, isProduction } from './utils/environment-utils'
 import { RealResendApi } from './transport/third-party/resend/resend-api'
 import { RealStripeApi } from './transport/third-party/stripe/stripe-api'
 import { validateConfig } from './config/environment-config-validator'
@@ -15,6 +15,12 @@ import { UsersRepository } from './transport/database/users/users-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { EnrichmentWorker } from './service/long-running/enrichment-worker/enrichment-worker'
 import { buildProcessingDependencies } from './service/processing/processing-dependencies'
+import { TelegramApi } from './transport/third-party/telegram/telegram-api'
+import { TelegramPollingWorker } from './service/long-running/telegram-polling-worker/telegram-polling-worker'
+import { TelegramPairNoncesRepository } from './transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
+import { TelegramPendingImportsRepository } from './transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { StudySessionsRepository } from './transport/database/study-sessions/study-sessions-repository'
 import { posthogClient, registerPosthogShutdownHandlers } from './transport/third-party/posthog/posthog-client'
 import { setupExpressErrorHandler } from 'posthog-node'
 
@@ -34,6 +40,18 @@ const startServer = async () => {
     )
     const enrichmentWorker = EnrichmentWorker(ProcessingJobsRepository(), buildProcessingDependencies())
 
+    const telegramApi = TelegramApi()
+    // Dev transport only: production receives updates via the webhook, and
+    // Telegram rejects getUpdates polling while a webhook is registered.
+    const telegramPollingWorker = TelegramPollingWorker({
+      telegramApi,
+      usersRepository,
+      telegramPairNoncesRepository: TelegramPairNoncesRepository(),
+      telegramPendingImportsRepository: TelegramPendingImportsRepository(),
+      userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
+      studySessionsRepository: StudySessionsRepository(),
+    })
+
     const expressApp = getConfig().shouldMockThirdParties
       ? buildApp({})
       : buildApp({
@@ -45,6 +63,8 @@ const startServer = async () => {
           resendApi: RealResendApi,
           ...(FEATURES.STRIPE ? { stripeApi: RealStripeApi } : {}),
           ...(FEATURES.REVENUECAT ? { revenuecatApi: RealRevenuecatApi } : {}),
+          ...(FEATURES.TELEGRAM ? { telegramApi } : {}),
+          ...(FEATURES.TELEGRAM && !isProduction() ? { telegramPollingWorker } : {}),
         })
 
     if (FEATURES.SENTRY) {

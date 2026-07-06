@@ -35,6 +35,10 @@ export const environmentConfigSchema = z.object({
   revenuecatProjectId: FEATURES.REVENUECAT ? z.string().min(1) : z.string(),
   // https://app.revenuecat.com/projects/da60432b/integrations/webhooks
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? z.string().min(1) : z.string(),
+  // https://core.telegram.org/bots#botfather
+  telegramBotToken: FEATURES.TELEGRAM ? z.string().min(1) : z.string(),
+  // Sent back by Telegram as X-Telegram-Bot-Api-Secret-Token on webhook calls
+  telegramWebhookSecret: FEATURES.TELEGRAM ? z.string().min(1) : z.string(),
   posthogApiKey: FEATURES.POSTHOG ? z.string().min(1) : z.string(),
   shouldLogRequests: z.boolean(),
   sentry: sentrySchema,

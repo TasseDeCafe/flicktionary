@@ -52,6 +52,29 @@ const findUserByStripeCustomerId = async (stripeCustomerId: string): Promise<DbU
   return result[0] ?? null
 }
 
+// Telegram chat ids are BIGINT; postgres.js returns int8 as strings, so the
+// TS layer passes them around as strings and lets Postgres coerce on write.
+const findUserIdByTelegramChatId = async (chatId: string): Promise<string | null> => {
+  const result = (await sql`
+    SELECT id FROM public.users WHERE telegram_chat_id = ${chatId}
+  `) as { id: string }[]
+  return result[0]?.id ?? null
+}
+
+const getTelegramChatId = async (userId: string): Promise<string | null> => {
+  const result = (await sql`
+    SELECT telegram_chat_id::text AS telegram_chat_id FROM public.users WHERE id = ${userId}
+  `) as { telegram_chat_id: string | null }[]
+  return result[0]?.telegram_chat_id ?? null
+}
+
+const clearTelegramChatId = async (userId: string): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users SET telegram_chat_id = NULL WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
 const updateUserStripeCustomerId = async (userId: string, stripeCustomerId: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.users
@@ -215,6 +238,9 @@ export interface UsersRepositoryInterface {
   ) => Promise<void>
   findUserByUserId: (id: string) => Promise<DbUser | null>
   findUserByStripeCustomerId: (stripeCustomerId: string) => Promise<DbUser | null>
+  findUserIdByTelegramChatId: (chatId: string) => Promise<string | null>
+  getTelegramChatId: (userId: string) => Promise<string | null>
+  clearTelegramChatId: (userId: string) => Promise<boolean>
   updateUserStripeCustomerId: (userId: string, stripeCustomerId: string) => Promise<boolean>
   updateStripeCustomerId: (userId: string, stripeCustomerId: string | null) => Promise<boolean>
   retrieveAllUsersCreatedLessThanNDaysAgo: (days: number) => Promise<string[]>
@@ -241,6 +267,9 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     insertUser,
     findUserByUserId,
     findUserByStripeCustomerId,
+    findUserIdByTelegramChatId,
+    getTelegramChatId,
+    clearTelegramChatId,
     updateUserStripeCustomerId,
     updateStripeCustomerId,
     retrieveAllUsersCreatedLessThanNDaysAgo,
