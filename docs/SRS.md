@@ -335,7 +335,7 @@ learn-new batch sheet, and the language-wide `warmup-continue` resume) is gone; 
 mode keeps `/practice/review` to itself. The post-session Strengthen CTA remains a
 dedicated surface. The session-scoped warm-up (`/practice/warmup/$lang`) still exists
 but has no UI entry point — the session-vocabulary footer now launches the zero-SRS
-session recap quiz instead (client-side, no FSRS writes; see SPEC.md), leaving the
+session recap quiz instead (client-side, no FSRS writes; see docs/REVIEW-SPEC.md), leaving the
 composed queue's auto-warm-up as the sole warm-up on-ramp.
 
 ## 5. Rating flow (applyTermRating)
@@ -554,7 +554,7 @@ sets from the same column. Everything below "park" is shared.
   on-ramp. The session-scoped `/practice/warmup/$targetLanguage` route +
   `startWarmupSession` (parks one session's terms explicitly) remain functional but
   unreferenced: the session-vocabulary footer now opens the zero-SRS session recap
-  instead (see SPEC.md). Abandoned warm-ups need no dedicated resume surface, since
+  instead (see docs/REVIEW-SPEC.md). Abandoned warm-ups need no dedicated resume surface, since
   the next Practice serves the parked terms' gates anyway.
   `startWarmupSession` parks the session's not-yet-introduced kept terms in **two
   independent passes** (shared with the composer via `runWarmupParkingPass` helpers): a

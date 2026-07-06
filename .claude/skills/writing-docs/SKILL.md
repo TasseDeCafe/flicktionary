@@ -17,7 +17,7 @@ Immediately after the H1, add a one-line blockquote banner naming the doc's stat
 
 The status vocabulary (use exactly these words so they stay greppable):
 
-- **authoritative-spec** — tracks the code; the source of truth for its area. Edited in place (never a changelog). The four: `SPEC.md`, `apps/extension/EXTENSION-SPEC.md`, `docs/SRS.md`, `AGENTS.md`.
+- **authoritative-spec** — tracks the code; the source of truth for its area. Edited in place (never a changelog). The set: `SPEC.md` (overview), `docs/READER-SPEC.md`, `docs/REVIEW-SPEC.md`, `docs/SRS.md`, `docs/DATA-MODEL.md`, `apps/extension/EXTENSION-SPEC.md`, `AGENTS.md`.
 - **reference** — authoritative for its subject but **not** code-driven (vendored docs, publish copy, scoped READMEs, retained historical designs). Don't edit it to "keep current"; touch only when its subject changes.
 - **proposal** — an open design not yet implemented. Lives in `docs/proposals/`. Never current behavior.
 - **scratch** — generation prompts / working notes, not a spec. Lives in `docs/brand/` (or alongside what it generates). Ignore when reasoning about behavior.
@@ -25,7 +25,7 @@ The status vocabulary (use exactly these words so they stay greppable):
 
 ## Where docs live
 
-- **Behavior specs** → repo root (`SPEC.md`, `AGENTS.md`) or `docs/` (`SRS.md`). Don't add new top-level `.md` files at the root casually — root is reserved for the few highest-traffic docs.
+- **Behavior specs** → repo root (`SPEC.md`, `AGENTS.md`) or `docs/` (`READER-SPEC.md`, `REVIEW-SPEC.md`, `SRS.md`, `DATA-MODEL.md`). Don't add new top-level `.md` files at the root casually — root is reserved for the few highest-traffic docs.
 - **Reference docs** → `docs/` or next to the code they describe (`**/README.md`).
 - **Proposals** → `docs/proposals/`.
 - **Scratch / brand** → `docs/brand/`.
