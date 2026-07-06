@@ -1,6 +1,6 @@
 # Automated product screenshots
 
-> **Status: proposal.** Handoff for continuing the screenshot-automation effort. The extension capture spike is proven and lives in `packages/screenshots/`; everything below "Open questions" is undecided.
+> **Status: historical** (archived 2026-07-06). The pipeline this proposed is implemented in `packages/screenshots/` — see its README for how to run it and the recipes that survived. Kept for the design rationale; the open questions below resolved as: screens = sessions list, video+text readers (gloss sheet open), session vocabulary, focus view with chat, practice exercise (correct-answer state) + flashcard, vocabulary tab, plus extension overlay/gloss/saved/multi-word shots on a German (manual `de-DE` track) and a Spanish (ASR) video; data = a dedicated `demo@flicktionary.app` account seeded through the real API + enrichment pipeline (SQL only for practice due-states); languages = German + Spanish; presentation = raw 1280×800 captures plus per-shot cropped variants written into `apps/landing/src/assets/`; on-demand only; localized screenshots out of scope; the track-dialog mount failure stayed un-root-caused (the auto-sync seeding path makes it irrelevant).
 
 ## Problem
 

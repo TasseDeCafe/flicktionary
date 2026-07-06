@@ -4,11 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "seed": "node src/seed.mjs",
     "shoot:extension": "node src/shoot-extension.mjs",
+    "shoot:web": "node src/shoot-web.mjs",
+    "postprocess": "node src/postprocess.mjs",
+    "shoot:all": "node src/seed.mjs && node src/shoot-extension.mjs && node src/seed.mjs && node src/shoot-web.mjs && node src/postprocess.mjs",
     "playwright:install": "playwright install chromium"
   },
   "devDependencies": {
     "@supabase/supabase-js": "catalog:",
-    "playwright": "catalog:"
+    "playwright": "catalog:",
+    "postgres": "catalog:",
+    "sharp": "catalog:"
   }
 }
