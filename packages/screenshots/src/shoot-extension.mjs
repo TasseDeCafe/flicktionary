@@ -1,272 +1,328 @@
-// Automated extension screenshots (spike-grade; see docs/proposals/automated-screenshots.md).
+// Captures the extension's in-video surfaces on YouTube, driven by the shot
+// manifest (src/manifest.mjs): per video — subtitle overlay, hover-gloss
+// popover on a curated word, saved popover, and (German) a multi-word phrase
+// selection with its chunk gloss.
 //
-// Flow: mint a magic link (local Supabase admin API) -> sign into the web app ->
-// pair the extension from its popup -> open a subtitled YouTube video (track
-// auto-sync seeded, so no dialog) -> pause -> hover a word (gloss popover) ->
-// right-click save -> re-hover (saved popover). Screenshots land in ./shots.
+// Side effect by design: saving the hero word/phrase creates the YouTube study
+// sessions + highlights on the demo account — the seed script builds on them.
+// Reruns are idempotent: an already-saved target is unsaved (right-click
+// toggle) and re-saved so every capture shows the same fresh state.
 //
-// Prereqs: dev tunnel running (web + backend + dev-tunnel Supabase), and a
-// dev-config extension build: pnpm --filter flicktionaryextension build:dev.
-// First run: pnpm --filter @flicktionary/screenshots playwright:install
+// Prereqs: dev tunnel running (pnpm dev), a dev-config extension build
+// (pnpm --filter flicktionaryextension build:dev), and the seed script run
+// once (onboarding). First time: playwright:install.
 //
 // Run: pnpm --filter @flicktionary/screenshots shoot:extension [-- --fresh]
-// (--fresh discards the persistent browser profile: re-signs-in and re-pairs.)
 
-import { chromium } from 'playwright'
-import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import {
+  cleanYoutubeFrame,
+  dismissYoutubeConsent,
+  launch,
+  resetProfileIfAccountChanged,
+  shot,
+  signIntoWebApp,
+  skipAdsLoop,
+} from './lib/browser.mjs'
+import { ensureOutDir, EXTENSION_PATH, log, sleep, USER_DATA_DIR } from './lib/env.mjs'
+import { ensureUbolite } from './lib/ubolite.mjs'
+import { DEMO, VIDEOS } from './manifest.mjs'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const PACKAGE_DIR = path.resolve(__dirname, '..')
-const REPO_ROOT = path.resolve(PACKAGE_DIR, '../..')
-
-const EMAIL = process.env.SCREENSHOT_EMAIL ?? 'sebastien.stecker@gmail.com'
-const WEB_URL = process.env.SCREENSHOT_WEB_URL ?? 'https://web-sebastien.flicktionary.dev'
-const VIDEO_ID = process.env.SCREENSHOT_VIDEO_ID ?? '3Uvn7KJYQwY'
-const SEEK_TO_S = Number(process.env.SCREENSHOT_SEEK_S ?? 95)
-const TRACK_LANGUAGE = process.env.SCREENSHOT_TRACK_LANG ?? 'ru'
-const EXTENSION_PATH = path.join(REPO_ROOT, 'apps/extension/.output/chrome-mv3')
-const USER_DATA_DIR = path.join(PACKAGE_DIR, 'user-data')
-const OUT_DIR = path.join(PACKAGE_DIR, 'shots')
+const GLOSS_POPOVER = '[data-flicktionary-gloss-popover]'
+const SAVED_POPOVER = '[data-flicktionary-saved-popover]'
+// Saved words paint yellow (SAVED_SPAN_CLASS in the overlay).
+const SAVED_CLASS = 'bg-yellow-400/20'
 
 if (!fs.existsSync(path.join(EXTENSION_PATH, 'manifest.json'))) {
   throw new Error(`No extension build at ${EXTENSION_PATH} — run: pnpm --filter flicktionaryextension build:dev`)
 }
 if (process.argv.includes('--fresh')) fs.rmSync(USER_DATA_DIR, { recursive: true, force: true })
-fs.mkdirSync(OUT_DIR, { recursive: true })
+resetProfileIfAccountChanged(DEMO.email)
+ensureOutDir()
 
-const log = (...args) => console.log(new Date().toISOString().slice(11, 19), ...args)
-
-const shot = async (page, name) => {
-  await page.screenshot({ path: path.join(OUT_DIR, `${name}.png`) })
-  log('screenshot:', name)
-}
-
-// ---------------------------------------------------------------- auth link
-const mintTokenHash = async () => {
-  // Local dev-tunnel Supabase; the key is the standard local demo secret
-  // (hardcoded in apps/backend/src/config/environment-config.ts for dev).
-  const url = 'http://127.0.0.1:34321'
-  const key = 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz'
-  const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
-  const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: EMAIL })
-  if (error) throw error
-  return data.properties.hashed_token
-}
-
-// ---------------------------------------------------------------- browser
-const launch = () =>
-  chromium.launchPersistentContext(USER_DATA_DIR, {
-    // Extensions need a real (headed) Chromium.
-    headless: false,
-    // Chrome Web Store screenshot size.
-    viewport: { width: 1280, height: 800 },
-    args: [
-      `--disable-extensions-except=${EXTENSION_PATH}`,
-      `--load-extension=${EXTENSION_PATH}`,
-      '--mute-audio',
-      '--lang=en-US',
-      '--disable-blink-features=AutomationControlled',
-    ],
-  })
-
+// With uBOLite riding along there are two extension service workers; the
+// Flicktionary one is the only one shipping popup-ui.html.
 const getExtensionId = async (context) => {
-  let [worker] = context.serviceWorkers()
-  if (!worker) worker = await context.waitForEvent('serviceworker', { timeout: 15000 })
-  return new URL(worker.url()).host
-}
-
-// ---------------------------------------------------------------- web sign-in
-const signIntoWebApp = async (context) => {
-  const page = await context.newPage()
-  await page.goto(`${WEB_URL}/sessions`, { waitUntil: 'domcontentloaded' })
-  await page.waitForTimeout(2500)
-  if (!page.url().includes('/login')) {
-    log('web app: already signed in')
-    await page.close()
-    return
+  const probe = await context.newPage()
+  const deadline = Date.now() + 15000
+  try {
+    while (Date.now() < deadline) {
+      for (const worker of context.serviceWorkers()) {
+        const id = new URL(worker.url()).host
+        const res = await probe.goto(`chrome-extension://${id}/popup-ui.html`).catch(() => null)
+        if (res?.ok()) return id
+      }
+      await sleep(500)
+    }
+  } finally {
+    await probe.close()
   }
-  log('web app: signing in via minted magic link')
-  const tokenHash = await mintTokenHash()
-  await page.goto(`${WEB_URL}/login/email/verify?token_hash=${encodeURIComponent(tokenHash)}`)
-  await page.getByRole('button', { name: 'Verify' }).click()
-  await page.waitForURL('**/sessions**', { timeout: 20000 })
-  log('web app: signed in')
-  await page.close()
+  throw new Error('Flicktionary extension service worker not found')
 }
 
-// ---------------------------------------------------------------- pairing
+const getExtensionWorker = (context, extId) =>
+  context.serviceWorkers().find((w) => new URL(w.url()).host === extId)
+
 const pairExtension = async (context, extId) => {
   const popup = await context.newPage()
   await popup.goto(`chrome-extension://${extId}/popup-ui.html`)
   await popup.waitForTimeout(1500)
-  if ((await popup.getByText(/Signed in as/i).count()) > 0) {
+  if ((await popup.getByText(/Signed in as/i).count()) === 0) {
+    log('extension: pairing...')
+    popup.on('console', (msg) => {
+      if (msg.type() === 'error') log('popup console error:', msg.text().slice(0, 300))
+    })
+    await popup.getByRole('button', { name: /Sign in with Flicktionary/i }).click()
+    try {
+      await popup.getByText(/Signed in as/i).waitFor({ timeout: 30000 })
+    } catch (error) {
+      await shot(popup, 'debug-popup-pairing-failed')
+      throw error
+    }
+    log('extension: paired')
+  } else {
     log('extension: already paired')
-    await popup.close()
-    return
   }
-  log('extension: pairing...')
-  await popup.getByRole('button', { name: /Sign in with Flicktionary/i }).click()
-  await popup.getByText(/Signed in as/i).waitFor({ timeout: 30000 })
-  log('extension: paired')
   await shot(popup, '00-popup-paired')
   await popup.close()
 }
 
-// ---------------------------------------------------------------- youtube
-const dismissYoutubeConsent = async (page, ms = 15000) => {
-  // The EU consent dialog renders late and its buttons don't expose a
-  // Playwright-visible button role — JS-click by text, across frames.
-  const deadline = Date.now() + ms
-  while (Date.now() < deadline) {
-    for (const frame of page.frames()) {
-      const clicked = await frame
-        .evaluate(() => {
-          const els = [...document.querySelectorAll('button, tp-yt-paper-button, [role="button"]')]
-          const target = els.find((e) => /^\s*reject all\s*$/i.test(e.textContent ?? ''))
-          if (target) {
-            target.click()
-            return true
-          }
-          return false
-        })
-        .catch(() => false)
-      if (clicked) {
-        log('youtube: dismissed consent')
-        await page.waitForTimeout(2000)
-        return
-      }
-    }
-    await page.waitForTimeout(500)
+const seekTo = (page, t) =>
+  page.evaluate((s) => {
+    const v = document.querySelector('video')
+    if (v) v.currentTime = s
+  }, t)
+
+const pauseVideo = (page) => page.evaluate(() => document.querySelector('video')?.pause())
+const playVideo = (page) => page.evaluate(() => document.querySelector('video')?.play())
+
+const sameWord = (a, b) => (a ?? '').normalize('NFC').toLowerCase() === (b ?? '').normalize('NFC').toLowerCase()
+
+// First on-screen span whose data-word matches (case-insensitive, so ASR
+// tracks with lowercased text still match the manifest word).
+const findWordSpan = async (page, word) => {
+  const spans = await page.locator('[data-word]').all()
+  for (const span of spans) {
+    if (sameWord(await span.getAttribute('data-word'), word)) return span
   }
-  log('youtube: no consent dialog seen')
+  return null
 }
 
-const skipAdsLoop = async (page, ms) => {
-  const deadline = Date.now() + ms
-  while (Date.now() < deadline) {
-    const skip = page.locator('.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern').first()
-    if (await skip.isVisible().catch(() => false)) {
-      await skip.click().catch(() => {})
-      log('youtube: skipped ad')
+// Seek near the target time (paused) until the wanted word is on screen. ASR
+// re-chunking can shift cue boundaries, so scan forward in small steps. A
+// whole scan pass can be eaten by a mid-roll ad break (server-stitched ads
+// swallow seeks and `.ad-showing` can stick around) — between passes, try the
+// skip button and let playback run a few seconds so the player clears the
+// break itself.
+const showCueWithWord = async (page, word, seekToS) => {
+  for (let pass = 0; pass < 3; pass += 1) {
+    for (let offset = -1; offset <= 6; offset += 1) {
+      await seekTo(page, seekToS + offset)
+      await page.waitForTimeout(1200)
+      await pauseVideo(page)
+      await disableYoutubeCaptions(page)
+      await page.waitForTimeout(500)
+      const span = await findWordSpan(page, word)
+      if (span) return span
     }
-    if ((await page.locator('.ad-showing').count()) === 0) return
-    await page.waitForTimeout(1000)
+    log(`"${word}" not found in scan pass ${pass + 1} — letting playback clear any ad break`)
+    await skipAdsLoop(page, 45000)
+    await playVideo(page)
+    await page.waitForTimeout(4000)
   }
+  const onScreen = await Promise.all((await page.locator('[data-word]').all()).map((s) => s.getAttribute('data-word')))
+  const videoTime = await page.evaluate(() => document.querySelector('video')?.currentTime)
+  await shot(page, 'debug-cue-not-found')
+  throw new Error(
+    `word "${word}" never appeared around t=${seekToS}s (video at ${videoTime}s, on screen: ${onScreen.join(' ')})`
+  )
+}
+
+// The popover mounts immediately but its gloss body fills in after the fetch;
+// capture only once the loading skeletons are gone and the text has settled.
+const waitForGlossLoaded = async (page, selector = GLOSS_POPOVER) => {
+  const popover = page.locator(selector)
+  await popover.waitFor({ timeout: 20000 })
+  const deadline = Date.now() + 25000
+  let prev = ''
+  while (Date.now() < deadline) {
+    const text = (await popover.innerText().catch(() => '')).trim()
+    const skeletons = await popover.locator('[data-slot="skeleton"]').count()
+    if (skeletons === 0 && text.length > 30 && text === prev) return
+    prev = text
+    await sleep(700)
+  }
+  log('WARNING: gloss popover did not settle, capturing anyway')
+}
+
+// YouTube's own caption renderer double-renders behind the overlay, and it can
+// switch on when the extension syncs the track — force it off (idempotent).
+const disableYoutubeCaptions = (page) =>
+  page.evaluate(() => {
+    document.querySelector('.ytp-subtitles-button[aria-pressed="true"]')?.click()
+  })
+
+// The player controls (title, progress bar) fade ~3s after the last mouse
+// move; wait them out so captures show a clean frame.
+const settleForShot = () => sleep(3300)
+
+const isSavedSpan = async (span) => ((await span.getAttribute('class')) ?? '').includes(SAVED_CLASS)
+
+// Right-click toggles save/remove in place; used to reset an already-saved
+// target on reruns so the fresh-gloss shot exists every run.
+const unsaveSpan = async (page, span) => {
+  await span.click({ button: 'right' })
+  const deadline = Date.now() + 8000
+  while (Date.now() < deadline) {
+    if (!(await isSavedSpan(span))) break
+    await sleep(400)
+  }
+  // Re-seek to clear any popover the toggle left open.
+  await page.mouse.move(40, 40)
+  await sleep(600)
+}
+
+const captureGlossAndSave = async (page, video) => {
+  const { word, seekToS } = video.gloss
+  let span = await showCueWithWord(page, word, seekToS)
+  await settleForShot()
+  await shot(page, `ext-${video.label}-overlay`)
+
+  if (await isSavedSpan(span)) {
+    log(`"${word}" already saved — unsaving for a fresh capture`)
+    await unsaveSpan(page, span)
+    span = await showCueWithWord(page, word, seekToS)
+  }
+
+  log(`hovering word: ${word}`)
+  await span.hover()
+  await waitForGlossLoaded(page)
+  await settleForShot()
+  await shot(page, `ext-${video.label}-gloss-popover`)
+
+  // The hover preview isn't pinned and can re-render/detach under the click —
+  // fall back to right-click save (the toggle needs no popover) if it does.
+  try {
+    await page.locator(GLOSS_POPOVER).getByRole('button', { name: /^Save$/ }).click({ timeout: 8000 })
+  } catch {
+    log('popover Save click failed — saving via right-click')
+    await span.click({ button: 'right' })
+  }
+  await page.locator(SAVED_POPOVER).waitFor({ timeout: 20000 }).catch(async () => {
+    // Saved popover didn't morph in — re-hover the (now saved) word to open it.
+    await page.mouse.move(40, 40)
+    await sleep(800)
+    await span.hover()
+  })
+  await page.locator(SAVED_POPOVER).waitFor({ timeout: 20000 })
+  await waitForGlossLoaded(page, SAVED_POPOVER)
+  await settleForShot()
+  await shot(page, `ext-${video.label}-saved-popover`)
+}
+
+const captureMultiword = async (page, video) => {
+  const { words, seekToS } = video.multiword
+  await showCueWithWord(page, words[words.length - 1], seekToS)
+
+  // Find the consecutive run of spans matching the phrase.
+  const spans = await page.locator('[data-word]').all()
+  const texts = await Promise.all(spans.map((s) => s.getAttribute('data-word')))
+  let startIndex = -1
+  for (let i = 0; i + words.length <= texts.length; i += 1) {
+    if (words.every((w, j) => sameWord(texts[i + j], w))) {
+      startIndex = i
+      break
+    }
+  }
+  if (startIndex === -1) throw new Error(`phrase "${words.join(' ')}" not found on screen`)
+  const phraseSpans = spans.slice(startIndex, startIndex + words.length)
+
+  for (const span of phraseSpans) {
+    if (await isSavedSpan(span)) {
+      log('phrase already saved — unsaving for a fresh capture')
+      await unsaveSpan(page, span)
+      await showCueWithWord(page, words[words.length - 1], seekToS)
+      return captureMultiword(page, video)
+    }
+  }
+
+  // Drag across the phrase: mousedown on the first word, move through each
+  // following word (the overlay extends the selection on word mouseenter),
+  // mouseup opens the pinned chunk gloss.
+  const boxes = []
+  for (const span of phraseSpans) boxes.push(await span.boundingBox())
+  log(`selecting phrase: ${words.join(' ')}`)
+  await page.mouse.move(boxes[0].x + boxes[0].width / 2, boxes[0].y + boxes[0].height / 2)
+  await page.mouse.down()
+  for (const box of boxes.slice(1)) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 })
+    await sleep(120)
+  }
+  await page.mouse.up()
+
+  await waitForGlossLoaded(page)
+  await settleForShot()
+  await shot(page, `ext-${video.label}-multiword-selection`)
+
+  // Save the phrase too — it becomes the hero card the web shots build on.
+  await page.locator(GLOSS_POPOVER).getByRole('button', { name: /^Save$/ }).click()
+  await page.locator(SAVED_POPOVER).waitFor({ timeout: 20000 })
+  await waitForGlossLoaded(page, SAVED_POPOVER)
+  await settleForShot()
+  await shot(page, `ext-${video.label}-multiword-saved`)
 }
 
 const run = async () => {
-  const context = await launch()
+  await ensureUbolite()
+  const context = await launch({ withExtension: true })
   try {
     const extId = await getExtensionId(context)
     log('extension id:', extId)
 
-    await signIntoWebApp(context)
+    await signIntoWebApp(context, DEMO.email)
     await pairExtension(context, extId)
 
-    // Seed the remembered track language for youtube.com so streamingAutoSync
-    // loads the track silently on bind. The prompt-on-failure track dialog
-    // renders unreliably under automation (root cause unknown — the page-script
-    // handshake works; the dialog host just doesn't always mount), so the
-    // script never depends on it.
-    const [sw] = context.serviceWorkers()
-    await sw.evaluate(async (lang) => {
-      await chrome.storage.local.set({
-        streamingLastLanguagesSynced: { 'www.youtube.com': [lang] },
-      })
-    }, TRACK_LANGUAGE)
-    log('seeded remembered track language:', TRACK_LANGUAGE)
-
     const page = await context.newPage()
-    await page.goto(`https://www.youtube.com/watch?v=${VIDEO_ID}`, { waitUntil: 'domcontentloaded' })
-    await dismissYoutubeConsent(page)
-    await page.waitForSelector('video', { timeout: 30000 })
-    await skipAdsLoop(page, 60000)
+    for (const video of VIDEOS) {
+      log(`--- video: ${video.label} (${video.videoId}) ---`)
 
-    // ---- wait for tokenized subtitle words (overlay shadow DOM is open) ----
-    const wordSpan = page.locator('[data-word]')
-    await page.evaluate(() => document.querySelector('video')?.play())
-    const wordDeadline = Date.now() + 30000
-    while (Date.now() < wordDeadline) {
-      if ((await wordSpan.count()) > 0) break
-      await page.waitForTimeout(500)
-    }
-    if ((await wordSpan.count()) === 0) {
-      await page.evaluate((t) => {
-        const v = document.querySelector('video')
-        if (v) v.currentTime = t
-      }, SEEK_TO_S)
-      await page.waitForTimeout(3000)
-    }
-    if ((await wordSpan.count()) === 0) throw new Error('no tokenized subtitle words appeared')
-    log('subtitle words tokenized:', await wordSpan.count())
+      // Seed the remembered track language so streamingAutoSync loads the
+      // track silently on bind (the prompt-on-failure dialog mounts
+      // unreliably under automation).
+      const sw = getExtensionWorker(context, extId)
+      await sw.evaluate(async (lang) => {
+        await chrome.storage.local.set({
+          streamingLastLanguagesSynced: { 'www.youtube.com': [lang] },
+        })
+      }, video.trackLanguage)
 
-    // ---- pause on a line with words ----
-    await page.evaluate((t) => {
-      const v = document.querySelector('video')
-      if (v) v.currentTime = t
-    }, SEEK_TO_S)
-    await page.waitForTimeout(2000)
-    await page.evaluate(() => document.querySelector('video')?.pause())
-    await page.waitForTimeout(1000)
-    let tries = 0
-    while ((await wordSpan.count()) === 0 && tries < 10) {
-      await page.evaluate(() => {
-        const v = document.querySelector('video')
-        if (v) v.currentTime += 3
-      })
-      await page.waitForTimeout(1500)
-      tries++
-    }
+      await page.goto(`https://www.youtube.com/watch?v=${video.videoId}`, { waitUntil: 'domcontentloaded' })
+      await dismissYoutubeConsent(page)
+      await page.waitForSelector('video', { timeout: 30000 })
+      await skipAdsLoop(page, 60000)
 
-    // Clean the frame: dismiss the watch-history nag, turn off YouTube's own
-    // caption rendering (it double-renders behind the overlay), fullscreen.
-    await page.evaluate(() => {
-      const nag = [...document.querySelectorAll('button')].find((b) => /leave history off/i.test(b.textContent ?? ''))
-      nag?.click()
-      const cc = document.querySelector('.ytp-subtitles-button[aria-pressed="true"]')
-      cc?.click()
-    })
-    await page.keyboard.press('f')
-    await page.waitForTimeout(1500)
-
-    const words = await wordSpan.all()
-    log('words on screen:', words.length)
-    await shot(page, '01-subtitle-overlay')
-
-    // Pick the longest word on screen — better gloss target than an arbitrary
-    // index. TODO(proposal): per-shot curated word targets instead.
-    let target = words[0]
-    let targetText = ''
-    for (const w of words) {
-      const text = (await w.getAttribute('data-word')) ?? ''
-      if (text.length > targetText.length) {
-        target = w
-        targetText = text
+      // Play until the overlay tokenizes subtitle words.
+      await playVideo(page)
+      const wordSpan = page.locator('[data-word]')
+      const deadline = Date.now() + 30000
+      while (Date.now() < deadline) {
+        if ((await wordSpan.count()) > 0) break
+        await page.waitForTimeout(500)
       }
+      if ((await wordSpan.count()) === 0) throw new Error('no tokenized subtitle words appeared')
+
+      await cleanYoutubeFrame(page)
+      await page.keyboard.press('f')
+      await page.waitForTimeout(1500)
+
+      await captureGlossAndSave(page, video)
+      if (video.multiword) await captureMultiword(page, video)
+
+      await page.keyboard.press('f')
+      await page.waitForTimeout(800)
     }
-
-    // ---- hover gloss ----
-    log('hovering word:', targetText)
-    await target.hover()
-    await page.waitForTimeout(3500) // 300ms hover debounce + fastGloss fetch
-    await shot(page, '02-hover-gloss')
-
-    // ---- save via right-click, then saved popover ----
-    await target.click({ button: 'right' })
-    log('right-click save sent')
-    await page.waitForTimeout(4000)
-    await shot(page, '03-after-save')
-
-    await page.mouse.move(100, 100)
-    await page.waitForTimeout(800)
-    await target.hover()
-    await page.waitForTimeout(2500)
-    await shot(page, '04-saved-popover')
-
-    log('done — screenshots in', OUT_DIR)
+    log('done')
   } finally {
     await context.close()
   }
