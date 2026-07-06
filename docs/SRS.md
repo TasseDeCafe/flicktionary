@@ -1,7 +1,9 @@
 # How the SRS works
 
-Reference for the practice/SRS system (web app). Describes current behavior. Update this doc
-alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
+The **single authoritative spec** for the practice/SRS system (web app): data model,
+scheduler, budgets, queues, reading mode, parking/exercises, and the practice UI surfaces.
+`SPEC.md` carries only a summary + pointer here. Describes current behavior. Update this
+doc alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
 
 Code map:
 
@@ -34,7 +36,7 @@ term:
   recognition-mode — see §pronunciation below; pronunciation can be per-form).
 - **target_form** — `''` is the citation/lemma; a non-empty string is a specific inflected form.
 
-`pool` (`passive`/`active`) stays on the wire and route params unchanged, but it is **derived**:
+`pool` (`recognition`/`production`) stays on the wire and route params unchanged, but it is **derived**:
 it is the review mode of a skill, mapped at the service boundary (`skillForPool` /
 `reviewModeForSkill`), not a stored column. The passive queue serves the recognition skills
 `{meaning_recognition, pronunciation}`; the active queue serves `meaning_production`.
@@ -393,8 +395,83 @@ cap/introduction/leech machinery.
 
 ## 6. Reading mode
 
-`generateNextReadingText` builds texts from the same `listReviewTerms` candidate set (same
-scopes/budgets — no learn-new bypass). On **advance**:
+Reading is **sessionless** (the `practice_sessions` table was dropped): state lives on
+`practice_texts` directly, keyed `(user_id, target_language, pool, ord)`, with a partial
+unique index allowing at most one `status='reading'` text per (user, language, pool).
+Opening `Read` (`/practice/review/$targetLanguage?pool=&scope=`) resumes that in-progress
+text when one exists — the language card's per-pool resume chips read the same state via
+`listCurrentReadings`. Background pre-generation is opportunistic and must never surface
+user-facing errors.
+
+### Scopes and pools
+
+A text is scoped to one target language, one pool, and one scope. Pool `production` is the
+old active drill — it serves only terms with an enabled `(meaning_production, '')` facet
+and has **no daily new-term cap** (the cap is a recognition-only concept, intentionally not
+inherited so production reading never eats the recognition new-term allowance). Scopes:
+`review_due` (already-introduced due terms only), `learn_new` (unseen terms up to the
+remaining per-day allowance), `mixed` (default; both). The scope is a **live filter
+re-evaluated per text** (`listReviewTerms`), not a frozen snapshot, and an in-progress or
+pre-generated text built under a different scope is discarded before resume — entering
+e.g. `Learn new` never surfaces a leftover `mixed` text. (Accepted transitional
+inconsistency: reading introduces new terms directly into FSRS via implicit ratings — a
+second intro path beside the composed queue's exercise-first on-ramp; reading lives under
+Custom practice.)
+
+### Text generation
+
+One short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of
+chunk level). The `status` + `ord` columns implement slot-based pre-generation:
+`prepareNextReadingText` reserves the next slot and runs the LLM in a detached promise
+behind a `generation_token` fence (raced or stale writers silently no-op), and the next
+advance promotes the ready slot instead of generating synchronously.
+
+The generation prompt is the methodology preamble + language instructions + user profile +
+the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`,
+`native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense,
+surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are
+unreliable at character arithmetic; the server locates each `surface_form` in `body` and
+computes offsets itself, claiming non-overlapping positions when a surface form repeats.
+
+Candidates come from the same `listReviewTerms` set as flashcards (same scopes/budgets —
+no learn-new bypass), filtered to **citation meaning facets** (a text must never embed a
+pronunciation or specific-form facet, whose front isn't the lemma) and excluding terms in
+the currently-reading text plus just-rated terms that may not have left the due window
+yet. When that set is empty, `generateNextReadingText` returns `done: true` and the
+reading view shows an "All caught up" view. Generation itself never introduces terms —
+facets enter FSRS lazily at rate/advance time (§5) and count against the daily-new
+allowance there.
+
+### Reading UX
+
+The body renders each annotation as a clickable yellow span (rated → muted gray;
+soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet`
+(`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. Its 3-dots overflow has `Edit term`
+(navigates to the focus view of the chunk's representative card with `?from=practice` so
+chevron-back returns to the same text), `Switch to active vocabulary` / `Switch to
+passive vocabulary` (label follows the term's derived `learningMode`; calls
+`chunks.setFacetEnabled` with `skill=meaning_production`, `targetForm=''`; hidden when
+the annotation has no canonical `user_lookups` row), and `Delete from vocabulary`
+(soft-delete via `chunks.deleteChunk` + a Sonner toast with a `Restore` action backed by
+`chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only
+variant of the RateSheet. The `Next text` button advances; **every annotation not
+explicitly rated is auto-rated `good`** (`was_explicit = false`) so passive reading still
+informs the SRS.
+
+**Peek + save unannotated spans.** Tap-to-select on plain body text (not covered by an
+annotation) opens a `LookupSheet` with a fast one-line gloss + optional POS / register
+chips. A single click/tap selects one `Intl.Segmenter` word in the text's target
+language; press-and-drag extends to a word range. Annotation taps stay reserved for the
+`RateSheet`, and ranges that cross an annotation are rejected rather than snapped. The
+gloss reuses the same Haiku-powered `fastGlossPass` as tap-to-select in the session view,
+exposed as `practice.fastGloss` keyed to the text body (no highlight row needed, no
+server-side cache). `Save to vocabulary` routes the selection into the `cards.createAdhoc`
+adhoc flow (passing the text body as the LLM context, truncated to 2000 chars), then
+navigates to the new card's focus view with `?from=practice`.
+
+### Advance (advanceReadingText)
+
+On **advance**:
 
 - `claimFinalize` is a one-shot status transition (reading → done); only the winner applies
   ratings — double-clicks/retries are no-ops.
@@ -420,7 +497,9 @@ scopes/budgets — no learn-new bypass). On **advance**:
   into the flashcard queue — `leech_parked_at IS NOT NULL AND srs_state IS NULL` (parked but
   never reviewed). Warms both pools (the citation `meaning_recognition` and `meaning_production`
   facets), per pool. Exact-form facets (`target_form != ''`) are never warmed — the exercise
-  bank has no facet identity, so only citation facets can park.
+  bank has no facet identity, so only citation facets can park (see
+  `docs/proposals/pronunciation-warmup.md` → "fix Trap 19" for the shared facet-identity
+  prerequisite).
 
 `listParkedTerms` / `getStrengthenExercises` take a `parkedOrigin: 'onboarding' | 'leech'`
 filter (the `srs_state IS NULL` vs `IS NOT NULL` split) so the two surfaces read disjoint
@@ -435,8 +514,22 @@ sets from the same column. Everything below "park" is shared.
   a lower desired retention (§2), which roughly doubles its expected lapse rate. New-lapse
   **delta**, not an absolute check, so graduated high-lapse terms aren't re-parked by
   good/easy ratings. Per pool.
-- **Parked** = out of every queue (flashcards and reading candidates). Ratings from stale
-  queues are accepted as no-ops.
+- **Parked** = out of every queue (flashcards and reading candidates — both feed from
+  `listReviewTerms`, which filters on the parked column; this is intentional, since
+  reading's implicit `good` on advance must never mutate a parked facet's FSRS). The
+  due-summary aggregates exclude parked rows too, so the landing never claims terms the
+  queue refuses to serve. Ratings from stale queues are accepted as no-ops. The flashcard
+  client reacts to `rateTerm`'s `parked: true` with a toast ("… keeps tripping you up —
+  it's parked for rehab exercises") and skips the in-session `again` requeue for that
+  card.
+- **Pool move resets production rehab.** A real enable/disable flip of the production
+  facet (guarded by `disabled_at IS DISTINCT FROM` the target inside `setFacetEnabled`'s
+  transaction) resets that facet's parked/rehab columns — both pool-move surfaces (the
+  term view's Study targets control and the Vocabulary tab) get it, while idempotent
+  re-enable re-stamps don't wipe progress. Only the production facet resets; the
+  recognition facet never changes. Soft-deleting a parked term hides it everywhere via
+  the existing `deleted_at` filters; restoring resumes with parked state intact
+  (correct — it still needs rehab).
 - **Rehab**: parked terms surface as gate exercises — in the daily **composed Practice
   queue** (§4b, uncredited-today terms only) and in the post-session **Strengthen**
   round. One correct gate
@@ -446,8 +539,11 @@ sets from the same column. Everything below "park" is shared.
   production_cloze` (typed answers tolerate edit distance 1).
 - **Graduation** (`unparkAndSoftReentry`): atomic — clears parked/rehab columns and writes a
   *softened* re-entry directly (review state, due +24h, stability 1, difficulty 5), NOT the
-  demonstrably-failing pre-park schedule. `reps`/`lapses` are preserved; the `parked_at`
-  flag, not the lapse count, is the re-park gate. `added_to_practice_at` untouched. For an
+  demonstrably-failing pre-park schedule. Deliberately a direct facet write
+  (`unparkAndSoftReentryFacet`), not routed through `applyRating`, so the recognition 24h
+  floor doesn't interfere. `reps`/`lapses` are preserved; the `parked_at`
+  flag, not the lapse count, is the re-park gate. `introduced_at` untouched, so the
+  daily-new cap is unaffected. For an
   onboarding facet (reps/lapses 0) this same write IS a freshly-introduced flashcard, so
   warm-up and leech use the identical graduation path.
 
@@ -486,16 +582,55 @@ sets from the same column. Everything below "park" is shared.
 
 ### Exercise bank + serve resilience
 
-- **Exercise bank** (`exercise-bank.ts`): per (term, pool) slots — passive
+- **Exercise bank** (`exercise-bank.ts`, `practice_exercise` table): durable
+  pre-generated exercises per `(user_lookup, pool, exercise_type)` — passive
   `mc_cloze, mc_comprehension, use_in_sentence`; active `mc_cloze, production_cloze,
-  use_in_sentence`. Generated + adversarially verified in the background (≤3 attempts per
-  slot), warmed on park/again/hard. Retries are informed, not blind: each attempt feeds
-  the verifier's prior rejection reasons back into the next generation prompt. Verifier
-  verdicts are parsed leniently (a string `"true"` counts as pass) and a fail with zero
-  reasons — a state the verify prompt forbids — is re-verified once before it counts,
-  so a malformed tool call can't silently convert passes into rejections. Strengthen
-  serves one gate exercise per parked term (oldest first) plus bonus exercises for this
-  session's again/hard set.
+  use_in_sentence`. `use_in_sentence` generates for both pools but is **ungated bonus
+  only** (`gate_eligible = false`) — an LLM grading error must never block a graduation.
+  Strengthen serves one gate exercise per parked term (oldest first) plus bonus exercises
+  for this session's again/hard set.
+- **Lifecycle + consume-on-answer.** Slots mirror the `practice_texts` fencing lifecycle:
+  `pending → generating` (mints a `generation_token`) `→ ready → used | failed`; stale
+  pending/generating slots (> 300s) are fenced off and replaced; an advisory lock per
+  `(term, pool)` makes concurrent ensure calls race-safe. Serving is read-only
+  (deterministic lowest-`created_at` ready row), so refresh/abandon before answering
+  re-serves the same exercise — no bank drain, no in-progress state machine. Submitting an
+  answer consumes the row (`used`), which doubles as the stale-answer fence; the next
+  attempt always gets a fresh exercise (anti-gaming for gates). **Skipping consumes
+  nothing.** Bank warm-up triggers, all fire-and-forget: an `again`/`hard` rating in
+  either render mode (an optional hook on `applyTermRating`), parking itself (gates must
+  exist before the user reaches Strengthen), each consumed slot (refill — narrowed to the
+  consumed type for non-rehab consumes, full ladder for rehab gate answers, skipped on
+  graduation), and the composed queue's hint pre-warm.
+- **Accuracy-first generation** (cost explicitly not a constraint): Opus GENERATE →
+  independent-context adversarial VERIFY (Sonnet by default; the `EXERCISE_VERIFY_MODEL`
+  env var flips it back to Opus in one line), up to `MAX_GEN_ATTEMPTS = 3` full cycles
+  before the slot fails. The verifier substitutes each distractor into the blank and fails
+  the exercise if any substitution is grammatically valid AND semantically defensible;
+  distractors must match the answer's POS and inflection/agreement (so grammar alone can't
+  eliminate them) while being semantically wrong in that sentence; production-cloze blanks
+  must be inflection-unambiguous from the sentence's cues. Retries are informed, not
+  blind: each cycle feeds the verifier's prior rejection reasons into the next generation
+  prompt. Verifier verdicts are parsed leniently (a string `"true"` counts as pass) and a
+  fail with zero reasons — a state the verify prompt forbids — is re-verified once before
+  it counts, so a malformed tool call can't silently convert passes into rejections. Blank
+  offsets are computed server-side by substring search over the emitted `surface_form`
+  (never LLM char arithmetic); options are shuffled server-side. Generation prompts work
+  from headword + sense (+ definition/translation when present) — no dependency on stored
+  examples. `use_in_sentence` payloads are built deterministically (no LLM at generation
+  time).
+- **Grading is server-side only.** Served payloads are stripped of `answer` /
+  `answerIndex` / `acceptedForms`; the truth (`correctIndex` / `correctAnswer`) is
+  revealed only in the answer response, after the exercise is consumed. MC = index
+  equality. Production cloze: NFD-normalize + strip diacritics + lowercase + trim, then
+  exact match against accepted forms or Damerau-Levenshtein ≤
+  `TYPED_ANSWER_MAX_EDIT_DISTANCE = 1` (shared dependency-free helpers in
+  `@flicktionary/core/utils/typed-answer-grading`, so the client-graded session recap
+  applies the exact same acceptance rules) — a missing accent plus one typo still passes.
+  Use-in-sentence: Sonnet-graded; a correct sentence in **any legitimate sense** passes
+  (real production is the point; it's bonus-only), but when the sense differs from the
+  stored one the feedback must say so and give an example in the stored sense; grading
+  failures degrade to attempt-only ("feedback unavailable"), never an error.
 - **Failure-tolerant ladder.** The gate serve tries the tier's preferred type, then falls
   back to **any** ready gate-eligible exercise — a term whose required type can't be
   generated (the verifier keeps refusing a malformed headword) still progresses, since
@@ -534,6 +669,55 @@ sets from the same column. Everything below "park" is shared.
   narrowed to the consumed type, so a hint never fans out into whole-ladder LLM work
   (rehab gate answers keep the full-ladder refill — the tiers need every type banked).
 
+### Dedicated exercise sessions (ExerciseSessionView)
+
+Routes: `/practice/strengthen/$targetLanguage` (leeches + bonus; Zod search: `pool`,
+optional `sessionHard` userLookupId array — carried in the URL so the list survives
+refresh) and `/practice/warmup/$targetLanguage` (session-scoped warm-up; search
+`studySessionId`) render the shared `ExerciseSessionView`, differing only in fetch source
+and copy (`copyVariant: 'rehab' | 'warmup'`); day-to-day gate serving happens inside the
+composed Practice queue itself. Strengthen's remaining entry point is the post-session CTA
+(primary `Strengthen` button on the composed completion screen when the session produced
+again/hard terms; the back button is the skip path — reading completion is unchanged
+though its ratings still warm bonus banks); `startStrengthenSession` requests
+`parkedOrigin: 'leech'` for its gate track. Warm-up has no dedicated UI entry point (§7
+warm-up entry).
+
+`startStrengthenSession` re-validates the client-supplied hard ids server-side (ownership,
+language, `count > 0`, not deleted, an enabled `(meaning_production, '')` facet —
+`disabled_at IS NULL`, enforced by the queue join — when `pool='active'`; silently drops
+the rest) and returns one tier-typed gate exercise per parked term plus one bonus exercise
+per validated hard term. A term with nothing ready gets a **`generating` placeholder**
+(skippable) and a background bank top-up — the session never blocks on LLM work.
+
+Exercise screens share an `ExerciseLayout`: scrollable content + a pinned bottom action
+bar (the flashcard-view pattern), with an optional status-row slot above the actions
+(filled by the composed queue's chevrons + chips row; empty in the dedicated sessions) and
+a **post-answer feedback slot** pinned above the status row — verdict, expected answer,
+meaning reminder, and rehab progress render there instead of in the scrollable body, where
+they routinely landed below the fold on small screens. The bar is bottom-anchored, so the
+feedback grows upward and the status row + actions never move; the slot is height-capped
+with internal scroll so long LLM feedback (use-in-sentence) can't eat the viewport. The
+header line is the shared `ExerciseHeader` — icon + uppercase track label (+ ` · headword`
+when naming the term can't leak a cloze answer) + an optional right-aligned position
+counter, which only the dedicated sessions pass (the composed queue's grows mid-session,
+so `N / M` would read as broken there). Every unanswered exercise has a secondary **Skip**
+(non-consuming — it re-serves next session, so "I don't know" on a gate doesn't burn the
+fresh exercise or the day; to *see* the answer, submit a guess — that consumes and
+reveals). Cloze exercises (`mc_cloze` + `production_cloze`) also offer an opt-in **Hint**
+button beside Skip (same lightbulb treatment as the flashcard hint): pressing it reveals
+the term's meaning under the sentence — the entry's `translation`/`definition` resolved by
+the same rules as flashcard faces (definition-only when L1 = L2 or Show translations is
+off; production cloze falls back to its generation-time `payload.hint`). The hint is
+free — it never affects gate credit — and is never auto-expanded; `mc_comprehension` gets
+no hint, since its options are meaning paraphrases. Cloze blanks render as literal
+underscores. MC answers highlight the correct option from the response's `correctIndex`;
+production cloze reveals `correctAnswer` on a miss; use-in-sentence is labelled **Bonus**
+and shows the LLM feedback. Every answered exercise appends a `Meaning: …` reminder line.
+Gate answers render a "Day N of 3" rehab progress note from the response's
+`rehabCorrectDays`, and `graduated: true` renders a graduation celebration ("back in your
+practice rotation"); the dueSummary invalidation drops the parked counts.
+
 ## 8. Frontend session model (composed-practice-view.tsx)
 
 - The queue is a **one-shot client-side slice of union items**
@@ -562,7 +746,11 @@ sets from the same column. Everything below "park" is shared.
   `Hint` button appears beside `Show answer` when `practice.getHintExercise` has a ready
   exercise (availability is best-effort — null or a failed check just hides the button;
   `useSubmitExerciseAnswer` invalidates the hint query so a consumed exercise is never
-  re-served from cache). Pressing it swaps the card for the MC exercise (`McExercise`
+  re-served from cache). The client prefetches the upcoming queue item's hint availability
+  while the current one is displayed — the availability query is cached per
+  `(userLookupId, pool)`, and redrill copies share the original card's cache key — so the
+  footer renders Hint + Show answer from the card's first frame instead of splitting a
+  beat after it appears. Pressing it swaps the card for the MC exercise (`McExercise`
   with relabeled actions: `Back to card` backs out non-consuming, `Show answer` after
   answering). Answering **locks the rating** — correct → `hard`, wrong → `again` — and
   reveals the card back with a single `Continue` that applies it through the normal
@@ -604,17 +792,46 @@ sets from the same column. Everything below "park" is shared.
   place to a cloze on the next poll — the generating placeholder's body copy and exercise
   header are headword-less for the same reason (terminally `failed` placeholders and peeked
   never-swapped items still name the term).
-- Counter pills derive from the remaining local queue (`getRemainingCounts`), with redrill
-  copies counted as Learning.
+- **Status row**: the sticky bottom control area is ONE row shared by every item type —
+  flashcards, exercises, hint mode, and peeked items alike: peek chevrons framing colored
+  remaining-count chips (derived from the remaining local queue, `getRemainingCounts`).
+  Chips bucket by **learning stage, not render type** — `new` (never-reviewed flashcards +
+  warm-up gates: a warm-up gate IS the term's first encounter), `learning`
+  (learning/relearning flashcards + `Again`-redrills + rehab gates), `review` — so a fresh
+  user who just added terms sees "7 New", not "7 Exercises" beside three zeros. Each chip
+  is a press target opening a short explanation popover (click/tap only, never hover — the
+  chips sit next to the answer buttons, where hover-open would misfire constantly); below
+  the `sm` breakpoint the chip labels collapse to screen-reader-only (dot + count) so the
+  row fits phone widths. The back chevron is withheld while a live exercise or hint is
+  displayed (peeking away would unmount it, and an already-consumed exercise can't be
+  re-answered on remount).
 - Landing/status lines compute servable work client-side from the due summary + per-language
   limits (`getPracticeLimitsForLanguage`): `servableReviewDue = min(reviewDueCount,
   reviewBudgetLeft)`; precedence when nothing is servable: "Daily review limit reached." >
-  "Daily new limit reached." > "No terms are ready right now.". The per-language landing
-  is one card — a primary **Practice** button (the composed queue's everyday default), a
-  **Custom practice** overlay for every secondary mode (presets + a build-your-own filter
-  panel + Read + reading history), a one-line status summary folding both pools
-  (`N to review · N new today · N warming up · N to strengthen`), and the reading-resume
-  chips.
+  "Daily new limit reached." > "No terms are ready right now.".
+
+### Landing + language action screen
+
+`/practice` is a per-language selector. Each row shows the full language name plus a
+compact status summary (follow-up timing / unseen / total) and opens
+`/practice/language/$targetLanguage`. When the language has any active-pool terms the
+summary appends `· N active`; when any terms are warming up it appends `· N warming up`
+(recognition + production onboarding combined, `warmupCount + productionWarmupCount`);
+when any terms are leech-parked it appends `· N parked` (both pools' leeches — warm-up
+terms are counted separately under "warming up").
+
+`/practice/language/$targetLanguage` is ONE card — the system makes the strategic
+decision, not the user. A single primary **Practice** button enters the composed queue
+(`/practice/composed/$targetLanguage`). A secondary **Custom practice** button opens an
+overlay with the focused presets (`Review (due, no new)`, `Flashcards only`, `Learn new`,
+`Exercises only`, `Production focus` — each just a composed-queue filter spec), the `Read`
+reading mode, per-pool reading history, and a build-your-own filter panel (pools / scope /
+item types / opt-in-new toggle, with inline reasons on contradictory combos — e.g.
+new-only + flashcards-only without opt-in cards is empty by construction). A one-line
+status summary folds both pools (`N to review · N new today · N warming up ·
+N to strengthen`), absorbing the old standalone "warming up — continue" and "parked —
+strengthen" banners; in-progress reading texts keep their per-pool resume chips on the
+card. The stat cards (Follow-ups / New today / Unseen / Total) render below.
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
@@ -626,6 +843,47 @@ origin **on both pools**: `parkedCount` / `productionParkedCount` are leech-only
 strengthen counts), and the composed queue serves both origins' gates in one session.
 `newCount` / `productionNewCount` exclude parked rows so a warm-up term is never advertised
 as servable-new.
+
+### Flashcard faces
+
+Card face composition is declarative in
+`packages/core/src/constants/card-face-config.ts`. `DEFAULT_CARD_FACE_CONFIG` shows
+`headword` + `targetExample` on the front and `translation` / `definition` /
+`nativeExample` / `grammar` on the back; `ru` and `en` (the Kaikki-grounded languages with
+Wiktionary IPA today) defer `ipa` to the back on recognition cards, since pronunciation is
+part of the answer. The resolver filters abstract slots by runtime conditions:
+translations/native examples hide when L1 = L2 or Show translations is off, definition
+shows in that hidden-translation mode and also falls back when translations are enabled
+but no translation exists, IPA shows only when `pickIpa` returns a displayable bucket, and
+grammar shows only when chips can render. Headwords use `grammar.display_form || headword`
+so Russian stress-marked forms carry through.
+
+### Keyboard shortcuts (desktop)
+
+Every practice surface — the composed queue, the dedicated Strengthen/Warm-up sessions,
+and the session recap — is fully keyboard-drivable through one shared data-driven hook
+(`apps/web/src/hooks/use-hotkeys.ts`: a global keydown listener per view with per-binding
+enabled gates; a matched key always `preventDefault`s, which both stops Space-scroll and
+suppresses native re-activation of a still-focused button). Bindings: flashcard front
+`Space`/`Enter` = Show answer, `H` = Hint (when banked); flashcard back `1`–`4` =
+Again/Hard/Good/Easy with `Space`/`Enter` = Good (Anki muscle memory; digits match by
+**physical key position** — `event.code Digit/Numpad` — so bare top-row presses work on
+AZERTY); hint outcome `Enter`/`Space` = Continue; MC exercises `1`–`4` pick an option, `H`
+reveals the meaning hint, `S`/`Esc` skip; typed exercises autofocus their input on
+desktop, whose own `Enter` submits (use-in-sentence is chat-style: `Enter` submits,
+`Shift+Enter` newline) — the only globals that fire while typing are `Esc` = skip and the
+post-answer `Enter`/`Space` = Next; still-generating placeholders `S`/`Esc`/`Enter`/
+`Space` = skip; failed decision cards `Enter`/`Space` = Study as flashcard, `S`/`Esc` =
+skip; peek mode `←`/`→` drive the chevrons (same withhold rules), `1`–`4` re-rate when
+offered, `Enter` returns to the current card; completion screens `Enter` = the primary
+action (Strengthen when offered, else close — `Space` is deliberately unbound there so
+Anki-style space-hammering through the last cards can't launch Strengthen). Single letters
+and digits never fire while an editable element has focus, browser/OS chords
+(`meta`/`ctrl`/`alt`) are never hijacked, key-repeat only re-fires for bindings that opt
+in (focus-view nav), and all bindings suspend while the term-actions kebab overlay is
+open. The UI teaches the keys with small `<Kbd>` badges (shared `packages/ui` component)
+rendered inside the buttons/MC options they trigger — desktop-only (`useIsMobile`), and
+sourced from the same binding data so badge and behavior can't drift.
 
 ## 9. FAQ / gotchas
 
