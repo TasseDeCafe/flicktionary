@@ -22,6 +22,7 @@ import { userPrefsContract } from './user-prefs-contract'
 import { practiceContract } from './practice-contract'
 import { languagesContract } from './languages-contract'
 import { extensionAuthContract } from './extension-auth-contract'
+import { telegramPairContract } from './telegram-pair-contract'
 import { glossesContract } from './glosses-contract'
 
 export const rootOrpcContract = {
@@ -49,5 +50,6 @@ export const rootOrpcContract = {
   practice: practiceContract,
   languages: languagesContract,
   extensionAuth: extensionAuthContract,
+  telegramPair: telegramPairContract,
   glosses: glossesContract,
 } as const

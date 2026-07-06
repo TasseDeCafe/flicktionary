@@ -74,6 +74,8 @@ const productionConfig: EnvironmentConfig = {
   revenuecatProjectId: FEATURES.REVENUECAT ? process.env.REVENUECAT_PROJECT_ID || '' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? process.env.REVENUECAT_WEBHOOK_AUTH_HEADER || '' : '',
   posthogApiKey: FEATURES.POSTHOG ? process.env.POSTHOG_API_KEY || '' : '',
+  telegramBotToken: FEATURES.TELEGRAM ? process.env.TELEGRAM_BOT_TOKEN || '' : '',
+  telegramWebhookSecret: FEATURES.TELEGRAM ? process.env.TELEGRAM_WEBHOOK_SECRET || '' : '',
   shouldRateLimit: true,
   shouldMockThirdParties: false,
   shouldSlowDownApiRoutes: false,
@@ -132,6 +134,10 @@ const developmentConfig: EnvironmentConfig = {
   revenuecatProjectId: FEATURES.REVENUECAT ? process.env.REVENUECAT_PROJECT_ID || '' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? process.env.REVENUECAT_WEBHOOK_AUTH_HEADER || '' : '',
   posthogApiKey: FEATURES.POSTHOG ? process.env.POSTHOG_API_KEY || '' : '',
+  // Use a SEPARATE dev bot here (BotFather), never the prod bot: Telegram
+  // rejects getUpdates polling while a webhook is registered on the same bot.
+  telegramBotToken: FEATURES.TELEGRAM ? process.env.TELEGRAM_BOT_TOKEN || '' : '',
+  telegramWebhookSecret: FEATURES.TELEGRAM ? process.env.TELEGRAM_WEBHOOK_SECRET || '' : '',
   shouldRateLimit: true,
   shouldMockThirdParties: false,
   shouldSlowDownApiRoutes: false,
@@ -172,6 +178,8 @@ const developmentWithoutThirdPartiesConfig: EnvironmentConfig = {
   },
   shouldMockThirdParties: true,
   shouldSlowDownApiRoutes: false,
+  telegramBotToken: 'dummyTelegramBotToken',
+  telegramWebhookSecret: 'dummyTelegramWebhookSecret',
 }
 
 const developmentWithoutThirdPartiesTunnelConfig: EnvironmentConfig = {
@@ -219,6 +227,8 @@ const testConfig: EnvironmentConfig = {
   revenuecatProjectId: FEATURES.REVENUECAT ? 'dummyRevenuecatProjectId' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? 'dummyRevenuecatWebhookAuthHeader' : '',
   posthogApiKey: FEATURES.POSTHOG ? 'dummyPosthogApiKey' : '',
+  telegramBotToken: FEATURES.TELEGRAM ? 'dummyTelegramBotToken' : '',
+  telegramWebhookSecret: FEATURES.TELEGRAM ? 'dummyTelegramWebhookSecret' : '',
   shouldRateLimit: false,
   shouldMockThirdParties: true,
   shouldSlowDownApiRoutes: false,

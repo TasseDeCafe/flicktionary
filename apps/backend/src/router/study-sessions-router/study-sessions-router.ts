@@ -15,28 +15,8 @@ import { ProcessingJobsRepositoryInterface } from '../../transport/database/proc
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
-import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { parsePastedText } from '../../utils/text-paste-parser'
-import { createHash } from 'crypto'
-
-// languageDetectionPass reads the first ~1k chars; concatenating a few dozen
-// segments is more than enough to identify the language while keeping the
-// prompt small.
-const DETECTION_SAMPLE_CHARS = 1_000
-
-const buildDetectionSample = (segments: ReadonlyArray<{ text: string }>): string => {
-  const parts: string[] = []
-  let length = 0
-  for (const segment of segments) {
-    const text = segment.text.trim()
-    if (text.length === 0) continue
-    parts.push(text)
-    length += text.length + 1
-    if (length >= DETECTION_SAMPLE_CHARS) break
-  }
-  return parts.join('\n')
-}
+import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -99,45 +79,17 @@ export const StudySessionsRouter = (
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
-  // Shared front half of both extension ingestion flows (YouTube + streaming):
-  // detect the subtitle language and resolve the user's native + CEFR prefs for
-  // it. Returns a discriminated result so each handler can map a failure to its
-  // own typed `errors.*` (the language detected here is the single source of
-  // truth — content language AND session target language).
-  type ExtensionIngestPrefs =
-    | { ok: true; detectedLanguage: string; nativeLanguage: string; cefrLevel: string }
-    | { ok: false; reason: 'unsupported' }
-    // Native language is missing → the user hasn't completed onboarding. This is
-    // NOT recoverable in-context (it's a global, one-time setup), so the
-    // extension routes the user to web onboarding rather than offering a picker.
-    | { ok: false; reason: 'needs-onboarding' }
-    // Native language is set but CEFR for the detected language is missing → the
-    // extension offers an inline per-language CEFR picker and retries.
-    | { ok: false; reason: 'missing-cefr'; targetLanguage: string }
-
-  const resolveExtensionIngestPrefs = async (
-    userId: string,
-    // Only the segment text is read (for language detection); subtitle and text
-    // imports both satisfy this shape.
-    segments: ReadonlyArray<{ text: string }>
-  ): Promise<ExtensionIngestPrefs> => {
-    const detectedLanguage = await languageDetectionPass(buildDetectionSample(segments))
-    if (!detectedLanguage) return { ok: false, reason: 'unsupported' }
-
-    const [nativeLanguage, prefs] = await Promise.all([
-      usersRepository.getNativeLanguage(userId),
-      targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
-    ])
-    // native + CEFR live in user_prefs (set during onboarding), keyed by the
-    // language being studied. The two gaps are distinct recovery flows: a
-    // missing native language means onboarding wasn't completed (global,
-    // one-time → onboarding); a missing CEFR is per-language (→ in-context
-    // picker). Conflating them stranded users who set CEFR but had no native
-    // language in an unbreakable "set your level" loop.
-    if (!nativeLanguage) return { ok: false, reason: 'needs-onboarding' }
-    if (!prefs?.cefr_level) return { ok: false, reason: 'missing-cefr', targetLanguage: detectedLanguage }
-    return { ok: true, detectedLanguage, nativeLanguage, cefrLevel: prefs.cefr_level }
+  // Ingest-prefs resolution + one-shot text import live in the shared service
+  // (service/study-sessions/import-text.ts) — the Telegram bot runs the same
+  // flow outside oRPC. The handlers here only map failures to typed errors.
+  const importTextDeps = {
+    studySessionsRepository,
+    usersRepository,
+    userTargetLanguagePrefsRepository: targetLanguagePrefsRepository,
   }
+
+  const resolveExtensionIngestPrefs = (userId: string, segments: ReadonlyArray<{ text: string }>) =>
+    resolveIngestPrefs(userId, segments, importTextDeps)
 
   // Build the UNPROCESSABLE_ENTITY error body for a failed prefs resolution.
   // The handler throws its own typed `errors.UNPROCESSABLE_ENTITY({ data })` —
@@ -464,55 +416,25 @@ export const StudySessionsRouter = (
     importText: implementer.importText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
 
-      // One segment per non-empty line, same parser the web paste wizard uses, so
-      // a selection imported here reads identically to one pasted in the app.
-      const parsed = parsePastedText(input.text)
-      if (parsed.length === 0) {
-        throw errors.BAD_REQUEST({
-          data: { errors: [{ message: 'No readable text found to import.' }] },
-        })
+      const result = await importTextForUser(
+        { userId, text: input.text, title: input.title, sourceUrl: input.sourceUrl ?? null },
+        importTextDeps
+      )
+      if (!result.ok) {
+        if (result.reason === 'empty') {
+          throw errors.BAD_REQUEST({
+            data: { errors: [{ message: 'No readable text found to import.' }] },
+          })
+        }
+        throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(result) })
       }
-
-      const prefs = await resolveExtensionIngestPrefs(userId, parsed)
-      if (!prefs.ok) {
-        throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(prefs) })
-      }
-      const { detectedLanguage, nativeLanguage, cefrLevel } = prefs
-
-      // Natural key for idempotent re-import: hash of the parsed segment text.
-      // Same normalization as the web paste dedup so identical bodies collapse.
-      const contentHash = createHash('sha256')
-        .update(parsed.map((s) => `|${s.text}`).join('\n'))
-        .digest('hex')
-
-      const sourceUrl = input.sourceUrl ?? null
-      const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForImportedText({
-        userId,
-        type: sourceUrl ? 'article' : 'text',
-        title: input.title,
-        sourceUrl,
-        contentHash,
-        language: detectedLanguage,
-        segments: parsed,
-        nativeLanguage,
-        targetLanguage: detectedLanguage,
-        cefrLevel,
-      })
-
-      void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
-        logWithSentry({
-          message: 'setLastTargetLanguage failed (text import)',
-          params: { userId, targetLanguage: detectedLanguage },
-          error,
-        })
-      })
 
       return {
         data: {
-          sessionId: session.id,
-          contentSourceId: contentSource.id,
-          textTrackId: track.id,
-          segmentCount: segments.length,
+          sessionId: result.sessionId,
+          contentSourceId: result.contentSourceId,
+          textTrackId: result.textTrackId,
+          segmentCount: result.segmentCount,
         },
       }
     }),

@@ -83,6 +83,16 @@ import { LanguagesRouter } from './router/languages-router/languages-router'
 import { ExtensionAuthRouter } from './router/extension-auth-router/extension-auth-router'
 import { GlossesRouter } from './router/glosses-router/glosses-router'
 import { ExtensionPairNoncesRepository } from './transport/database/extension-pair-nonces/extension-pair-nonces-repository'
+import { TelegramPairNoncesRepository } from './transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
+import { TelegramPendingImportsRepository } from './transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { MockTelegramApi, TelegramApiInterface } from './transport/third-party/telegram/telegram-api'
+import {
+  MockTelegramPollingWorker,
+  TelegramPollingWorkerInterface,
+} from './service/long-running/telegram-polling-worker/telegram-polling-worker'
+import { TelegramBotDependencies } from './service/telegram-bot/handle-telegram-update'
+import { telegramWebhookRouter } from './router/webhooks/telegram/telegram-webhook-router'
+import { TelegramPairRouter } from './router/telegram-pair-router/telegram-pair-router'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -94,6 +104,8 @@ export type AppDependencies = {
   resendApi?: ResendApi
   stripeApi?: StripeApi
   revenuecatApi?: RevenuecatApi
+  telegramApi?: TelegramApiInterface
+  telegramPollingWorker?: TelegramPollingWorkerInterface
 }
 
 export const buildApp = ({
@@ -110,6 +122,8 @@ export const buildApp = ({
   resendApi = MockResendApi,
   stripeApi = MockStripeApi,
   revenuecatApi = MockRevenuecatApi,
+  telegramApi = MockTelegramApi(),
+  telegramPollingWorker = MockTelegramPollingWorker(),
 }: AppDependencies): Express => {
   const app: Express = express()
 
@@ -181,6 +195,23 @@ export const buildApp = ({
       `${API_V1}/payment/revenuecat-webhook`,
       revenuecatWebhookRouter(handledRevenuecatEventsRepository, authUsersRepository, revenuecatService)
     )
+  }
+
+  // Shared by the webhook (prod transport), the pairing router, and the dev
+  // polling worker (constructed in server.ts with these same repo factories).
+  const telegramBotDependencies: TelegramBotDependencies = {
+    telegramApi,
+    usersRepository,
+    telegramPairNoncesRepository: TelegramPairNoncesRepository(),
+    telegramPendingImportsRepository: TelegramPendingImportsRepository(),
+    userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
+    studySessionsRepository: StudySessionsRepository(),
+  }
+
+  if (FEATURES.TELEGRAM) {
+    // Authenticated by Telegram's secret-token header (checked in the router),
+    // so it mounts with the other webhooks — before the user-JWT middleware.
+    app.post(`${API_V1}/telegram/webhook`, telegramWebhookRouter(telegramBotDependencies))
   }
 
   app.use(helmet())
@@ -387,6 +418,9 @@ export const buildApp = ({
     API_V1,
     ExtensionAuthRouter(ExtensionPairNoncesRepository(), usersRepository, userTargetLanguagePrefsRepository)
   )
+  if (FEATURES.TELEGRAM) {
+    app.use(API_V1, TelegramPairRouter(telegramBotDependencies))
+  }
   app.use(API_V1, GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository))
   app.use(
     API_V1,
@@ -405,6 +439,7 @@ export const buildApp = ({
 
   accessCache.initialize()
   enrichmentWorker.initialize()
+  telegramPollingWorker.initialize()
 
   return app
 }
