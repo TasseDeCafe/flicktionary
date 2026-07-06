@@ -1,6 +1,6 @@
 This turborepo monorepo is the repo of Flicktionary.app. This is a work in progress, don't treat it like a polished product.
 
-The product spec is @SPEC.md (auto-loaded above). The browser extension (`apps/extension`, a vendored asbplayer fork) has its own dedicated spec: `apps/extension/EXTENSION-SPEC.md` — the source of truth for extension behavior, architecture, fork lineage, and the do-not-reintroduce/donor-model policy. Read it before working on the extension. See the **Project docs map** below for the full set of docs and what each one owns.
+The product spec is `SPEC.md` — the source of truth for web-app behavior (data model, user flows, processing pipeline, LLM methodology). It is deliberately **not** auto-loaded (it's ~150k chars); read the relevant sections before working on web-app behavior. The browser extension (`apps/extension`, a vendored asbplayer fork) has its own dedicated spec: `apps/extension/EXTENSION-SPEC.md` — the source of truth for extension behavior, architecture, fork lineage, and the do-not-reintroduce/donor-model policy. Read it before working on the extension. See the **Project docs map** below for the full set of docs and what each one owns.
 
 Keeping the docs honest: the behavior specs are meant to match the code. If you notice drift, or you make a change that needs a spec update, do it **as part of shipping that change** — running the `create-pr` or `update-docs` skill is your green light to edit the behavior specs (`SPEC.md`, `apps/extension/EXTENSION-SPEC.md`, `docs/SRS.md`). Outside that flow, don't rewrite a spec unprompted mid-conversation — surface the drift and let me confirm. Never edit the reference/artifact docs (see the map) to "keep them current"; they don't track the code.
 
@@ -10,9 +10,9 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 
 **Behavior specs** — authoritative, and they track the code. Read the relevant one before working in its area; update it (in place — these are not changelogs) when you change what it describes, via the `create-pr` / `update-docs` flow.
 
-- `SPEC.md` — the web app's product spec: data model, user flows, processing pipeline, navigation/settings, LLM methodology.
+- `SPEC.md` — the web app's product spec: data model, user flows, processing pipeline, navigation/settings, LLM methodology. **Not auto-loaded — read the relevant sections before any web-app behavior work.**
 - `apps/extension/EXTENSION-SPEC.md` — the browser extension: behavior, architecture, fork lineage, removed-subsystem & donor-model policy. **Read before any extension work.**
-- `docs/SRS.md` — the practice / spaced-repetition system (web): scheduler, queue, study facets, leeches, daily budgets.
+- `docs/SRS.md` — the **single home for the practice / spaced-repetition system** (web): scheduler, queues, study facets, leeches/warm-up, daily budgets, reading mode, exercise bank, and the practice UI surfaces. `SPEC.md` keeps only a summary + pointer — practice behavior changes go here, not there.
 - `AGENTS.md` (this file) — conventions, stack, commands, and hard-won traps.
 
 **Reference / artifact docs** — authoritative for their subject but **not** code-driven. Do **not** edit them to "stay current"; touch one only when its specific subject actually changes.
