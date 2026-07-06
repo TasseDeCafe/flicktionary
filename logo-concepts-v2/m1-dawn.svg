@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3B1D5A"/>
+      <stop offset="0.45" stop-color="#C2407A"/>
+      <stop offset="0.72" stop-color="#FF7A4E"/>
+      <stop offset="1" stop-color="#FFAE5C"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#FFE1A0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFE1A0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <circle cx="80" cy="70" r="3" fill="#FFFFFF" opacity="0.6"/>
+    <circle cx="180" cy="46" r="2.5" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="420" cy="86" r="3" fill="#FFFFFF" opacity="0.6"/>
+    <circle cx="330" cy="52" r="2" fill="#FFFFFF" opacity="0.4"/>
+    <g fill="#FFE8B0" opacity="0.3">
+      <polygon points="248,330 264,330 256,140" transform="rotate(-75 256 330)"/>
+      <polygon points="248,330 264,330 256,140" transform="rotate(-45 256 330)"/>
+      <polygon points="248,330 264,330 256,140" transform="rotate(-15 256 330)"/>
+      <polygon points="248,330 264,330 256,140" transform="rotate(15 256 330)"/>
+      <polygon points="248,330 264,330 256,140" transform="rotate(45 256 330)"/>
+      <polygon points="248,330 264,330 256,140" transform="rotate(75 256 330)"/>
+    </g>
+    <circle cx="256" cy="330" r="170" fill="url(#glow)"/>
+    <circle cx="256" cy="330" r="64" fill="#FFD76A"/>
+    <g stroke="#4A2160" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.8">
+      <path d="M104 152 Q120 138 136 152"/>
+      <path d="M168 118 Q180 108 192 118"/>
+    </g>
+    <ellipse cx="256" cy="470" rx="380" ry="130" fill="#7E2D5F"/>
+    <g fill="#A84E7F">
+      <rect x="96" y="366" width="120" height="20" rx="10"/>
+      <rect x="240" y="366" width="90" height="20" rx="10"/>
+      <rect x="354" y="366" width="84" height="20" rx="10"/>
+    </g>
+    <ellipse cx="120" cy="560" rx="360" ry="170" fill="#5A1F4B"/>
+    <g fill="#7E3B67">
+      <rect x="60" y="436" width="104" height="18" rx="9"/>
+      <rect x="184" y="436" width="72" height="18" rx="9"/>
+      <rect x="84" y="472" width="130" height="18" rx="9"/>
+    </g>
+    <ellipse cx="420" cy="590" rx="380" ry="180" fill="#3A1238"/>
+    <rect x="320" y="452" width="110" height="24" rx="12" fill="#FFC233"/>
+    <rect x="298" y="492" width="86" height="18" rx="9" fill="#5E2B57"/>
+  </g>
+</svg>

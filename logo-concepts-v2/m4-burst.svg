@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <radialGradient id="burst" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#FF9D5C"/>
+      <stop offset="0.55" stop-color="#F0426F"/>
+      <stop offset="1" stop-color="#D62E64"/>
+    </radialGradient>
+    <path id="spark" d="M0 -16 L4.5 -4.5 L16 0 L4.5 4.5 L0 16 L-4.5 4.5 L-16 0 L-4.5 -4.5 Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#burst)"/>
+    <circle cx="256" cy="256" r="170" fill="none" stroke="#FFFFFF" stroke-width="20" opacity="0.12"/>
+    <g fill="#FFFFFF">
+      <rect x="116" y="224" width="280" height="64" rx="32"/>
+      <rect x="116" y="224" width="280" height="64" rx="32" transform="rotate(60 256 256)"/>
+      <rect x="116" y="224" width="280" height="64" rx="32" transform="rotate(120 256 256)"/>
+    </g>
+    <use href="#spark" transform="translate(410 140) scale(1.1)" fill="#FFC233"/>
+    <use href="#spark" transform="translate(120 120) scale(0.8)" fill="#FFFFFF" opacity="0.8"/>
+    <use href="#spark" transform="translate(300 446) scale(0.7)" fill="#FFC233" opacity="0.9"/>
+    <circle cx="350" cy="78" r="6" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="88" cy="300" r="7" fill="#FFC233" opacity="0.9"/>
+    <circle cx="170" cy="424" r="5" fill="#FFFFFF" opacity="0.6"/>
+    <circle cx="60" cy="200" r="4" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="452" cy="248" r="5" fill="#FFFFFF" opacity="0.55"/>
+    <rect x="386" y="332" width="38" height="14" rx="7" fill="#FFFFFF" opacity="0.6" transform="rotate(24 405 339)"/>
+    <rect x="70" y="380" width="30" height="12" rx="6" fill="#FFFFFF" opacity="0.5" transform="rotate(-18 85 386)"/>
+  </g>
+</svg>

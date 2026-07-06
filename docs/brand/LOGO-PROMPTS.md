@@ -13,8 +13,9 @@ So the logo should lean on the universal action — **highlighting/extracting a 
 language** and **recall/memory** — rather than any one source (don't over-index on film).
 It must stay legible as a tiny app icon (16–32px).
 
-Each prompt below is a distinct concept, ready to paste into any modern image
-generator (Midjourney, DALL·E, Ideogram, etc.).
+Each prompt below is a distinct concept. Concepts 1–5 are one-liners for image
+generators (Midjourney, DALL·E, Ideogram, etc.); Concept 6 is a full brief for
+long-prompt design tools (e.g. Claude Design).
 
 ---
 
@@ -67,6 +68,104 @@ default: deep blue ground, white card, yellow accent — restate or swap as you 
 *(clean, source-agnostic brand mark)*
 
 > Minimalist monogram app icon: a single bold geometric letter "F" with one horizontal arm rendered as a thick highlighter stroke in a contrasting accent color. Flat solid colors, heavy stroke weight, no gradients, no outline noise, no extra text. Balanced in a rounded-square icon, must stay clear and crisp at 16–32px.
+
+---
+
+## Concept 6 — F built from text lines (full design brief)
+
+*(the `logo-concepts-v2/` C direction — an F emerging from abstract text lines. Unlike
+the one-liners above, this is a full brief for design tools that take long prompts
+(e.g. Claude Design), not for image generators. If the tool accepts reference files,
+attach `logo-concepts-v2/c-flines.svg` + `c-flines-small.svg` as "my draft".)*
+
+> Design a logo + app icon for "Flicktionary" (flicktionary.app), a language-learning app.
+>
+> What the app is: from any content — pasted text, subtitles, YouTube videos, articles,
+> soon books — you highlight the words you don't understand, each becomes a rich
+> explanation card, and you review them over time with spaced repetition. The source is
+> incidental; the core loop is highlight → understand → remember. Think LingQ, not
+> Netflix: do NOT use movie/film imagery (no clapperboards, tickets, film strips, play
+> buttons).
+>
+> Concept direction to explore (I have a rough draft I like but it's not there yet):
+> a geometric letter "F" that emerges from lines of text — horizontal rounded bars that
+> read simultaneously as abstract text lines and as the brand letter. In my draft, the
+> F's two arms continue to the right as faded "ghost" line fragments, plus one extra
+> faded line below the middle arm, so the whole tile reads as a paragraph with an F
+> embedded in it. Push this idea further and better: vary the number and rhythm of ghost
+> lines, try one line carrying a highlight accent (highlighting a word is the app's
+> signature gesture), try uppercase-bar vs. more lowercase/humanist F constructions, try
+> a negative-space F cut out of a text block. Give me 4–6 genuinely distinct takes, not
+> one take in six colors.
+>
+> Deliverables per take:
+> 1. Detailed app icon: the mark on a rounded-square (squircle, ~23% corner radius) tile.
+> 2. Simplified favicon variant: the same idea reduced to survive 16 px — typically just
+>    the F bars, no ghost lines. It must stay recognizable in a browser tab on both
+>    white and dark tab backgrounds.
+> 3. Horizontal wordmark lockup: mark + "flicktionary" in a rounded geometric sans
+>    (the app uses Nunito ExtraBold).
+>
+> Style constraints:
+> - Flat vector, bold rounded geometry, generous negative space. No 3D, no drop
+>   shadows, no thin strokes, no readable body text.
+> - Palettes: (a) sky-blue gradient tile #4AC7FA → #0E9DE0 with a white mark;
+>   (b) sunset gradient #FF8A4C → #FF4E7A with a white mark. You may propose one more
+>   palette of your own, but avoid generic-SaaS violet. Amber #FFC233 is available as
+>   the highlight accent color.
+> - Tone: friendly but clean — consumer learning app, not enterprise dev tool, not
+>   childish.
+>
+> Present every icon at 128 px, 32 px, and 16 px on both a light and a dark background
+> so small-size legibility can be judged honestly.
+
+---
+
+## Concept 7 — Open brief, no prescribed direction (full design brief)
+
+*(same long-prompt format as Concept 6, but the concept space is left wide open —
+use this when you want the model to propose directions instead of executing one)*
+
+> Design a logo + app icon for "Flicktionary" (flicktionary.app), a language-learning app.
+>
+> What the app is: from any content — pasted text, subtitles, YouTube videos, articles,
+> soon books — you highlight the words you don't understand, each becomes a rich
+> explanation card, and you review them over time with spaced repetition. The source is
+> incidental; the core loop is highlight → understand → remember. Think LingQ, not
+> Netflix: do NOT use movie/film imagery (no clapperboards, tickets, film strips, play
+> buttons). Ideas worth mining if you want them: the act of highlighting, words/text as
+> raw material, understanding clicking into place, memory and recall, collecting a
+> personal vocabulary, any-content-in / knowledge-out. But don't feel bound to any of
+> these — a great abstract or letterform mark that just *feels* right also wins.
+>
+> You choose the concepts: give me 5–6 genuinely different directions, not one idea in
+> six colors. Vary the type of mark across the set — e.g. at least one letterform/
+> monogram, at least one pictorial metaphor, at least one abstract/geometric mark.
+> For context, directions already explored in-house (avoid simply reproducing them,
+> though a fresh reinterpretation is fair game): movie tickets/clapperboards, a text
+> block with one highlighted word, a bold asterisk as a "there's a definition here"
+> gloss mark, an F built out of text lines, a speech bubble containing a page, a fan
+> of flashcards, a firefly jar.
+>
+> Deliverables per direction:
+> 1. Detailed app icon: the mark on a rounded-square (squircle, ~23% corner radius) tile.
+> 2. Simplified favicon variant: the same idea reduced to survive 16 px. It must stay
+>    recognizable in a browser tab on both white and dark tab backgrounds.
+> 3. Horizontal wordmark lockup: mark + "flicktionary" in a rounded geometric sans
+>    (the app uses Nunito ExtraBold).
+>
+> Style constraints:
+> - Flat vector, bold shapes, generous negative space. No 3D, no drop shadows, no thin
+>   strokes, no readable body text inside the mark.
+> - Color is yours to propose — pick a distinct palette per direction and say why it
+>   fits. Territories we've liked so far, as a hint not a rule: warm highlighter amber
+>   (#FFC233), sunset orange→pink gradients, sky blues. Avoid generic-SaaS violet.
+> - Tone: friendly but clean — consumer learning app, not enterprise dev tool, not
+>   childish.
+>
+> Present every icon at 128 px, 32 px, and 16 px on both a light and a dark background
+> so small-size legibility can be judged honestly. For each direction, one sentence on
+> the idea behind it.
 
 ---
 

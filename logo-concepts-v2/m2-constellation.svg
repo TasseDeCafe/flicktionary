@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23264D"/>
+      <stop offset="1" stop-color="#0C0E22"/>
+    </linearGradient>
+    <radialGradient id="nebA">
+      <stop offset="0" stop-color="#7C5CFC" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#7C5CFC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebB">
+      <stop offset="0" stop-color="#2DD4BF" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#2DD4BF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambglow">
+      <stop offset="0" stop-color="#FFC233" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFC233" stop-opacity="0"/>
+    </radialGradient>
+    <path id="spark" d="M0 -16 L4.5 -4.5 L16 0 L4.5 4.5 L0 16 L-4.5 4.5 L-16 0 L-4.5 -4.5 Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#night)"/>
+    <circle cx="140" cy="390" r="190" fill="url(#nebA)"/>
+    <circle cx="400" cy="120" r="170" fill="url(#nebB)"/>
+    <g fill="#FFFFFF">
+      <circle cx="60" cy="60" r="3" opacity="0.7"/>
+      <circle cx="120" cy="200" r="2.5" opacity="0.5"/>
+      <circle cx="90" cy="330" r="2" opacity="0.5"/>
+      <circle cx="140" cy="460" r="3" opacity="0.6"/>
+      <circle cx="230" cy="60" r="2" opacity="0.6"/>
+      <circle cx="300" cy="90" r="2.5" opacity="0.5"/>
+      <circle cx="390" cy="70" r="3" opacity="0.7"/>
+      <circle cx="450" cy="150" r="2" opacity="0.5"/>
+      <circle cx="470" cy="240" r="3" opacity="0.6"/>
+      <circle cx="430" cy="330" r="2.5" opacity="0.5"/>
+      <circle cx="360" cy="300" r="2" opacity="0.4"/>
+      <circle cx="390" cy="420" r="3" opacity="0.6"/>
+      <circle cx="300" cy="470" r="2.5" opacity="0.5"/>
+      <circle cx="230" cy="330" r="2" opacity="0.4"/>
+      <circle cx="60" cy="150" r="2" opacity="0.4"/>
+      <circle cx="490" cy="60" r="2" opacity="0.4"/>
+      <circle cx="280" cy="200" r="2" opacity="0.45"/>
+      <circle cx="240" cy="430" r="2" opacity="0.5"/>
+    </g>
+    <use href="#spark" transform="translate(90 110) scale(0.8)" fill="#FFFFFF" opacity="0.9"/>
+    <use href="#spark" transform="translate(440 390)" fill="#FFFFFF" opacity="0.8"/>
+    <use href="#spark" transform="translate(330 40) scale(0.7)" fill="#FFFFFF" opacity="0.7"/>
+    <g stroke="#C7D6FF" stroke-width="5" stroke-linecap="round" opacity="0.85">
+      <line x1="180" y1="124" x2="180" y2="256"/>
+      <line x1="180" y1="256" x2="180" y2="392"/>
+      <line x1="180" y1="124" x2="258" y2="130"/>
+      <line x1="258" y1="130" x2="330" y2="142"/>
+      <line x1="180" y1="256" x2="252" y2="260"/>
+      <line x1="252" y1="260" x2="310" y2="268"/>
+    </g>
+    <g fill="#FFFFFF">
+      <circle cx="180" cy="124" r="12"/>
+      <circle cx="180" cy="256" r="10"/>
+      <circle cx="180" cy="392" r="12"/>
+      <circle cx="258" cy="130" r="9"/>
+      <circle cx="252" cy="260" r="9"/>
+      <circle cx="310" cy="268" r="11"/>
+    </g>
+    <g fill="#FFFFFF" opacity="0.25">
+      <circle cx="180" cy="124" r="22"/>
+      <circle cx="180" cy="392" r="22"/>
+      <circle cx="310" cy="268" r="20"/>
+    </g>
+    <circle cx="330" cy="142" r="44" fill="url(#ambglow)"/>
+    <use href="#spark" transform="translate(330 142) scale(1.9)" fill="#FFC233"/>
+  </g>
+</svg>

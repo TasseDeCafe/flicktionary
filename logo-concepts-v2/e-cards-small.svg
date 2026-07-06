@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g transform="rotate(-14 256 470)">
+    <rect x="116" y="80" width="280" height="352" rx="48" fill="#FFC233"/>
+  </g>
+  <g transform="rotate(8 256 470)">
+    <rect x="116" y="72" width="280" height="352" rx="48" fill="#FFFFFF" stroke="#1F2430" stroke-width="20"/>
+    <text x="256" y="330" text-anchor="middle" font-family="Nunito, 'Noto Sans', sans-serif" font-weight="800" font-size="240" fill="#1F2430">A</text>
+  </g>
+</svg>
