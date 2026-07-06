@@ -353,6 +353,7 @@ users
   native_language          text?
   tap_to_translate_enabled boolean default false
   llm_highlights_enabled   boolean default true
+  telegram_chat_id         bigint? unique  -- Telegram-bot pairing; one chat per account
 
 user_target_language_pref
   user_id                   uuid
