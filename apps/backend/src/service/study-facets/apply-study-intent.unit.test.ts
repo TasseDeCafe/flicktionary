@@ -54,11 +54,14 @@ describe('applyStudyIntent', () => {
 
     expect(result.applied).toBe(true)
     expect(result.formFacetTargets).toEqual([])
-    expect(applyStudyIntentFacets).toHaveBeenCalledWith({
-      userLookupId: lookupId,
-      facets: [{ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' }],
-      guardHighlightId: undefined,
-    })
+    expect(applyStudyIntentFacets).toHaveBeenCalledWith(
+      {
+        userLookupId: lookupId,
+        facets: [{ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' }],
+        guardHighlightId: undefined,
+      },
+      undefined
+    )
   })
 
   it("formScope 'form' studies the form ONLY — no citation facets (the lemma stays a skill-less base)", async () => {
@@ -79,29 +82,32 @@ describe('applyStudyIntent', () => {
       { skill: 'meaning_recognition', targetForm: 'palabras' },
       { skill: 'meaning_production', targetForm: 'palabras' },
     ])
-    expect(applyStudyIntentFacets).toHaveBeenCalledWith({
-      userLookupId: lookupId,
-      guardHighlightId: highlightId,
-      facets: [
-        {
-          userLookupId: lookupId,
-          skill: 'meaning_recognition',
-          targetForm: 'palabras',
-          dataStatus: 'pending_data',
-          source: 'highlight',
-          // The payload keeps the display form (trim/case via the key only).
-          payload: { form: 'Palabras ' },
-        },
-        {
-          userLookupId: lookupId,
-          skill: 'meaning_production',
-          targetForm: 'palabras',
-          dataStatus: 'pending_data',
-          source: 'highlight',
-          payload: { form: 'Palabras ' },
-        },
-      ],
-    })
+    expect(applyStudyIntentFacets).toHaveBeenCalledWith(
+      {
+        userLookupId: lookupId,
+        guardHighlightId: highlightId,
+        facets: [
+          {
+            userLookupId: lookupId,
+            skill: 'meaning_recognition',
+            targetForm: 'palabras',
+            dataStatus: 'pending_data',
+            source: 'highlight',
+            // The payload keeps the display form (trim/case via the key only).
+            payload: { form: 'Palabras ' },
+          },
+          {
+            userLookupId: lookupId,
+            skill: 'meaning_production',
+            targetForm: 'palabras',
+            dataStatus: 'pending_data',
+            source: 'highlight',
+            payload: { form: 'Palabras ' },
+          },
+        ],
+      },
+      undefined
+    )
   })
 
   it("production-only formScope 'form' studies only the form's production facet (no citation, no recognition base)", async () => {
@@ -142,7 +148,8 @@ describe('applyStudyIntent', () => {
     expect(applyStudyIntentFacets).toHaveBeenCalledWith(
       expect.objectContaining({
         facets: [{ userLookupId: lookupId, skill: 'meaning_recognition', targetForm: '' }],
-      })
+      }),
+      undefined
     )
   })
 
@@ -191,7 +198,10 @@ describe('applyStudyIntent', () => {
       deps
     )
 
-    expect(deleteFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'pronunciation', targetForm: '' })
+    expect(deleteFacet).toHaveBeenCalledWith(
+      { userLookupId: lookupId, skill: 'pronunciation', targetForm: '' },
+      undefined
+    )
   })
 
   it('keeps the pronunciation facet when IPA is displayable', async () => {

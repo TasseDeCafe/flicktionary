@@ -188,12 +188,18 @@ export type StudyIntentFacetSpec = FacetAddress & {
 // Returns false when the guard lost (nothing was applied). The highlights
 // UPDATE living in this repository is a deliberate layering exception: the
 // stamp MUST be atomic with the facet writes or the guard is worthless.
-const applyStudyIntentFacets = async (params: {
-  userLookupId: string
-  facets: StudyIntentFacetSpec[]
-  guardHighlightId?: string
-}): Promise<boolean> => {
-  return await beginTx(async (tx) => {
+const applyStudyIntentFacets = async (
+  params: {
+    userLookupId: string
+    facets: StudyIntentFacetSpec[]
+    guardHighlightId?: string
+  },
+  // When given, the writes join the caller's transaction instead of opening
+  // their own (the lesson-import confirm applies intents inside its
+  // all-or-nothing batch transaction).
+  executor?: postgres.Sql
+): Promise<boolean> => {
+  const run = async (tx: postgres.Sql): Promise<boolean> => {
     if (params.guardHighlightId) {
       const stamped = (await tx`
         UPDATE public.highlights
@@ -209,7 +215,8 @@ const applyStudyIntentFacets = async (params: {
       await enableFacet(facet, tx)
     }
     return true
-  })
+  }
+  return executor ? await run(executor) : await beginTx(run)
 }
 
 // Race-safe daily-new-cap guard for the citation recognition facet — the ONLY
@@ -647,11 +654,14 @@ export interface StudyFacetsRepositoryInterface {
     },
     executor?: postgres.Sql
   ) => Promise<void>
-  applyStudyIntentFacets: (params: {
-    userLookupId: string
-    facets: StudyIntentFacetSpec[]
-    guardHighlightId?: string
-  }) => Promise<boolean>
+  applyStudyIntentFacets: (
+    params: {
+      userLookupId: string
+      facets: StudyIntentFacetSpec[]
+      guardHighlightId?: string
+    },
+    executor?: postgres.Sql
+  ) => Promise<boolean>
   parkLeechFacet: (params: FacetAddress) => Promise<void>
   advanceRehabDayFacet: (params: FacetAddress) => Promise<number | null>
   unparkAndSoftReentryFacet: (

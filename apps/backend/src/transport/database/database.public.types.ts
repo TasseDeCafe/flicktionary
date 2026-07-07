@@ -365,6 +365,133 @@ export type Database = {
           },
         ]
       }
+      import_batch_rows: {
+        Row: {
+          batch_id: string
+          confirmed: boolean | null
+          created_at: string
+          created_card_id: string | null
+          duplicate_facets: Json | null
+          duplicate_user_lookup_id: string | null
+          id: string
+          lesson_date: string | null
+          payload: Json
+          planned_action: string
+          row_index: number
+        }
+        Insert: {
+          batch_id: string
+          confirmed?: boolean | null
+          created_at?: string
+          created_card_id?: string | null
+          duplicate_facets?: Json | null
+          duplicate_user_lookup_id?: string | null
+          id?: string
+          lesson_date?: string | null
+          payload: Json
+          planned_action: string
+          row_index: number
+        }
+        Update: {
+          batch_id?: string
+          confirmed?: boolean | null
+          created_at?: string
+          created_card_id?: string | null
+          duplicate_facets?: Json | null
+          duplicate_user_lookup_id?: string | null
+          id?: string
+          lesson_date?: string | null
+          payload?: Json
+          planned_action?: string
+          row_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'import_batch_rows_batch_id_fkey'
+            columns: ['batch_id']
+            isOneToOne: false
+            referencedRelation: 'import_batches'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'import_batch_rows_created_card_fkey'
+            columns: ['created_card_id']
+            isOneToOne: false
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'import_batch_rows_duplicate_lookup_fkey'
+            columns: ['duplicate_user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      import_batches: {
+        Row: {
+          created_at: string
+          error: string | null
+          expires_at: string
+          format_profile: string | null
+          id: string
+          input_hash: string
+          raw_text: string
+          source_title: string
+          status: string
+          study_session_id: string | null
+          target_language: string
+          teacher_profile_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          expires_at: string
+          format_profile?: string | null
+          id?: string
+          input_hash: string
+          raw_text: string
+          source_title: string
+          status?: string
+          study_session_id?: string | null
+          target_language: string
+          teacher_profile_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          format_profile?: string | null
+          id?: string
+          input_hash?: string
+          raw_text?: string
+          source_title?: string
+          status?: string
+          study_session_id?: string | null
+          target_language?: string
+          teacher_profile_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'import_batches_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'import_batches_teacher_profile_id_fkey'
+            columns: ['teacher_profile_id']
+            isOneToOne: false
+            referencedRelation: 'teacher_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       nominated_windows: {
         Row: {
           created_at: string
@@ -470,6 +597,7 @@ export type Database = {
           caused_parking: boolean
           headword: string
           id: string
+          import_batch_id: string | null
           pool: string
           practice_text_id: string | null
           prev_srs_difficulty: number | null
@@ -495,6 +623,7 @@ export type Database = {
           caused_parking?: boolean
           headword: string
           id?: string
+          import_batch_id?: string | null
           pool: string
           practice_text_id?: string | null
           prev_srs_difficulty?: number | null
@@ -520,6 +649,7 @@ export type Database = {
           caused_parking?: boolean
           headword?: string
           id?: string
+          import_batch_id?: string | null
           pool?: string
           practice_text_id?: string | null
           prev_srs_difficulty?: number | null
@@ -542,6 +672,13 @@ export type Database = {
           was_introduction?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: 'practice_rating_events_import_batch_id_fkey'
+            columns: ['import_batch_id']
+            isOneToOne: false
+            referencedRelation: 'import_batches'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'practice_rating_events_lookup_fkey'
             columns: ['user_lookup_id']
@@ -618,13 +755,14 @@ export type Database = {
           created_at: string
           highlight_id: string | null
           id: string
+          import_batch_id: string | null
           kind: Database['public']['Enums']['processing_job_kind']
           last_error: string | null
           locked_at: string | null
           locked_by: string | null
           run_after: string
           status: Database['public']['Enums']['processing_job_status']
-          study_session_id: string
+          study_session_id: string | null
           updated_at: string
           user_id: string
           window_end_index: number | null
@@ -635,13 +773,14 @@ export type Database = {
           created_at?: string
           highlight_id?: string | null
           id?: string
+          import_batch_id?: string | null
           kind: Database['public']['Enums']['processing_job_kind']
           last_error?: string | null
           locked_at?: string | null
           locked_by?: string | null
           run_after?: string
           status?: Database['public']['Enums']['processing_job_status']
-          study_session_id: string
+          study_session_id?: string | null
           updated_at?: string
           user_id: string
           window_end_index?: number | null
@@ -652,13 +791,14 @@ export type Database = {
           created_at?: string
           highlight_id?: string | null
           id?: string
+          import_batch_id?: string | null
           kind?: Database['public']['Enums']['processing_job_kind']
           last_error?: string | null
           locked_at?: string | null
           locked_by?: string | null
           run_after?: string
           status?: Database['public']['Enums']['processing_job_status']
-          study_session_id?: string
+          study_session_id?: string | null
           updated_at?: string
           user_id?: string
           window_end_index?: number | null
@@ -670,6 +810,13 @@ export type Database = {
             columns: ['highlight_id']
             isOneToOne: false
             referencedRelation: 'highlights'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'processing_jobs_import_batch_id_fkey'
+            columns: ['import_batch_id']
+            isOneToOne: false
+            referencedRelation: 'import_batches'
             referencedColumns: ['id']
           },
           {
@@ -1021,6 +1168,36 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      teacher_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          name: string
+          profile_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language: string
+          name: string
+          profile_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          name?: string
+          profile_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       telegram_pair_nonces: {
         Row: {
@@ -1394,11 +1571,16 @@ export type Database = {
     Enums: {
       card_chat_role: 'user' | 'assistant'
       card_status: 'needs_data' | 'kept' | 'removed'
-      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv'
+      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv' | 'lesson'
       exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
-      processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
+      processing_job_kind:
+        | 'enrich_highlight'
+        | 'discover_session'
+        | 'nominate_window'
+        | 'seed_card_chat'
+        | 'extract_lesson'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
@@ -1682,11 +1864,17 @@ export const Constants = {
     Enums: {
       card_chat_role: ['user', 'assistant'],
       card_status: ['needs_data', 'kept', 'removed'],
-      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming', 'tv'],
+      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming', 'tv', 'lesson'],
       exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
       exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
-      processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
+      processing_job_kind: [
+        'enrich_highlight',
+        'discover_session',
+        'nominate_window',
+        'seed_card_chat',
+        'extract_lesson',
+      ],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],
       revenuecat_auto_renewal_status: [
         'will_renew',

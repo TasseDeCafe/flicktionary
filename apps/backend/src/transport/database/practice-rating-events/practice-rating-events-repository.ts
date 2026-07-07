@@ -25,6 +25,10 @@ export type InsertRatingEventInput = {
   causedParking: boolean
   // Reading-mode context; null for flashcard ratings.
   practiceTextId: string | null
+  // Lesson-import provenance; set only on the implicit 'again' lapses a
+  // confirmed import applies. Marked events are excluded from the daily
+  // review budget (a big import must not eat the day's allowance).
+  importBatchId?: string | null
   // Audit snapshots that survive renames.
   headword: string
   sense: string
@@ -59,6 +63,7 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       was_introduction,
       caused_parking,
       practice_text_id,
+      import_batch_id,
       headword,
       sense,
       prev_srs_state,
@@ -81,6 +86,7 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.wasIntroduction},
       ${params.causedParking},
       ${params.practiceTextId},
+      ${params.importBatchId ?? null},
       ${params.headword},
       ${params.sense},
       ${params.prevSrsState},
@@ -172,6 +178,7 @@ const countReviewBudgetConsumedToday = async (params: {
       AND was_introduction = FALSE
       AND prev_srs_state IN ('new', 'review')
       AND reverted_at IS NULL
+      AND import_batch_id IS NULL
       AND rated_at >= CURRENT_DATE
       AND rated_at < CURRENT_DATE + INTERVAL '1 day'
   `) as Array<{ consumed: number }>
@@ -192,6 +199,7 @@ const countReviewBudgetConsumedTodayByLanguage = async (params: {
       AND was_introduction = FALSE
       AND prev_srs_state IN ('new', 'review')
       AND reverted_at IS NULL
+      AND import_batch_id IS NULL
       AND rated_at >= CURRENT_DATE
       AND rated_at < CURRENT_DATE + INTERVAL '1 day'
     GROUP BY target_language

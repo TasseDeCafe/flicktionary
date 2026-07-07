@@ -80,6 +80,24 @@ const enqueueSeedCardChat = async (params: EnqueueSeedCardChatInput): Promise<Db
   return result[0] ?? null
 }
 
+// Idempotent per LIVE (pending/processing) batch extraction job. The generic
+// `enqueue` requires a session id, but an extract job belongs to an import
+// batch — the session is created at confirm, not upload. Mirrors
+// uq_processing_jobs_live_extract_lesson.
+const enqueueExtractLesson = async (
+  params: { importBatchId: string; userId: string },
+  executor: postgres.Sql = sql
+): Promise<DbProcessingJob | null> => {
+  const result = (await executor`
+    INSERT INTO public.processing_jobs (kind, study_session_id, import_batch_id, user_id)
+    VALUES ('extract_lesson', NULL, ${params.importBatchId}, ${params.userId})
+    ON CONFLICT (import_batch_id) WHERE kind = 'extract_lesson' AND status IN ('pending', 'processing')
+    DO NOTHING
+    RETURNING *
+  `) as DbProcessingJob[]
+  return result[0] ?? null
+}
+
 // Atomically claim up to `limit` runnable jobs: due pending rows, plus stale
 // processing rows whose lease (locked_at) is older than `staleAfterSeconds` —
 // the lease-reclaim path that recovers work orphaned by a crashed worker.
@@ -185,6 +203,10 @@ const listActiveBySession = async (sessionId: string): Promise<DbProcessingJob[]
 export interface ProcessingJobsRepositoryInterface {
   enqueue: (params: EnqueueJobInput, executor?: postgres.Sql) => Promise<DbProcessingJob | null>
   enqueueSeedCardChat: (params: EnqueueSeedCardChatInput) => Promise<DbProcessingJob | null>
+  enqueueExtractLesson: (
+    params: { importBatchId: string; userId: string },
+    executor?: postgres.Sql
+  ) => Promise<DbProcessingJob | null>
   claimBatch: (limit: number, workerId: string, staleAfterSeconds: number) => Promise<DbProcessingJob[]>
   refreshLease: (id: string, workerId: string) => Promise<boolean>
   markDone: (id: string, workerId: string) => Promise<boolean>
@@ -203,6 +225,7 @@ export const ProcessingJobsRepository = (): ProcessingJobsRepositoryInterface =>
   return {
     enqueue,
     enqueueSeedCardChat,
+    enqueueExtractLesson,
     claimBatch,
     refreshLease,
     markDone,
