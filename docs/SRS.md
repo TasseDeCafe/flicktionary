@@ -250,8 +250,36 @@ active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) an
 |---|---|---|---|
 | review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC |
 | learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
-| new (capped) | `srs_state IS NULL`, **primary citation** facet | remaining **new budget** | created_at ASC |
-| new (opt-in) | `srs_state IS NULL`, **NOT** primary citation | hard ceiling, **`learn_new` only** | created_at ASC |
+| new (capped) | `srs_state IS NULL`, **primary citation** facet, not decayed | remaining **new budget** | tier ASC, zipf DESC |
+| new (opt-in) | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, **`learn_new` only** | tier ASC, zipf DESC |
+
+**New-term priority tiers** (`new-term-priority.ts` — the single home of the constants and
+SQL fragments). Both new buckets order by a computed tier, then `zipf_estimate DESC NULLS
+LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
+the stable tiebreak. The tier, from three signal columns on `user_lookups`:
+
+1. **revealed demand** — `encounter_count >= 2`: the term was encountered again at a
+   user-intent boundary (a re-save, or a lesson import confirming it as a duplicate).
+2. **fresh saves** — `last_encountered_at` within the 14-day freshness window.
+3. **the backlog** — everything else, served most-frequent-first via `zipf_estimate`
+   (LLM-estimated continuous Zipf, 0–8 one decimal, emitted by the basic-data pass;
+   pre-existing rows are covered by the one-off `pnpm db:backfill-zipf` script).
+
+Signals are maintained by `recordEncounter` (user-lookups repository), called only at
+user-intent boundaries — highlight-save enrichment and lesson-import confirm — with a 1-hour
+collapse window so worker retries / multi-chunk runs can never inflate a single save into
+tier 1. `findOrCreate` never bumps them (it fires from background materialization).
+
+**Decay (virtual shelf)**: never-introduced terms with `last_encountered_at` older than 90
+days are excluded from both new buckets, from warm-up discovery
+(`listEligibleNewCitationFacets`), **and from the matching landing counts** (`new_count`,
+`production_new_count`, the opt-in counts) — the badges must not advertise terms the queue
+refuses to serve. Decayed terms stay visible in the Vocabulary list (`unseen` status) and any
+re-save revives them (`recordEncounter` refreshes `last_encountered_at`). Deliberately
+OUTSIDE the decay predicate: due/learning buckets, `listParkedTerms`, and the
+leech-rehab/warm-up surfaces — parked terms have their own lifecycle (`leech_parked_at ASC`
+ordering, rehab graduation) and must not silently decay. All predicates are `NOW()`-relative,
+so `pnpm db:advance-day` time travel works.
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
 `(meaning_recognition,'')`, active → `(meaning_production,'')`). **Opt-in new** facets
@@ -289,7 +317,8 @@ practice presets are just named filter specs.
 
 - **Parking pass (auto-warm-up).** With `autoWarmup` on (the default Practice), the
   compose first parks eligible never-reviewed citation terms into warm-up — discovery is
-  by (user, language) via `listEligibleNewCitationFacets` (oldest-added first), the park
+  by (user, language) via `listEligibleNewCitationFacets` (tier-ordered like the flashcard
+  new bucket, decayed terms excluded — see §4), the park
   writes reuse the session warm-up's mechanism (`runWarmupParkingPass` helpers in
   `warmup-parking.ts`). **Production parks first**, then recognition under the daily-new
   cap (first `cap_reached` stops the pass → `dailyLimitReached`). The budget is

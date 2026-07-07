@@ -16,6 +16,7 @@
     "build-emails": "npx tsx scripts/build-email-templates.ts",
     "load:kaikki": "npx tsx scripts/load-kaikki.ts",
     "db:advance-day": "npx tsx scripts/advance-practice-day.ts",
+    "db:backfill-zipf": "npx tsx scripts/backfill-zipf.ts",
     "db:dev:tunnel:reset": "./scripts/db--dev-tunnel--reset.sh",
     "db:dev:tunnel:wipe": "./scripts/db--dev-tunnel--wipe.sh",
     "db:dev:tunnel:migrate": "./scripts/db--dev-tunnel--migrate.sh",

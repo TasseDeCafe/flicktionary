@@ -1158,6 +1158,7 @@ export type Database = {
           created_at: string
           definition: string | null
           deleted_at: string | null
+          encounter_count: number
           exploration_extras: Json
           exported_at: string | null
           first_card_id: string | null
@@ -1167,18 +1168,21 @@ export type Database = {
           grounding_patch: Json | null
           headword: string
           id: string
+          last_encountered_at: string
           native_example: string | null
           sense: string
           target_example: string | null
           target_language: string
           translation: string | null
           user_id: string
+          zipf_estimate: number | null
         }
         Insert: {
           count?: number
           created_at?: string
           definition?: string | null
           deleted_at?: string | null
+          encounter_count?: number
           exploration_extras?: Json
           exported_at?: string | null
           first_card_id?: string | null
@@ -1188,18 +1192,21 @@ export type Database = {
           grounding_patch?: Json | null
           headword: string
           id?: string
+          last_encountered_at?: string
           native_example?: string | null
           sense?: string
           target_example?: string | null
           target_language: string
           translation?: string | null
           user_id: string
+          zipf_estimate?: number | null
         }
         Update: {
           count?: number
           created_at?: string
           definition?: string | null
           deleted_at?: string | null
+          encounter_count?: number
           exploration_extras?: Json
           exported_at?: string | null
           first_card_id?: string | null
@@ -1209,12 +1216,14 @@ export type Database = {
           grounding_patch?: Json | null
           headword?: string
           id?: string
+          last_encountered_at?: string
           native_example?: string | null
           sense?: string
           target_example?: string | null
           target_language?: string
           translation?: string | null
           user_id?: string
+          zipf_estimate?: number | null
         }
         Relationships: [
           {

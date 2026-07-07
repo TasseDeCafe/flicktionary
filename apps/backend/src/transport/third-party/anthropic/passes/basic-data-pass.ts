@@ -60,6 +60,11 @@ export type BasicDataChunk = {
   // language-instructions block for per-language guidance.
   grammar?: Record<string, unknown>
   belowCefr: boolean
+  // Estimated corpus frequency of the HEADWORD on the continuous Zipf scale
+  // (0-8, one decimal; ~7 = "the", ~2 = genuinely rare). Judged for the lexeme,
+  // not the inflected surface form; works for multi-word expressions too.
+  // Feeds the new-term priority ordering (tier 3 sorts by it).
+  zipf: number | null
   reasoning?: string
 }
 
@@ -137,6 +142,11 @@ const buildTool = (hideTranslationFields: boolean, targetLanguage: string): Anth
               description:
                 "Always false for user highlights. The user explicitly selected this text, so enrich it even if it is below the learner's CEFR level.",
             },
+            zipf: {
+              type: 'number',
+              description:
+                'Estimated corpus frequency of the HEADWORD on the continuous Zipf scale, one decimal, 0-8 (Zipf = log10 of occurrences per billion words: ~7 for the most common function words, ~5 for everyday vocabulary, ~3 for educated/domain vocabulary, ~2 for genuinely rare words). Judge the LEXEME (citation form), not the inflected surface form. For multi-word expressions, estimate how often the expression itself occurs, not its component words.',
+            },
             grammar: buildGrammarSchema(targetLanguage, GRAMMAR_OBJECT_DESCRIPTION),
             reasoning: {
               type: 'string',
@@ -156,6 +166,7 @@ const buildTool = (hideTranslationFields: boolean, targetLanguage: string): Anth
             'target_example',
             'native_example',
             'below_cefr',
+            'zipf',
           ],
         },
       },
@@ -313,5 +324,8 @@ export const parseBasicDataChunks = (raw: Array<Record<string, unknown>>): Basic
         ? sanitizeGrammarIpa(c.grammar as Record<string, unknown>)
         : undefined,
     belowCefr: Boolean(c.below_cefr),
+    // Clamped to the scale's range so a stray out-of-scale emission can't
+    // overflow the NUMERIC(3,1) column or distort the ordering.
+    zipf: typeof c.zipf === 'number' && Number.isFinite(c.zipf) ? Math.min(8, Math.max(0, c.zipf)) : null,
     reasoning: typeof c.reasoning === 'string' ? c.reasoning : undefined,
   }))

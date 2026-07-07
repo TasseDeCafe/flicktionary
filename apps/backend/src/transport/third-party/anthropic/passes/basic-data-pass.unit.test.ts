@@ -31,10 +31,30 @@ describe('parseBasicDataChunks', () => {
         definition: 'volverse uno con algo',
         targetExample: 'El sonido se fundía con el silencio.',
         nativeExample: 'The sound merged with the silence.',
+        grammar: undefined,
         belowCefr: false,
+        zipf: null,
         reasoning: undefined,
       },
     ])
+  })
+
+  it('parses a numeric zipf estimate, clamps out-of-scale values, and nulls junk', () => {
+    const base = {
+      source: 'llm',
+      headword: 'foo',
+      surface_form: 'foo',
+      segment_id: 'x',
+      below_cefr: false,
+    }
+    const parsed = parseBasicDataChunks([
+      { ...base, zipf: 3.4 },
+      { ...base, zipf: 42 },
+      { ...base, zipf: -1 },
+      { ...base, zipf: 'common' },
+      { ...base },
+    ])
+    expect(parsed.map((c) => c.zipf)).toEqual([3.4, 8, 0, null, null])
   })
 
   it('parses a highlight-source chunk and preserves highlight_id + reasoning', () => {
@@ -239,6 +259,7 @@ describe('bindChunksToSingleHighlight', () => {
     targetExample: null,
     nativeExample: null,
     belowCefr: false,
+    zipf: null,
     ...overrides,
   })
 

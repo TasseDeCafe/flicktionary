@@ -148,6 +148,13 @@ export const enrichHighlight = async (
     userLookupsRepository,
   })
 
+  // Saving a highlight is a user-intent encounter with the term: bump the
+  // new-term priority signals. Every touched lookup here traces to THE user
+  // highlight (bindChunksToSingleHighlight pins the chunk to it, and the
+  // fallback stub is the highlight too). recordEncounter's collapse window
+  // absorbs worker retries, so a single save can never reach tier 1 on its own.
+  await userLookupsRepository.recordEncounter([...touchedLookups.keys()])
+
   if (KAIKKI_LANGUAGES.has(session.target_language)) {
     await runWiktionaryGrounding({
       sessionId,
