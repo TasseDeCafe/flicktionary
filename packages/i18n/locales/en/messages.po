@@ -285,6 +285,14 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Add {newCount} cards"
+msgstr "Add {newCount} cards"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Add {newCount} cards · update {updateCount}"
+msgstr "Add {newCount} cards · update {updateCount}"
+
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Add a form"
 msgstr "Add a form"
@@ -335,6 +343,10 @@ msgstr "Add translation"
 msgid "Added"
 msgstr "Added"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Adding…"
+msgstr "Adding…"
+
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Additional hosts"
 msgstr "Additional hosts"
@@ -344,6 +356,10 @@ msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
 "try using a different font."
 msgstr "Adds an outline around subtitle text. If this causes overlapping lines, "
 "try using a different font."
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Adds the lesson's study angle to the existing card"
+msgstr "Adds the lesson's study angle to the existing card"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Adjective"
@@ -421,6 +437,14 @@ msgstr "Allow subtitle file drag-and-drop"
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Already in your vocabulary"
+msgstr "Already in your vocabulary"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Already saved as \"{duplicateHeadword}\""
+msgstr "Already saved as \"{duplicateHeadword}\""
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Always play (unpause) after invoking above shortcut"
@@ -1000,6 +1024,10 @@ msgstr "Couldn't load your practice session."
 msgid "Couldn't load your terms."
 msgstr "Couldn't load your terms."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Couldn't parse"
+msgstr "Couldn't parse"
+
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't remove the form"
 msgstr "Couldn't remove the form"
@@ -1145,6 +1173,10 @@ msgstr "Deleted \"{headword}\""
 msgid "Deleting…"
 msgstr "Deleting…"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Deselect all"
+msgstr "Deselect all"
+
 #: apps/extension/common/components/MiscSettingsTab.tsx
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
@@ -1208,6 +1240,10 @@ msgstr "e.g. + acc, от + gen"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "e.g. Häuser"
 msgstr "e.g. Häuser"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "e.g. Lessons with Yulia — June"
+msgstr "e.g. Lessons with Yulia — June"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "e.g. Namens"
@@ -1426,6 +1462,20 @@ msgstr "Extension shortcut"
 msgid "Extension version"
 msgstr "Extension version"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Extract cards"
+msgstr "Extract cards"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Extraction failed after several attempts. Try uploading the file again — "
+"if it keeps failing, paste the notes as text instead."
+msgstr "Extraction failed after several attempts. Try uploading the file again "
+"— if it keeps failing, paste the notes as text instead."
+
+#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+msgid "Failed to add the cards"
+msgstr "Failed to add the cards"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to advance"
 msgstr "Failed to advance"
@@ -1580,9 +1630,17 @@ msgstr "Failed to load suggestions"
 msgid "Failed to load surrounding context"
 msgstr "Failed to load surrounding context"
 
+#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+msgid "Failed to load teacher profiles"
+msgstr "Failed to load teacher profiles"
+
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to load term"
 msgstr "Failed to load term"
+
+#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+msgid "Failed to load the import"
+msgstr "Failed to load the import"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Failed to load vocabulary"
@@ -1672,6 +1730,10 @@ msgstr "Failed to set CEFR level"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
+
+#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+msgid "Failed to start the import"
+msgstr "Failed to start the import"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to start warm-up"
@@ -1841,6 +1903,10 @@ msgstr "Free-form notes that don't fit the structured fields above."
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Frequency"
 msgstr "Frequency"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "From the notes"
+msgstr "From the notes"
 
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Full exploration"
@@ -2085,6 +2151,12 @@ msgstr "Imperfective"
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx
+msgid "Import lesson notes"
+msgstr "Import lesson notes"
+
 #: apps/extension/common/components/MiscSettingsTab.tsx
 msgid "Import Settings"
 msgstr "Import Settings"
@@ -2092,6 +2164,10 @@ msgstr "Import Settings"
 #: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Import this article"
 msgstr "Import this article"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Import this row"
+msgstr "Import this row"
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Imported text"
@@ -2189,6 +2265,10 @@ msgstr "Keep at least one skill"
 msgid "Keep practicing this one."
 msgstr "Keep practicing this one."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Kept here so nothing is silently dropped"
+msgstr "Kept here so nothing is silently dropped"
+
 #: apps/extension/common/components/SettingsForm.tsx
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
@@ -2219,6 +2299,10 @@ msgstr "Language preferences"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Languages"
 msgstr "Languages"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "lapse"
+msgstr "lapse"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "Last day to cancel before first charge"
@@ -2257,6 +2341,14 @@ msgstr "Leave empty for no limit."
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Less formal:"
 msgstr "Less formal:"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Lesson language"
+msgstr "Lesson language"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Lesson notes"
+msgstr "Lesson notes"
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
@@ -2304,6 +2396,7 @@ msgstr "Loading…"
 msgid "Looking up and saving words"
 msgstr "Looking up and saving words"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Looks like {suggestedLanguageName}"
 msgstr "Looks like {suggestedLanguageName}"
@@ -2456,6 +2549,10 @@ msgstr "Neuter"
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "New"
 msgstr "New"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "New cards"
+msgstr "New cards"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New only"
@@ -2834,6 +2931,18 @@ msgstr "Paste a text"
 msgid "Paste an article, comment, or post"
 msgstr "Paste an article, comment, or post"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Paste the lesson notes here…"
+msgstr "Paste the lesson notes here…"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Paste your teacher's notes or upload the exported file. We'll turn "
+"corrections and vocabulary into proposed cards you can review before "
+"anything is saved."
+msgstr "Paste your teacher's notes or upload the exported file. We'll turn "
+"corrections and vocabulary into proposed cards you can review before "
+"anything is saved."
+
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Paste your text"
 msgstr "Paste your text"
@@ -2871,6 +2980,7 @@ msgid "Pick a focused session instead of the everyday mix."
 msgstr "Pick a focused session instead of the everyday mix."
 
 #: apps/web/src/components/language-select-field.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Pick a language"
 msgstr "Pick a language"
@@ -3081,6 +3191,7 @@ msgid "Processing warnings"
 msgstr "Processing warnings"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
@@ -3120,6 +3231,7 @@ msgid "Pronoun"
 msgstr "Pronoun"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3180,6 +3292,10 @@ msgid "Reading in progress ({0, plural, one {# term} other {# terms}}) — "
 msgstr "Reading in progress ({0, plural, one {# term} other {# terms}}) — "
 "continue"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Reading the notes — this takes about a minute…"
+msgstr "Reading the notes — this takes about a minute…"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Ready to practice"
 msgstr "Ready to practice"
@@ -3206,6 +3322,7 @@ msgid "Recently added"
 msgstr "Recently added"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
@@ -3321,6 +3438,7 @@ msgstr "Repeat playback: Off"
 msgid "Repeat playback: On"
 msgstr "Repeat playback: On"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
@@ -3525,6 +3643,10 @@ msgstr "Select a video element to sync it with Flicktionary."
 #: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "Select a video element…"
 msgstr "Select a video element…"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Select all"
+msgstr "Select all"
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Select some text first."
@@ -3802,6 +3924,7 @@ msgstr "Start something new"
 msgid "Starting session…"
 msgstr "Starting session…"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Starting…"
 msgstr "Starting…"
@@ -3977,6 +4100,7 @@ msgstr "Subtitles Width"
 msgid "Success!"
 msgstr "Success!"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Switch"
 msgstr "Switch"
@@ -4010,6 +4134,10 @@ msgstr "Target language"
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Teacher profile (optional)"
+msgstr "Teacher profile (optional)"
+
 #: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
 msgid "Telegram connected!"
 msgstr "Telegram connected!"
@@ -4035,6 +4163,10 @@ msgstr "terms"
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms coming back for their scheduled review."
 msgstr "Terms coming back for their scheduled review."
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Terms that aren't in your vocabulary yet"
+msgstr "Terms that aren't in your vocabulary yet"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms you're meeting for the first time, including warm-up exercises for "
@@ -4090,6 +4222,7 @@ msgstr "The extension popup contains the full settings: subtitle appearance "
 "more. You can keep several settings profiles and switch between them "
 "from the popup."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx
 msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
@@ -4133,6 +4266,10 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "This card was rated as forgotten — it will come back for review sooner."
+msgstr "This card was rated as forgotten — it will come back for review sooner."
 
 #: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
 msgid "This connection link has already been used or has expired."
@@ -4191,6 +4328,7 @@ msgid "This value was taken from Wiktionary's dictionary data during "
 msgstr "This value was taken from Wiktionary's dictionary data during "
 "processing."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Title"
 msgstr "Title"
@@ -4327,8 +4465,13 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 "content."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Try again"
 msgstr "Try again"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx
+msgid "Turn your teacher's notes into cards"
+msgstr "Turn your teacher's notes into cards"
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "TV"
@@ -4430,6 +4573,10 @@ msgstr "Upload"
 msgid "Upload a .srt file"
 msgstr "Upload a .srt file"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Upload a file (.md or .xlsx)"
+msgstr "Upload a file (.md or .xlsx)"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Upload your .srt file"
 msgstr "Upload your .srt file"
@@ -4445,6 +4592,10 @@ msgstr "Upper intermediate — fluent on familiar topics, some abstract ideas."
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Use “{term}” in a sentence"
 msgstr "Use “{term}” in a sentence"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Use a .md, .txt, or .xlsx file."
+msgstr "Use a .md, .txt, or .xlsx file."
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Use a subtitle file you already have."
@@ -4584,6 +4735,10 @@ msgstr "We couldn't create an exercise for “{headword}”."
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "We couldn't read these notes"
+msgstr "We couldn't read these notes"
+
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
@@ -4692,6 +4847,10 @@ msgstr "Why this form?"
 msgid "Wiktionary"
 msgstr "Wiktionary"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Wins"
+msgstr "Wins"
+
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Word or expression"
 msgstr "Word or expression"
@@ -4770,6 +4929,10 @@ msgstr "Your account has been deleted successfully."
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Your answer will appear in this card's chat."
 msgstr "Your answer will appear in this card's chat."
+
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+msgid "Your attempt:"
+msgstr "Your attempt:"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "Your current plan"

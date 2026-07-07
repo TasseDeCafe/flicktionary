@@ -5,7 +5,7 @@ import { logAnthropicCacheUsage } from '../log-cache-usage'
 const TOOL_NAME = 'report_zipf_estimates'
 
 // How many headwords ride in one call. Validated in the zipf experiment
-// (docs/proposals/llm-zipf-band-estimation.md Results): batching at 50 does
+// (old-docs/llm-zipf-band-estimation.md Results): batching at 50 does
 // not degrade accuracy vs single-term calls.
 export const ZIPF_BATCH_SIZE = 50
 

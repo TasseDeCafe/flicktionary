@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, FileText, Sparkles, type LucideIcon } from 'lucide-react'
+import { Clapperboard, FileText, FileUp, Sparkles, type LucideIcon } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -59,6 +59,14 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
       description: t`Save a term you heard or saw, no source needed`,
       onSelect: () => {
         void navigate({ to: '/vocabulary/new-word' })
+      },
+    },
+    {
+      icon: FileUp,
+      label: t`Import lesson notes`,
+      description: t`Turn your teacher's notes into cards`,
+      onSelect: () => {
+        void navigate({ to: '/lessons/import' })
       },
     },
   ]
