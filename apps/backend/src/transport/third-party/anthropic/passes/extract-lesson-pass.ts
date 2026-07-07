@@ -8,8 +8,10 @@ const TOOL_NAME = 'report_extraction'
 // is the validated prototype spec from
 // docs/proposals/lesson-notes-extractor-prototype.md (Results), with the two
 // GO adjustments applied: form_correction + sentence_pattern merged into one
-// `grammar` type with optional targetForm, and multi-word expression headwords
-// allowed.
+// `grammar` type, and multi-word expression headwords allowed. targetForm is
+// set on grammar AND pronunciation rows whenever a specific inflected form is
+// the point — confirm then form-scopes the study intent so the facets attach
+// to that form, not the lemma.
 export type ExtractedLessonRow = {
   sourceText: string
   type: 'vocab' | 'grammar' | 'pronunciation' | 'win' | 'noise'
@@ -57,7 +59,7 @@ const buildTool = (): Anthropic.Tool => ({
               type: 'string',
               enum: ['vocab', 'grammar', 'pronunciation', 'win', 'noise'],
               description:
-                'vocab = a word/expression to learn; grammar = a form correction or sentence-pattern note (set target_form when a specific inflected form is the point); pronunciation = a pronunciation/stress item; win = the teacher recorded a success (display-only, never imported); noise = not importable (empty, formatting junk, meta-notes).',
+                'vocab = a word/expression to learn; grammar = a form correction or sentence-pattern note; pronunciation = a pronunciation/stress item; win = the teacher recorded a success (display-only, never imported); noise = not importable (empty, formatting junk, meta-notes). For grammar and pronunciation rows, set target_form when a specific inflected form is the point.',
             },
             headword: {
               type: 'string',
@@ -67,7 +69,7 @@ const buildTool = (): Anthropic.Tool => ({
             target_form: {
               type: ['string', 'null'],
               description:
-                'For grammar rows where a SPECIFIC inflected form is the point of the correction: that form, exactly. Null otherwise.',
+                'When a SPECIFIC inflected form is the point of the item (a grammar correction of that form, or a stress/pronunciation note on that form): that form, exactly. The headword stays the lemma. Null when the item is about the word in general.',
             },
             context: {
               type: 'string',
@@ -125,12 +127,13 @@ Hard rules:
 - NEVER invent rows: every source_text must be verbatim-traceable to the notes.
 - Skip genuinely empty cells; emit formatting junk / meta-notes as type 'noise'.
 - Success/win items ARE emitted, typed 'win' — never dropped, never imported.
-- headword = dictionary citation form (lemmatized). Multi-word expressions are allowed when the collocation or idiom is the real learning unit.
+- headword = dictionary citation form (lemmatized), ALWAYS — even when the note is about an inflected form. Put the inflected form in target_form instead. Multi-word expressions are allowed when the collocation or idiom is the real learning unit.
+- target_form: set on grammar AND pronunciation rows when a specific inflected form is the point (a case/agreement correction, a stress mark on a non-citation form). The learner then studies that exact form.
 - context = the cleaned corrected phrase/sentence.
 - Normalize any stress marking to a combining acute accent (U+0301) in stress_mark.
 - wrong_form is always the learner's attempt, never the correction, whatever the column order.
 - Classify by CONTENT, not by which column an item sits in (teachers misfile).
-- Facet mapping is deterministic by type: vocab -> production + recognition; grammar -> production (on target_form when a specific inflection is the point); pronunciation -> pronunciation only; win/noise -> none.
+- Facet mapping is deterministic by type: vocab -> production + recognition; grammar -> production; pronunciation -> pronunciation only; win/noise -> none. When target_form is set, the facets attach to that form instead of the lemma.
 - Confidence rubric: >= 0.9 only when type and pivot are unambiguous; <= 0.7 for judgment-call pivots (sentence-pattern grammar rows); <= 0.5 when unsure.
 
 Infer the teacher's conventions from the notes themselves (column semantics, error markers like "(не-X)", CAPITALIZED or bold vowels as stress, escaped hyphens in aspect pairs) and describe them in format_profile.${profileBlock}`
