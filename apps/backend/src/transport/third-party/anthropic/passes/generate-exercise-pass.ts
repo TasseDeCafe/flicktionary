@@ -187,6 +187,7 @@ Hard rules:
 - Each of the 3 distractors must share the part of speech and the exact inflection/agreement of the surface form (gender, number, person, tense, case — whatever applies), so grammar alone cannot eliminate it. Each must be semantically wrong in THIS sentence.
 - Never use a synonym or near-synonym of the term as a distractor — if a distractor would also be acceptable in the blank, the exercise is broken.
 - surface_form is the EXACT substring of sentence realizing the term (matching casing/punctuation). The server computes the blank position from it.
+- Write the sentence in FULL, with the term present — never blank it out yourself (no underscores); the server does the blanking.
 
 Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
 
@@ -222,6 +223,7 @@ Hard rules:
 - The context must make the term the natural, uniquely correct filler — given the hint, a learner who knows the term can produce exactly the blanked form.
 - Prefer a sentence where the required inflection is unambiguous (clear subject/tense/agreement cues).
 - surface_form is the EXACT substring of sentence realizing the term (matching casing/punctuation). The server computes the blank position from it.
+- Write the sentence in FULL, with the term present — never blank it out yourself (no underscores); the server does the blanking.
 - accepted_forms lists every string acceptable as a typed answer: the surface form plus legitimate orthographic variants only. Do NOT include inflections that would be wrong in this sentence.
 
 Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
@@ -233,8 +235,15 @@ ${termBlock}${rejectionBlock}
 Call ${TOOL_NAME}. Stop after the tool call.`
 }
 
-const locateBlank = (sentence: string, surfaceForm: string): { blankStart: number; blankEnd: number } => {
+export const locateBlank = (sentence: string, surfaceForm: string): { blankStart: number; blankEnd: number } => {
   if (!surfaceForm) throw new Error('Exercise generation returned an empty surface_form')
+  // The model occasionally writes the sentence with the blank already baked in
+  // and echoes the underscores back as surface_form — the stored "answer" is
+  // then the blank itself. Underscores never occur in natural sentences, so
+  // any occurrence means a pre-blanked sentence; throw so the bank retries.
+  if (sentence.includes('_') || surfaceForm.includes('_')) {
+    throw new Error(`Exercise generation pre-blanked the sentence (surface_form: "${surfaceForm}")`)
+  }
   const blankStart = sentence.indexOf(surfaceForm)
   if (blankStart < 0) {
     throw new Error(`Exercise generation surface_form is not a substring of sentence: "${surfaceForm}"`)
