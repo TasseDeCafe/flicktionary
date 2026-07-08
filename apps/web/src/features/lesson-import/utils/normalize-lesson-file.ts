@@ -79,31 +79,44 @@ export const sheetNameToHeading = (name: string): string => {
   return `${day}/${month}/${year}`
 }
 
-export const normalizeXlsxToMarkdown = (buffer: ArrayBuffer): string => {
+// One non-empty sheet of an uploaded workbook. `title` is the lesson-heading
+// text (packed-date names already rewritten); `name` is the raw sheet name so
+// the picker can disambiguate when the rewrite collapsed a suffix.
+export type LessonSheet = { name: string; title: string; markdown: string }
+
+export const xlsxToSheets = (buffer: ArrayBuffer): LessonSheet[] => {
   const workbook = XLSX.read(buffer, { type: 'array', cellHTML: true, cellStyles: true })
-  const sections = workbook.SheetNames.map((name) => {
+  return workbook.SheetNames.flatMap((name) => {
     const table = sheetToMarkdown(workbook.Sheets[name]!)
-    if (table.length === 0) return ''
-    // Sheet names double as lesson identifiers (the second-teacher convention
-    // is one sheet per file; the Italki archive names sheets DDMMYYYY). A
-    // heading per sheet keeps multi-sheet files splittable server-side.
-    return workbook.SheetNames.length > 1 ? `### **${sheetNameToHeading(name)}**\n\n${table}` : table
-  }).filter((section) => section.length > 0)
-  return sections.join('\n\n')
+    return table.length === 0 ? [] : [{ name, title: sheetNameToHeading(name), markdown: table }]
+  })
 }
 
-export type NormalizedLessonFile = { ok: true; markdown: string } | { ok: false; reason: 'unsupported' | 'empty' }
+// Sheet titles double as lesson identifiers (the second-teacher convention is
+// one sheet per file; the Italki archive names sheets by date). A heading per
+// sheet keeps multi-sheet selections splittable server-side.
+export const sheetsToMarkdown = (sheets: LessonSheet[]): string =>
+  sheets.map((sheet) => `### **${sheet.title}**\n\n${sheet.markdown}`).join('\n\n')
+
+export type NormalizedLessonFile =
+  // A multi-sheet workbook surfaces its sheets so the wizard can offer a picker.
+  | { ok: true; kind: 'sheets'; sheets: LessonSheet[] }
+  | { ok: true; kind: 'text'; markdown: string }
+  | { ok: false; reason: 'unsupported' | 'empty' }
 
 export const normalizeLessonFile = async (file: File): Promise<NormalizedLessonFile> => {
   const name = file.name.toLowerCase()
-  const markdown = name.endsWith('.xlsx')
-    ? normalizeXlsxToMarkdown(await file.arrayBuffer())
-    : name.endsWith('.md') || name.endsWith('.txt') || file.type.startsWith('text/')
-      ? await file.text()
-      : null
+  if (name.endsWith('.xlsx')) {
+    const sheets = xlsxToSheets(await file.arrayBuffer())
+    if (sheets.length === 0) return { ok: false, reason: 'empty' }
+    if (sheets.length > 1) return { ok: true, kind: 'sheets', sheets }
+    return { ok: true, kind: 'text', markdown: sheets[0]!.markdown }
+  }
+  const markdown =
+    name.endsWith('.md') || name.endsWith('.txt') || file.type.startsWith('text/') ? await file.text() : null
   if (markdown === null) return { ok: false, reason: 'unsupported' }
   if (markdown.trim().length === 0) return { ok: false, reason: 'empty' }
-  return { ok: true, markdown }
+  return { ok: true, kind: 'text', markdown }
 }
 
 // Title suggestion: the file name without its extension.

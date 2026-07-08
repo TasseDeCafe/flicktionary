@@ -92,6 +92,7 @@
     "eslint-plugin-react": "catalog:",
     "eslint-plugin-react-refresh": "catalog:",
     "eslint-plugin-react-you-might-not-need-an-effect": "catalog:",
+    "jsdom": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-tailwindcss": "catalog:",
     "tailwindcss": "catalog:",

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ArrowRight, Languages, Upload } from 'lucide-react'
+import { ArrowRight, FileSpreadsheet, Languages, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
+import { Checkbox } from '@flicktionary/ui/components/checkbox'
 import { Input } from '@flicktionary/ui/components/input'
 import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
@@ -15,7 +16,12 @@ import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { shouldUseDetectedLanguage } from '@/features/sessions/utils/detected-language'
 import { useCreateLessonBatch, useListTeacherProfiles } from '../api/lesson-import-hooks'
-import { normalizeLessonFile, suggestTitleFromFileName } from '../utils/normalize-lesson-file'
+import {
+  normalizeLessonFile,
+  sheetsToMarkdown,
+  suggestTitleFromFileName,
+  type LessonSheet,
+} from '../utils/normalize-lesson-file'
 
 const TITLE_MAX = 200
 const TEXT_MAX = 500_000
@@ -31,6 +37,11 @@ export const LessonImportWizard = () => {
 
   const [text, setText] = useState('')
   const [fileName, setFileName] = useState<string | null>(null)
+  // A multi-sheet workbook goes through a sheet picker instead of the textarea:
+  // day-to-day only one sheet is new, and every selected sheet costs an
+  // extraction call — so nothing is pre-selected.
+  const [sheets, setSheets] = useState<LessonSheet[] | null>(null)
+  const [selectedSheetIdxs, setSelectedSheetIdxs] = useState<ReadonlySet<number>>(new Set())
   const [title, setTitle] = useState('')
   const [titleTouched, setTitleTouched] = useState(false)
   const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
@@ -39,10 +50,17 @@ export const LessonImportWizard = () => {
 
   const effectiveTarget = targetLanguage ?? prefs?.lastTargetLanguage ?? null
 
+  // What actually gets imported: the composed selected sheets in picker mode,
+  // the textarea content otherwise. Language detection reads the same source.
+  const sourceText = useMemo(
+    () => (sheets ? sheetsToMarkdown(sheets.filter((_, i) => selectedSheetIdxs.has(i))) : text),
+    [sheets, selectedSheetIdxs, text]
+  )
+
   // Auto-detect the lesson language once typing/pasting settles; a manual pick
   // always wins (same pattern as the text-paste wizard).
   const { mutate: detectLanguageMutation, data: detectionResult, reset: resetDetection } = useDetectLanguage()
-  const debouncedText = useDebouncedValue(text, 300)
+  const debouncedText = useDebouncedValue(sourceText, 300)
   useEffect(() => {
     // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- the trigger is the debounced text SETTLING (time-based), not a keystroke; firing detection from onChange would spam the backend per keypress
     if (languageTouched) return
@@ -76,13 +94,42 @@ export const LessonImportWizard = () => {
       )
       return
     }
-    setText(normalized.markdown)
+    if (normalized.kind === 'sheets') {
+      setSheets(normalized.sheets)
+      setSelectedSheetIdxs(new Set())
+      setText('')
+    } else {
+      setText(normalized.markdown)
+      setSheets(null)
+    }
     setFileName(file.name)
     if (!titleTouched) setTitle(suggestTitleFromFileName(file.name))
   }
 
-  const trimmedText = text.trim()
-  const canSubmit = !!effectiveTarget && trimmedText.length > 0 && title.trim().length > 0 && !isCreating
+  const clearSheets = () => {
+    setSheets(null)
+    setSelectedSheetIdxs(new Set())
+    setFileName(null)
+  }
+
+  const toggleSheet = (index: number) => {
+    setSelectedSheetIdxs((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  const selectedSheetCount = selectedSheetIdxs.size
+  const sheetCount = sheets?.length ?? 0
+
+  const trimmedText = sourceText.trim()
+  // The contract caps rawText at 500k chars; a big multi-sheet selection can
+  // exceed it, so refuse client-side with a hint instead of a 400 from the API.
+  const selectionTooLarge = trimmedText.length > TEXT_MAX
+  const canSubmit =
+    !!effectiveTarget && trimmedText.length > 0 && !selectionTooLarge && title.trim().length > 0 && !isCreating
 
   const handleSubmit = () => {
     if (!effectiveTarget || !canSubmit) return
@@ -129,18 +176,79 @@ export const LessonImportWizard = () => {
       <div className='flex flex-col gap-4'>
         <div className='flex flex-col gap-2'>
           <Label htmlFor='lesson-text' className='text-sm'>{t`Lesson notes`}</Label>
-          <Textarea
-            id='lesson-text'
-            value={text}
-            maxLength={TEXT_MAX}
-            onChange={(e) => {
-              setText(e.target.value)
-              setFileName(null)
-            }}
-            placeholder={t`Paste the lesson notes here…`}
-            rows={8}
-            className='text-base'
-          />
+          {sheets ? (
+            /* Multi-sheet workbook: pick which sheets (lessons) to import. Each
+               selected sheet is one extraction call, so day-to-day the user
+               ticks only the new lesson. */
+            <>
+              <div className='rounded-xl border'>
+                <div className='flex items-center gap-2 border-b px-3 py-2.5'>
+                  <FileSpreadsheet className='text-muted-foreground size-4 shrink-0' />
+                  <span className='min-w-0 flex-1 truncate text-sm font-medium'>{fileName}</span>
+                  <button
+                    type='button'
+                    onClick={clearSheets}
+                    aria-label={t`Remove file`}
+                    className='text-muted-foreground hover:text-foreground -m-1 shrink-0 rounded-md p-1 transition-colors'
+                  >
+                    <X className='size-4' />
+                  </button>
+                </div>
+                <div className='max-h-72 overflow-y-auto p-1.5'>
+                  {sheets.map((sheet, index) => (
+                    <button
+                      key={index}
+                      type='button'
+                      onClick={() => toggleSheet(index)}
+                      className='flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
+                    >
+                      <Checkbox
+                        checked={selectedSheetIdxs.has(index)}
+                        aria-label={t`Import this sheet`}
+                        tabIndex={-1}
+                        className='pointer-events-none'
+                      />
+                      <span className='min-w-0 flex-1 truncate text-sm'>{sheet.title}</span>
+                      {sheet.name !== sheet.title && (
+                        <span className='text-muted-foreground shrink-0 truncate text-xs'>{sheet.name}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className='flex items-center justify-between gap-3'>
+                <span className={selectionTooLarge ? 'text-destructive text-xs' : 'text-muted-foreground text-xs'}>
+                  {selectionTooLarge
+                    ? t`Too much text selected — import fewer sheets at a time`
+                    : t`${selectedSheetCount} of ${sheetCount} sheets selected`}
+                </span>
+                <button
+                  type='button'
+                  className='text-foreground/70 hover:text-foreground shrink-0 text-xs font-medium underline-offset-2 transition-colors hover:underline'
+                  onClick={() =>
+                    setSelectedSheetIdxs(
+                      selectedSheetIdxs.size === sheets.length ? new Set() : new Set(sheets.map((_, i) => i))
+                    )
+                  }
+                >
+                  {selectedSheetIdxs.size === sheets.length ? t`Deselect all` : t`Select all`}
+                </button>
+              </div>
+            </>
+          ) : (
+            <Textarea
+              id='lesson-text'
+              value={text}
+              maxLength={TEXT_MAX}
+              onChange={(e) => {
+                setText(e.target.value)
+                setFileName(null)
+              }}
+              placeholder={t`Paste the lesson notes here…`}
+              rows={8}
+              className='text-base'
+            />
+          )}
           <input
             ref={fileInputRef}
             type='file'

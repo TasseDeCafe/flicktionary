@@ -139,6 +139,10 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 msgid "{reviewsDue, plural, one {# to review} other {# to review}}"
 msgstr "{reviewsDue, plural, one {# à réviser} other {# à réviser}}"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "{selectedSheetCount} of {sheetCount} sheets selected"
+msgstr "{selectedSheetCount} feuille(s) sur {sheetCount} sélectionnée(s)"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "{warmingUp} warming up"
@@ -1194,6 +1198,7 @@ msgid "Deleting…"
 msgstr "Suppression…"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Deselect all"
 msgstr "Tout désélectionner"
 
@@ -2200,6 +2205,10 @@ msgstr "Importer cet article"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Import this row"
 msgstr "Importer cette ligne"
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Import this sheet"
+msgstr "Importer cette feuille"
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Imported text"
@@ -3449,6 +3458,10 @@ msgstr "Supprimer"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Supprimer « {sessionTitle} » ?"
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Remove file"
+msgstr "Supprimer le fichier"
+
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Remove form"
 msgstr "Supprimer la forme"
@@ -3692,6 +3705,7 @@ msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Select all"
 msgstr "Tout sélectionner"
 
@@ -4462,6 +4476,10 @@ msgid "Too many requests. Please use the app in only one tab and device at a "
 "time and try again later."
 msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet "
 "et appareil à la fois et réessayer."
+
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Too much text selected — import fewer sheets at a time"
+msgstr "Trop de texte sélectionné — importez moins de feuilles à la fois"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Top"
