@@ -358,8 +358,9 @@ export const practiceContract = {
 
   // Grade one exercise answer (server-side truth; the exercise is consumed on
   // answer, so a retry/stale submit is rejected). MC types take selectedIndex,
-  // typed types take text. correctIndex / correctAnswer are revealed only in
-  // the response — after the exercise has been consumed.
+  // typed types take text; production_cloze also accepts giveUp (grades as
+  // incorrect, reveals the answer). correctIndex / correctAnswer are revealed
+  // only in the response — after the exercise has been consumed.
   submitExerciseAnswer: oc
     .route({ method: 'POST', path: '/practice/exercises/{exerciseId}/answer', successStatus: 200 })
     .errors({

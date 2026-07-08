@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, CircleX, Lightbulb } from 'lucide-react'
+import { CircleCheck, CircleX, Eye, Lightbulb } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
@@ -17,7 +17,9 @@ type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'produc
 // Typed cloze: the learner produces the missing form. Accent-insensitive,
 // 1-typo-tolerant grading happens server-side; the canonical answer is
 // revealed in the response for learning value. Skipping never consumes — the
-// same exercise re-serves next session.
+// same exercise re-serves next session. Giving up (Show answer) grades as a
+// miss server-side but reads softer than a wrong guess: the escalation is
+// Hint → Show answer in the same button slot.
 export const ProductionClozeExercise = ({
   exerciseId,
   payload,
@@ -51,6 +53,7 @@ export const ProductionClozeExercise = ({
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
   const [hintRevealed, setHintRevealed] = useState(false)
+  const [gaveUp, setGaveUp] = useState(false)
 
   const hintText = meaning ?? payload.hint
   const hintAvailable = !!hintText
@@ -62,6 +65,22 @@ export const ProductionClozeExercise = ({
       { exerciseId, response: { text: trimmed } },
       {
         onSuccess: (resp) => {
+          setResult(resp.data)
+          onAnswered(resp.data)
+        },
+      }
+    )
+  }
+
+  // Give-up: grades as a miss server-side (consumes the exercise, no gate
+  // credit, fresh exercise next time) but renders as a neutral reveal.
+  const handleGiveUp = () => {
+    if (result || isPending) return
+    submitAnswer(
+      { exerciseId, response: { giveUp: true } },
+      {
+        onSuccess: (resp) => {
+          setGaveUp(true)
           setResult(resp.data)
           onAnswered(resp.data)
         },
@@ -91,19 +110,29 @@ export const ProductionClozeExercise = ({
       feedback={
         result && (
           <div className='flex flex-col gap-3'>
-            <div
-              className={cn(
-                'flex items-center gap-2 text-sm font-medium',
-                result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
-              )}
-            >
-              {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
-              {result.correct ? t`Correct!` : t`Not quite.`}
-            </div>
-            {result.correctAnswer && !result.correct && (
-              <p className='text-sm'>
-                {t`Expected:`} <span className='font-semibold'>{result.correctAnswer}</span>
-              </p>
+            {/* A voluntary give-up reads as a neutral reveal, not a failure verdict. */}
+            {gaveUp ? (
+              <div className='flex items-center gap-2 text-sm'>
+                <Eye className='text-muted-foreground h-4 w-4' />
+                {t`The answer was:`} <span className='font-semibold'>{result.correctAnswer}</span>
+              </div>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    'flex items-center gap-2 text-sm font-medium',
+                    result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                  )}
+                >
+                  {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
+                  {result.correct ? t`Correct!` : t`Not quite.`}
+                </div>
+                {result.correctAnswer && !result.correct && (
+                  <p className='text-sm'>
+                    {t`Expected:`} <span className='font-semibold'>{result.correctAnswer}</span>
+                  </p>
+                )}
+              </>
             )}
             <MeaningLine meaning={hintText} />
             <RehabProgressNote data={result} copyVariant={copyVariant} />
@@ -129,7 +158,10 @@ export const ProductionClozeExercise = ({
               {showKbd && <Kbd>↵</Kbd>}
             </Button>
             <div className='flex gap-2'>
-              {hintAvailable && !hintRevealed && (
+              {/* Escalating disclosure in one slot: Hint first, then Show
+                  answer (give-up) once the hint is out — or immediately when
+                  no hint exists. Skip stays a pure defer next to it. */}
+              {hintAvailable && !hintRevealed ? (
                 <Button
                   type='button'
                   variant='outline'
@@ -140,6 +172,18 @@ export const ProductionClozeExercise = ({
                 >
                   <Lightbulb className='h-4 w-4' />
                   {t`Hint`}
+                </Button>
+              ) : (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xl'
+                  className='flex-1'
+                  disabled={isPending}
+                  onClick={handleGiveUp}
+                >
+                  <Eye className='h-4 w-4' />
+                  {t`Show answer`}
                 </Button>
               )}
               <Button

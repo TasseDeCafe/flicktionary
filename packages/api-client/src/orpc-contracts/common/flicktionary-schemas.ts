@@ -640,6 +640,10 @@ export type StrengthenExerciseEntry = z.infer<typeof StrengthenExerciseEntrySche
 export const ExerciseAnswerSchema = z.union([
   z.object({ selectedIndex: z.number().int().min(0).max(3) }),
   z.object({ text: z.string().trim().min(1).max(500) }),
+  // Give-up on a typed cloze: grades as incorrect and reveals the answer.
+  // Only valid for production_cloze — MC types can always guess, and
+  // use_in_sentence has no canonical answer to reveal.
+  z.object({ giveUp: z.literal(true) }),
 ])
 export type ExerciseAnswer = z.infer<typeof ExerciseAnswerSchema>
 
