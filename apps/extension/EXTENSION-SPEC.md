@@ -559,18 +559,23 @@ uses intersection, not exact offsets.
   survives the CEFR-picker retry via `pendingSave`. The right-click power-save
   bypasses the tooltip and always saves with the default. No ghost/"Use
   suggested" affordance here (web-only for now).
-- **Two commit lanes (pre-save note editor)** — web parity. The preview tooltip
-  carries an **Add note** affordance beside Save; tapping it opens the shared
-  `HighlightNoteEditor` (textarea + preset chips) and the footer shows both
-  **Save** and **Save note**. **Save** is the main lane (full card; a typed note
-  rides along and seeds the chat). **Save note** is the **note-only** lane: the
-  `save-word` message carries `noteOnly: true` (+ `note` / `presetTags` /
-  `chatSeedPrompt`), `highlights.create` makes an empty stub card + seeds the
-  chat with NO enrichment / study facets, and the card stays data-less until the
-  user generates it in the web app (it can't be kept into Vocabulary/Practice
-  until then). The note fields ride `SaveWordParams` → the `save-word` message →
-  `highlights.create`, alongside `studyIntent` (ignored in the note-only lane),
-  and survive the CEFR-picker retry via `pendingSave`.
+- **Two commit lanes + the inner note view (pre-save)** — web parity. The
+  preview tooltip carries an **Add note** affordance beside Save; tapping it
+  navigates the WHOLE popover content to an inner **note view** — back chevron
+  (ghost icon button) + "Add note" title with the word as a subtitle, the
+  shared `HighlightNoteEditor` (textarea + preset chips), and ONE commit
+  button — instead of expanding the editor inline. **Save** (the main view's
+  primary button) is the main lane (full card; a note drafted in the note view
+  and kept via Back rides along and seeds the chat — the main view signals the
+  pending draft by morphing `Add note` into `Edit note` with a dot). **Save
+  note** (the note view's single button, disabled until a note or preset is
+  entered) is the **note-only** lane: the `save-word` message carries
+  `noteOnly: true` (+ `note` / `presetTags` / `chatSeedPrompt`),
+  `highlights.create` makes an empty stub card + seeds the chat with NO
+  enrichment / study facets. The note fields ride `SaveWordParams` → the
+  `save-word` message → `highlights.create`, alongside `studyIntent` (ignored
+  in the note-only lane), and survive the CEFR-picker retry via `pendingSave`.
+  The note view resets when the hovered word changes.
   **Toast cold-start trap:** sonner's `toast()` publishes to subscribers only
   (no replay), and the page-global Toaster host is created lazily — a bare
   `ensureToasterHost(); toast(...)` drops the page's first toast (the save
@@ -629,14 +634,15 @@ uses intersection, not exact offsets.
     preview gloss** for that span (chunk gloss for a multi-word highlight,
     single-word hover gloss otherwise) instead of just closing — it only closes
     for a cross-cue highlight or a resumed/detached anchor. **Add/Edit note**
-    offers the same textarea +
-    preset tags as the web and composes the same localized `chatSeedPrompt`
-    (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
+    navigates to the same inner **note view** as the preview tooltip (back
+    chevron + editor + single `Save note`) and composes the same localized
+    `chatSeedPrompt` (`update-flicktionary-highlight-note` →
+    `highlights.updateNoteAndTags`).
     Like the web sheet, **the note/presets seed the card chat exactly once and
-    lock on save**: a committed note/preset set renders the editor read-only
-    (saved note + selected chips, dimmed + non-interactive, lock caption) and
-    the footer collapses to the cyclable **Saved** control with no `Add/Edit
-    note` — the seed
+    lock on save**: a committed note/preset set renders read-only inline on the
+    main view (saved note + selected chips, dimmed + non-interactive, lock
+    caption) and the footer collapses to the cyclable **Saved** control with no
+    `Add/Edit note` — the seed
     is keyed per highlight, so re-saving would post a duplicate chat turn. The
     only way to change a committed note is to delete the highlight; an empty save
     seeds nothing and stays editable.
@@ -647,7 +653,22 @@ uses intersection, not exact offsets.
     live facets once a `chunkId` resolves (`get-flicktionary-study-targets` →
     `chunks.getStudyTargets`, read-only). Editing study targets is a save-time
     decision — afterwards it happens only in the web app's term view (the
-    extension has none); there is no Save here. A STICKY saved popover wins over the hover
+    extension has none); there is no Save here.
+    **Note-only stub state ("note saved, word not saved")** — web parity. While
+    the highlight's `noteOnly` flag is set (the DTO derives it server-side as
+    "the highlight's card is parked in `needs_data`"), the popover is
+    deliberately DISTINCT from saved mode: the study-target picker stays
+    **editable** (the shared `StudyOptionsSection`, its own local draft), the
+    committed note shows locked inline, and the footer is primary **Save** + a
+    green cyclable **Note saved** control (→ Remove on hover, discarding stub +
+    chat). `Save` upgrades the stub into a full study card
+    (`save-flicktionary-word` → `highlights.saveWord`: persists the intent +
+    runs the normal enrichment, which re-points the stub's card to the enriched
+    lemma+sense lookup — the note/chat survive — and auto-keeps it). On success
+    the popover patches the store (`patchWordSaved`: `noteOnly` off + the
+    intent) and morphs into the normal saved state, showing the just-chosen
+    skills from the stored intent through the enrich window.
+    A STICKY saved popover wins over the hover
     preview (the preview neither opens over it nor renders while it's up); a
     hover-opened one yields to hovering other words. Sticky dismissal is
     outside pointerdown (composedPath — shadow root; right-button presses are

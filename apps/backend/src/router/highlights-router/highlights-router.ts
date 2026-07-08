@@ -39,7 +39,7 @@ const parseFastGloss = (s: string): FastGloss => {
   return parseFastGlossText(s)
 }
 
-const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk) => {
+const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk, opts?: { noteOnly?: boolean }) => {
   // study_intent is stored as loose JSONB; validate it back to the contract shape
   // (or null) so a legacy/garbled value never breaks output validation.
   const parsedIntent = StudyIntentSchema.safeParse(row.study_intent)
@@ -56,6 +56,15 @@ const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk) => {
     fastGloss: row.fast_gloss,
     studyIntent: parsedIntent.success ? parsedIntent.data : null,
     chunkId: 'chunk_id' in row ? row.chunk_id : null,
+    // "The word is not saved as a study card": the highlight HAS a card, but
+    // it is parked in needs_data — the note-only lane creates exactly that stub,
+    // while a full-lane card auto-keeps within its enrich run (a failed
+    // enrichment can also strand needs_data, where offering the saveWord
+    // upgrade is equally right). Chunk-less rows (create/update responses)
+    // can't derive this, so the note-only create and saveWord handlers pass
+    // the answer explicitly; the remaining chunk-less paths only ever touch
+    // non-stub highlights and default to false.
+    noteOnly: opts?.noteOnly ?? ('card_status' in row && row.card_status === 'needs_data'),
     createdAt: new Date(row.created_at).toISOString(),
   }
 }
@@ -87,7 +96,7 @@ export const HighlightsRouter = (
         })
       }
       const highlights = await highlightsRepository.listBySessionId(input.sessionId)
-      return { data: highlights.map(toHighlightDto) }
+      return { data: highlights.map((h) => toHighlightDto(h)) }
     }),
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
@@ -145,7 +154,9 @@ export const HighlightsRouter = (
           noteOnlyDependencies
         )
         if (chatSeedPrompt) await enqueueSeedBestEffort(inserted.id)
-        return { data: toHighlightDto(inserted) }
+        // The bare insert row carries no chunk join, so state the stub-ness the
+        // transaction just created.
+        return { data: toHighlightDto(inserted, { noteOnly: true }) }
       }
 
       // Pre-save ghost adoption: the client swapped its local selection to the
@@ -263,6 +274,44 @@ export const HighlightsRouter = (
         throw errors.CONFLICT({ data: { errors: [{ message: 'Study intent already applied' }] } })
       }
       return { data: toHighlightDto(updated) }
+    }),
+
+    // Upgrade a note-only stub into a full study card: persist the chosen study
+    // intent, then run the normal enrichment. The enrich job RE-POINTS the
+    // stub's still-needs_data card to the enriched lemma+sense lookup (see
+    // insertCardForHighlightIdempotent) — same card row, so the existing note
+    // and seeded chat survive; the card auto-keeps once basic data lands,
+    // exactly like a full save.
+    saveWord: implementer.saveWord.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      const existing = await highlightsRepository.findById(input.highlightId)
+      if (!existing || existing.study_session_id !== input.sessionId) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Highlight not found' }] } })
+      }
+      // The applied_at-guarded update doubles as the stub check: once enrichment
+      // applied an intent the word IS saved and there is nothing to upgrade.
+      const updated = await highlightsRepository.updateStudyIntent(input.highlightId, input.studyIntent)
+      if (!updated) {
+        throw errors.CONFLICT({ data: { errors: [{ message: 'Word already saved' }] } })
+      }
+      // No debounce: unlike a fresh selection there is no mis-selection window
+      // to absorb (the user explicitly confirmed), and the worker's existence
+      // re-check already covers a delete racing the job. NOT best-effort — the
+      // enqueue IS the upgrade, so a failure must surface for a retry.
+      await processingJobsRepository.enqueue({
+        kind: 'enrich_highlight',
+        sessionId: input.sessionId,
+        highlightId: input.highlightId,
+        userId,
+        runAfter: new Date(),
+      })
+      // The upgrade is committed — report the highlight as no longer note-only
+      // so the client renders the normal saved state immediately.
+      return { data: toHighlightDto(updated, { noteOnly: false }) }
     }),
 
     delete: implementer.delete.handler(async ({ input, context, errors }) => {

@@ -36,7 +36,10 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   Remove). Opening it and running **Generate full exploration** (or generating
   data via chat) fills its basic data and **auto-keeps it** — the on-demand
   exploration mints the session context blob lazily on first use even though the
-  note-only session never ran an `enrich_highlight` job.
+  note-only session never ran an `enrich_highlight` job. The reader's gloss
+  sheet offers a third upgrade path: its stub state's **Save** runs
+  `highlights.saveWord` → the normal `enrich_highlight` pipeline (see
+  `docs/READER-SPEC.md` → note-only stub state).
 - Filter and search across the single list. There is no bulk Keep all / Reject
   all and no generic card-status mutation: cards keep themselves once they gain
   basic data, so the only user-driven transition is `cards.removeFromSession`.

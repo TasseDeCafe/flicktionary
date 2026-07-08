@@ -53,6 +53,9 @@ const toHighlightDto = (row: DbHighlight) => {
     fastGloss: row.fast_gloss,
     studyIntent: parsedIntent.success ? parsedIntent.data : null,
     chunkId: null,
+    // A switch always creates a FULL-lane highlight (its enrich job is enqueued
+    // in the same transaction), never a note-only stub.
+    noteOnly: false,
     createdAt: new Date(row.created_at).toISOString(),
   }
 }

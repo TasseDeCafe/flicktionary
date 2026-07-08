@@ -548,6 +548,10 @@ export interface SavedHighlightDto {
   // The materialized term id (null pre-enrich). When set, the saved popover edits
   // live facets instead of the stored intent.
   readonly chunkId: string | null
+  // True while the WORD is not saved as a study card (note-only stub: the card
+  // only hosts the note/chat). The saved popover renders "Note saved" with an
+  // editable study picker and offers the save-flicktionary-word upgrade.
+  readonly noteOnly: boolean
 }
 
 // Load the saved highlights for the current video so the overlay can paint
@@ -584,6 +588,22 @@ export interface DeleteFlicktionaryHighlightMessage extends MessageWithId {
 }
 
 export interface DeleteFlicktionaryHighlightResponse {
+  readonly success: boolean
+  readonly error?: string
+}
+
+// Upgrade a note-only stub into a full study card — wraps highlights.saveWord
+// (persists the chosen study intent + runs the normal enrichment; the stub's
+// card fills in place, so the note and its seeded chat survive).
+export interface SaveFlicktionaryWordMessage extends MessageWithId {
+  readonly command: 'save-flicktionary-word'
+  readonly sessionId: string
+  readonly highlightId: string
+  // Untouched study options → null → the backend keep-time default applies.
+  readonly studyIntent: SaveWordStudyIntent | null
+}
+
+export interface SaveFlicktionaryWordResponse {
   readonly success: boolean
   readonly error?: string
 }

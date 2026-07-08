@@ -7,7 +7,13 @@ export type DbHighlight = Tables<'highlights'>
 // A highlight joined to its materialized term: chunk_id is cards.user_lookup_id
 // for the highlight's card (the partial unique index on cards(highlight_id)
 // guarantees at most one). Null until the enrich job materializes the card.
-export type DbHighlightWithChunk = DbHighlight & { chunk_id: string | null }
+// card_status rides along to distinguish a note-only stub (a card parked in
+// needs_data — full-lane cards auto-keep within their enrich run) from a real
+// study card.
+export type DbHighlightWithChunk = DbHighlight & {
+  chunk_id: string | null
+  card_status: Tables<'cards'>['status'] | null
+}
 
 export type HighlightInsertParams = {
   studySessionId: string
@@ -55,7 +61,7 @@ const insertHighlight = async (params: HighlightInsertParams, executor: postgres
 
 const listBySessionId = async (studySessionId: string): Promise<DbHighlightWithChunk[]> => {
   return (await sql`
-    SELECT h.*, c.user_lookup_id AS chunk_id
+    SELECT h.*, c.user_lookup_id AS chunk_id, c.status AS card_status
     FROM public.highlights h
     LEFT JOIN public.cards c ON c.highlight_id = h.id
     WHERE h.study_session_id = ${studySessionId}

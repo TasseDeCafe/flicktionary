@@ -36,6 +36,7 @@ const toSavedHighlightDtos = (
       formScope: 'lemma' | 'form'
     } | null
     chunkId: string | null
+    noteOnly: boolean
   }>,
   segmentIdByIndex: Record<string, string>
 ): SavedHighlightDto[] => {
@@ -60,6 +61,7 @@ const toSavedHighlightDtos = (
       fastGloss: row.fastGloss,
       studyIntent: row.studyIntent,
       chunkId: row.chunkId,
+      noteOnly: row.noteOnly,
     })
   }
   return out

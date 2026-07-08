@@ -619,7 +619,9 @@ msgstr "Auxiliaire"
 msgid "Avatar"
 msgstr "Avatar"
 
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/navigation/components/modal-screen.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Back"
 msgstr "Retour"
 
@@ -1023,6 +1025,10 @@ msgstr "Impossible de renommer — veuillez réessayer."
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Could not save the note."
 msgstr "Impossible d'enregistrer la note."
+
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+msgid "Could not save the word."
+msgstr "Impossible d'enregistrer le mot."
 
 #: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Could not save your level. Please try again."
@@ -1747,6 +1753,10 @@ msgstr "Échec de l'enregistrement du surlignage"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Failed to save term"
 msgstr "Échec de l'enregistrement du terme"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to save the word"
+msgstr "Échec de l'enregistrement du mot"
 
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to send chat message"
@@ -2776,9 +2786,16 @@ msgstr "Pas tout à fait."
 msgid "Notable forms"
 msgstr "Formes remarquables"
 
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Note saved"
 msgstr "Note enregistrée"
+
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Note saved — click to remove highlight"
+msgstr "Note enregistrée — cliquer pour supprimer la surbrillance"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Notes"

@@ -605,7 +605,9 @@ msgstr "Auxiliary"
 msgid "Avatar"
 msgstr "Avatar"
 
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/navigation/components/modal-screen.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Back"
 msgstr "Back"
 
@@ -1005,6 +1007,10 @@ msgstr "Could not rename — please try again."
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Could not save the note."
 msgstr "Could not save the note."
+
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+msgid "Could not save the word."
+msgstr "Could not save the word."
 
 #: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Could not save your level. Please try again."
@@ -1720,6 +1726,10 @@ msgstr "Failed to save highlight"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Failed to save term"
 msgstr "Failed to save term"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to save the word"
+msgstr "Failed to save the word"
 
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to send chat message"
@@ -2738,9 +2748,16 @@ msgstr "Not quite."
 msgid "Notable forms"
 msgstr "Notable forms"
 
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Note saved"
 msgstr "Note saved"
+
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Note saved — click to remove highlight"
+msgstr "Note saved — click to remove highlight"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Notes"

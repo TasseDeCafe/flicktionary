@@ -161,6 +161,7 @@ export default class SaveWordHandler {
         // until the enrich job materializes the term.
         studyIntent: created.studyIntent,
         chunkId: created.chunkId,
+        noteOnly: created.noteOnly,
       },
       sessionId: cached.sessionId,
       targetLanguage: cached.targetLanguage,

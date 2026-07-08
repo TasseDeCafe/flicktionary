@@ -1189,6 +1189,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 onNotePatched={(note, presetTags) =>
                   savedStore.getState().patchNote(savedPopoverHighlight.id, note, presetTags)
                 }
+                onWordSaved={(studyIntent) =>
+                  savedStore.getState().patchWordSaved(savedPopoverHighlight.id, studyIntent)
+                }
                 onClose={closeSavedPopover}
                 portalContainer={popoverContainer}
                 onPointerEnter={() => {

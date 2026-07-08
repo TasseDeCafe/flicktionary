@@ -93,6 +93,12 @@ export const HighlightSchema = z.object({
   // card/term (cards.highlight_id → cards.user_lookup_id). Null pre-enrich. When
   // set, the saved gloss sheet switches from intent-editing to live-facet editing.
   chunkId: z.string().uuid().nullable(),
+  // True while the WORD is not saved as a study card: the highlight's card is
+  // parked in needs_data — the state a note-only save creates (stub card whose
+  // only job is hosting the note/chat). The gloss sheets render this as "note
+  // saved" and offer highlights.saveWord to upgrade; flips false once the
+  // upgrade's enrich job fills the card and auto-keeps it.
+  noteOnly: z.boolean(),
   createdAt: z.string(),
 })
 export type Highlight = z.infer<typeof HighlightSchema>
