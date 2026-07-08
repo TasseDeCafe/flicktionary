@@ -3331,6 +3331,10 @@ msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire "
 "enregistré. Appuyez sur un terme pour l'évaluer ; les termes non "
 "appuyés sont considérés comme reconnus lorsque vous avancez."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Reading file…"
+msgstr "Lecture du fichier…"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Reading history"
 msgstr "Historique de lecture"

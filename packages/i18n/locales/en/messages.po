@@ -3286,6 +3286,10 @@ msgstr "Read short generated texts that weave in your kept vocabulary. Tap a "
 "term to rate it; terms you don't tap are scored as recognized when you "
 "advance."
 
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+msgid "Reading file…"
+msgstr "Reading file…"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Reading history"
 msgstr "Reading history"

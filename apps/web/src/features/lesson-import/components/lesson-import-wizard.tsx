@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ArrowRight, FileSpreadsheet, Languages, Upload, X } from 'lucide-react'
+import { ArrowRight, FileSpreadsheet, Languages, LoaderCircle, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
@@ -86,24 +86,34 @@ export const LessonImportWizard = () => {
     [profiles, effectiveTarget]
   )
 
+  const [isReadingFile, setIsReadingFile] = useState(false)
   const handleFile = async (file: File) => {
-    const normalized = await normalizeLessonFile(file)
-    if (!normalized.ok) {
-      toast.error(
-        normalized.reason === 'unsupported' ? t`Use a .md, .txt, or .xlsx file.` : t`The file appears to be empty.`
-      )
-      return
+    setIsReadingFile(true)
+    try {
+      // SheetJS parses synchronously and a big workbook blocks the main thread
+      // for seconds — yield until after the next paint so the button's reading
+      // state is actually visible before the block starts.
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)))
+      const normalized = await normalizeLessonFile(file)
+      if (!normalized.ok) {
+        toast.error(
+          normalized.reason === 'unsupported' ? t`Use a .md, .txt, or .xlsx file.` : t`The file appears to be empty.`
+        )
+        return
+      }
+      if (normalized.kind === 'sheets') {
+        setSheets(normalized.sheets)
+        setSelectedSheetIdxs(new Set())
+        setText('')
+      } else {
+        setText(normalized.markdown)
+        setSheets(null)
+      }
+      setFileName(file.name)
+      if (!titleTouched) setTitle(suggestTitleFromFileName(file.name))
+    } finally {
+      setIsReadingFile(false)
     }
-    if (normalized.kind === 'sheets') {
-      setSheets(normalized.sheets)
-      setSelectedSheetIdxs(new Set())
-      setText('')
-    } else {
-      setText(normalized.markdown)
-      setSheets(null)
-    }
-    setFileName(file.name)
-    if (!titleTouched) setTitle(suggestTitleFromFileName(file.name))
   }
 
   const clearSheets = () => {
@@ -264,12 +274,16 @@ export const LessonImportWizard = () => {
             type='button'
             variant='secondary'
             size='xl'
-            disabled={isCreating}
+            disabled={isCreating || isReadingFile}
             onClick={() => fileInputRef.current?.click()}
             className='w-full'
           >
-            <Upload />
-            {fileName ? t`Replace file (${fileName})` : t`Upload a file (.md or .xlsx)`}
+            {isReadingFile ? <LoaderCircle className='animate-spin' /> : <Upload />}
+            {isReadingFile
+              ? t`Reading file…`
+              : fileName
+                ? t`Replace file (${fileName})`
+                : t`Upload a file (.md or .xlsx)`}
           </Button>
         </div>
 

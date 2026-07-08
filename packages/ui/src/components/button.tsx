@@ -13,7 +13,11 @@ const buttonVariants = cva(
           'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
           'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        // --secondary sits at 96% lightness, so a /80 alpha hover blends back
+        // into a white page invisibly — hover/press need genuinely darker fills
+        // (same approach as ghost's active state, with dark-theme overrides).
+        secondary:
+          'bg-secondary text-secondary-foreground hover:bg-slate-200 active:bg-slate-300 dark:hover:bg-secondary/80 dark:active:bg-secondary/60',
         ghost:
           'hover:bg-accent hover:text-accent-foreground active:bg-slate-200 active:text-accent-foreground dark:hover:bg-accent/50 dark:active:bg-accent',
         link: 'text-primary underline-offset-4 hover:underline',
