@@ -172,15 +172,19 @@ export const materializeBasicDataChunks = async (params: {
         targetExample: chunk.targetExample,
         nativeExample: hideTranslationFields ? null : chunk.nativeExample,
         grammarPatch,
+        zipf: chunk.zipf,
       })
-    } else if (grammarPatch) {
+    } else if (grammarPatch || chunk.zipf != null) {
       // Existing row already had content from an earlier session. Don't
       // touch the user's text edits, but still merge LLM-only grammar facts
       // the model emitted this round. Wiktionary-owned fields stay pinned
-      // once the row has been grounded.
+      // once the row has been grounded. The zipf estimate rides along here
+      // too — this branch is the only update path for rows that already have
+      // content, so without it pre-existing terms would never receive one.
       await userLookupsRepository.updateContent({
         id: lookup.id,
         grammarPatch,
+        zipf: chunk.zipf,
       })
     }
 

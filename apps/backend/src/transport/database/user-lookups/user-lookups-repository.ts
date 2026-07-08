@@ -1,5 +1,6 @@
 import postgres from 'postgres'
 import { beginTx, sql } from '../postgres-client'
+import { newTermNotDecayedSql, newTermOrderSql, newTermTierSql } from '../../../service/practice/new-term-priority'
 import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
 import {
@@ -318,6 +319,25 @@ const findOrCreate = async (
   return result[0]!
 }
 
+// Bump the new-term priority signals at a user-intent boundary (saving a
+// highlight, confirming a lesson import). encounter_count >= 2 is the tier-1
+// "revealed demand" signal, and last_encountered_at drives freshness + decay.
+// The collapse window makes retries and multi-chunk runs idempotent regardless
+// of call site: a bump within an hour of the last one is a no-op, so a worker
+// retry (or a batch touching the same lookup twice) can never inflate a single
+// save into tier 1. Rows created moments ago (last_encountered_at defaults to
+// NOW()) are skipped for the same reason — their creation IS the encounter.
+const recordEncounter = async (userLookupIds: string[]): Promise<void> => {
+  if (userLookupIds.length === 0) return
+  await sql`
+    UPDATE public.user_lookups
+    SET encounter_count = encounter_count + 1,
+        last_encountered_at = NOW()
+    WHERE id = ANY(${userLookupIds}::uuid[])
+      AND last_encountered_at < NOW() - INTERVAL '1 hour'
+  `
+}
+
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
 // pass an explicit empty string or the corresponding clear flag.
@@ -334,6 +354,7 @@ const updateContent = async (params: {
   explorationExtrasPatch?: Record<string, unknown> | null
   grammarPatch?: Record<string, unknown> | null
   markGrammarUserEdited?: boolean
+  zipf?: number | null
 }): Promise<void> => {
   const extras = params.explorationExtrasPatch ?? null
   const extrasJson = extras ? sql.json(extras as unknown as postgres.JSONValue) : null
@@ -354,6 +375,7 @@ const updateContent = async (params: {
       END,
       exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
       grammar = grammar || COALESCE(${grammarJson}::jsonb, '{}'::jsonb),
+      zipf_estimate = COALESCE(${params.zipf ?? null}, zipf_estimate),
       grammar_user_edited_at = CASE
         WHEN ${params.markGrammarUserEdited ?? false} THEN NOW()
         ELSE grammar_user_edited_at
@@ -506,6 +528,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL
           AND rf.data_status = 'ready' AND rf.srs_state IS NULL
           AND rf.leech_parked_at IS NULL
+          AND ${newTermNotDecayedSql()}
       )::int AS new_count,
       COUNT(*) FILTER (
         WHERE rf.introduced_at >= CURRENT_DATE
@@ -541,6 +564,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
           AND pf.data_status = 'ready'
           AND pf.srs_state IS NULL
           AND pf.leech_parked_at IS NULL
+          AND ${newTermNotDecayedSql()}
       )::int AS production_new_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
@@ -585,6 +609,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       AND f.leech_parked_at IS NULL
       AND f.srs_state IS NULL
       AND NOT (f.target_form = '' AND f.skill IN ('meaning_recognition', 'meaning_production'))
+      AND ${newTermNotDecayedSql()}
     GROUP BY ul.target_language
   `
   const optInByLanguage = new Map(optInResult.map((row) => [row.target_language as string, row]))
@@ -705,10 +730,17 @@ const listReviewTerms = async (params: {
 
   // Four capped buckets unioned, then spaced. Priority: 1 due-review,
   // 2 due-learning, 3 new. A bucket with a 0 LIMIT contributes nothing.
+  //
+  // The new buckets select and serve by tier (see new-term-priority.ts), and
+  // never-introduced terms outside the decay window fall off entirely. The
+  // tier is selected as a column (due buckets emit a constant) because the
+  // spaced CTE window and the final ORDER BY re-order after the bucket LIMITs
+  // — tiering only the bucket ORDER BY would tier *selection* while still
+  // *serving* FIFO.
   const rows = (await sql`
     WITH selected AS (
       (
-        SELECT ul.*, ${facetCols}, 1 AS facet_priority
+        SELECT ul.*, ${facetCols}, 1 AS facet_priority, 0 AS new_tier
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
@@ -719,7 +751,7 @@ const listReviewTerms = async (params: {
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 2 AS facet_priority
+        SELECT ul.*, ${facetCols}, 2 AS facet_priority, 0 AS new_tier
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
@@ -730,36 +762,40 @@ const listReviewTerms = async (params: {
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
           AND f.srs_state IS NULL
           AND ${primaryCitation}
-        ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+          AND ${newTermNotDecayedSql()}
+        ORDER BY ${newTermOrderSql()}, f.target_form ASC
         LIMIT ${newLimit}
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
           AND f.srs_state IS NULL
           AND NOT ${primaryCitation}
-        ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+          AND ${newTermNotDecayedSql()}
+        ORDER BY ${newTermOrderSql()}, f.target_form ASC
         LIMIT ${optInNewLimit}
       )
     ),
     spaced AS (
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY id
-        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST, created_at ASC, headword ASC, sense ASC, target_form ASC
+        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST, new_tier ASC, zipf_estimate DESC NULLS LAST,
+          created_at ASC, headword ASC, sense ASC, target_form ASC
       ) AS sibling_rank
       FROM selected
     )
     SELECT * FROM spaced
-    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST, created_at ASC, headword ASC, sense ASC, target_form ASC
+    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST, new_tier ASC, zipf_estimate DESC NULLS LAST,
+      created_at ASC, headword ASC, sense ASC, target_form ASC
   `) as DbUserLookupWithFacet[]
   return rows
 }
@@ -1036,8 +1072,9 @@ const listParkedTerms = async (params: {
 // scaffolding right now: kept, live term; facet exists, enabled, never
 // reviewed, not parked. The by-(user, language) counterpart of warmup.ts's
 // session-scoped eligibleToEnter — feeds the composed queue's auto-warm-up
-// discovery. Oldest-added first, so the daily-new cap admits terms in the same
-// order the flashcard new bucket serves them.
+// discovery. Tier-ordered (see new-term-priority.ts), so the daily-new cap
+// admits terms in the same order the flashcard new bucket serves them; decayed
+// never-encountered-lately terms are off the shelf here too.
 const listEligibleNewCitationFacets = async (params: {
   userId: string
   targetLanguage: string
@@ -1056,7 +1093,8 @@ const listEligibleNewCitationFacets = async (params: {
       AND f.disabled_at IS NULL
       AND f.srs_state IS NULL
       AND f.leech_parked_at IS NULL
-    ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
+      AND ${newTermNotDecayedSql()}
+    ORDER BY ${newTermOrderSql()}
   `) as Array<{ id: string }>
   return rows.map((row) => row.id)
 }
@@ -1818,6 +1856,7 @@ export interface UserLookupsRepositoryInterface {
     },
     executor?: postgres.Sql
   ) => Promise<DbUserLookup>
+  recordEncounter: (userLookupIds: string[]) => Promise<void>
   updateContent: (params: {
     id: string
     translation?: string | null
@@ -1829,6 +1868,7 @@ export interface UserLookupsRepositoryInterface {
     explorationExtrasPatch?: Record<string, unknown> | null
     grammarPatch?: Record<string, unknown> | null
     markGrammarUserEdited?: boolean
+    zipf?: number | null
   }) => Promise<void>
   applyGroundingPatch: (params: { id: string; grammarPatch: Record<string, unknown> }) => Promise<void>
   renameKey: (params: {
@@ -1938,6 +1978,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listHeadwordSensesRelevantToTrack,
     findPotentialExistingSensesByHeadwords,
     findOrCreate,
+    recordEncounter,
     updateContent,
     applyGroundingPatch,
     renameKey,

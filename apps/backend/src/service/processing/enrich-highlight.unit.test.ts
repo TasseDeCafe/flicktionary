@@ -71,6 +71,7 @@ const highlightChunk = {
   targetExample: null,
   nativeExample: null,
   belowCefr: false,
+  zipf: null,
 }
 
 const createDeps = () => {
@@ -109,6 +110,7 @@ const createDeps = () => {
         grammar_user_edited_at: null,
       }),
       updateContent: vi.fn().mockResolvedValue(undefined),
+      recordEncounter: vi.fn().mockResolvedValue(undefined),
     },
     usersRepository: {},
     userTargetLanguagePrefsRepository: {},

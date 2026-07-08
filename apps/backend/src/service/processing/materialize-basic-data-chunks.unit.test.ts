@@ -21,6 +21,7 @@ const llmChunk = (overrides: Partial<BasicDataChunk> = {}): BasicDataChunk => ({
   targetExample: 'Una palabra basta.',
   nativeExample: 'One word is enough.',
   belowCefr: false,
+  zipf: null,
   ...overrides,
 })
 
@@ -109,6 +110,7 @@ describe('materializeBasicDataChunks — translations-off is a generation pref, 
     expect(repos.updateContent).toHaveBeenCalledWith({
       id: lookupId,
       grammarPatch: { pos: 'noun' },
+      zipf: null,
     })
   })
 
@@ -120,6 +122,21 @@ describe('materializeBasicDataChunks — translations-off is a generation pref, 
     await run({ chunk: llmChunk(), hideTranslationFields: true, repos })
 
     expect(repos.updateContent).not.toHaveBeenCalled()
+  })
+
+  it('existing chunk with a zipf estimate but no grammar: still writes the zipf', async () => {
+    // The grammar-patch branch is the only update path for rows that already
+    // have content — the zipf estimate must reach them through it.
+    const repos = createRepos({ translation: 'manual translation', definition: 'existing def' })
+
+    await run({ chunk: llmChunk({ zipf: 4.2 }), hideTranslationFields: true, repos })
+
+    expect(repos.updateContent).toHaveBeenCalledTimes(1)
+    expect(repos.updateContent).toHaveBeenCalledWith({
+      id: lookupId,
+      grammarPatch: null,
+      zipf: 4.2,
+    })
   })
 })
 

@@ -23,6 +23,9 @@ const newRow: DbUserLookupWithFacet = {
   count: 1,
   created_at: '2026-01-01T00:00:00Z',
   deleted_at: null,
+  zipf_estimate: null,
+  last_encountered_at: '2026-01-01T00:00:00Z',
+  encounter_count: 1,
   // Facet (citation recognition) state.
   skill: 'meaning_recognition',
   target_form: '',

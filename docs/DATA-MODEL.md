@@ -235,6 +235,19 @@ user_lookup                          -- cross-source dedup + canonical user voca
   -- (disabled_at IS NULL) (meaning_production,'') facet, surfaced on the
   -- wire as a DERIVED `learningMode` for read-only display.
   -- See docs/SRS.md §1 for the study_facets schema + the full data model.
+  zipf_estimate       numeric(3,1)? -- LLM-estimated continuous Zipf frequency of the
+                                    -- headword (0-8, one decimal; ~7 = "the", ~2 =
+                                    -- rare). Emitted by the basic-data pass; backfilled
+                                    -- by scripts/backfill-zipf.ts. NULL = not yet
+                                    -- estimated. Orders tier 3 of the new-term queue
+                                    -- (docs/SRS.md §4).
+  last_encountered_at timestamptz   -- refreshed by recordEncounter() at user-intent
+                                    -- boundaries only (highlight-save enrichment,
+                                    -- lesson-import confirm). Drives the tier-2
+                                    -- freshness window and the 90-day new-term decay.
+  encounter_count     int default 1 -- bumped by the same boundaries, 1-hour collapse
+                                    -- window (retries can't inflate it). >= 2 = tier-1
+                                    -- "revealed demand" in the new-term queue.
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)
