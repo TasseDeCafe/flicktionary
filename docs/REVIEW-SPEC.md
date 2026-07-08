@@ -44,7 +44,7 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   inserts cards in `needs_data`; user highlights bypass the CEFR floor) and then
   auto-keep once basic data lands. Vocabulary membership and the recognition
   floor happen on the keep transition, which is now automatic.
-- **Floor guard:** a **kept** term (`count > 0`, not deleted) must always keep ≥1 enabled facet — `chunks.setFacetEnabled` rejects (409) a disable that would zero out its last enabled facet (delete the term instead). Pre-keep terms keep their freedom to drop to zero. The focus view's per-target last-skill lock is the friendly UI front for this invariant; the backend guard is the authoritative safety net.
+- **Floor guard:** a **kept** term (`count > 0`, not deleted) must always keep ≥1 enabled facet — `chunks.setFacetEnabled` rejects (409) a disable that would zero out its last enabled facet (delete the term instead). Pre-keep terms keep their freedom to drop to zero. The focus view's last-skill lock is the friendly UI front for this invariant and matches its per-term scope: a toggle locks only when it is the term's last enabled facet across ALL targets, so a lemma can drop to zero skills while a form still carries one (the state a form-scoped lesson import produces). The backend guard is the authoritative safety net.
 - The enriching/failed **placeholder rows** + status polling stay (a highlight
   still being enriched has no card yet), and a **retry** affordance for failed
   enrichment.

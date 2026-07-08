@@ -249,10 +249,9 @@ user_lookup                          -- cross-source dedup + canonical user voca
   -- See docs/SRS.md §1 for the study_facets schema + the full data model.
   zipf_estimate       numeric(3,1)? -- LLM-estimated continuous Zipf frequency of the
                                     -- headword (0-8, one decimal; ~7 = "the", ~2 =
-                                    -- rare). Emitted by the basic-data pass; backfilled
-                                    -- by scripts/backfill-zipf.ts. NULL = not yet
-                                    -- estimated. Orders tier 3 of the new-term queue
-                                    -- (docs/SRS.md §4).
+                                    -- rare). Emitted by the basic-data pass. NULL =
+                                    -- not yet estimated (sorts last). Orders tier 3
+                                    -- of the new-term queue (docs/SRS.md §4).
   last_encountered_at timestamptz   -- refreshed by recordEncounter() at user-intent
                                     -- boundaries only (highlight-save enrichment,
                                     -- lesson-import confirm). Drives the tier-2
