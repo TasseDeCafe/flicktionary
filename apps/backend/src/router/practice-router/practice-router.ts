@@ -557,7 +557,11 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       }
       const isMc = exercise.exercise_type === 'mc_cloze' || exercise.exercise_type === 'mc_comprehension'
       const hasSelectedIndex = 'selectedIndex' in input.response
-      if (isMc !== hasSelectedIndex) {
+      const isGiveUp = 'giveUp' in input.response
+      // Give-up (reveal without a guess) only exists for typed cloze: MC types
+      // can always guess, use_in_sentence has no canonical answer to reveal.
+      const shapeMatches = isGiveUp ? exercise.exercise_type === 'production_cloze' : isMc === hasSelectedIndex
+      if (!shapeMatches) {
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: `Response shape does not match exercise type ${exercise.exercise_type}` }] },
         })
@@ -578,12 +582,16 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       if (isMc && hasSelectedIndex && 'selectedIndex' in input.response) {
         correctIndex = payload.answerIndex as number
         correct = gradeMcAnswer({ answerIndex: correctIndex }, input.response.selectedIndex)
-      } else if (exercise.exercise_type === 'production_cloze' && 'text' in input.response) {
+      } else if (exercise.exercise_type === 'production_cloze') {
         correctAnswer = payload.answer as string
-        correct = gradeProductionClozeAnswer(
-          { answer: correctAnswer, acceptedForms: (payload.acceptedForms as string[] | undefined) ?? [] },
-          input.response.text
-        )
+        // Give-up grades as a plain miss: same consume, same (lack of) rehab
+        // credit, same bank refill — the only difference is the client copy.
+        correct =
+          'text' in input.response &&
+          gradeProductionClozeAnswer(
+            { answer: correctAnswer, acceptedForms: (payload.acceptedForms as string[] | undefined) ?? [] },
+            input.response.text
+          )
       } else if ('text' in input.response) {
         // use_in_sentence — LLM-graded, NEVER gates. Grading failure degrades
         // to attempt-only (counts as correct, no feedback) rather than blocking.

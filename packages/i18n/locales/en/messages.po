@@ -3795,6 +3795,7 @@ msgid "Show"
 msgstr "Show"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -4223,6 +4224,10 @@ msgstr "Texts"
 #: apps/web/src/features/contact/api/contact-hooks.ts
 msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
+
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+msgid "The answer was:"
+msgstr "The answer was:"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "The extension overlays interactive subtitles on streaming video "
