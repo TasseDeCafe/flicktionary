@@ -42,6 +42,16 @@ export class ConfirmBatchNeedsOnboardingError extends Error {
   }
 }
 
+// No CEFR level stored for the batch's target language — the session's
+// cefr_level calibrates card explanations, so we refuse to guess. The client
+// recovers by asking for the level (CefrStep) and retrying the confirm.
+export class ConfirmBatchCefrNotSetError extends Error {
+  constructor() {
+    super('CEFR level is not set for the target language')
+    this.name = 'ConfirmBatchCefrNotSetError'
+  }
+}
+
 export type ConfirmBatchDeps = {
   importBatchesRepository: ImportBatchesRepositoryInterface
   teacherProfilesRepository: TeacherProfilesRepositoryInterface
@@ -100,8 +110,11 @@ export const confirmBatch = async (
     const batch = await deps.importBatchesRepository.claimForConfirm({ batchId, userId }, tx)
     if (!batch) throw new ConfirmBatchConflictError()
 
+    // Throwing here rolls back the status claim, so the batch stays 'ready'
+    // and the confirm can be retried once the level is set.
     const prefs = await deps.userTargetLanguagePrefsRepository.findForLanguage(userId, batch.target_language)
-    const cefrLevel = prefs?.cefr_level ?? 'B1'
+    const cefrLevel = prefs?.cefr_level
+    if (!cefrLevel) throw new ConfirmBatchCefrNotSetError()
 
     const { session, track } = await getOrCreateLessonSession({ batch, userId, nativeLanguage, cefrLevel }, tx)
     await deps.importBatchesRepository.setStudySessionId({ batchId: batch.id, studySessionId: session.id }, tx)

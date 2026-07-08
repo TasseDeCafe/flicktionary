@@ -32,7 +32,6 @@ export const useGetLessonBatch = (batchId: string) => {
 }
 
 export const useConfirmLessonBatch = (batchId: string) => {
-  const { t } = useLingui()
   return useMutation(
     orpcQuery.lessonImport.confirmBatch.mutationOptions({
       meta: {
@@ -44,7 +43,10 @@ export const useConfirmLessonBatch = (batchId: string) => {
           orpcQuery.chunks.listChunks.key(),
           orpcQuery.practice.dueSummary.key(),
         ],
-        errorMessage: t`Failed to add the cards`,
+        // `showErrorToast: false`: the confirm view's own onError turns
+        // `cefr_not_set` into an inline CEFR picker (no toast) and shows a
+        // generic toast for everything else.
+        showErrorToast: false,
       },
     })
   )

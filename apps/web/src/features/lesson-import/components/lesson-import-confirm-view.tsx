@@ -2,12 +2,16 @@ import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { AlertTriangle, ChevronDown, Sparkles, Trophy } from 'lucide-react'
+import { toast } from 'sonner'
 import type { ImportBatchRow } from '@flicktionary/api-client/orpc-contracts/lesson-import-contract'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Checkbox } from '@flicktionary/ui/components/checkbox'
 import { SkeletonList, Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
+import { CefrStep } from '@/features/sessions/components/cefr-step'
+import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { useConfirmLessonBatch, useGetLessonBatch } from '../api/lesson-import-hooks'
 
 type FacetSkill = ImportBatchRow['proposedSkills'][number]
@@ -39,6 +43,14 @@ export const LessonImportConfirmView = () => {
 
   const { data, isLoading } = useGetLessonBatch(batchId)
   const { mutate: confirmBatch, isPending: isConfirming } = useConfirmLessonBatch(batchId)
+  const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
+
+  // Safety net for batches whose target language has no stored CEFR level
+  // (drafts created before the wizard asked, or entry points that skip the
+  // wizard): the backend rejects the confirm with `cefr_not_set`, we collect
+  // the level here and retry.
+  const [cefrNeeded, setCefrNeeded] = useState(false)
+  const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
   // Decisions are stored as sparse overrides on top of the per-row defaults,
   // so no state needs syncing when the rows query lands or refetches.
@@ -97,6 +109,27 @@ export const LessonImportConfirmView = () => {
             replace: true,
           })
         },
+        onError: (err) => {
+          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          if (code === 'cefr_not_set') {
+            setCefrNeeded(true)
+            return
+          }
+          toast.error(t`Failed to add the cards`)
+        },
+      }
+    )
+  }
+
+  const handleCefrSubmit = () => {
+    if (!cefrChoice || !data) return
+    setCefr(
+      { targetLanguage: data.batch.targetLanguage, cefrLevel: cefrChoice },
+      {
+        onSuccess: () => {
+          setCefrNeeded(false)
+          handleConfirm()
+        },
       }
     )
   }
@@ -135,6 +168,32 @@ export const LessonImportConfirmView = () => {
             </div>
           )}
           <SkeletonList count={8} renderItem={() => <ConfirmRowSkeleton />} className='flex flex-col gap-2' />
+        </div>
+      </ModalScreen>
+    )
+  }
+
+  if (cefrNeeded && data) {
+    return (
+      <ModalScreen onClose={close} closeIcon='x' title={data.batch.sourceTitle}>
+        <div className='flex flex-1 flex-col overflow-hidden'>
+          <div className='flex-1 overflow-y-auto px-4 pb-28'>
+            <div className='mx-auto flex w-full max-w-md flex-col gap-6 pt-8 md:max-w-lg'>
+              <CefrStep targetLanguage={data.batch.targetLanguage} value={cefrChoice} onChange={setCefrChoice} />
+            </div>
+          </div>
+          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+            <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+              <Button
+                size='xl'
+                className='w-full'
+                disabled={!cefrChoice || isSettingCefr || isConfirming}
+                onClick={handleCefrSubmit}
+              >
+                {isSettingCefr || isConfirming ? t`Adding…` : t`Continue`}
+              </Button>
+            </div>
+          </div>
         </div>
       </ModalScreen>
     )

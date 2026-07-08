@@ -11,9 +11,11 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
-import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
+import { CefrStep } from '@/features/sessions/components/cefr-step'
+import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { shouldUseDetectedLanguage } from '@/features/sessions/utils/detected-language'
 import { useCreateLessonBatch, useListTeacherProfiles } from '../api/lesson-import-hooks'
 import {
@@ -26,6 +28,8 @@ import {
 const TITLE_MAX = 200
 const TEXT_MAX = 500_000
 
+type Step = 'form' | 'cefr'
+
 export const LessonImportWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -34,6 +38,7 @@ export const LessonImportWizard = () => {
   const { data: prefs } = useGetUserPrefs()
   const { data: profiles } = useListTeacherProfiles()
   const { mutate: createBatch, isPending: isCreating } = useCreateLessonBatch()
+  const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
 
   const [text, setText] = useState('')
   const [fileName, setFileName] = useState<string | null>(null)
@@ -47,8 +52,17 @@ export const LessonImportWizard = () => {
   const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
   const [languageTouched, setLanguageTouched] = useState(false)
   const [teacherProfileId, setTeacherProfileId] = useState<string | null>(null)
+  const [step, setStep] = useState<Step>('form')
+  const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
   const effectiveTarget = targetLanguage ?? prefs?.lastTargetLanguage ?? null
+
+  // The confirm stamps the user's CEFR level for this language onto the lesson
+  // session (it calibrates card explanations), so a first import in a new
+  // language asks for the level up front — same step the session wizard shows.
+  const requiresCefrStep =
+    !!effectiveTarget && !prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === effectiveTarget)?.cefrLevel
+  const totalSteps = requiresCefrStep ? 2 : 1
 
   // What actually gets imported: the composed selected sheets in picker mode,
   // the textarea content otherwise. Language detection reads the same source.
@@ -139,13 +153,17 @@ export const LessonImportWizard = () => {
   // exceed it, so refuse client-side with a hint instead of a 400 from the API.
   const selectionTooLarge = trimmedText.length > TEXT_MAX
   const canSubmit =
-    !!effectiveTarget && trimmedText.length > 0 && !selectionTooLarge && title.trim().length > 0 && !isCreating
+    !!effectiveTarget &&
+    trimmedText.length > 0 &&
+    !selectionTooLarge &&
+    title.trim().length > 0 &&
+    !isCreating &&
+    !isSettingCefr
 
-  const handleSubmit = () => {
-    if (!effectiveTarget || !canSubmit) return
+  const submitImport = (lang: string) => {
     createBatch(
       {
-        targetLanguage: effectiveTarget,
+        targetLanguage: lang,
         sourceTitle: title.trim(),
         rawText: trimmedText,
         teacherProfileId,
@@ -165,12 +183,49 @@ export const LessonImportWizard = () => {
     )
   }
 
+  const handleSubmit = () => {
+    if (!effectiveTarget || !canSubmit) return
+    if (requiresCefrStep) {
+      setStep('cefr')
+      return
+    }
+    submitImport(effectiveTarget)
+  }
+
+  const handleCefrSubmit = () => {
+    if (!cefrChoice || !effectiveTarget) return
+    const lang = effectiveTarget
+    setCefr({ targetLanguage: lang, cefrLevel: cefrChoice }, { onSuccess: () => submitImport(lang) })
+  }
+
+  const closeWizard = () => void navigate({ to: '/sessions' })
+
+  if (step === 'cefr' && effectiveTarget) {
+    return (
+      <WizardShell
+        title={t`Import lesson notes`}
+        currentStep={2}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('form')}
+        primary={{
+          label: isSettingCefr || isCreating ? t`Starting…` : t`Continue`,
+          onClick: handleCefrSubmit,
+          disabled: !cefrChoice || isSettingCefr || isCreating,
+          loading: isSettingCefr || isCreating,
+        }}
+      >
+        <CefrStep targetLanguage={effectiveTarget} value={cefrChoice} onChange={setCefrChoice} />
+      </WizardShell>
+    )
+  }
+
   return (
     <WizardShell
       title={t`Import lesson notes`}
       currentStep={1}
-      totalSteps={1}
-      onClose={() => void navigate({ to: '/sessions' })}
+      totalSteps={totalSteps}
+      onClose={closeWizard}
       primary={{
         label: isCreating ? t`Starting…` : t`Extract cards`,
         onClick: handleSubmit,

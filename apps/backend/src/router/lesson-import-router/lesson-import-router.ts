@@ -15,6 +15,7 @@ import type { ExtractedLessonRow } from '../../transport/third-party/anthropic/p
 import { createBatch } from '../../service/lesson-import/create-batch'
 import {
   confirmBatch,
+  ConfirmBatchCefrNotSetError,
   ConfirmBatchConflictError,
   ConfirmBatchNeedsOnboardingError,
   mapProposedFacetsToSkills,
@@ -112,7 +113,22 @@ export const LessonImportRouter = (deps: ConfirmBatchDeps): Router => {
         }
         if (error instanceof ConfirmBatchNeedsOnboardingError) {
           throw errors.PRECONDITION_FAILED({
-            data: { errors: [{ message: 'Finish onboarding (native language) first' }] },
+            data: {
+              errors: [{ code: 'native_language_not_set', message: 'Finish onboarding (native language) first' }],
+            },
+          })
+        }
+        if (error instanceof ConfirmBatchCefrNotSetError) {
+          throw errors.PRECONDITION_FAILED({
+            data: {
+              errors: [
+                {
+                  code: 'cefr_not_set',
+                  message: 'CEFR level is not set for the target language',
+                  targetLanguage: batch.target_language,
+                },
+              ],
+            },
           })
         }
         throw error
