@@ -13,7 +13,7 @@ Generic source shape so non-movie content can plug in later without migration.
 ```
 content_source
   id                  uuid pk
-  type                'movie' | 'tv' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc'
+  type                'movie' | 'tv' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc' | 'lesson'
                                    -- 'tv' rows are one content_source per
                                    -- episode (metadata: tmdbShowId, showTitle,
                                    -- seasonNumber, episodeNumber, episodeTitle,
@@ -23,6 +23,10 @@ content_source
                                    -- 'youtube' rows are created by the browser
                                    -- extension; deduped per user on
                                    -- metadata->>'youtubeVideoId'.
+                                   -- 'lesson' rows are one per confirmed
+                                   -- lesson-notes import batch (title = the
+                                   -- upload's title) — unlike 'adhoc' they are
+                                   -- NOT deduped per (user, language).
   title               text
   language            text
   metadata            jsonb        -- tmdb_id, year, isbn, url, etc.
@@ -166,13 +170,21 @@ card_chat_read_state                 -- per-card chat read marker (server-side, 
                                    -- with role='assistant' has created_at > last_read_at.
                                    -- card_id alone is the PK (a card has exactly one owner).
 
-processing_jobs                      -- durable background-job queue (enrichment + ghost nomination)
+processing_jobs                      -- durable background-job queue (enrichment + ghost nomination + lesson extraction)
   id                  uuid pk
-  kind                'enrich_highlight' | 'nominate_window'
+  kind                'enrich_highlight' | 'nominate_window' | 'seed_card_chat' | 'extract_lesson'
                                    -- legacy enum may still include discover_session; worker treats it as no-op
-  study_session_id    uuid -> study_session.id  (ON DELETE CASCADE)
+  study_session_id    uuid? -> study_session.id  (ON DELETE CASCADE; required for
+                                    -- every kind EXCEPT extract_lesson — the
+                                    -- lesson session is created at confirm,
+                                    -- not upload, so extract jobs carry only
+                                    -- an import_batch_id)
+  import_batch_id     uuid? -> import_batches.id (ON DELETE CASCADE; required for
+                                    -- extract_lesson, null otherwise; a partial
+                                    -- unique index keeps one LIVE extract job
+                                    -- per batch)
   highlight_id        uuid? -> highlight.id      (ON DELETE CASCADE; required for
-                                    -- enrich_highlight, null for nominate_window)
+                                    -- enrich_highlight/seed_card_chat, null otherwise)
   window_start_index  int?          -- required for nominate_window
   window_end_index    int?          -- required for nominate_window
   user_id             uuid
@@ -237,10 +249,9 @@ user_lookup                          -- cross-source dedup + canonical user voca
   -- See docs/SRS.md §1 for the study_facets schema + the full data model.
   zipf_estimate       numeric(3,1)? -- LLM-estimated continuous Zipf frequency of the
                                     -- headword (0-8, one decimal; ~7 = "the", ~2 =
-                                    -- rare). Emitted by the basic-data pass; backfilled
-                                    -- by scripts/backfill-zipf.ts. NULL = not yet
-                                    -- estimated. Orders tier 3 of the new-term queue
-                                    -- (docs/SRS.md §4).
+                                    -- rare). Emitted by the basic-data pass. NULL =
+                                    -- not yet estimated (sorts last). Orders tier 3
+                                    -- of the new-term queue (docs/SRS.md §4).
   last_encountered_at timestamptz   -- refreshed by recordEncounter() at user-intent
                                     -- boundaries only (highlight-save enrichment,
                                     -- lesson-import confirm). Drives the tier-2
@@ -318,6 +329,12 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
                                     -- parked the facet
   practice_text_id    uuid? -> practice_text.id (ON DELETE SET NULL)
                                     -- reading-mode context; null for flashcard ratings
+  import_batch_id     uuid? -> import_batches.id (ON DELETE SET NULL)
+                                    -- lesson-import provenance: set only on the
+                                    -- implicit 'again' lapses a confirmed import
+                                    -- applies. Budget queries add
+                                    -- import_batch_id IS NULL, so an import never
+                                    -- eats the day's review allowance
   headword            text
   sense               text
   prev_srs_state      srs_state?    -- pre-rating snapshot of the rated facet
@@ -330,6 +347,57 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
   reverted_at         timestamptz?  -- undo tombstone: reverted events stay
                                     -- (append-only) but leave every budget count
   rated_at            timestamptz
+
+teacher_profiles                     -- lesson-import: stored per-teacher format
+                                     -- descriptions (user-editable prose injected
+                                     -- into the extraction prompt as DESCRIPTIVE
+                                     -- context only — never prescriptive rules)
+  id                  uuid pk
+  user_id             uuid -> auth.users (ON DELETE CASCADE)
+  name                text          -- user-facing identity; unique (user_id, name)
+  language            text
+  profile_text        text
+  created_at          timestamptz
+  updated_at          timestamptz
+
+import_batches                       -- lesson-import extraction drafts. Idempotent
+                                     -- by (user_id, target_language, input_hash)
+                                     -- over non-failed rows (partial unique index):
+                                     -- re-uploading the same text resumes the draft
+                                     -- or routes to the confirmed batch's session.
+                                     -- Drafts expire (worker sweep); confirmed
+                                     -- batches stay (rating-event provenance).
+  id                  uuid pk
+  user_id             uuid -> auth.users (ON DELETE CASCADE)
+  target_language     text
+  teacher_profile_id  uuid? -> teacher_profiles.id (ON DELETE SET NULL)
+  source_title        text
+  raw_text            text          -- the client-normalized markdown, verbatim
+  input_hash          text          -- sha256 of raw_text; the batch identity
+  status              'extracting' | 'ready' | 'failed' | 'confirmed'
+  format_profile      text?         -- the extractor's inferred conventions; the
+                                    -- user can save it as a teacher profile
+  study_session_id    uuid? -> study_session.id (ON DELETE SET NULL; set at confirm)
+  error               text?
+  expires_at          timestamptz
+  created_at          timestamptz
+
+import_batch_rows                    -- one extracted candidate per row, verbatim
+  id                  uuid pk
+  batch_id            uuid -> import_batches.id (ON DELETE CASCADE)
+  row_index           int           -- unique (batch_id, row_index)
+  payload             jsonb         -- the extractor row verbatim (sourceText, type,
+                                    -- headword, targetForm, context, wrongForm,
+                                    -- stressMark, proposedFacets, confidence)
+  lesson_date         date?
+  duplicate_user_lookup_id uuid? -> user_lookup (ON DELETE SET NULL)
+  duplicate_facets    jsonb?        -- resolution snapshot (production state,
+                                    -- enabled skills) for the confirm screen
+  planned_action      'create' | 'add_facet' | 'lapse_and_add_facet' | 'skip'
+  confirmed           bool?         -- null until confirmBatch records the decision
+  created_card_id     uuid? -> card.id (ON DELETE SET NULL; unused in v1 — cards
+                                    -- materialize async in the enrich job)
+  created_at          timestamptz
 
 practice_exercise                    -- durable pre-generated exercise bank for the
                                      -- Strengthen surface (leech rehab gates +

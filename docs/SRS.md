@@ -263,7 +263,7 @@ the stable tiebreak. The tier, from three signal columns on `user_lookups`:
 2. **fresh saves** — `last_encountered_at` within the 14-day freshness window.
 3. **the backlog** — everything else, served most-frequent-first via `zipf_estimate`
    (LLM-estimated continuous Zipf, 0–8 one decimal, emitted by the basic-data pass;
-   pre-existing rows are covered by the one-off `pnpm db:backfill-zipf` script).
+   NULL — not yet estimated — sorts last).
 
 Signals are maintained by `recordEncounter` (user-lookups repository), called only at
 user-intent boundaries — highlight-save enrichment and lesson-import confirm — with a 1-hour

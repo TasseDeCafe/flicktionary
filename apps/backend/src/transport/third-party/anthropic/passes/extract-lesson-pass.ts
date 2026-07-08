@@ -6,7 +6,7 @@ const TOOL_NAME = 'report_extraction'
 
 // One extracted item from a lesson section. The shape (and the prompt below)
 // is the validated prototype spec from
-// docs/proposals/lesson-notes-extractor-prototype.md (Results), with the two
+// old-docs/lesson-notes-extractor-prototype.md (Results), with the two
 // GO adjustments applied: form_correction + sentence_pattern merged into one
 // `grammar` type, and multi-word expression headwords allowed. targetForm is
 // set on grammar AND pronunciation rows whenever a specific inflected form is

@@ -43,8 +43,10 @@ internal model, it uses "chunk".
 
 ### Sources, reader & enrichment — spec lives in `docs/READER-SPEC.md`
 
-Three source kinds feed the same `text_segment` table — movie & TV subtitles (TMDB +
-OpenSubtitles search or manual `.srt` upload), pasted text, and source-less ad-hoc vocab
+Four source kinds feed the same `text_segment` table — movie & TV subtitles (TMDB +
+OpenSubtitles search or manual `.srt` upload), pasted text, lesson-notes imports
+("Import lesson notes": teacher notes → LLM extraction → confirm screen → lesson
+session; see `docs/READER-SPEC.md` → Source content), and source-less ad-hoc vocab
 entries ("Add a word") — plus YouTube/streaming via the companion extension and text
 messages forwarded to the Telegram bot (which replies with a session deep link). The
 mid-source screen is a search bar over the track and a scrollable segment list; that is
@@ -181,7 +183,7 @@ terms` CTA (the session recap). The `cards.exportCsv` backend endpoint still exi
 
 Native-style shell so the eventual React Native port is a translation, not a redesign.
 
-- **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet with three options: `Start a movie or TV session`, `Practice with a text`, `Add a word` (designed to grow as more `content_source.type`s land). `Start a movie or TV session` covers both movies and TV shows via one wizard (an in-wizard `Movie` / `TV show` choice); it fetches subtitles for something the user is watching elsewhere and does **not** play video (in-video capture is the browser extension's job). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Add a word" creates a single card without any source (see `docs/READER-SPEC.md` → Source content → Ad-hoc vocab entries). "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
+- **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet with four options: `Start a movie or TV session`, `Practice with a text`, `Add a word`, `Import lesson notes` (designed to grow as more `content_source.type`s land). `Start a movie or TV session` covers both movies and TV shows via one wizard (an in-wizard `Movie` / `TV show` choice); it fetches subtitles for something the user is watching elsewhere and does **not** play video (in-video capture is the browser extension's job). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Add a word" creates a single card without any source (see `docs/READER-SPEC.md` → Source content → Ad-hoc vocab entries). "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / TV / Texts / Articles / YouTube / Streaming` filter chips with counts so the unified list stays scannable as content types diversify. Synthetic adhoc sessions (the per-(user, language) "Personal vocabulary" pseudo-sessions backing the Add-a-word flow) are filtered out at the query layer — they never appear under any chip. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
   - **TV sessions group by show.** Episodes are one `study_session` each, but the list collapses every TV episode of the same show into a single tappable **show row** (poster + show title + `<lang> · N episodes`), derived client-side from the session list (`deriveTvShows`, keyed on the `tmdbShowId` now carried on the session DTO from `content_source.metadata`) — no per-episode rows clutter the list. Movies and every other source type stay individual rows; show rows and loose rows interleave by recency. The filter-chip counts stay episode-based. Tapping a show row opens the **show detail screen** (a modal drill-in): a scrollable list of its added episodes (`S0xE0y · <episode>`, each linking to its session, each with the same soft-delete trash control) under a **sticky-footer `Add episode`** button. `Add episode` deep-links into the new-session wizard pre-seeded for this show (see "Start a movie or TV session"). The detail screen reads the cached session list, so it opens with no extra fetch; removing the last episode collapses the show and falls back to the Sessions list.
@@ -345,6 +347,21 @@ For a show already in the Sessions list, the `Add episode` button on its show de
 4. If CEFR is not set for the picked language: inline CEFR prompt opens; on save the original submit replays.
 5. Server lazily creates (or reuses) the synthetic `(user, target_language)` adhoc session, appends a segment + highlight, runs a one-shot highlight-only basic-data pass, runs Wiktionary grounding when applicable, returns `{ cardId, sessionId }`.
 6. Frontend lands on the focus view of the new card with `?from=vocabulary`, so chevron-back returns to `/vocabulary`.
+
+**Import lesson notes**
+
+1. From the `+` overlay, pick `Import lesson notes`.
+2. Paste the teacher's notes or upload the exported file (`.md` / `.xlsx`, normalized to
+   markdown client-side with intra-cell bold preserved). Title auto-suggested; language
+   auto-detected (manual pick wins); optionally attach a stored teacher profile.
+3. Background extraction runs (~1 min); the confirm screen shows the proposed rows
+   grouped by consequence (new / already-in-vocabulary / pronunciation / couldn't-parse /
+   wins), pre-checked at extractor confidence ≥ 0.8, with per-row skill chips and a
+   `⚠ lapse` badge where a known card will be rescheduled.
+4. Confirm (LLM-free) creates the lesson session + one highlight per accepted new row;
+   cards materialize through the normal background enrichment; duplicates get facets
+   added and (if in review state) an implicit `again` lapse excluded from the daily
+   review budget. The user lands on the session-vocabulary view.
 
 **Mid-watch**
 
