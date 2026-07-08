@@ -288,6 +288,86 @@ const findPotentialExistingSensesByHeadwords = async (params: {
   return grouped
 }
 
+// One row of the lesson-import duplicate resolution: an existing vocabulary
+// term matching an extracted headword, with the production-citation facet's
+// SRS state and the term's enabled skills — everything the extract job needs
+// to compute the planned action (create / add_facet / lapse_and_add_facet).
+export type HeadwordMatch = {
+  id: string
+  headword: string
+  sense: string
+  count: number
+  // The citation meaning_production facet's state; nulls when absent.
+  productionSrsState: SrsState | null
+  productionEnabled: boolean
+  productionParked: boolean
+  enabledSkills: FacetSkill[]
+}
+
+// Case-insensitive exact-headword matches against the user's live vocabulary.
+// Keyed by the lowercased headword; a headword with several senses returns
+// several rows (the caller picks — sense '' first).
+const listByHeadwords = async (params: {
+  userId: string
+  targetLanguage: string
+  headwords: string[]
+}): Promise<Map<string, HeadwordMatch[]>> => {
+  if (params.headwords.length === 0) return new Map()
+  const result = (await sql`
+    SELECT
+      ul.id,
+      ul.headword,
+      ul.sense,
+      ul.count,
+      pf.srs_state AS production_srs_state,
+      (pf.id IS NOT NULL AND pf.disabled_at IS NULL) AS production_enabled,
+      (pf.leech_parked_at IS NOT NULL) AS production_parked,
+      COALESCE(
+        (
+          SELECT array_agg(DISTINCT f.skill)
+          FROM public.study_facets f
+          WHERE f.user_lookup_id = ul.id AND f.disabled_at IS NULL
+        ),
+        '{}'
+      ) AS enabled_skills
+    FROM public.user_lookups ul
+    LEFT JOIN public.study_facets pf
+      ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.deleted_at IS NULL
+      AND LOWER(ul.headword) = ANY(SELECT LOWER(h) FROM unnest(${params.headwords}::text[]) AS h)
+    ORDER BY ul.headword ASC, ul.sense ASC
+  `) as Array<{
+    id: string
+    headword: string
+    sense: string | null
+    count: number
+    production_srs_state: SrsState | null
+    production_enabled: boolean
+    production_parked: boolean
+    enabled_skills: FacetSkill[]
+  }>
+
+  const grouped = new Map<string, HeadwordMatch[]>()
+  for (const row of result) {
+    const key = row.headword.toLowerCase()
+    const matches = grouped.get(key) ?? []
+    matches.push({
+      id: row.id,
+      headword: row.headword,
+      sense: row.sense ?? '',
+      count: row.count,
+      productionSrsState: row.production_srs_state,
+      productionEnabled: row.production_enabled,
+      productionParked: row.production_parked,
+      enabledSkills: row.enabled_skills ?? [],
+    })
+    grouped.set(key, matches)
+  }
+  return grouped
+}
+
 // Idempotent get-or-insert keyed by (user_id, target_language, headword, sense).
 // Called at card-creation time so the user_lookups row always exists by the
 // time the card row references it. The no-op DO UPDATE clause exists solely so
@@ -327,9 +407,9 @@ const findOrCreate = async (
 // retry (or a batch touching the same lookup twice) can never inflate a single
 // save into tier 1. Rows created moments ago (last_encountered_at defaults to
 // NOW()) are skipped for the same reason — their creation IS the encounter.
-const recordEncounter = async (userLookupIds: string[]): Promise<void> => {
+const recordEncounter = async (userLookupIds: string[], executor: postgres.Sql = sql): Promise<void> => {
   if (userLookupIds.length === 0) return
-  await sql`
+  await executor`
     UPDATE public.user_lookups
     SET encounter_count = encounter_count + 1,
         last_encountered_at = NOW()
@@ -1354,8 +1434,11 @@ const getChunkRowForUser = async (userLookupId: string, userId: string): Promise
 // pronunciation facet has nothing to rehab once its IPA precondition disappears,
 // so it is deleted rather than disabled. Keyed on user_lookup_id (FK-cascade
 // scope); ownership is enforced by the caller.
-const deleteFacet = async (params: { userLookupId: string; skill: FacetSkill; targetForm: string }): Promise<void> => {
-  await sql`
+const deleteFacet = async (
+  params: { userLookupId: string; skill: FacetSkill; targetForm: string },
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  await executor`
     DELETE FROM public.study_facets
     WHERE user_lookup_id = ${params.userLookupId}
       AND skill = ${params.skill}
@@ -1856,7 +1939,12 @@ export interface UserLookupsRepositoryInterface {
     },
     executor?: postgres.Sql
   ) => Promise<DbUserLookup>
-  recordEncounter: (userLookupIds: string[]) => Promise<void>
+  recordEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
+  listByHeadwords: (params: {
+    userId: string
+    targetLanguage: string
+    headwords: string[]
+  }) => Promise<Map<string, HeadwordMatch[]>>
   updateContent: (params: {
     id: string
     translation?: string | null
@@ -1922,7 +2010,10 @@ export interface UserLookupsRepositoryInterface {
     generatedPayload?: Record<string, unknown>
   }) => Promise<void>
   listCandidateFormsForChunk: (userLookupId: string) => Promise<string[]>
-  deleteFacet: (params: { userLookupId: string; skill: FacetSkill; targetForm: string }) => Promise<void>
+  deleteFacet: (
+    params: { userLookupId: string; skill: FacetSkill; targetForm: string },
+    executor?: postgres.Sql
+  ) => Promise<void>
   listParkedTerms: (params: {
     userId: string
     targetLanguage: string
@@ -1979,6 +2070,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findPotentialExistingSensesByHeadwords,
     findOrCreate,
     recordEncounter,
+    listByHeadwords,
     updateContent,
     applyGroundingPatch,
     renameKey,

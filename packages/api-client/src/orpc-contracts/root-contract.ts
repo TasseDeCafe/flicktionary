@@ -24,6 +24,7 @@ import { languagesContract } from './languages-contract'
 import { extensionAuthContract } from './extension-auth-contract'
 import { telegramPairContract } from './telegram-pair-contract'
 import { glossesContract } from './glosses-contract'
+import { lessonImportContract } from './lesson-import-contract'
 
 export const rootOrpcContract = {
   authentication: authenticationContract,
@@ -52,4 +53,5 @@ export const rootOrpcContract = {
   extensionAuth: extensionAuthContract,
   telegramPair: telegramPairContract,
   glosses: glossesContract,
+  lessonImport: lessonImportContract,
 } as const

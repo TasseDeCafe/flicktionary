@@ -9,6 +9,7 @@ export const ContentSourceTypeSchema = z.enum([
   'adhoc',
   'youtube',
   'streaming',
+  'lesson',
 ])
 export type ContentSourceType = z.infer<typeof ContentSourceTypeSchema>
 

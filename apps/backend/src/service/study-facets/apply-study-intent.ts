@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
@@ -62,7 +63,10 @@ export const applyStudyIntent = async (
     intent: StudyIntent
     appliedGuardHighlightId?: string
   },
-  deps: ApplyStudyIntentDeps
+  deps: ApplyStudyIntentDeps,
+  // When given, all facet writes join the caller's transaction (lesson-import
+  // confirm applies intents inside its all-or-nothing batch transaction).
+  executor?: postgres.Sql
 ): Promise<ApplyStudyIntentResult> => {
   const notApplied: ApplyStudyIntentResult = { applied: false, formFacetTargets: [] }
 
@@ -103,11 +107,14 @@ export const applyStudyIntent = async (
     })
   }
 
-  const applied = await deps.studyFacetsRepository.applyStudyIntentFacets({
-    userLookupId: params.userLookupId,
-    facets,
-    guardHighlightId: params.appliedGuardHighlightId,
-  })
+  const applied = await deps.studyFacetsRepository.applyStudyIntentFacets(
+    {
+      userLookupId: params.userLookupId,
+      facets,
+      guardHighlightId: params.appliedGuardHighlightId,
+    },
+    executor
+  )
   if (!applied) return notApplied
 
   // The reconcile guards the CITATION pronunciation facet against missing IPA;
@@ -118,7 +125,8 @@ export const applyStudyIntent = async (
       deps.userLookupsRepository,
       params.userLookupId,
       (lookup.grammar ?? {}) as Record<string, unknown>,
-      lookup.target_language
+      lookup.target_language,
+      executor
     )
   }
 

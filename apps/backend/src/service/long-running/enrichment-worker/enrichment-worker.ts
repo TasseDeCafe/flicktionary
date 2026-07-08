@@ -8,6 +8,7 @@ import type { ProcessingDependencies } from '../../processing/processing-depende
 import { enrichHighlight } from '../../processing/enrich-highlight'
 import { nominateWindow } from '../../processing/nominate-window'
 import { seedCardChatFromNote } from '../../processing/seed-card-chat-from-note'
+import { extractLessonJob } from '../../lesson-import/extract-lesson-job'
 
 export interface EnrichmentWorkerInterface {
   initialize: () => void
@@ -47,12 +48,14 @@ export const EnrichmentWorker = (
     try {
       if (job.kind === 'enrich_highlight') {
         if (!job.highlight_id) throw new Error('enrich_highlight job missing highlight_id')
+        if (!job.study_session_id) throw new Error('enrich_highlight job missing study_session_id')
         await enrichHighlight(
           { sessionId: job.study_session_id, highlightId: job.highlight_id, userId: job.user_id },
           processingDependencies
         )
       } else if (job.kind === 'seed_card_chat') {
         if (!job.highlight_id) throw new Error('seed_card_chat job missing highlight_id')
+        if (!job.study_session_id) throw new Error('seed_card_chat job missing study_session_id')
         await seedCardChatFromNote(
           {
             jobId: job.id,
@@ -66,6 +69,7 @@ export const EnrichmentWorker = (
         if (job.window_start_index === null || job.window_end_index === null) {
           throw new Error('nominate_window job missing window indices')
         }
+        if (!job.study_session_id) throw new Error('nominate_window job missing study_session_id')
         await nominateWindow(
           {
             sessionId: job.study_session_id,
@@ -73,6 +77,12 @@ export const EnrichmentWorker = (
             startIndex: job.window_start_index,
             endIndex: job.window_end_index,
           },
+          processingDependencies
+        )
+      } else if (job.kind === 'extract_lesson') {
+        if (!job.import_batch_id) throw new Error('extract_lesson job missing import_batch_id')
+        await extractLessonJob(
+          { jobId: job.id, importBatchId: job.import_batch_id, userId: job.user_id },
           processingDependencies
         )
       } else {
@@ -100,6 +110,7 @@ export const EnrichmentWorker = (
           if (
             updated?.status === 'failed' &&
             job.kind === 'nominate_window' &&
+            job.study_session_id !== null &&
             job.window_start_index !== null &&
             job.window_end_index !== null
           ) {
@@ -109,6 +120,14 @@ export const EnrichmentWorker = (
               endIndex: job.window_end_index,
             })
           }
+          // Terminal extraction failure must reach the batch, or getBatch polls
+          // 'extracting' forever — mirror of the nominate_window hook above.
+          if (updated?.status === 'failed' && job.kind === 'extract_lesson' && job.import_batch_id !== null) {
+            return processingDependencies.importBatchesRepository.markFailed({
+              batchId: job.import_batch_id,
+              error: message,
+            })
+          }
         })
         .catch((markErr) => logCustomErrorMessageAndError(`markFailedOrRetry failed (id=${job.id})`, markErr))
     } finally {
@@ -116,10 +135,28 @@ export const EnrichmentWorker = (
     }
   }
 
+  // Cheap daily housekeeping piggybacked on the poll loop: expired
+  // lesson-import drafts and expired telegram pending imports both accumulate
+  // otherwise (telegram's deleteExpired previously had no caller at all).
+  const SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000
+  let lastSweepAtMs = 0
+
+  const sweepExpired = async (): Promise<void> => {
+    if (Date.now() - lastSweepAtMs < SWEEP_INTERVAL_MS) return
+    lastSweepAtMs = Date.now()
+    try {
+      await processingDependencies.importBatchesRepository.deleteExpiredDrafts()
+      await processingDependencies.telegramPendingImportsRepository.deleteExpired()
+    } catch (e) {
+      logCustomErrorMessageAndError('expiry sweep failed', e)
+    }
+  }
+
   const tick = async (): Promise<void> => {
     if (ticking) return
     ticking = true
     try {
+      await sweepExpired()
       const jobs = await processingJobsRepository.claimBatch(BATCH_SIZE, workerId, STALE_AFTER_SECONDS)
       if (jobs.length === 0) return
       await Promise.all(jobs.map(runJob))

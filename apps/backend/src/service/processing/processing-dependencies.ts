@@ -13,6 +13,11 @@ import { WiktionaryEntriesRepository } from '../../transport/database/wiktionary
 import { GhostCandidatesRepository } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
 import { NominatedWindowsRepository } from '../../transport/database/nominated-windows/nominated-windows-repository'
 import { StudyFacetsRepository } from '../../transport/database/study-facets/study-facets-repository'
+import { ImportBatchesRepository } from '../../transport/database/import-batches/import-batches-repository'
+import { TeacherProfilesRepository } from '../../transport/database/teacher-profiles/teacher-profiles-repository'
+import { ProcessingJobsRepository } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import { PracticeRatingEventsRepository } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
+import { TelegramPendingImportsRepository } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -28,6 +33,11 @@ import type { WiktionaryEntriesRepositoryInterface } from '../../transport/datab
 import type { GhostCandidatesRepositoryInterface } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
 import type { NominatedWindowsRepositoryInterface } from '../../transport/database/nominated-windows/nominated-windows-repository'
 import type { StudyFacetsRepositoryInterface } from '../../transport/database/study-facets/study-facets-repository'
+import type { ImportBatchesRepositoryInterface } from '../../transport/database/import-batches/import-batches-repository'
+import type { TeacherProfilesRepositoryInterface } from '../../transport/database/teacher-profiles/teacher-profiles-repository'
+import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
+import type { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -45,6 +55,11 @@ export type ProcessingDependencies = {
   ghostCandidatesRepository: GhostCandidatesRepositoryInterface
   nominatedWindowsRepository: NominatedWindowsRepositoryInterface
   studyFacetsRepository: StudyFacetsRepositoryInterface
+  importBatchesRepository: ImportBatchesRepositoryInterface
+  teacherProfilesRepository: TeacherProfilesRepositoryInterface
+  processingJobsRepository: ProcessingJobsRepositoryInterface
+  practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
+  telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
 }
 
 // Repos are stateless factories over the shared postgres client, so the worker
@@ -66,4 +81,9 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   ghostCandidatesRepository: GhostCandidatesRepository(),
   nominatedWindowsRepository: NominatedWindowsRepository(),
   studyFacetsRepository: StudyFacetsRepository(),
+  importBatchesRepository: ImportBatchesRepository(),
+  teacherProfilesRepository: TeacherProfilesRepository(),
+  processingJobsRepository: ProcessingJobsRepository(),
+  practiceRatingEventsRepository: PracticeRatingEventsRepository(),
+  telegramPendingImportsRepository: TelegramPendingImportsRepository(),
 })

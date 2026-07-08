@@ -86,6 +86,9 @@ export const applyTermRating = async (params: {
   wasExplicit?: boolean
   // Reading-mode context for the event row; absent for flashcards.
   practiceTextId?: string
+  // Lesson-import provenance for the event row; set only on the implicit
+  // 'again' lapses a confirmed import applies (excluded from review budgets).
+  importBatchId?: string
   deps: RateTermDependencies
 }): Promise<ApplyTermRatingResult> => {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
@@ -173,6 +176,7 @@ export const applyTermRating = async (params: {
         wasIntroduction: introducedNew,
         causedParking: parked,
         practiceTextId: params.practiceTextId ?? null,
+        importBatchId: params.importBatchId ?? null,
         headword: lookup.headword,
         sense: lookup.sense ?? '',
         prevSrsState: prev.state,

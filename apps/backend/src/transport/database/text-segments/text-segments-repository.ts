@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
@@ -123,13 +124,18 @@ const listAroundIndex = async (textTrackId: string, centerIndex: number, radius:
 // Append a single segment at MAX(index)+1. The transaction-scoped advisory
 // lock serializes appenders for the same text_track so concurrent ad-hoc
 // submissions cannot collide on the unique (text_track_id, index) constraint.
-const appendSegmentAtomic = async (params: {
-  textTrackId: string
-  text: string
-  startMs: number | null
-  endMs: number | null
-}): Promise<DbTextSegment> => {
-  return await beginTx(async (tx) => {
+// Pass `executor` (a transaction handle) to append inside a caller-owned
+// transaction — the advisory lock is xact-scoped either way.
+const appendSegmentAtomic = async (
+  params: {
+    textTrackId: string
+    text: string
+    startMs: number | null
+    endMs: number | null
+  },
+  executor?: postgres.Sql
+): Promise<DbTextSegment> => {
+  const run = async (tx: postgres.Sql): Promise<DbTextSegment> => {
     await tx`
       SELECT pg_advisory_xact_lock(hashtext(${`text_segment_append:${params.textTrackId}`}))
     `
@@ -145,7 +151,8 @@ const appendSegmentAtomic = async (params: {
       RETURNING id, text_track_id, index, text, start_ms, end_ms, tsv
     `) as DbTextSegment[]
     return result[0]!
-  })
+  }
+  return executor ? await run(executor) : await beginTx(run)
 }
 
 export interface TextSegmentsRepositoryInterface {
@@ -156,12 +163,15 @@ export interface TextSegmentsRepositoryInterface {
   findById: (id: string) => Promise<DbTextSegment | null>
   listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
   listAroundIndex: (textTrackId: string, centerIndex: number, radius: number) => Promise<DbTextSegment[]>
-  appendSegmentAtomic: (params: {
-    textTrackId: string
-    text: string
-    startMs: number | null
-    endMs: number | null
-  }) => Promise<DbTextSegment>
+  appendSegmentAtomic: (
+    params: {
+      textTrackId: string
+      text: string
+      startMs: number | null
+      endMs: number | null
+    },
+    executor?: postgres.Sql
+  ) => Promise<DbTextSegment>
 }
 
 export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {

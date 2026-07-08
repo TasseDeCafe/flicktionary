@@ -93,6 +93,9 @@ import {
 import { TelegramBotDependencies } from './service/telegram-bot/handle-telegram-update'
 import { telegramWebhookRouter } from './router/webhooks/telegram/telegram-webhook-router'
 import { TelegramPairRouter } from './router/telegram-pair-router/telegram-pair-router'
+import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
+import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
+import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -422,6 +425,21 @@ export const buildApp = ({
     app.use(API_V1, TelegramPairRouter(telegramBotDependencies))
   }
   app.use(API_V1, GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository))
+  app.use(
+    API_V1,
+    LessonImportRouter({
+      importBatchesRepository: ImportBatchesRepository(),
+      teacherProfilesRepository: TeacherProfilesRepository(),
+      highlightsRepository,
+      processingJobsRepository,
+      textSegmentsRepository,
+      userLookupsRepository,
+      studyFacetsRepository,
+      practiceRatingEventsRepository,
+      userTargetLanguagePrefsRepository,
+      usersRepository,
+    })
+  )
   app.use(
     API_V1,
     PracticeRouter({

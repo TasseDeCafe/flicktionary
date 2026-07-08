@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 
@@ -12,10 +13,13 @@ export const reconcilePronunciationFacet = async (
   userLookupsRepository: UserLookupsRepositoryInterface,
   chunkId: string,
   grammar: Record<string, unknown>,
-  targetLanguage: string
+  targetLanguage: string,
+  // Join a caller-owned transaction — needed when the facet being reconciled
+  // was created in that (still uncommitted) transaction.
+  executor?: postgres.Sql
 ): Promise<void> => {
   const ipa = (grammar?.ipa ?? null) as IpaBagShape | null
   if (!hasDisplayableIpa(ipa, targetLanguage)) {
-    await userLookupsRepository.deleteFacet({ userLookupId: chunkId, skill: 'pronunciation', targetForm: '' })
+    await userLookupsRepository.deleteFacet({ userLookupId: chunkId, skill: 'pronunciation', targetForm: '' }, executor)
   }
 }
