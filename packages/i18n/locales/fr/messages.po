@@ -914,6 +914,8 @@ msgstr "Contexte (facultatif)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
@@ -1503,7 +1505,7 @@ msgstr "L'extraction a échoué après plusieurs tentatives. Essayez de "
 "télécharger le fichier à nouveau — si cela continue d'échouer, collez "
 "les notes sous forme de texte à la place."
 
-#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Failed to add the cards"
 msgstr "Échec de l'ajout des cartes"
 

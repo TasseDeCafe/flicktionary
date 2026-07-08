@@ -900,6 +900,8 @@ msgstr "Context (optional)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
@@ -1477,7 +1479,7 @@ msgid "Extraction failed after several attempts. Try uploading the file again â€
 msgstr "Extraction failed after several attempts. Try uploading the file again "
 "â€” if it keeps failing, paste the notes as text instead."
 
-#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Failed to add the cards"
 msgstr "Failed to add the cards"
 
