@@ -57,6 +57,28 @@ const sheetToMarkdown = (ws: XLSX.WorkSheet): string => {
   return lines.join('\n')
 }
 
+// Sheet names that are packed dates become DD/MM/YYYY headings — the
+// server-side section splitter and the extractor's lesson_date only recognize
+// separator-carrying dates. The Italki archive names lesson sheets DDMMYYYY,
+// with older variants DMMYYYY / DDMMYY and a same-day counter ("24052021(2)",
+// dropped: the splitter splits on every date heading, so the second lesson
+// still gets its own section). Non-date names pass through untouched.
+export const sheetNameToHeading = (name: string): string => {
+  const packed = /^(\d{6,8})(?:\s*\(\d+\))?$/.exec(name.trim())
+  if (!packed) return name
+  const digits = packed[1]!
+  const [day, month, year] =
+    digits.length === 8
+      ? [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
+      : digits.length === 7
+        ? [`0${digits.slice(0, 1)}`, digits.slice(1, 3), digits.slice(3)]
+        : [digits.slice(0, 2), digits.slice(2, 4), `20${digits.slice(4)}`]
+  const dayNum = Number(day)
+  const monthNum = Number(month)
+  if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12) return name
+  return `${day}/${month}/${year}`
+}
+
 export const normalizeXlsxToMarkdown = (buffer: ArrayBuffer): string => {
   const workbook = XLSX.read(buffer, { type: 'array', cellHTML: true, cellStyles: true })
   const sections = workbook.SheetNames.map((name) => {
@@ -65,7 +87,7 @@ export const normalizeXlsxToMarkdown = (buffer: ArrayBuffer): string => {
     // Sheet names double as lesson identifiers (the second-teacher convention
     // is one sheet per file; the Italki archive names sheets DDMMYYYY). A
     // heading per sheet keeps multi-sheet files splittable server-side.
-    return workbook.SheetNames.length > 1 ? `### **${name}**\n\n${table}` : table
+    return workbook.SheetNames.length > 1 ? `### **${sheetNameToHeading(name)}**\n\n${table}` : table
   }).filter((section) => section.length > 0)
   return sections.join('\n\n')
 }
