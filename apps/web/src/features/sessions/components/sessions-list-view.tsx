@@ -7,7 +7,7 @@ import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
-type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming'
+type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -28,10 +28,7 @@ export const SessionsListView = () => {
   // active show bubbles up alongside recent movies/texts. The TV filter shows
   // only groups; non-TV filters never produce a group.
   const items = useMemo(() => {
-    const groups =
-      filter === 'movie' || filter === 'text' || filter === 'article' || filter === 'youtube' || filter === 'streaming'
-        ? []
-        : deriveTvShows(filtered)
+    const groups = filter === 'all' || filter === 'tv' ? deriveTvShows(filtered) : []
     const loose = filtered.filter((s) => s.contentSourceType !== 'tv')
     const merged = [
       ...groups.map((group) => ({
@@ -46,19 +43,6 @@ export const SessionsListView = () => {
     return merged
   }, [filtered, filter])
 
-  const counts = useMemo(() => {
-    const all = data ?? []
-    return {
-      all: all.length,
-      movie: all.filter((s) => s.contentSourceType === 'movie').length,
-      tv: all.filter((s) => s.contentSourceType === 'tv').length,
-      text: all.filter((s) => s.contentSourceType === 'text').length,
-      article: all.filter((s) => s.contentSourceType === 'article').length,
-      youtube: all.filter((s) => s.contentSourceType === 'youtube').length,
-      streaming: all.filter((s) => s.contentSourceType === 'streaming').length,
-    }
-  }, [data])
-
   return (
     <div className='mx-auto max-w-4xl px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
@@ -71,25 +55,28 @@ export const SessionsListView = () => {
       {(data?.length ?? 0) > 0 && (
         <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
-            {t`All`} ({counts.all})
+            {t`All`}
           </FilterChip>
           <FilterChip active={filter === 'movie'} onClick={() => setFilter('movie')}>
-            {t`Movies`} ({counts.movie})
+            {t`Movies`}
           </FilterChip>
           <FilterChip active={filter === 'tv'} onClick={() => setFilter('tv')}>
-            {t`TV`} ({counts.tv})
+            {t`TV`}
           </FilterChip>
           <FilterChip active={filter === 'text'} onClick={() => setFilter('text')}>
-            {t`Texts`} ({counts.text})
+            {t`Texts`}
           </FilterChip>
           <FilterChip active={filter === 'article'} onClick={() => setFilter('article')}>
-            {t`Articles`} ({counts.article})
+            {t`Articles`}
           </FilterChip>
           <FilterChip active={filter === 'youtube'} onClick={() => setFilter('youtube')}>
-            {t`YouTube`} ({counts.youtube})
+            {t`YouTube`}
           </FilterChip>
           <FilterChip active={filter === 'streaming'} onClick={() => setFilter('streaming')}>
-            {t`Streaming`} ({counts.streaming})
+            {t`Streaming`}
+          </FilterChip>
+          <FilterChip active={filter === 'lesson'} onClick={() => setFilter('lesson')}>
+            {t`Lessons`}
           </FilterChip>
         </div>
       )}
@@ -129,7 +116,7 @@ export const SessionsListView = () => {
 
 // Varied widths so the placeholder reads as the labelled filter chips rather
 // than identical pills, in the same scrollable row as the real chips.
-const FILTER_CHIP_SKELETON_WIDTHS = ['w-16', 'w-20', 'w-12', 'w-16', 'w-20', 'w-24', 'w-24']
+const FILTER_CHIP_SKELETON_WIDTHS = ['w-10', 'w-16', 'w-10', 'w-14', 'w-16', 'w-18', 'w-20', 'w-16']
 const FilterChipsSkeleton = () => (
   <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
     {FILTER_CHIP_SKELETON_WIDTHS.map((width, i) => (
