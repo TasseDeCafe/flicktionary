@@ -652,14 +652,21 @@ sets from the same column. Everything below "park" is shared.
   fail with zero reasons — a state the verify prompt forbids — is re-verified once before
   it counts, so a malformed tool call can't silently convert passes into rejections. Blank
   offsets are computed server-side by substring search over the emitted `surface_form`
-  (never LLM char arithmetic); options are shuffled server-side. Generation prompts work
+  (never LLM char arithmetic); a deterministic guard rejects any sentence/`surface_form`
+  containing underscores — the generator occasionally writes the sentence pre-blanked and
+  echoes the blank back as the surface form, which would store the underscores as the
+  answer — so the retry cycle regenerates instead (both cloze prompts also forbid it
+  explicitly); options are shuffled server-side. Generation prompts work
   from headword + sense (+ definition/translation when present) — no dependency on stored
   examples. `use_in_sentence` payloads are built deterministically (no LLM at generation
   time).
 - **Grading is server-side only.** Served payloads are stripped of `answer` /
   `answerIndex` / `acceptedForms`; the truth (`correctIndex` / `correctAnswer`) is
   revealed only in the answer response, after the exercise is consumed. MC = index
-  equality. Production cloze: NFD-normalize + strip diacritics + lowercase + trim, then
+  equality. Production cloze also accepts a `giveUp` response (and only production cloze:
+  MC types can always guess, use-in-sentence has no canonical answer to reveal) — graded
+  as a plain miss (same consume, no gate credit, same bank refill); only the client copy
+  differs. Otherwise: NFD-normalize + strip diacritics + lowercase + trim, then
   exact match against accepted forms or Damerau-Levenshtein ≤
   `TYPED_ANSWER_MAX_EDIT_DISTANCE = 1` (shared dependency-free helpers in
   `@flicktionary/core/utils/typed-answer-grading`, so the client-graded session recap
@@ -739,17 +746,21 @@ header line is the shared `ExerciseHeader` — icon + uppercase track label (+ `
 when naming the term can't leak a cloze answer) + an optional right-aligned position
 counter, which only the dedicated sessions pass (the composed queue's grows mid-session,
 so `N / M` would read as broken there). Every unanswered exercise has a secondary **Skip**
-(non-consuming — it re-serves next session, so "I don't know" on a gate doesn't burn the
-fresh exercise or the day; to *see* the answer, submit a guess — that consumes and
-reveals). Cloze exercises (`mc_cloze` + `production_cloze`) also offer an opt-in **Hint**
-button beside Skip (same lightbulb treatment as the flashcard hint): pressing it reveals
-the term's meaning under the sentence — the entry's `translation`/`definition` resolved by
-the same rules as flashcard faces (definition-only when L1 = L2 or Show translations is
-off; production cloze falls back to its generation-time `payload.hint`). The hint is
-free — it never affects gate credit — and is never auto-expanded; `mc_comprehension` gets
-no hint, since its options are meaning paraphrases. Cloze blanks render as literal
-underscores. MC answers highlight the correct option from the response's `correctIndex`;
-production cloze reveals `correctAnswer` on a miss; use-in-sentence is labelled **Bonus**
+(non-consuming — it re-serves next session, so "not now" doesn't burn the fresh exercise
+or the day). Cloze exercises (`mc_cloze` + `production_cloze`) also offer an opt-in
+**Hint** button beside Skip (same lightbulb treatment as the flashcard hint): pressing it
+reveals the term's meaning under the sentence — the entry's `translation`/`definition`
+resolved by the same rules as flashcard faces (definition-only when L1 = L2 or Show
+translations is off; production cloze falls back to its generation-time `payload.hint`).
+The hint is free — it never affects gate credit — and is never auto-expanded;
+`mc_comprehension` gets no hint, since its options are meaning paraphrases. On production
+cloze the hint slot escalates: once the hint is revealed (immediately, when no hint
+exists) it becomes **Show answer** (eye icon) — a give-up that submits `{giveUp: true}`,
+grades as a miss (consumes, no gate credit, fresh exercise next time), and renders a
+neutral "The answer was: …" reveal instead of the red "Not quite. / Expected:" verdict.
+Cloze blanks render as literal underscores. MC answers highlight the correct option from
+the response's `correctIndex`; production cloze reveals `correctAnswer` on a miss;
+use-in-sentence is labelled **Bonus**
 and shows the LLM feedback. Every answered exercise appends a `Meaning: …` reminder line.
 Gate answers render a "Day N of 3" rehab progress note from the response's
 `rehabCorrectDays`, and `graduated: true` renders a graduation celebration ("back in your
@@ -774,7 +785,8 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   That meaning powers an opt-in **Hint** button on the cloze types (`mc_cloze` +
   `production_cloze`; free — no effect on gate credit; `mc_comprehension` is excluded
   since its options ARE meaning paraphrases) and a post-answer `Meaning: …` reminder
-  on every type. Post-answer feedback (verdict / expected answer / meaning / rehab
+  on every type; on production cloze the hint slot escalates to the **Show answer**
+  give-up described in §7. Post-answer feedback (verdict / expected answer / meaning / rehab
   progress) renders in `ExerciseLayout`'s pinned feedback slot above the status row —
   always visible, height-capped — instead of the scrollable body.
   Flashcard items render `FlashcardFace` (the extracted presentational card body) +
