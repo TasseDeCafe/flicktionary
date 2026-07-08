@@ -76,6 +76,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       prevSrsLastReview: '2026-05-20T00:00:00Z',
       prevSrsReps: 3,
       prevSrsLapses: 0,
+      prevSrsLearningSteps: 0,
     })
 
   test('review budget counts DISTINCT facets, not terms, and refunds on revert', async () => {

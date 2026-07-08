@@ -134,6 +134,7 @@ export const applyTermRating = async (params: {
     lastReview: lookup.srs_last_review,
     reps: lookup.srs_reps,
     lapses: lookup.srs_lapses,
+    learningSteps: lookup.srs_learning_steps,
   }
 
   // applyRating seeds null-state facets via createEmptyCard, then FSRS
@@ -160,6 +161,7 @@ export const applyTermRating = async (params: {
         lastReview: result.lastReview,
         reps: result.reps,
         lapses: result.lapses,
+        learningSteps: result.learningSteps,
       },
       tx
     )
@@ -186,6 +188,7 @@ export const applyTermRating = async (params: {
         prevSrsLastReview: prev.lastReview,
         prevSrsReps: prev.reps,
         prevSrsLapses: prev.lapses,
+        prevSrsLearningSteps: prev.learningSteps,
       },
       tx
     )

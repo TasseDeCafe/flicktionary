@@ -41,6 +41,7 @@ export type InsertRatingEventInput = {
   prevSrsLastReview: string | null
   prevSrsReps: number | null
   prevSrsLapses: number | null
+  prevSrsLearningSteps: number | null
 }
 
 // Append one rating event. `executor` defaults to the pooled connection; pass
@@ -72,7 +73,8 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       prev_srs_difficulty,
       prev_srs_last_review,
       prev_srs_reps,
-      prev_srs_lapses
+      prev_srs_lapses,
+      prev_srs_learning_steps
     )
     VALUES (
       ${params.userId},
@@ -95,7 +97,8 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.prevSrsDifficulty},
       ${params.prevSrsLastReview},
       ${params.prevSrsReps},
-      ${params.prevSrsLapses}
+      ${params.prevSrsLapses},
+      ${params.prevSrsLearningSteps}
     )
     RETURNING id
   `) as Array<{ id: string }>

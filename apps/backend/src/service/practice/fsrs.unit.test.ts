@@ -36,6 +36,7 @@ const newRow: DbUserLookupWithFacet = {
   srs_last_review: null,
   srs_reps: 0,
   srs_lapses: 0,
+  srs_learning_steps: 0,
   leech_parked_at: null,
   leech_rehab_correct_days: 0,
   leech_rehab_last_correct_on: null,
@@ -121,9 +122,12 @@ describe('applyRating', () => {
     })
 
     it('produces a sane interval on a second rating across the floor', () => {
-      // First rating: clamped to the +24h floor.
+      // First rating: clamped to the +24h floor, and the card advances to the
+      // second learning step (the counter that must round-trip through the DB).
       const first = applyRating(newRow, 'good', now)
       expect(first.due.getTime()).toBe(floor)
+      expect(first.state).toBe('learning')
+      expect(first.learningSteps).toBe(1)
 
       // Persist the clamped card and rate again ~24h later. Clamping the first
       // due shifts the elapsed time FSRS sees vs native scheduling; confirm the
@@ -137,12 +141,34 @@ describe('applyRating', () => {
         srs_last_review: first.lastReview.toISOString(),
         srs_reps: first.reps,
         srs_lapses: first.lapses,
+        srs_learning_steps: first.learningSteps,
       }
       const now2 = new Date(floor)
       const second = applyRating(persisted, 'good', now2)
+      // Past the last learning step, Good must GRADUATE the card to review —
+      // this is the assertion that was missing while every card sat in
+      // learning forever (the step counter was rebuilt as 0 on each rating).
+      expect(second.state).toBe('review')
       expect(second.due.getTime()).toBeGreaterThanOrEqual(now2.getTime() + DAY_MS)
       expect(Number.isFinite(second.due.getTime())).toBe(true)
       expect(second.reps).toBeGreaterThan(first.reps)
+    })
+
+    it("'again' on a learning card restarts the ladder instead of graduating", () => {
+      const learningAtLastStep: DbUserLookupWithFacet = {
+        ...newRow,
+        srs_state: 'learning',
+        srs_due: now.toISOString(),
+        srs_stability: 1,
+        srs_difficulty: 5,
+        srs_last_review: new Date(now.getTime() - DAY_MS).toISOString(),
+        srs_reps: 1,
+        srs_lapses: 0,
+        srs_learning_steps: 1,
+      }
+      const result = applyRating(learningAtLastStep, 'again', now)
+      expect(result.state).toBe('learning')
+      expect(result.learningSteps).toBe(0)
     })
   })
 })
