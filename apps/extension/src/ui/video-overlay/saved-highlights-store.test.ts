@@ -14,6 +14,7 @@ const highlight = (overrides: Partial<SavedHighlightDto>): SavedHighlightDto => 
   fastGloss: null,
   studyIntent: null,
   chunkId: null,
+  noteOnly: false,
   ...overrides,
 })
 

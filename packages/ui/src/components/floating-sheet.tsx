@@ -109,6 +109,12 @@ export const FloatingSheet = ({
       // dismiss it — only a scroll of the content behind it counts as "look away".
       const content = contentRef.current
       if (content && event.target instanceof Node && content.contains(event.target)) return
+      // While an input INSIDE the sheet has focus, an outside scroll is the
+      // browser's own doing, not a look-away: the mobile on-screen keyboard
+      // scrolls the page to reveal the focused field the instant it opens
+      // (the sheet is position:fixed, so that scroll targets the document).
+      const active = typeof document !== 'undefined' ? document.activeElement : null
+      if (content && active && content.contains(active)) return
       onOpenChange(false)
     }
     // Runs on mobile too, not just the desktop popover. Mobile's other dismissal

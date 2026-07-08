@@ -416,6 +416,7 @@ export const useCreateHighlight = (sessionId: string) => {
           // chunkId is null until the enrich job materializes the term.
           studyIntent: vars.studyIntent ?? null,
           chunkId: null,
+          noteOnly: vars.noteOnly ?? false,
           createdAt: new Date().toISOString(),
         }
         const ctx = await applyOptimistic(queryClient, [
@@ -610,6 +611,21 @@ export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
         invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
         successMessage: t`Note saved`,
         errorMessage: t`Failed to update highlight`,
+      },
+    })
+  )
+}
+
+// Upgrade a note-only stub into a full study card (persists the study intent +
+// runs the normal enrichment; note/chat survive). No success toast — the sheet
+// morphing into the normal saved state is the feedback.
+export const useSaveWord = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.highlights.saveWord.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
+        errorMessage: t`Failed to save the word`,
       },
     })
   )

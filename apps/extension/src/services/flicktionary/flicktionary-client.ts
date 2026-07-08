@@ -13,6 +13,8 @@ import {
   LoadFlicktionarySavedHighlightsMessage,
   LoadFlicktionarySavedHighlightsResponse,
   SavedHighlightDto,
+  SaveFlicktionaryWordMessage,
+  SaveFlicktionaryWordResponse,
   SaveWordMessage,
   SaveWordResponse,
   SaveWordFastGloss,
@@ -294,6 +296,27 @@ export async function updateSavedHighlightNote(params: {
     },
   }
   const response: UpdateFlicktionaryHighlightNoteResponse | undefined = await browser.runtime.sendMessage(message)
+  return response?.success ?? false
+}
+
+// Upgrade a note-only stub into a full study card: persists the chosen study
+// intent + runs the normal enrichment (the note and its seeded chat survive).
+export async function saveFlicktionaryWord(params: {
+  sessionId: string
+  highlightId: string
+  studyIntent: SaveWordStudyIntent | null
+}): Promise<boolean> {
+  const message: TabToExtensionCommand<SaveFlicktionaryWordMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'save-flicktionary-word',
+      messageId: uuidv4(),
+      sessionId: params.sessionId,
+      highlightId: params.highlightId,
+      studyIntent: params.studyIntent,
+    },
+  }
+  const response: SaveFlicktionaryWordResponse | undefined = await browser.runtime.sendMessage(message)
   return response?.success ?? false
 }
 

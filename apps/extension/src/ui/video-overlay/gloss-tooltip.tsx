@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Check, Eye, Lock, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, Eye, Lock, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
@@ -21,6 +21,7 @@ import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent 
 import {
   fetchSavedGloss,
   fetchStudyTargets,
+  saveFlicktionaryWord,
   updateSavedHighlightNote,
   type FlicktionaryFacetSkill,
   type GlossData,
@@ -136,20 +137,22 @@ export function GlossTooltip({
   // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
   // Switch's track-height comment).
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
-  // Pre-save note editor (web parity): the two commit lanes are Save (full card,
-  // a typed note rides along) and Save note (note-only stub + seeded chat).
+  // Pre-save note draft (web parity): the two commit lanes are Save (full card,
+  // a typed note rides along) and Save note (note-only stub + seeded chat). The
+  // editor lives in an inner "note view" that replaces the popover's content
+  // (back chevron to return), instead of expanding inline below the options.
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [noteExpanded, setNoteExpanded] = useState(false)
+  const [noteViewOpen, setNoteViewOpen] = useState(false)
   const { prompts: presetPrompts } = usePresetTagTexts()
 
-  // A new word = a new save target: re-arm the draft + note editor (the section
+  // A new word = a new save target: re-arm the draft + note view (the section
   // re-collapses via its `key={word}` remount).
   useEffect(() => {
     setStudyDraft(defaultStudyIntentDraft)
     setNote('')
     setTags([])
-    setNoteExpanded(false)
+    setNoteViewOpen(false)
   }, [word])
 
   const toggleTag = (tag: PresetTag) => {
@@ -164,6 +167,8 @@ export function GlossTooltip({
     presetTags: tags,
     chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
   })
+
+  const hasNoteDetails = note.trim().length > 0 || tags.length > 0
 
   return (
     <FloatingSheet
@@ -184,98 +189,113 @@ export function GlossTooltip({
         visualScrollAffordance
         className={POPOVER_CONTENT_CLASS}
       >
-        <div className={CARD_HEADER_CLASS}>
-          <div className='text-foreground text-base font-semibold break-words'>{word}</div>
-          <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
-        </div>
-
-        {/* Study options — only when saving is actually available. The shared
-            web section (Radix Checkbox + Switch, px-pinned at source), so the
-            controls are pixel-identical to the web sheet. */}
-        {signedIn && !saveDisabledReason && (
-          <div className={CARD_BODY_CLASS}>
-            <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
-          </div>
-        )}
-
-        {/* Pre-save note editor — shown once the user taps Add note. */}
-        {signedIn && !saveDisabledReason && noteExpanded && (
-          <div className={CARD_BODY_CLASS}>
-            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
-          </div>
-        )}
-
-        {/* Not signed in → both glossing and saving fail, so offer Sign in in
-            place of Save (the gloss area shows the "Sign in to translate" note).
-            Otherwise the explicit Save — discoverable counterpart to the
-            right-click shortcut, disabled (with a reason) where unavailable. */}
-        <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
-          {!signedIn ? (
-            <Button type='button' size='xl' className='w-full' onClick={onSignIn}>
-              <Trans>Sign in</Trans>
-            </Button>
-          ) : saveDisabledReason ? (
-            <>
-              <Button type='button' size='xl' className='w-full' disabled>
-                <Save className='mr-1 h-4 w-4' />
-                <Trans>Save</Trans>
-              </Button>
-              <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
-            </>
-          ) : noteExpanded ? (
-            // Two commit lanes, both full-size and 50/50 wide (no morph). Save
-            // (full card; the note rides along + seeds chat) and Save note
-            // (note-only stub + seeded chat, no enrichment) — Save note is
-            // disabled until there's a note or preset to seed the chat with.
-            <div className='grid grid-cols-2 gap-2'>
+        {noteViewOpen ? (
+          // Inner note view (web-sheet parity): back chevron + editor + ONE
+          // commit button — the note-only lane (empty stub card + seeded chat,
+          // no enrichment / study facets). A note kept as a draft (Back) still
+          // rides along with the main Save.
+          <>
+            <div className={CARD_HEADER_CLASS}>
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  aria-label={t`Back`}
+                  onClick={() => setNoteViewOpen(false)}
+                  // The overlay popovers are desktop-only, so pin the desktop
+                  // sizes instead of letting a narrow browser window flip the
+                  // responsive mobile sizing on.
+                  className='-my-2 -ml-2 size-9 shrink-0'
+                >
+                  <ChevronLeft className='size-5' />
+                </Button>
+                <div className='text-foreground truncate text-base font-semibold'>
+                  <Trans>Add note</Trans>
+                </div>
+              </div>
+              <div className='text-muted-foreground truncate text-sm'>{word}</div>
+            </div>
+            <div className={CARD_BODY_CLASS}>
+              <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+            </div>
+            <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
               <Button
                 type='button'
                 size='xl'
                 className='w-full'
-                disabled={saving}
-                onClick={() => onSave(buildSave(false))}
-              >
-                <Save className='mr-1 h-4 w-4' />
-                {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                size='xl'
-                className='w-full'
-                disabled={saving || (!note.trim() && tags.length === 0)}
+                disabled={saving || !hasNoteDetails}
                 onClick={() => onSave(buildSave(true))}
               >
-                <Trans>Save note</Trans>
+                {saving ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
               </Button>
             </div>
-          ) : (
-            // Collapsed: Save (full card) + Add note (opens the editor).
-            <div className='grid grid-cols-2 gap-2'>
-              <Button
-                type='button'
-                size='xl'
-                className='w-full'
-                disabled={saving}
-                onClick={() => onSave(buildSave(false))}
-              >
-                <Save className='mr-1 h-4 w-4' />
-                {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                size='xl'
-                className='w-full'
-                disabled={saving}
-                onClick={() => setNoteExpanded(true)}
-              >
-                <PencilLine className='mr-1 h-4 w-4' />
-                <Trans>Add note</Trans>
-              </Button>
+          </>
+        ) : (
+          <>
+            <div className={CARD_HEADER_CLASS}>
+              <div className='text-foreground text-base font-semibold break-words'>{word}</div>
+              <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
             </div>
-          )}
-        </div>
+
+            {/* Study options — only when saving is actually available. The shared
+                web section (Radix Checkbox + Switch, px-pinned at source), so the
+                controls are pixel-identical to the web sheet. */}
+            {signedIn && !saveDisabledReason && (
+              <div className={CARD_BODY_CLASS}>
+                <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
+              </div>
+            )}
+
+            {/* Not signed in → both glossing and saving fail, so offer Sign in in
+                place of Save (the gloss area shows the "Sign in to translate" note).
+                Otherwise the explicit Save — discoverable counterpart to the
+                right-click shortcut, disabled (with a reason) where unavailable. */}
+            <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
+              {!signedIn ? (
+                <Button type='button' size='xl' className='w-full' onClick={onSignIn}>
+                  <Trans>Sign in</Trans>
+                </Button>
+              ) : saveDisabledReason ? (
+                <>
+                  <Button type='button' size='xl' className='w-full' disabled>
+                    <Save className='mr-1 h-4 w-4' />
+                    <Trans>Save</Trans>
+                  </Button>
+                  <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
+                </>
+              ) : (
+                // Save (full card — a drafted note rides along + seeds chat) +
+                // Add note (opens the inner note view; a dot marks a pending
+                // draft that Save will carry).
+                <div className='grid grid-cols-2 gap-2'>
+                  <Button
+                    type='button'
+                    size='xl'
+                    className='w-full'
+                    disabled={saving}
+                    onClick={() => onSave(buildSave(false))}
+                  >
+                    <Save className='mr-1 h-4 w-4' />
+                    {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xl'
+                    className='w-full'
+                    disabled={saving}
+                    onClick={() => setNoteViewOpen(true)}
+                  >
+                    <PencilLine className='mr-1 h-4 w-4' />
+                    {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+                    {hasNoteDetails && <span aria-hidden className='bg-primary ml-1.5 h-1.5 w-1.5 rounded-full' />}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </FloatingSheetContent>
     </FloatingSheet>
   )
@@ -388,6 +408,10 @@ export interface SavedGlossTooltipProps {
   // The note/tags write landed — the caller patches the store entry so a
   // re-open shows the saved values without a reload.
   onNotePatched: (note: string | null, presetTags: string[]) => void
+  // The note-only stub was upgraded into a full study card (highlights.saveWord
+  // landed) — the caller patches the store entry (noteOnly off + the intent) so
+  // the open popover morphs into the normal saved state without a reload.
+  onWordSaved: (studyIntent: SaveWordStudyIntent | null) => void
   onClose: () => void
   portalContainer: HTMLElement
   // The pointer entered the popover. A HOVER-opened popover (see
@@ -413,6 +437,7 @@ export function SavedGlossTooltip({
   initialGloss,
   onRemove,
   onNotePatched,
+  onWordSaved,
   onClose,
   onPointerEnter,
   portalContainer,
@@ -428,11 +453,20 @@ export function SavedGlossTooltip({
   )
   const [note, setNote] = useState(highlight.note ?? '')
   const [tags, setTags] = useState<string[]>([...highlight.presetTags])
-  const [noteExpanded, setNoteExpanded] = useState(false)
-  // Only the note save runs in the tooltip now; Remove is delegated to the
+  // Inner "note view": Add note replaces the popover's content with the editor
+  // (back chevron to return) instead of expanding it inline (web-sheet parity).
+  const [noteViewOpen, setNoteViewOpen] = useState(false)
+  // Note save + word upgrade run in the tooltip; Remove is delegated to the
   // parent (see onRemove) so it can morph back to the preview gloss.
-  const [busy, setBusy] = useState<'note' | null>(null)
+  const [busy, setBusy] = useState<'note' | 'word' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  // Study options for the note-only stub state (word not saved yet); applied by
+  // the Save upgrade. Same full-set draft semantics as the preview tooltip.
+  const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
+  // Keeps SavedStudyTargetsSection on the stored-intent display path right
+  // after the upgrade: the stub's chunkId is already set, but its facets only
+  // exist once the enrich job applies the intent (seconds later).
+  const [wordJustSaved, setWordJustSaved] = useState(false)
 
   const { prompts: presetPrompts } = usePresetTagTexts()
 
@@ -467,13 +501,30 @@ export function SavedGlossTooltip({
       setBusy(null)
       if (ok) {
         onNotePatched(trimmedNote || null, tags)
-        setNoteExpanded(false)
+        setNoteViewOpen(false)
       } else {
         setActionError(t`Could not save the note.`)
       }
     })
     // presetPrompts is a per-render literal of stable translations — not a dep.
   }, [sessionId, highlight.id, note, tags, onNotePatched, t])
+
+  // Save on the note-only stub: upgrade it into a full study card with the
+  // chosen study options; the note and its seeded chat survive.
+  const handleSaveWord = useCallback(() => {
+    const studyIntent = draftToStudyIntent(studyDraft) ?? null
+    setBusy('word')
+    setActionError(null)
+    void saveFlicktionaryWord({ sessionId, highlightId: highlight.id, studyIntent }).then((ok) => {
+      setBusy(null)
+      if (ok) {
+        setWordJustSaved(true)
+        onWordSaved(studyIntent)
+      } else {
+        setActionError(t`Could not save the word.`)
+      }
+    })
+  }, [sessionId, highlight.id, studyDraft, onWordSaved, t])
 
   const toggleTag = (tag: PresetTag) => {
     setTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]))
@@ -486,6 +537,9 @@ export function SavedGlossTooltip({
   // store-backed row, patched in place by onNotePatched on save, so this flips
   // the instant a save lands.
   const noteLocked = hasNoteDetails
+  // The uncommitted draft, as opposed to hasNoteDetails (the committed row):
+  // gates Save note and marks Add note with a draft dot.
+  const draftHasDetails = note.trim().length > 0 || tags.length > 0
 
   return (
     <FloatingSheet
@@ -505,77 +559,140 @@ export function SavedGlossTooltip({
         visualScrollAffordance
         className={POPOVER_CONTENT_CLASS}
       >
-        <div className={CARD_HEADER_CLASS}>
-          <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
-          <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
-          {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
-        </div>
-
-        {/* Study targets — always visible (parity with the web saved sheet),
-            read-only here: editing lives in the web app's term view. */}
-        <div className={CARD_BODY_CLASS}>
-          <SavedStudyTargetsSection highlight={highlight} />
-        </div>
-
-        {/* Locked notes render the read-only editor (saved note/chips, no Edit
-            affordance); an unsaved highlight shows the editable editor once
-            expanded. */}
-        {(noteExpanded || noteLocked) && (
-          <div className={CARD_BODY_CLASS}>
-            <HighlightNoteEditor
-              note={note}
-              tags={tags}
-              onNoteChange={setNote}
-              onToggleTag={toggleTag}
-              readOnly={noteLocked}
-            />
-          </div>
-        )}
-
-        {/* Unified footer (parity with the web saved sheet): a cyclable green
-            "Saved" state that REMOVES the highlight on click (replacing the old
-            standalone trash). While composing a new note it turns into "Save
-            note"; once a note is committed it locks — just the Saved toggle. */}
-        <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
-          <div className='grid grid-cols-2 gap-2'>
-            {noteExpanded && !noteLocked ? (
-              <Button type='button' size='xl' className='w-full' disabled={busy !== null} onClick={handleSaveNote}>
-                {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
-              </Button>
-            ) : (
-              // Cyclable Saved → Remove, sized to match Button size='xl'
-              // (h-12 px-6 text-base) + w-full so it fills its 50% grid cell.
-              <button
-                type='button'
-                aria-label={t`Saved — click to remove highlight`}
-                disabled={busy !== null}
-                onClick={onRemove}
-                className='group inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-6 text-base font-medium text-emerald-400 transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50'
-              >
-                <Check className='h-4 w-4 group-hover:hidden' />
-                <Trash2 className='hidden h-4 w-4 group-hover:block' />
-                <span className='group-hover:hidden'>
-                  <Trans>Saved</Trans>
-                </span>
-                <span className='hidden group-hover:inline'>
-                  <Trans>Remove</Trans>
-                </span>
-              </button>
-            )}
-            {!noteExpanded && !noteLocked && (
+        {noteViewOpen ? (
+          // Inner note view: back chevron + editor + ONE commit button (patches
+          // the note/tags, then locks — the seed fires once). Only reachable
+          // while unlocked.
+          <>
+            <div className={CARD_HEADER_CLASS}>
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  aria-label={t`Back`}
+                  onClick={() => setNoteViewOpen(false)}
+                  // The overlay popovers are desktop-only, so pin the desktop
+                  // sizes instead of letting a narrow browser window flip the
+                  // responsive mobile sizing on.
+                  className='-my-2 -ml-2 size-9 shrink-0'
+                >
+                  <ChevronLeft className='size-5' />
+                </Button>
+                <div className='text-foreground truncate text-base font-semibold'>
+                  <Trans>Add note</Trans>
+                </div>
+              </div>
+              <div className='text-muted-foreground truncate text-sm'>{highlight.selectionText}</div>
+              {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
+            </div>
+            <div className={CARD_BODY_CLASS}>
+              <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+            </div>
+            <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
               <Button
                 type='button'
-                variant='outline'
                 size='xl'
                 className='w-full'
-                onClick={() => setNoteExpanded(true)}
+                disabled={busy !== null || !draftHasDetails}
+                onClick={handleSaveNote}
               >
-                <PencilLine className='mr-1 h-4 w-4' />
-                {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+                {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
               </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={CARD_HEADER_CLASS}>
+              <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
+              <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
+              {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
+            </div>
+
+            {/* Study targets — always visible (parity with the web saved sheet).
+                On a note-only stub the WORD isn't saved yet, so the study choice
+                is still open: the EDITABLE preview picker, applied by Save.
+                Otherwise read-only — editing lives in the web app's term view. */}
+            <div className={CARD_BODY_CLASS}>
+              {highlight.noteOnly ? (
+                <StudyOptionsSection
+                  key={highlight.id}
+                  value={studyDraft}
+                  onChange={setStudyDraft}
+                  surfaceForm={highlight.selectionText}
+                />
+              ) : (
+                // Right after the upgrade the stub's chunkId is set but its
+                // facets don't exist until the enrich job runs — force the
+                // stored-intent display path so the just-chosen skills show.
+                <SavedStudyTargetsSection highlight={wordJustSaved ? { ...highlight, chunkId: null } : highlight} />
+              )}
+            </div>
+
+            {/* A committed note stays visible inline as passive context (read-only
+                editor: saved note/chips + lock caption); EDITING an uncommitted
+                note lives in the inner note view. */}
+            {noteLocked && (
+              <div className={CARD_BODY_CLASS}>
+                <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} readOnly />
+              </div>
             )}
-          </div>
-        </div>
+
+            {/* Unified footer (parity with the web saved sheet). Note-only stub:
+                primary Save upgrades the stub into a full card with the study
+                options above, and the green control reads "Note saved" (the
+                word isn't). Otherwise: the cyclable green "Saved" that REMOVES
+                the highlight on click (replacing the old standalone trash),
+                plus Add note (inner note view) until a committed note locks. */}
+            <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
+              <div className='grid grid-cols-2 gap-2'>
+                {highlight.noteOnly ? (
+                  <Button type='button' size='xl' className='w-full' disabled={busy !== null} onClick={handleSaveWord}>
+                    <Save className='mr-1 h-4 w-4' />
+                    {busy === 'word' ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+                  </Button>
+                ) : null}
+                {/* Cyclable Saved/Note saved → Remove, sized to match Button
+                    size='xl' (h-12 px-6 text-base) + w-full for its grid cell. */}
+                <button
+                  type='button'
+                  aria-label={
+                    highlight.noteOnly
+                      ? t`Note saved — click to remove highlight`
+                      : t`Saved — click to remove highlight`
+                  }
+                  disabled={busy !== null}
+                  onClick={onRemove}
+                  // px-2 (not px-6): the stub state's "Note saved" must fit its
+                  // 50% cell on one line.
+                  className='group inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-2 text-base font-medium whitespace-nowrap text-emerald-400 transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50'
+                >
+                  <Check className='h-4 w-4 group-hover:hidden' />
+                  <Trash2 className='hidden h-4 w-4 group-hover:block' />
+                  <span className='group-hover:hidden'>
+                    {highlight.noteOnly ? <Trans>Note saved</Trans> : <Trans>Saved</Trans>}
+                  </span>
+                  <span className='hidden group-hover:inline'>
+                    <Trans>Remove</Trans>
+                  </span>
+                </button>
+                {!highlight.noteOnly && !noteLocked && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xl'
+                    className='w-full'
+                    onClick={() => setNoteViewOpen(true)}
+                  >
+                    <PencilLine className='mr-1 h-4 w-4' />
+                    {draftHasDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+                    {draftHasDetails && <span aria-hidden className='bg-primary ml-1.5 h-1.5 w-1.5 rounded-full' />}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </FloatingSheetContent>
     </FloatingSheet>
   )

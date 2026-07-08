@@ -206,16 +206,22 @@ const AddFormControl = ({
         <OverlayContent className='sm:max-w-md'>
           {setupForm ? (
             <>
-              <OverlayHeader>
+              {/* pt-2 tightens the gap under the drawer grabber on mobile; the
+                  desktop dialog header has no own padding (md:pt-0 keeps that). */}
+              <OverlayHeader className='pt-2 md:pt-0'>
                 <OverlayTitle className='flex items-center gap-2'>
-                  <button
+                  {/* Negative margins keep the 44px tap target from inflating
+                      the title row. */}
+                  <Button
                     type='button'
+                    variant='ghost'
+                    size='icon'
                     aria-label={t`Back to forms`}
                     onClick={() => setSetupForm(null)}
-                    className='hover:bg-accent -ml-1 rounded-md p-1 transition-colors'
+                    className='-my-2 -ml-2 shrink-0'
                   >
-                    <ChevronLeft className='h-5 w-5' />
-                  </button>
+                    <ChevronLeft className='size-6 md:size-5' />
+                  </Button>
                   {t`Set up form`}
                 </OverlayTitle>
                 <OverlayDescription className='sr-only'>{t`Choose how to fill this form's data.`}</OverlayDescription>
@@ -236,7 +242,7 @@ const AddFormControl = ({
             </>
           ) : (
             <>
-              <OverlayHeader>
+              <OverlayHeader className='pt-2 md:pt-0'>
                 <OverlayTitle>{t`Add a form`}</OverlayTitle>
                 <OverlayDescription>{t`Forms you've encountered`}</OverlayDescription>
               </OverlayHeader>

@@ -132,6 +132,36 @@ export const highlightsContract = {
     )
     .output(z.object({ data: HighlightSchema })),
 
+  // Upgrade a note-only stub into a full study card ("save the word after all"):
+  // persists the chosen study intent on the highlight and enqueues the normal
+  // enrich_highlight job — the stub card fills in place (idempotent card insert),
+  // the existing note/chat are untouched, and the card auto-keeps once basic
+  // data lands. Only valid while the highlight is still a stub (intent not yet
+  // applied); afterwards the word IS saved and there is nothing to upgrade.
+  saveWord: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/{sessionId}/highlights/{highlightId}/save-word',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      // The intent was already applied (the word is already saved) — nothing to
+      // upgrade; the client should refetch and render the normal saved state.
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        highlightId: z.string().uuid(),
+        // Untouched study options → null → the backend keep-time default
+        // applies (same semantics as create's optional studyIntent).
+        studyIntent: StudyIntentSchema.nullable(),
+      })
+    )
+    .output(z.object({ data: HighlightSchema })),
+
   delete: oc
     .route({ method: 'DELETE', path: '/study-sessions/{sessionId}/highlights/{highlightId}', successStatus: 200 })
     .errors({

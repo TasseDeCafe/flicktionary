@@ -58,8 +58,17 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard> => {
 
 // Idempotent insert for highlight-backed cards: guarded by the partial unique
 // index cards_highlight_id_unique. The background enrichment worker retries on
-// transient failure, so a single highlight must never produce two cards. On
-// conflict the INSERT does nothing and RETURNING is empty, so we read back the
+// transient failure, so a single highlight must never produce two cards.
+//
+// On conflict, a card still in `needs_data` is RE-POINTED to the given
+// lookup/surface form instead of left as-is. That re-point is what lets
+// enrichment upgrade a note-only stub in place: the stub's card was pinned to
+// a raw-selection lookup (headword = selection text, sense '') at save time,
+// while enrichment keys the term by the LLM's lemma + sense — without the
+// re-point the basic data lands on a lookup the card never references and the
+// card stays data-less forever. Kept cards are never rebound (their lookup
+// carries the keep-count bookkeeping) and `removed` cards stay untouched; for
+// those the update's WHERE fails, RETURNING is empty, and we read back the
 // pre-existing row. Callers must pass a non-null highlightId.
 const insertCardForHighlightIdempotent = async (
   params: CardInsertInput & { highlightId: string },
@@ -78,7 +87,11 @@ const insertCardForHighlightIdempotent = async (
       ${params.status}
     )
     ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL
-    DO NOTHING
+    DO UPDATE SET
+      user_lookup_id = EXCLUDED.user_lookup_id,
+      surface_form = EXCLUDED.surface_form,
+      segment_id = EXCLUDED.segment_id
+    WHERE cards.status = 'needs_data'
     RETURNING *
   `) as DbCard[]
   if (inserted[0]) return inserted[0]

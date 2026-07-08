@@ -27,6 +27,10 @@ export interface SavedHighlightsState {
   add: (highlight: SavedHighlightDto, sessionId?: string, targetLanguage?: string) => void
   remove: (highlightId: string) => void
   patchNote: (highlightId: string, note: string | null, presetTags: string[]) => void
+  // A note-only stub was upgraded into a full study card (highlights.saveWord):
+  // flip noteOnly off and record the intent so the open popover morphs into the
+  // normal saved state without a reload.
+  patchWordSaved: (highlightId: string, studyIntent: SavedHighlightDto['studyIntent']) => void
   reset: () => void
 }
 
@@ -53,6 +57,10 @@ export function createSavedHighlightsStore(): SavedHighlightsStore {
     patchNote: (highlightId, note, presetTags) =>
       set((state) => ({
         highlights: state.highlights.map((h) => (h.id === highlightId ? { ...h, note, presetTags } : h)),
+      })),
+    patchWordSaved: (highlightId, studyIntent) =>
+      set((state) => ({
+        highlights: state.highlights.map((h) => (h.id === highlightId ? { ...h, noteOnly: false, studyIntent } : h)),
       })),
     reset: () => set({ sessionId: null, targetLanguage: null, highlights: [], loaded: false }),
   }))

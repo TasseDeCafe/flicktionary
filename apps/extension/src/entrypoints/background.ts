@@ -38,6 +38,7 @@ import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler
 import LoadFlicktionarySavedHighlightsHandler from '@/handlers/flicktionary/saved-highlights-handler'
 import DeleteFlicktionaryHighlightHandler from '@/handlers/flicktionary/delete-highlight-handler'
 import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/update-highlight-note-handler'
+import SaveFlicktionaryWordHandler from '@/handlers/flicktionary/save-flicktionary-word-handler'
 import GetFlicktionaryStudyTargetsHandler from '@/handlers/flicktionary/get-study-targets-handler'
 import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
@@ -111,6 +112,7 @@ export default defineBackground(() => {
     new LoadFlicktionarySavedHighlightsHandler(),
     new DeleteFlicktionaryHighlightHandler(),
     new UpdateFlicktionaryHighlightNoteHandler(),
+    new SaveFlicktionaryWordHandler(),
     new GetFlicktionaryStudyTargetsHandler(),
     new FlicktionarySavedGlossHandler(),
     new ImportArticleHandler(),
