@@ -81,7 +81,9 @@ const FACET_OF: Record<LiveSkillKey, FacetSkill> = {
 // the focus view's SkillsCard, the reader's saved gloss sheet, and (mirrored in
 // its own messaging) the extension. `locked` is the UI last-skill lock — the
 // friendly front for the backend floor guard: a KEPT term must always keep ≥1
-// enabled skill per target, so its last enabled skill can't be toggled off here.
+// enabled facet across ALL its targets (the guard is per term, not per target —
+// a lemma with zero skills is fine while a form still carries one), so only the
+// term's last enabled skill anywhere can't be toggled off here.
 export type LiveSkillItem = {
   key: LiveSkillKey
   enabled: boolean
@@ -128,8 +130,10 @@ export const buildLiveSkillItems = ({
   noIpaHint: string
 }): LiveSkillItem[] => {
   const targetForm = selectedTarget.kind === 'form' ? selectedTarget.targetForm : ''
-  const enabledCount = enabledSkillCount(facets, targetForm)
-  const isOnly = (enabled: boolean) => isKept && enabled && enabledCount === 1
+  // Mirrors the backend floor guard, which counts enabled facets term-wide: the
+  // lock engages only when this toggle is the term's last enabled facet anywhere.
+  const termEnabledCount = facets.filter((f) => f.enabled).length
+  const isOnly = (enabled: boolean) => isKept && enabled && termEnabledCount === 1
   const enabledOf = (key: LiveSkillKey) =>
     facets.some((f) => f.skill === FACET_OF[key] && f.targetForm === targetForm && f.enabled)
 

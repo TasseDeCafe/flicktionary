@@ -1,11 +1,9 @@
 # Lesson-notes extractor — prototype test
 
-> **Status: proposal — experiment run 2026-07-07, verdict GO; not
-> implemented.** Test plan for the LLM extraction pass behind the planned
-> "import teacher lesson notes" feature. Nothing here is current behavior.
-> The **Results** section below holds the experiment's findings; the
-> implementation plan will be written next and will supersede the design
-> sketch below.
+> **Status: historical (archived 2026-07-07).** Experiment plan + results for
+> the lesson-notes extraction pass; verdict GO. Implemented by PR #221
+> (backend pipeline) and the stacked lesson-import web PR — current behavior
+> lives in `docs/READER-SPEC.md` (Source content → Lesson-notes import).
 
 ## Feature context (one paragraph)
 

@@ -1,10 +1,9 @@
 # LLM frequency-band (Zipf) estimation — validation test
 
-> **Status: proposal — experiment run 2026-07-07, feature not implemented.**
-> Test plan for validating that an LLM can estimate word/expression frequency
-> bands well enough to order the new-term backlog. Nothing here is current
-> behavior. The **Results** section below holds the experiment outcome:
-> **go, LLM-only, continuous Zipf estimate, Opus.**
+> **Status: historical (archived 2026-07-07).** Experiment plan + results for
+> LLM Zipf-frequency estimation; verdict go (LLM-only, continuous Zipf, Opus).
+> Implemented by PR #220 (tier-based new-term priority) — current behavior
+> lives in `docs/SRS.md` §4.
 
 ## Feature context (one paragraph)
 
