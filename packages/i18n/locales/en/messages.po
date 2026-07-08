@@ -2359,6 +2359,10 @@ msgstr "Lesson language"
 msgid "Lesson notes"
 msgstr "Lesson notes"
 
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Lessons"
+msgstr "Lessons"
+
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Light"
