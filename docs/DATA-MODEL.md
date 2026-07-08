@@ -339,11 +339,12 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
   sense               text
   prev_srs_state      srs_state?    -- pre-rating snapshot of the rated facet
   prev_srs_due        timestamptz?  -- (state/due/stability/difficulty/last_review/
-  prev_srs_stability  real?         -- reps/lapses); restored by practice.undoRating.
-  prev_srs_difficulty real?         -- All NULL for an introduction.
-  prev_srs_last_review timestamptz?
+  prev_srs_stability  real?         -- reps/lapses/learning_steps); restored by
+  prev_srs_difficulty real?         -- practice.undoRating. All NULL for an
+  prev_srs_last_review timestamptz? -- introduction.
   prev_srs_reps       int?
   prev_srs_lapses     int?
+  prev_srs_learning_steps int?
   reverted_at         timestamptz?  -- undo tombstone: reverted events stay
                                     -- (append-only) but leave every budget count
   rated_at            timestamptz

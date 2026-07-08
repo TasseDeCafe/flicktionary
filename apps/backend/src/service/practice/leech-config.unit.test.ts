@@ -39,6 +39,7 @@ const makeResult = (lapses: number): FsrsResult => ({
   lastReview: new Date('2026-06-04T00:00:00Z'),
   reps: 10,
   lapses,
+  learningSteps: 0,
 })
 
 describe('shouldParkLeech', () => {

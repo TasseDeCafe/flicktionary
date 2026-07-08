@@ -92,4 +92,4 @@ The wiring pattern (from the original template handoff): guard at function entry
 - **Backend (`apps/backend`)** — Flicktionary will use it for the LLM-call endpoint and Supabase queries.
 - **TanStack Router / Query, oRPC, Zustand, Lingui, Tailwind, Radix** — keeping them in the web app; they're light and the cost of ripping them out and re-adding later is higher than the cost of keeping them.
 - **Native app (`apps/native`)** — left in place but cannot push to production until the items above are restored. Runtime `EasUpdateGate` + `expo-updates` are still there but no-op since `updates.url` is gone.
-- **Backend GitHub workflows** (`.github/workflows/backend-sentry.yaml`, `push-migrations.yaml`) — still active. Disable or delete if you don't want the backend deploying.
+- **Backend GitHub workflows** (`.github/workflows/backend-sentry.yaml`) — still active. Disable or delete if you don't want the backend deploying. (`push-migrations.yaml` was deleted: Supabase's GitHub integration points at `apps/backend/supabase/migrations` directly and auto-applies on merge to main.)

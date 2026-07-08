@@ -71,6 +71,7 @@ export const undoRating = async (
         prevLastReview: event.prev_srs_last_review,
         prevReps: event.prev_srs_reps,
         prevLapses: event.prev_srs_lapses,
+        prevLearningSteps: event.prev_srs_learning_steps,
         wasIntroduction: event.was_introduction,
         causedParking: event.caused_parking,
       },

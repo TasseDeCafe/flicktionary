@@ -213,10 +213,12 @@ describe('study-facets-repository integration tests', () => {
       lastReview: new Date('2026-06-09T00:00:00Z'),
       reps: 1,
       lapses: 0,
+      learningSteps: 1,
     })
     let facet = await repo.getFacet(address)
     expect(facet?.srs_state).toBe('review')
     expect(facet?.srs_reps).toBe(1)
+    expect(facet?.srs_learning_steps).toBe(1)
 
     await repo.parkLeechFacet(address)
     facet = await repo.getFacet(address)
@@ -238,8 +240,10 @@ describe('study-facets-repository integration tests', () => {
     facet = await repo.getFacet(address)
     expect(facet?.leech_parked_at).toBeNull()
     expect(facet?.leech_rehab_correct_days).toBe(0)
-    // reps preserved across graduation.
+    // reps preserved across graduation; the ladder position resets so a later
+    // lapse starts the relearning ladder from step 0.
     expect(facet?.srs_reps).toBe(1)
+    expect(facet?.srs_learning_steps).toBe(0)
 
     // Undo an introduction: restore to null state and clear introduced_at.
     await repo.restoreSrsSnapshotForFacet({
@@ -251,6 +255,7 @@ describe('study-facets-repository integration tests', () => {
       prevLastReview: null,
       prevReps: null,
       prevLapses: null,
+      prevLearningSteps: null,
       wasIntroduction: true,
       causedParking: false,
     })
@@ -258,6 +263,7 @@ describe('study-facets-repository integration tests', () => {
     expect(facet?.srs_state).toBeNull()
     expect(facet?.introduced_at).toBeNull()
     expect(facet?.srs_reps).toBe(0)
+    expect(facet?.srs_learning_steps).toBe(0)
   })
 
   test('a production facet is addressed independently of the recognition facet', async () => {

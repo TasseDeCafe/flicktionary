@@ -472,6 +472,7 @@ const applyFsrsResultForFacet = async (
     lastReview: Date
     reps: number
     lapses: number
+    learningSteps: number
   },
   executor: postgres.Sql = sql
 ): Promise<void> => {
@@ -484,6 +485,7 @@ const applyFsrsResultForFacet = async (
         srs_last_review = ${params.lastReview.toISOString()},
         srs_reps = ${params.reps},
         srs_lapses = ${params.lapses},
+        srs_learning_steps = ${params.learningSteps},
         updated_at = NOW()
     WHERE user_lookup_id = ${params.userLookupId}
       AND skill = ${params.skill}
@@ -505,6 +507,7 @@ const restoreSrsSnapshotForFacet = async (
     prevLastReview: string | null
     prevReps: number | null
     prevLapses: number | null
+    prevLearningSteps: number | null
     wasIntroduction: boolean
     causedParking: boolean
   },
@@ -519,6 +522,7 @@ const restoreSrsSnapshotForFacet = async (
         srs_last_review = ${params.prevLastReview},
         srs_reps = ${params.prevReps ?? 0},
         srs_lapses = ${params.prevLapses ?? 0},
+        srs_learning_steps = ${params.prevLearningSteps ?? 0},
         introduced_at = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE introduced_at END,
         leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_parked_at END,
         leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE leech_rehab_correct_days END,
@@ -586,6 +590,7 @@ const unparkAndSoftReentryFacet = async (
         srs_stability = ${params.stability},
         srs_difficulty = ${params.difficulty},
         srs_last_review = ${params.lastReview.toISOString()},
+        srs_learning_steps = 0,
         leech_parked_at = NULL,
         leech_rehab_correct_days = 0,
         leech_rehab_last_correct_on = NULL,
@@ -637,6 +642,7 @@ export interface StudyFacetsRepositoryInterface {
       lastReview: Date
       reps: number
       lapses: number
+      learningSteps: number
     },
     executor?: postgres.Sql
   ) => Promise<void>
@@ -649,6 +655,7 @@ export interface StudyFacetsRepositoryInterface {
       prevLastReview: string | null
       prevReps: number | null
       prevLapses: number | null
+      prevLearningSteps: number | null
       wasIntroduction: boolean
       causedParking: boolean
     },

@@ -604,6 +604,7 @@ export type Database = {
           prev_srs_due: string | null
           prev_srs_lapses: number | null
           prev_srs_last_review: string | null
+          prev_srs_learning_steps: number | null
           prev_srs_reps: number | null
           prev_srs_stability: number | null
           prev_srs_state: Database['public']['Enums']['srs_state'] | null
@@ -630,6 +631,7 @@ export type Database = {
           prev_srs_due?: string | null
           prev_srs_lapses?: number | null
           prev_srs_last_review?: string | null
+          prev_srs_learning_steps?: number | null
           prev_srs_reps?: number | null
           prev_srs_stability?: number | null
           prev_srs_state?: Database['public']['Enums']['srs_state'] | null
@@ -656,6 +658,7 @@ export type Database = {
           prev_srs_due?: string | null
           prev_srs_lapses?: number | null
           prev_srs_last_review?: string | null
+          prev_srs_learning_steps?: number | null
           prev_srs_reps?: number | null
           prev_srs_stability?: number | null
           prev_srs_state?: Database['public']['Enums']['srs_state'] | null
@@ -1031,6 +1034,7 @@ export type Database = {
           srs_due: string | null
           srs_lapses: number
           srs_last_review: string | null
+          srs_learning_steps: number
           srs_reps: number
           srs_stability: number | null
           srs_state: Database['public']['Enums']['srs_state'] | null
@@ -1057,6 +1061,7 @@ export type Database = {
           srs_due?: string | null
           srs_lapses?: number
           srs_last_review?: string | null
+          srs_learning_steps?: number
           srs_reps?: number
           srs_stability?: number | null
           srs_state?: Database['public']['Enums']['srs_state'] | null
@@ -1083,6 +1088,7 @@ export type Database = {
           srs_due?: string | null
           srs_lapses?: number
           srs_last_review?: string | null
+          srs_learning_steps?: number
           srs_reps?: number
           srs_stability?: number | null
           srs_state?: Database['public']['Enums']['srs_state'] | null

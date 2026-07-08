@@ -34,6 +34,7 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   srs_last_review: string | null
   srs_reps: number
   srs_lapses: number
+  srs_learning_steps: number
   leech_parked_at: string | null
   leech_rehab_correct_days: number
   leech_rehab_last_correct_on: string | null
@@ -66,6 +67,7 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
   srs_last_review: facet.srs_last_review,
   srs_reps: facet.srs_reps,
   srs_lapses: facet.srs_lapses,
+  srs_learning_steps: facet.srs_learning_steps,
   leech_parked_at: facet.leech_parked_at,
   leech_rehab_correct_days: facet.leech_rehab_correct_days,
   leech_rehab_last_correct_on: facet.leech_rehab_last_correct_on,
@@ -783,8 +785,8 @@ const listReviewTerms = async (params: {
   const primarySkill = skillForPool(params.pool)
   const facetCols = sql`
     f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
-    f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-    f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
+    f.srs_last_review, f.srs_reps, f.srs_lapses, f.srs_learning_steps, f.leech_parked_at,
+    f.leech_rehab_correct_days, f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
     (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
       AS is_production_enabled
   `
@@ -1128,8 +1130,8 @@ const listParkedTerms = async (params: {
     SELECT
       ul.*,
       f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
-      f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-      f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
+      f.srs_last_review, f.srs_reps, f.srs_lapses, f.srs_learning_steps, f.leech_parked_at,
+      f.leech_rehab_correct_days, f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
       (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
         AS is_production_enabled
     FROM public.user_lookups ul

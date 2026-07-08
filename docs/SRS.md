@@ -181,9 +181,17 @@ introduced).
 `applyRating(facetRow, rating, now)`:
 
 1. Reads the facet's FSRS columns into an FSRS card; a never-reviewed facet is seeded with
-   `createEmptyCard(now)`.
-2. Runs `fsrs.next()` and persists `state/due/stability/difficulty/last_review/reps/lapses` on
-   the facet (`applyFsrsResultForFacet`).
+   `createEmptyCard(now)`. The columns include `srs_learning_steps` — ts-fsrs v5's per-card
+   position on the intraday learning/relearning ladder (defaults: learning `1m → 10m`,
+   relearning `10m`). The counter MUST round-trip through the DB: `good` graduates a
+   learning card to `review` only from the ladder's last step, so rebuilding it as 0 on
+   every read would trap cards in `learning` forever (the only exits would be `easy` and
+   gate graduation).
+2. Runs `fsrs.next()` and persists
+   `state/due/stability/difficulty/last_review/reps/lapses/learning_steps` on the facet
+   (`applyFsrsResultForFacet`). The undo snapshot (`prev_srs_*` on the rating event) carries
+   the counter too, and leech/warm-up graduation (`unparkAndSoftReentryFacet`) resets it to 0
+   so a later lapse starts the relearning ladder from its first step.
 3. **Recognition 24h floor**: for recognition-mode facets (`reviewModeForSkill(skill) ===
    'recognition'` — i.e. `meaning_recognition` and `pronunciation`),
    non-`again` ratings clamp `due` to at least `now + 24h`. This kills FSRS's minutes-away

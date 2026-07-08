@@ -51,7 +51,11 @@ const facetToFsrs = (row: DbUserLookupWithFacet): FsrsCard | null => {
     difficulty: row.srs_difficulty ?? 0,
     elapsed_days: 0,
     scheduled_days: 0,
-    learning_steps: 0,
+    // The current position on the intraday learning/relearning ladder. This
+    // MUST round-trip through the DB: rebuilding it as 0 would make Good
+    // recompute "advance from step 0, stay in Learning" on every rating, so no
+    // card could ever graduate to Review.
+    learning_steps: row.srs_learning_steps,
     reps: row.srs_reps,
     lapses: row.srs_lapses,
     state: DB_TO_STATE[row.srs_state],
@@ -67,6 +71,7 @@ export type FsrsResult = {
   lastReview: Date
   reps: number
   lapses: number
+  learningSteps: number
 }
 
 // Recognition-pool terms the user got right are never rescheduled sooner than this far
@@ -127,5 +132,6 @@ export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: 
     lastReview: next.last_review ?? now,
     reps: next.reps,
     lapses: next.lapses,
+    learningSteps: next.learning_steps,
   }
 }
