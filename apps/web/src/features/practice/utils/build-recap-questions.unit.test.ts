@@ -17,6 +17,7 @@ const term = (overrides: Partial<RecapTerm> & { chunkId: string }): RecapTerm =>
   surfaceForm: `word-${overrides.chunkId}`,
   gloss: `gloss-${overrides.chunkId}`,
   pos: null,
+  aspect: null,
   targetExample: null,
   ...overrides,
 })
@@ -56,6 +57,7 @@ describe('buildRecapTerms', () => {
         surfaceForm: 'surface-a',
         gloss: 'translation-a',
         pos: 'verb',
+        aspect: null,
         targetExample: null,
       },
     ])

@@ -6,6 +6,7 @@ import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
+import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
 import {
   getCardFaceConfig,
   resolveCardSlots,
@@ -93,6 +94,13 @@ export const FlashcardFace = ({
   // demoted to a secondary line on the back. Citation cards resolve to the lemma.
   const content = resolveCardContent(card, targetLanguage, englishIpaDialect)
 
+  // A production front prompts with the gloss alone, which for aspect-pair
+  // languages is ambiguous between the twins ("to see" → ви́деть/уви́деть) — so
+  // the prompt carries a dictionary-style aspect tag. Front only: the back
+  // already shows the full grammar chips, and on a recognition card the
+  // headword itself disambiguates.
+  const aspectTag = pool === 'production' ? getAspectTag(content.grammar, targetLanguage) : null
+
   const cond: CardSlotConditions = {
     hideTranslationFields,
     hasIpa: !!content.ipa,
@@ -153,6 +161,7 @@ export const FlashcardFace = ({
         return content.translation ? (
           <p key='translation' className='text-lg'>
             {content.translation}
+            {face === 'front' && aspectTag && <span className='text-muted-foreground'> ({aspectTag})</span>}
           </p>
         ) : null
       }
@@ -162,6 +171,7 @@ export const FlashcardFace = ({
         return content.definition ? (
           <p key='definition' className={face === 'front' ? 'text-lg' : 'text-muted-foreground text-sm'}>
             {content.definition}
+            {face === 'front' && aspectTag && <span className='text-muted-foreground'> ({aspectTag})</span>}
           </p>
         ) : null
       case 'grammar':
