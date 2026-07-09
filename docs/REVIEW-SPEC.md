@@ -72,7 +72,11 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   helpers from `@flicktionary/core/utils/typed-answer-grading`). When the term
   can't be located in its example by case-insensitive substring (surface form,
   then headword), MC shows a headword-only prompt and typed **hides the
-  sentence entirely** (it contains the answer). A miss or **Skip** (no reveal,
+  sentence entirely** (it contains the answer); in that sentence-less case the
+  typed gloss carries the muted verbal-aspect tag ("to see *(impf.)*",
+  `getAspectTag` — language + POS gated) since grading only accepts this term's
+  forms and the bare gloss is ambiguous between aspect twins. With the sentence
+  shown, its context pins the aspect and no tag renders. A miss or **Skip** (no reveal,
   no correct-credit) re-appends the term once at the end of the queue in the
   other form; a missed redrill is dropped. Position counter shown (`N / M`; the
   total grows by one at the moment of a miss — bounded and attributable, unlike
