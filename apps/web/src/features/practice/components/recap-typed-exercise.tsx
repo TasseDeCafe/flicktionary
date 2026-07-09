@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, CircleX } from 'lucide-react'
+import { CircleCheck, CircleX, Eye } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { isTypedAnswerAccepted } from '@flicktionary/core/utils/typed-answer-grading'
 import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
@@ -31,7 +31,8 @@ export const RecapTypedExercise = ({
   header: ReactNode
   onAnswered: (correct: boolean) => void
   // Skip = "I don't know": advances without revealing the answer (submit a
-  // guess to see it) and the term retries once at the end of the queue.
+  // guess or hit Show answer to see it) and the term retries once at the end
+  // of the queue.
   onSkip: () => void
   onNext: () => void
 }) => {
@@ -40,6 +41,7 @@ export const RecapTypedExercise = ({
   const showKbd = !isMobile
   const [text, setText] = useState('')
   const [result, setResult] = useState<boolean | null>(null)
+  const [gaveUp, setGaveUp] = useState(false)
 
   // With the blanked sentence shown, its context pins the verbal aspect; when
   // the sentence is withheld the gloss alone is ambiguous between aspect twins
@@ -47,12 +49,28 @@ export const RecapTypedExercise = ({
   // forms, so the tag keeps the twin from being marked wrong.
   const aspectTag = item.blanked ? null : getAspectTag({ pos: item.term.pos, aspect: item.term.aspect }, targetLanguage)
 
+  // With a blanked sentence, the answer to reveal is the word that was blanked
+  // out — the headword may be an inflection that can't grammatically fill the
+  // blank (e.g. an infinitive in a finite-verb slot).
+  const expectedAnswer = item.blanked
+    ? item.blanked.sentence.slice(item.blanked.start, item.blanked.end)
+    : item.term.headword
+
   const handleSubmit = () => {
     const trimmed = text.trim()
     if (!trimmed || result !== null) return
     const correct = isTypedAnswerAccepted(item.acceptedForms, trimmed)
     setResult(correct)
     onAnswered(correct)
+  }
+
+  // Give-up: counts as a miss (the term redrills like one) but renders as a
+  // neutral reveal, not a failure verdict.
+  const handleGiveUp = () => {
+    if (result !== null) return
+    setGaveUp(true)
+    setResult(false)
+    onAnswered(false)
   }
 
   // While the input has focus it owns the keyboard (its own onKeyDown handles
@@ -72,19 +90,29 @@ export const RecapTypedExercise = ({
       feedback={
         result !== null && (
           <div className='flex flex-col gap-3'>
-            <div
-              className={cn(
-                'flex items-center gap-2 text-sm font-medium',
-                result ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
-              )}
-            >
-              {result ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
-              {result ? t`Correct!` : t`Not quite.`}
-            </div>
-            {!result && (
-              <p className='text-sm'>
-                {t`Expected:`} <span className='font-semibold'>{item.term.headword}</span>
-              </p>
+            {/* A voluntary give-up reads as a neutral reveal, not a failure verdict. */}
+            {gaveUp ? (
+              <div className='flex items-center gap-2 text-sm'>
+                <Eye className='text-muted-foreground h-4 w-4' />
+                {t`The answer was:`} <span className='font-semibold'>{expectedAnswer}</span>
+              </div>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    'flex items-center gap-2 text-sm font-medium',
+                    result ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                  )}
+                >
+                  {result ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
+                  {result ? t`Correct!` : t`Not quite.`}
+                </div>
+                {!result && (
+                  <p className='text-sm'>
+                    {t`Expected:`} <span className='font-semibold'>{expectedAnswer}</span>
+                  </p>
+                )}
+              </>
             )}
           </div>
         )
@@ -101,10 +129,18 @@ export const RecapTypedExercise = ({
               {t`Check`}
               {showKbd && <Kbd>↵</Kbd>}
             </Button>
-            <Button type='button' variant='outline' size='xl' className='w-full' onClick={onSkip}>
-              {t`Skip`}
-              {showKbd && <Kbd>Esc</Kbd>}
-            </Button>
+            <div className='flex gap-2'>
+              {/* Show answer reveals + redrills; Skip stays a pure defer (no
+                  reveal) next to it. */}
+              <Button type='button' variant='outline' size='xl' className='flex-1' onClick={handleGiveUp}>
+                <Eye className='h-4 w-4' />
+                {t`Show answer`}
+              </Button>
+              <Button type='button' variant='outline' size='xl' className='flex-1' onClick={onSkip}>
+                {t`Skip`}
+                {showKbd && <Kbd>Esc</Kbd>}
+              </Button>
+            </div>
           </>
         )
       }
