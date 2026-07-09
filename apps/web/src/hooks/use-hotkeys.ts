@@ -51,7 +51,15 @@ const matches = (e: KeyboardEvent, key: HotkeyKey): boolean => {
 export const useHotkeys = (bindings: HotkeyBinding[], enabled = true): void => {
   useEffect(() => {
     if (!enabled) return
+    const attachedAt = performance.now()
     const handler = (e: KeyboardEvent) => {
+      // Only react to key presses that began while this binding set was live.
+      // A synchronous state change during a keydown (e.g. Enter grading a
+      // typed answer from the input's own handler) re-registers this listener
+      // before the event finishes bubbling to window, and a freshly-enabled
+      // binding for the same key would fire on the very keypress that enabled
+      // it (submit + advance on a single Enter).
+      if (e.timeStamp <= attachedAt) return
       // Never hijack browser/OS chords.
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const editable = isEditableTarget(e.target)
