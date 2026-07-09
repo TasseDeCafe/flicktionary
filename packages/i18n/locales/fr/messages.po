@@ -3863,6 +3863,7 @@ msgstr "Série"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Show answer"
 msgstr "Afficher la réponse"
 
@@ -4295,6 +4296,7 @@ msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "The answer was:"
 msgstr "La réponse était :"
 

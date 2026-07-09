@@ -76,9 +76,14 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   typed gloss carries the muted verbal-aspect tag ("to see *(impf.)*",
   `getAspectTag` — language + POS gated) since grading only accepts this term's
   forms and the bare gloss is ambiguous between aspect twins. With the sentence
-  shown, its context pins the aspect and no tag renders. A miss or **Skip** (no reveal,
-  no correct-credit) re-appends the term once at the end of the queue in the
-  other form; a missed redrill is dropped. Position counter shown (`N / M`; the
+  shown, its context pins the aspect and no tag renders. A missed typed answer
+  reveals the expected word — the exact form that was blanked out of the
+  sentence when one is shown (the headword may be an inflection that can't
+  grammatically fill the blank), the headword otherwise. Typed questions also
+  offer **Show answer** (give-up): a neutral reveal of that same expected word,
+  no failure verdict, counted as a miss. A miss (wrong guess or Show answer) or
+  **Skip** (no reveal, no correct-credit) re-appends the term once at the end
+  of the queue in the other form; a missed redrill is dropped. Position counter shown (`N / M`; the
   total grows by one at the moment of a miss — bounded and attributable, unlike
   the composed queue's async redrills). Completion shows `X of Y correct`;
   close/back returns to the session-vocabulary list. Button disabled when no
