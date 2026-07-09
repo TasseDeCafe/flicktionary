@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Badge } from '@flicktionary/ui/components/badge'
 import { getEffectiveGrammarFields } from '@flicktionary/core/constants/language-grammar'
+import { renderAspectLabel } from '@flicktionary/core/utils/verbal-aspect'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 const asString = (v: unknown): string | null => {
@@ -22,19 +23,6 @@ const renderGenderLabel = (gender: string): string => {
       return 'c.'
     default:
       return gender
-  }
-}
-
-const renderAspectLabel = (aspect: string): string => {
-  switch (aspect) {
-    case 'impf':
-      return 'impf.'
-    case 'perf':
-      return 'perf.'
-    case 'biaspectual':
-      return 'biasp.'
-    default:
-      return aspect
   }
 }
 

@@ -48,7 +48,7 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
 | Stamps `introduced_at` on introduction | yes | no |
 | Counts toward review budget | yes | no |
 | 24h interval floor | yes | no |
-| Card layout | headword front | prompt front (`ACTIVE_CARD_FACE_CONFIG`) |
+| Card layout | headword front | prompt front (`PRODUCTION_CARD_FACE_CONFIG`) |
 
 - Keeping a term creates a `(meaning_recognition, '')` facet **as a default** (atomic with the
   `count` bump; `ensureDefaultCitationFacetIfUnconfigured`, idempotent) — but only when the term
@@ -906,6 +906,18 @@ shows in that hidden-translation mode and also falls back when translations are 
 but no translation exists, IPA shows only when `pickIpa` returns a displayable bucket, and
 grammar shows only when chips can render. Headwords use `grammar.display_form || headword`
 so Russian stress-marked forms carry through.
+
+Production cards flip the direction (`PRODUCTION_CARD_FACE_CONFIG`, language-independent):
+the front prompts with the gloss (translation, or definition per the same resolver rules) +
+the example translation; the back reveals `headword` / `ipa` / `targetExample` / `grammar`.
+A card with no gloss data at all would resolve an empty front, so it falls back to the
+recognition layout. For languages whose grammar config lists `aspect` (Russian today), the
+front's gloss line carries a muted dictionary-style aspect tag — "to see *(impf.)*" — so
+the prompt disambiguates aspect twins (ви́деть vs уви́деть). The tag is `getAspectTag`
+(`packages/core/utils/verbal-aspect.ts`), gated by language + POS exactly like the grammar
+chips (a stray aspect value on a non-verb never surfaces); form cards inherit the lemma's
+aspect through the `resolveCardContent` grammar fallback. Front only — the back's grammar
+chips already show aspect, and a recognition front shows the headword itself.
 
 ### Keyboard shortcuts (desktop)
 

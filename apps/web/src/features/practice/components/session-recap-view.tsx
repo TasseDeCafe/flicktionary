@@ -173,6 +173,7 @@ const RecapQuiz = ({
     <RecapTypedExercise
       key={current.key}
       item={current}
+      targetLanguage={targetLanguage}
       header={header}
       onAnswered={handleAnswered}
       onSkip={handleSkip}

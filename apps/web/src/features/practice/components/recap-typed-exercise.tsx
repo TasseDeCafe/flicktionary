@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, CircleX } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { isTypedAnswerAccepted } from '@flicktionary/core/utils/typed-answer-grading'
+import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
@@ -19,12 +20,14 @@ type TypedItem = Extract<RecapQueueItem, { kind: 'typed' }>
 // withheld entirely — it contains the answer.
 export const RecapTypedExercise = ({
   item,
+  targetLanguage,
   header,
   onAnswered,
   onSkip,
   onNext,
 }: {
   item: TypedItem
+  targetLanguage: string
   header: ReactNode
   onAnswered: (correct: boolean) => void
   // Skip = "I don't know": advances without revealing the answer (submit a
@@ -37,6 +40,12 @@ export const RecapTypedExercise = ({
   const showKbd = !isMobile
   const [text, setText] = useState('')
   const [result, setResult] = useState<boolean | null>(null)
+
+  // With the blanked sentence shown, its context pins the verbal aspect; when
+  // the sentence is withheld the gloss alone is ambiguous between aspect twins
+  // ("to see" → ви́деть/уви́деть) — and grading here only accepts this term's
+  // forms, so the tag keeps the twin from being marked wrong.
+  const aspectTag = item.blanked ? null : getAspectTag({ pos: item.term.pos, aspect: item.term.aspect }, targetLanguage)
 
   const handleSubmit = () => {
     const trimmed = text.trim()
@@ -102,7 +111,10 @@ export const RecapTypedExercise = ({
     >
       <div className='flex flex-col gap-1'>
         <p className='text-muted-foreground text-sm'>{t`Type the term for:`}</p>
-        <p className='text-lg font-medium'>{item.term.gloss}</p>
+        <p className='text-lg font-medium'>
+          {item.term.gloss}
+          {aspectTag && <span className='text-muted-foreground font-normal'> ({aspectTag})</span>}
+        </p>
       </div>
 
       {item.blanked && (

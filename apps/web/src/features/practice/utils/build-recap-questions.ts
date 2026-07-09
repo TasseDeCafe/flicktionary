@@ -14,6 +14,10 @@ export type RecapTerm = {
   // definition), guaranteed non-empty.
   gloss: string
   pos: string | null
+  // Verbal aspect (impf/perf/biaspectual) — the typed exercise tags the gloss
+  // with it when the sentence is withheld, where the prompt would otherwise be
+  // ambiguous between aspect twins.
+  aspect: string | null
   targetExample: string | null
 }
 
@@ -29,7 +33,7 @@ export type RecapCardInput = {
     translation: string | null
     definition: string | null
     targetExample: string | null
-    grammar: { pos?: string | null }
+    grammar: { pos?: string | null; aspect?: string | null }
   }
 }
 
@@ -55,6 +59,7 @@ export const buildRecapTerms = (
       surfaceForm: card.surfaceForm,
       gloss,
       pos: card.chunk.grammar.pos ?? null,
+      aspect: card.chunk.grammar.aspect ?? null,
       targetExample: card.chunk.targetExample,
     })
   }
