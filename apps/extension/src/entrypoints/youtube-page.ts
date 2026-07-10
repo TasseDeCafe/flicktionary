@@ -1,5 +1,6 @@
 import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { trackFromDef, trackId } from '@/pages/util'
+import { timedtextTripleFromUrl, triplesEqual, type NativeTrackTriple } from '@/services/native-track-selection'
 import { decodePoToken, fetchPlayerContextForPage } from '@/services/youtube'
 
 // Minimal structural view of YouTube's untyped page-realm caption-track objects
@@ -190,6 +191,11 @@ const includeTranslationsForLanguageCodes = async (tracks: VideoDataSubtitleTrac
 interface YtMoviePlayerElement extends HTMLElement {
   isSubtitlesOn?: () => boolean
   toggleSubtitles?: () => void
+  setOption?: (module: string, option: string, value: unknown) => void
+  getOption?: (
+    module: string,
+    option: string
+  ) => { languageCode?: string; kind?: string; translationLanguage?: { languageCode?: string } } | undefined
 }
 
 const moviePlayer = () => (document.getElementById('movie_player') ?? undefined) as YtMoviePlayerElement | undefined
@@ -346,6 +352,14 @@ export default defineUnlistedScript(() => {
   let observedCaptionsButton: HTMLElement | undefined
   let lastPublishedCaptionsState: NativeCaptionsState | undefined
   let captionsSuppressionStyle: HTMLStyleElement | undefined
+  // Native gear-menu selections are only forwarded for the video the extension
+  // has actually loaded subtitles for (armed on bind/write-back). This is what
+  // keeps the extension's own remembered-track auto-sync the initial source:
+  // during an SPA navigation the binding from the previous video is still live,
+  // and YouTube (with CC on) fetches its persisted track for the NEW video
+  // before the extension has loaded anything — that fetch must not be treated
+  // as a user selection.
+  let armedTrackVideoId: string | undefined
 
   const publishNativeCaptionsState = (force = false) => {
     const state = currentNativeCaptionsState()
@@ -359,8 +373,16 @@ export default defineUnlistedScript(() => {
       return
     }
 
+    const captionsTurnedOn = state.on && lastPublishedCaptionsState?.on !== true
     lastPublishedCaptionsState = state
     document.dispatchEvent(new CustomEvent('asbplayer-native-captions-state', { detail: state }))
+
+    if (captionsTurnedOn) {
+      // Deferred write-back (see requestedTrackTriple): re-assert the
+      // extension's loaded track the moment captions turn on, before YouTube's
+      // own persisted-track restore can win.
+      applyRequestedTrack()
+    }
   }
 
   const captionsButtonObserver = new MutationObserver(() => publishNativeCaptionsState())
@@ -408,6 +430,7 @@ export default defineUnlistedScript(() => {
 
   document.addEventListener('asbplayer-native-captions-bind', () => {
     captionControlBound = true
+    armedTrackVideoId = inferVideoId()
     suppressNativeCaptionsRendering(true)
     ensureCaptionsButtonObserver()
     publishNativeCaptionsState(true)
@@ -415,6 +438,8 @@ export default defineUnlistedScript(() => {
 
   document.addEventListener('asbplayer-native-captions-unbind', () => {
     captionControlBound = false
+    armedTrackVideoId = undefined
+    requestedTrackTriple = undefined
     suppressNativeCaptionsRendering(false)
   })
 
@@ -433,6 +458,112 @@ export default defineUnlistedScript(() => {
 
     publishNativeCaptionsState()
   })
+
+  // --- Native gear-menu track mirroring ---
+  // Every native track change (gear → Subtitles/CC, including Auto-translate)
+  // fetches `/api/timedtext` with the selected (lang, kind, tlang). A
+  // PerformanceObserver on resource entries sees those loads regardless of
+  // transport — patching window.fetch would miss them, since YouTube captures
+  // its network functions at boot, before a content-script-injected patch can
+  // land. The extension's own srv3 fetches are filtered out inside
+  // timedtextTripleFromUrl.
+
+  // The track the extension asked the native menu to show (write-back). Kept
+  // until replaced/unbound: setOption while captions are toggled off
+  // force-enables them (live-probed), which would clobber the adopted CC-off
+  // state — so the write is deferred and (re-)applied on every CC-on edge.
+  let requestedTrackTriple: NativeTrackTriple | undefined
+
+  // What the player itself reports as selected. Undefined while captions are
+  // toggled off — getOption('captions','track') returns {} then.
+  const currentPlayerTrackTriple = (): NativeTrackTriple | undefined => {
+    try {
+      const track = moviePlayer()?.getOption?.('captions', 'track')
+
+      if (!track || typeof track.languageCode !== 'string') {
+        return undefined
+      }
+
+      return {
+        lang: track.languageCode,
+        asr: track.kind === 'asr',
+        tlang: track.translationLanguage?.languageCode || undefined,
+      }
+    } catch (error) {
+      console.error(error)
+      return undefined
+    }
+  }
+
+  const applyRequestedTrack = () => {
+    if (requestedTrackTriple === undefined) {
+      return
+    }
+
+    try {
+      const player = moviePlayer()
+
+      if (!player?.setOption || player.isSubtitlesOn?.() !== true) {
+        return
+      }
+
+      const current = currentPlayerTrackTriple()
+
+      if (current !== undefined && triplesEqual(current, requestedTrackTriple)) {
+        return
+      }
+
+      player.setOption('captions', 'track', {
+        languageCode: requestedTrackTriple.lang,
+        ...(requestedTrackTriple.asr === true ? { kind: 'asr' } : {}),
+        ...(requestedTrackTriple.tlang ? { translationLanguage: { languageCode: requestedTrackTriple.tlang } } : {}),
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  document.addEventListener('asbplayer-native-captions-select-track', (e) => {
+    const triple = (e as CustomEvent).detail as Partial<NativeTrackTriple> | undefined
+
+    if (!triple || typeof triple.lang !== 'string') {
+      return
+    }
+
+    requestedTrackTriple = { lang: triple.lang, asr: triple.asr === true, tlang: triple.tlang || undefined }
+    // bind (dispatched earlier in the same load) normally arms already; re-arm
+    // here so write-back does not depend on that ordering.
+    armedTrackVideoId = inferVideoId()
+    applyRequestedTrack()
+  })
+
+  const timedtextObserver = new PerformanceObserver((entries) => {
+    for (const entry of entries.getEntries()) {
+      const triple = timedtextTripleFromUrl(entry.name)
+
+      if (triple === undefined) {
+        continue
+      }
+
+      if (!captionControlBound || armedTrackVideoId === undefined || armedTrackVideoId !== inferVideoId()) {
+        continue
+      }
+
+      // Only fetches matching the player's CURRENT selection are real user
+      // picks. This drops stale entries — above all YouTube's CC-on restore
+      // fetch of its own persisted track, which loses (microtask vs network)
+      // against the deferred write-back applied on the same CC-on edge — and
+      // superseded fetches from rapid menu picks.
+      const current = currentPlayerTrackTriple()
+
+      if (current === undefined || !triplesEqual(current, triple)) {
+        continue
+      }
+
+      document.dispatchEvent(new CustomEvent('asbplayer-native-captions-track-selected', { detail: triple }))
+    }
+  })
+  timedtextObserver.observe({ type: 'resource', buffered: false })
 
   let publishing = false
 

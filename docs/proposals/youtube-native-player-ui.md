@@ -1,6 +1,6 @@
 # Reusing YouTube's native player UI for subtitle control
 
-> **Status: proposal.** Tracks the two-slice effort to reuse YouTube's native player controls (CC button, gear→Subtitles/CC menu) as the extension's subtitle UI, Language Reactor-style. Slice 1 shipped (PR #233) — its behavior is specced in `apps/extension/EXTENSION-SPEC.md` § "Native caption control", which is authoritative. Slice 2 is an open design; nothing in it is current behavior.
+> **Status: implemented.** Both slices of the effort to reuse YouTube's native player controls (CC button, gear→Subtitles/CC menu) as the extension's subtitle UI, Language Reactor-style, have shipped. Slice 1 (PR #233) is specced in `apps/extension/EXTENSION-SPEC.md` § "Native caption control"; slice 2 in § "Native track mirroring" — the spec is authoritative, this doc is kept as design history only.
 
 ## Goal
 
@@ -56,34 +56,24 @@ Design decisions fixed there that slice 2 inherits:
 - The protocol is site-agnostic; only `youtube-page.ts` implements it. Other
   sites keep the overlay toggle without any per-site flag.
 
-## Slice 2 — gear-menu track selection (open)
+## Slice 2 — gear-menu track selection (shipped)
 
-Sketch, to be refined before implementation:
+See `EXTENSION-SPEC.md` § "Native track mirroring" for the authoritative
+behavior: PerformanceObserver detection of `/api/timedtext` triples, the
+(lang, asr, tlang?) mapping onto the published track list (with synthesis for
+never-published auto-translate targets), `setOption` write-back so the native
+menu tracks what's loaded, per-video arming, and the echo/serialization
+guards.
 
-- **Detection**: page script registers a `PerformanceObserver` for
-  `/api/timedtext` resource entries; on a hit, read the `(lang, kind, tlang)`
-  triple from the URL and confirm against `getOption('captions', 'track')`.
-  Publish a `track-selected` event to the content script.
-- **Mapping**: the triple maps onto the already-published track list —
-  `trackMergeKey` is `language:asr|manual` and auto-translate corresponds 1:1
-  to the existing `tlang` machine-translation synthesis (`L_from_base`
-  tracks). Feed the match into the existing `VideoDataSyncController` load
-  path (srv3 fetch, POT token, ASR re-chunking all reused).
-- **Write-back**: on dialog confirm / auto-sync, `setOption` the primary track
-  into the player so the native menu shows a checkmark on what is actually
-  loaded (avoids LR's "menu says Off while subs show" drift).
-- **Guards**: ignore timedtext fetches the extension itself triggers
-  (write-back and initial reveal cause native fetches); dedupe against the
-  currently loaded track; decide behavior when the selected native track has
-  no match (e.g. a language the track list lacks — likely load it anyway via a
-  synthesized URL).
+The open questions above were resolved as:
 
-Open questions:
-
-- Does the second subtitle track survive a native track switch (probably yes:
-  only slot 1 changes), and how does that interact with remembered tracks?
-- `m.youtube.com` and Shorts: different chrome; slice 1 already degrades
-  gracefully there (no CC button found → overlay toggle), slice 2 should keep
-  that property.
-- Whether a native track switch should update `streamingLastLanguagesSynced`
-  (remembered choices) or stay session-local.
+- The second subtitle track survives a native switch (the menu owns slot 1
+  only); the dialog's translation-toggle overlay track does not (it's tied to
+  the previous primary; `streamingTranslationMode` reconstructs it on the next
+  dialog confirm).
+- `m.youtube.com`/Shorts keep slice 1's graceful degradation (per-video
+  arming + a `#movie_player` containment guard on the content side).
+- A native pick is session-local — it never writes
+  `streamingLastLanguagesSynced` — but a picked auto-translate target is
+  recorded into `streamingPages.youtube.targetLanguages`, exactly like a
+  dialog confirm (that list offers variants, it never auto-loads).

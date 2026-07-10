@@ -28,6 +28,12 @@ import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { getCachedFlicktionaryNativeLanguage } from '@/services/flicktionary/flicktionary-target-language'
+import {
+  nativeTrackSelectionPlan,
+  tripleForTrack,
+  triplesEqual,
+  type NativeTrackTriple,
+} from '@/services/native-track-selection'
 import { normalizeSyncedTracks, resolveSyncedTrackId } from '@/services/synced-track-resolution'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/shadow-video-data-sync-app'
@@ -90,6 +96,13 @@ export default class VideoDataSyncController {
   private _activeElement?: Element
   private _autoSyncAttempted: boolean = false
   private _dataReceivedListener?: (event: Event) => void
+  private _trackSelectedListener?: (event: Event) => void
+  // Serialization of native gear-menu selections (see
+  // _handleNativeTrackSelected): the triple currently being loaded, and the
+  // latest different selection that arrived while it was loading (latest wins;
+  // intermediate picks are intentionally dropped).
+  private _nativeTrackSyncInFlight?: NativeTrackTriple
+  private _pendingNativeTriple?: NativeTrackTriple
 
   // The subtitle-track dialog renders in the content-script realm via a
   // fullscreen-aware modal shadow host. The model flows through `_store`
@@ -135,7 +148,14 @@ export default class VideoDataSyncController {
       document.removeEventListener('asbplayer-synced-data', this._dataReceivedListener, false)
     }
 
+    if (this._trackSelectedListener) {
+      document.removeEventListener('asbplayer-native-captions-track-selected', this._trackSelectedListener, false)
+    }
+
     this._dataReceivedListener = undefined
+    this._trackSelectedListener = undefined
+    this._nativeTrackSyncInFlight = undefined
+    this._pendingNativeTriple = undefined
     this._syncedData = undefined
     this._lastSyncedTracks = undefined
 
@@ -180,8 +200,11 @@ export default class VideoDataSyncController {
 
     this._syncedData = undefined
     this._autoSyncAttempted = false
-    // New video context — what was loaded for the previous one is irrelevant.
+    // New video context — what was loaded for the previous one is irrelevant,
+    // and pending native-menu work must not leak across the navigation.
     this._lastSyncedTracks = undefined
+    this._nativeTrackSyncInFlight = undefined
+    this._pendingNativeTriple = undefined
 
     if (!this._dataReceivedListener) {
       this._dataReceivedListener = (event: Event) => {
@@ -189,6 +212,16 @@ export default class VideoDataSyncController {
         this._setSyncedData(data)
       }
       document.addEventListener('asbplayer-synced-data', this._dataReceivedListener, false)
+    }
+
+    if (!this._trackSelectedListener) {
+      this._trackSelectedListener = (event: Event) => {
+        const triple = (event as CustomEvent).detail as NativeTrackTriple | undefined
+        if (triple && typeof triple.lang === 'string') {
+          void this._handleNativeTrackSelected(triple)
+        }
+      }
+      document.addEventListener('asbplayer-native-captions-track-selected', this._trackSelectedListener, false)
     }
 
     if (pageDelegate.config.key === 'youtube') {
@@ -719,7 +752,7 @@ export default class VideoDataSyncController {
     this._wasPaused = undefined
   }
 
-  private async _syncData(data: VideoDataSubtitleTrack[]) {
+  private async _syncData(data: VideoDataSubtitleTrack[], userRequested = false) {
     try {
       let subtitles: SerializedSubtitleFile[] = []
 
@@ -741,7 +774,7 @@ export default class VideoDataSyncController {
       await this._syncSubtitles(
         subtitles,
         data.some((track) => typeof track.url === 'object'),
-        false
+        userRequested
       )
       this._recordSyncedTracks(data)
       return true
@@ -754,10 +787,105 @@ export default class VideoDataSyncController {
     }
   }
 
+  // A track selection made in the site's native subtitle menu (YouTube's gear
+  // → Subtitles/CC, forwarded by the page script as a (lang, asr, tlang?)
+  // triple). The native menu owns slot 1 only; the second/third tracks
+  // survive. Deliberately session-local: it never writes the remembered
+  // per-site tracks (the dialog's remember toggle stays the only writer) —
+  // but a picked auto-translate target IS recorded, like a dialog confirm,
+  // so future videos publish its `>> code` variants.
+  private async _handleNativeTrackSelected(triple: NativeTrackTriple) {
+    if (!this._context.nativeCaptionsController.controllingDisplay || !this._isHidden()) {
+      return
+    }
+
+    // Every eligible <video> gets its own binding and all of them hear this
+    // document event — only the binding for the main player may react, or a
+    // Shorts/preview binding could hijack the selection.
+    if (document.getElementById('movie_player')?.contains(this._context.video) !== true) {
+      return
+    }
+
+    if (this._syncedData?.subtitles === undefined) {
+      return
+    }
+
+    if (this._nativeTrackSyncInFlight !== undefined) {
+      if (!triplesEqual(this._nativeTrackSyncInFlight, triple)) {
+        this._pendingNativeTriple = triple
+      }
+      return
+    }
+
+    const plan = nativeTrackSelectionPlan({
+      triple,
+      availableTracks: this._syncedData.subtitles,
+      loadedTracks: this._lastSyncedTracks,
+      inFlightTriple: undefined,
+      emptyTrack: this._emptySubtitle,
+    })
+
+    if (plan === undefined) {
+      return
+    }
+
+    this._nativeTrackSyncInFlight = triple
+
+    try {
+      const synced = await this._syncData(plan.slots, true)
+
+      if (synced) {
+        // Without this merge the reopened dialog cannot represent a freshly
+        // synthesized translation (it resolves loaded tracks against the
+        // published list only) and confirming it would unload the subtitles.
+        if (plan.synthesizedTrack !== undefined && this._syncedData?.subtitles !== undefined) {
+          const synthesizedId = plan.synthesizedTrack.id
+          if (!this._syncedData.subtitles.some((track) => track.id === synthesizedId)) {
+            this._syncedData.subtitles.push(plan.synthesizedTrack)
+          }
+        }
+
+        if (triple.tlang !== undefined) {
+          await this._rememberTranslationLanguages([triple.tlang])
+        }
+      }
+    } finally {
+      this._nativeTrackSyncInFlight = undefined
+      const pending = this._pendingNativeTriple
+      this._pendingNativeTriple = undefined
+
+      if (pending !== undefined) {
+        void this._handleNativeTrackSelected(pending)
+      }
+    }
+  }
+
   // Remember the slot-ordered tracks just synced so the reopened dialog shows
-  // them (see services/synced-track-resolution.ts).
+  // them (see services/synced-track-resolution.ts), and mirror slot 1 into the
+  // site's native subtitle menu so its checkmark shows what is actually loaded.
   private _recordSyncedTracks(data: VideoDataSubtitleTrack[]) {
     this._lastSyncedTracks = normalizeSyncedTracks(data, this._emptySubtitle)
+    this._writeBackNativeTrackSelection(this._lastSyncedTracks[0])
+  }
+
+  // Push the loaded primary track into the site's native subtitle menu (the
+  // page script applies it via the player API). Self-negotiating like the rest
+  // of the native-captions protocol: sites without a page-script
+  // implementation never listen. Tracks that don't exist in the site's own
+  // menu (local files, generated transcripts, Empty) are skipped and the
+  // native menu left alone.
+  private _writeBackNativeTrackSelection(track: VideoDataSubtitleTrack) {
+    const triple = tripleForTrack(track)
+
+    if (triple === undefined) {
+      return
+    }
+
+    let payload: NativeTrackTriple = triple
+    if (typeof cloneInto === 'function') {
+      payload = cloneInto(payload, document.defaultView)
+    }
+    document.dispatchEvent(new CustomEvent('asbplayer-native-captions-select-track', { detail: payload }))
   }
 
   private async _syncDataArray(data: ConfirmedVideoDataSubtitleTrack[], syncWithAsbplayerId?: string) {
@@ -803,7 +931,10 @@ export default class VideoDataSyncController {
     const files: File[] = await Promise.all(
       serializedFiles.map(async (f) => new File([base64ToBlob(f.base64, 'text/plain')], f.name))
     )
-    this._context.loadSubtitles(files, flatten, userRequested, syncWithAsbplayerId)
+    // Awaited so callers only record/write back tracks once the load has
+    // actually succeeded — and so the native caption control is bound (from
+    // _updateSubtitles, inside this promise) before any write-back fires.
+    await this._context.loadSubtitles(files, flatten, userRequested, syncWithAsbplayerId)
   }
 
   private async _subtitlesForUrl(
