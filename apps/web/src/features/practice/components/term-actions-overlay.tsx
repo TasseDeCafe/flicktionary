@@ -1,7 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Pencil } from 'lucide-react'
-import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  PracticePool,
+  PracticeQueueFilter,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -26,6 +29,10 @@ interface TermActionsOverlayProps {
   practiceMode: 'flashcards' | 'strengthen' | 'warmup'
   practiceStudySessionId?: string
   practiceSessionHard?: string[]
+  // The composed queue's filter ('flashcards' mode only) — carried through the
+  // focus-view URL so its close re-enters the composed route under the same
+  // filter, which is what lets the stashed session snapshot match and resume.
+  practiceFilter?: PracticeQueueFilter
 }
 
 // Header-kebab actions for the term behind the displayed composed-queue item.
@@ -33,10 +40,10 @@ interface TermActionsOverlayProps {
 // pointer, fetched lazily on open (the queue payloads stay lean). Same menu
 // pattern as the vocabulary rows and the reading-mode rate sheet.
 //
-// Navigating away unmounts the composed queue (client-side state): the fresh
-// queue on return re-fetches — already-rated cards drop out naturally and
-// 'again' cards resurface as due learning-state — but in-session peek
-// re-rate records don't survive the round-trip.
+// Navigating away unmounts the composed queue, but the session survives the
+// detour: the view stashes its snapshot on unmount and the focus view's close
+// re-enters the same route, where the snapshot resumes (see
+// composed-session-snapshot.ts).
 export const TermActionsOverlay = ({
   open,
   onOpenChange,
@@ -46,6 +53,7 @@ export const TermActionsOverlay = ({
   practiceMode,
   practiceStudySessionId,
   practiceSessionHard,
+  practiceFilter,
 }: TermActionsOverlayProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -69,6 +77,7 @@ export const TermActionsOverlay = ({
         practiceMode,
         practiceStudySessionId,
         practiceSessionHard,
+        practiceFilter,
       },
     })
   }

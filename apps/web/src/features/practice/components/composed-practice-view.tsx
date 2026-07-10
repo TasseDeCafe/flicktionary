@@ -35,6 +35,13 @@ import {
 import { FlashcardFace, poolForCard } from './flashcard-face'
 import { TermActionsOverlay } from './term-actions-overlay'
 import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
+import {
+  clearComposedSession,
+  currentDayKey,
+  saveComposedSession,
+  takeComposedSession,
+  type RatingRecord,
+} from './composed-session-snapshot'
 import { ReviewQueueStats } from './review-queue-stats'
 import type { QueueCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
@@ -52,16 +59,6 @@ const POLL_INTERVAL_MS = 4000
 // A persistently-failing rateTerm mutation re-appends its card to the queue end
 // (so it isn't silently lost) — capped so a hard failure can't loop forever.
 const MAX_RATE_RETRIES = 2
-
-// One durably-applied rating, keyed by the queue item it rated (object
-// identity — same identity scheme as the redrill machinery). `eventId` is the
-// undo handle the rating response returned; `redrill` is the in-session copy
-// an 'again' rating appended (null otherwise), so a re-rate can reconcile it.
-type RatingRecord = {
-  rating: RateValue
-  eventId: string
-  redrill: ComposedQueueItem | null
-}
 
 // The MC exercise a pressed Hint swapped in for the current flashcard,
 // snapshotted from the hint query so a background refetch can't change the
@@ -127,7 +124,10 @@ type ComposedPracticeViewProps = {
 // warm-up + rehab terms) and due flashcards, served by composePracticeQueue
 // (production-first ordering is the server's). One-shot snapshot: the queue is
 // seeded from the compose response; the serve-only refresh poll only upgrades
-// exercise placeholders in place, never appends.
+// exercise placeholders in place, never appends. An interrupted session is
+// stashed on unmount and resumed on the next matching mount (see
+// composed-session-snapshot.ts), so an edit-term detour or back gesture never
+// re-composes an in-progress session.
 export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPracticeViewProps) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
@@ -135,35 +135,51 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   const resolveMeaning = useTermMeaning(targetLanguage)
   const navigate = useNavigate()
   const languageName = getLanguageName(targetLanguage)
-  const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
+  // Deliberate session end (X / Back buttons, error screen) — skips the
+  // unmount save below, so the next Practice entry composes fresh instead of
+  // resuming this session.
+  const endedRef = useRef(false)
+  const close = () => {
+    endedRef.current = true
+    void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
+  }
 
   const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
   const { mutateAsync: refreshQueue } = useRefreshPracticeQueue()
   const { mutate: rateTerm } = useRateTerm()
   const { mutate: undoRating } = useUndoRating()
 
-  const [queue, setQueue] = useState<ComposedQueueItem[] | null>(null)
-  const [index, setIndex] = useState(0)
+  // An interrupted same-day session (edit-term detour, back gesture) resumes
+  // where it stood instead of re-composing — a fresh compose would run the
+  // auto-warm-up parking pass and turn an almost-finished session into a new
+  // batch of introductions. Lazy initializer: the take consumes the stash
+  // exactly once per mount, and every piece of session state seeds from it.
+  const [resumedSession] = useState(() => takeComposedSession(targetLanguage, filter))
+  const [queue, setQueue] = useState<ComposedQueueItem[] | null>(resumedSession?.queue ?? null)
+  const [index, setIndex] = useState(resumedSession?.index ?? 0)
   // Mirror of `index` for async rate callbacks: rolling back an optimistic
   // redrill copy must know whether the copy was already consumed.
-  const indexRef = useRef(0)
+  const indexRef = useRef(resumedSession?.index ?? 0)
   const [revealed, setRevealed] = useState(false)
-  const [capNoticeShown, setCapNoticeShown] = useState(false)
-  const [dailyLimitReached, setDailyLimitReached] = useState(false)
+  const [capNoticeShown, setCapNoticeShown] = useState(resumedSession?.capNoticeShown ?? false)
+  const [dailyLimitReached, setDailyLimitReached] = useState(resumedSession?.dailyLimitReached ?? false)
   // Peek-back: how many items behind the live index we're re-viewing read-only.
   const [peekBack, setPeekBack] = useState(0)
-  const startedRef = useRef(false)
+  // A resumed session is already started — the compose effect must not run.
+  const startedRef = useRef(resumedSession != null)
   // Terms rated again/hard this session — offered post-session Strengthen
   // exercises. Parked terms are exercises here (never flashcards), so the set
   // stays non-parked by construction.
-  const sessionHardRef = useRef<Set<string>>(new Set())
+  const sessionHardRef = useRef<Set<string>>(resumedSession?.sessionHard ?? new Set())
   // Durably-applied ratings keyed by queue-item identity: an entry exists ⇔
   // the rating landed server-side with an undoable event. Drives the peek
   // re-rate buttons (flashcard items only — a consumed exercise can't be
   // un-answered).
-  const ratingRecordsRef = useRef<Map<ComposedQueueItem, RatingRecord>>(new Map())
+  const ratingRecordsRef = useRef<Map<ComposedQueueItem, RatingRecord>>(resumedSession?.ratingRecords ?? new Map())
   // Answered-exercise outcomes, for the read-only peek display.
-  const exerciseOutcomesRef = useRef<Map<ComposedQueueItem, ExerciseAnswerData>>(new Map())
+  const exerciseOutcomesRef = useRef<Map<ComposedQueueItem, ExerciseAnswerData>>(
+    resumedSession?.exerciseOutcomes ?? new Map()
+  )
   // The peeked item whose undo→re-rate chain is in flight (disables the peek
   // rate buttons until the chain settles).
   const [pendingRerate, setPendingRerate] = useState<ComposedQueueItem | null>(null)
@@ -190,6 +206,40 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       }
     )
   }, [composeQueue, targetLanguage, filter])
+
+  // Live mirror of the snapshot-worthy state for the unmount save below (a
+  // cleanup closure would otherwise see the mount render's values).
+  const sessionStateRef = useRef({ queue, index, dailyLimitReached, capNoticeShown })
+  sessionStateRef.current = { queue, index, dailyLimitReached, capNoticeShown }
+  useEffect(
+    () => () => {
+      const snapshot = sessionStateRef.current
+      // Only an interrupted session is worth resuming: when nothing composed
+      // yet, the live queue is exhausted (completion screen), or the user
+      // deliberately ended the session (close()), clear the stash instead of
+      // saving — an ended session must also invalidate any earlier stash so
+      // it can't resurface after the fact.
+      if (endedRef.current || !snapshot.queue || !snapshot.queue[snapshot.index]) {
+        clearComposedSession()
+        return
+      }
+      saveComposedSession({
+        targetLanguage,
+        filter,
+        queue: snapshot.queue,
+        index: snapshot.index,
+        dailyLimitReached: snapshot.dailyLimitReached,
+        capNoticeShown: snapshot.capNoticeShown,
+        sessionHard: sessionHardRef.current,
+        ratingRecords: ratingRecordsRef.current,
+        exerciseOutcomes: exerciseOutcomesRef.current,
+        dayKey: currentDayKey(),
+      })
+    },
+    // The route remounts this view on language/filter change, so these deps
+    // make the cleanup a save-once-on-unmount.
+    [targetLanguage, filter]
+  )
 
   // Serve-only poll while a 'generating' exercise placeholder is still at or
   // ahead of the current position, swapping it to ready/failed in place.
@@ -664,6 +714,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           targetLanguage={targetLanguage}
           pool={actionsPool}
           practiceMode='flashcards'
+          practiceFilter={filter}
         />
       )}
     </ModalScreen>

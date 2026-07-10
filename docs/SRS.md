@@ -770,12 +770,25 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 
 - The queue is a **one-shot client-side slice of union items**
   (`{type:'flashcard'} | {type:'exercise'}`): seeded from the compose mutation's
-  response, re-entered fresh on every mount (the route keys the view on the serialized
-  filter). The serve-only refresh poll (~4s while a `generating` exercise placeholder is
-  at/ahead of the index) only upgrades placeholders in place
-  (`mergeComposedPlaceholders`, keyed `(pool, userLookupId)`) — it never appends, so a
-  term graduating mid-session becomes a flashcard on the NEXT session, not this one.
-  Navigation still drops the in-session state (rating records, Strengthen set, position).
+  response (the route keys the view on the serialized filter). The serve-only refresh
+  poll (~4s while a `generating` exercise placeholder is at/ahead of the index) only
+  upgrades placeholders in place (`mergeComposedPlaceholders`, keyed
+  `(pool, userLookupId)`) — it never appends, so a term graduating mid-session becomes
+  a flashcard on the NEXT session, not this one.
+- **Interrupted sessions resume** (`composed-session-snapshot.ts`, a module-level stash
+  like the Vocabulary tab's saved-search): unmounting mid-session — the Edit-term
+  focus-view detour, a back gesture — saves the full session (queue, position, rating
+  records, exercise outcomes, Strengthen set, cap flags), and the next mount of the
+  composed route resumes it instead of re-composing, so a detour can't run a fresh
+  auto-warm-up parking pass and refill an almost-finished session with new
+  introductions. Resume requires the same language + filter and the same local calendar
+  day (due-ness and daily budgets shift overnight); the snapshot is consumed on read.
+  **Deliberate exits never resume**: the X/Back buttons and reaching the completion
+  screen skip the save, so re-entering Practice from the language screen composes fresh
+  (and can introduce new warm-up terms, by design). The chunk soft-delete mutations
+  splice a deleted term's not-yet-reached items out of the stashed queue, so a "delete
+  this card" detour resumes without it. A hard page reload still drops the session (the
+  stash is in-memory only).
 - **Exercise items** render through the shared exercise components
   (`McExercise` / `ProductionClozeExercise` / `UseInSentenceExercise`) with per-entry
   copy from `origin` (warm-up vs rehab); skips are non-consuming as in Strengthen.
@@ -830,9 +843,11 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   the term behind the displayed item — flashcard or exercise alike (an exercise entry
   carries its own `userLookupId`/`pool`); `Edit term` deep-links to the focus view via
   `chunks.get`'s representative-card pointer (`firstCardId`/`firstCardSessionId`, fetched
-  lazily on menu open) with `from=practice&practiceMode=flashcards`, so the focus view's
-  close returns to a fresh everyday composed queue (`practiceMode=read` returns to the
-  reading route). The dedicated Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
+  lazily on menu open) with `from=practice&practiceMode=flashcards&practiceFilter=…`
+  (the composed route's search), so the focus view's close re-enters the composed route
+  under the same filter and the stashed session snapshot resumes where it stood
+  (`practiceMode=read` returns to the reading route). The dedicated
+  Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
   the same kebab, passing `practiceMode: 'strengthen' | 'warmup'` + their route's re-entry
   state (`practiceSessionHard` / `practiceStudySessionId`) so close re-enters the same
   session (serving is read-only + consume-on-answer, so it re-serves the remaining work).
