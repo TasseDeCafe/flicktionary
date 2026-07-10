@@ -2,7 +2,6 @@ import {
   PlayMode,
   SettingsUpdatedMessage,
   ToggleSubtitlesInListFromVideoMessage,
-  ToggleSubtitlesMessage,
   VideoToExtensionCommand,
 } from '@asbplayer-fork/common'
 import { KeyBindSet } from '@asbplayer-fork/common/settings'
@@ -160,16 +159,7 @@ export default class KeyBindings {
       (event) => {
         event.preventDefault()
         event.stopImmediatePropagation()
-
-        const toggleSubtitlesCommand: VideoToExtensionCommand<ToggleSubtitlesMessage> = {
-          sender: 'asbplayer-video',
-          message: {
-            command: 'toggle-subtitles',
-          },
-          src: context.video.src,
-        }
-
-        browser.runtime.sendMessage(toggleSubtitlesCommand)
+        context.toggleSubtitles()
       },
       () => context.subtitleController.subtitles.length === 0,
       true

@@ -690,8 +690,10 @@ uses intersection, not exact offsets.
 ### Controls overlay
 
 `VideoOverlayController` (default-on via `streamingEnableOverlay`) shows a
-control bar over the video on pause: load/toggle subtitles, playback-mode
-switches, offset/playback-rate/subtitle-navigation scroller. Desktop feature —
+control bar over the video on pause: load/toggle subtitles (the toggle hides
+when a native caption control is in charge — see "Native caption control"
+below), playback-mode switches, offset/playback-rate/subtitle-navigation
+scroller. Desktop feature —
 despite its upstream "mobile overlay" ancestry. It shows whether or not
 subtitles are synced (`emptySubtitleTrack` model state) — it hosts the Load
 Subtitles button, the only path back into the track dialog, so gating it on
@@ -700,6 +702,69 @@ synced would strand users who cancel the dialog. The show is deferred by a
 internally around seeks, and reacting to the raw `pause` event made the
 controls flash on every subtitle navigation — or stick on screen mid-playback
 when the async model push landed after the play-event hide.
+
+### Native caption control (YouTube CC button)
+
+On YouTube, once subtitles load, the player's own CC button (and YouTube's
+`c` shortcut) becomes the user-facing subtitle toggle, Language-Reactor-style:
+the overlay hides its own toggle button (`subtitleToggleHidden` model flag)
+and YouTube's caption rendering is suppressed
+(`.ytp-caption-window-container { display: none !important }`, injected by the
+page script) so only the extension overlay draws.
+
+Mechanics — a self-negotiating document-CustomEvent protocol between
+`NativeCaptionsController` (content, per binding) and the page script:
+
+- `asbplayer-native-captions-bind` (content → page): sent from
+  `_updateSubtitles` whenever subtitles load on a page-script site. The page
+  starts observing its native control and applies rendering suppression.
+  Sites whose page script doesn't implement the protocol never respond, so
+  everything falls back to the overlay toggle + global setting — no per-site
+  flag needed.
+- `asbplayer-native-captions-state` (page → content):
+  `{ available, on }`. Availability means the `#movie_player` API
+  (`isSubtitlesOn`/`toggleSubtitles` — unofficial, but same shape as the
+  documented iframe player API) is present and the CC button is rendered,
+  visible and not `aria-disabled` — YouTube hides it on videos without native
+  tracks (e.g. a local file loaded on a caption-less video), in which case the
+  overlay toggle stays. Published from a `MutationObserver` on the button's
+  attributes (`onApiChange` does NOT fire on caption toggles), re-attached from
+  the page script's existing 500 ms interval because SPA navigations can
+  replace the button node and silently kill the observer.
+- `asbplayer-native-captions-set` (content → page): flip the native control
+  via `toggleSubtitles()`. The resulting state event is what updates the
+  extension, so the native player remains the single source of truth.
+- `asbplayer-native-captions-unbind` (content → page): drop suppression; sent
+  on subtitle reset/unbind. The native CC on/off state is deliberately left
+  as-is (it matches what the user last saw).
+
+Visibility state model: the native state lands in
+`SubtitleController.displaySubtitlesOverride`, a **per-video layer over the
+global `streamingDisplaySubtitles` setting** (`effectiveDisplaySubtitles =
+override ?? setting`). The setting is never written from the native path — the
+CC button is video-local by design, so toggling it must not affect other tabs
+or sites. Who wins on first contact depends on how the subtitles loaded
+(`userRequested`, threaded from `_syncSubtitles` through
+`Binding.loadSubtitles`):
+
+- **Explicit load** (dialog confirm, Open Files, drag-and-drop, Generate):
+  the native control is forced ON — the user just loaded subtitles and must
+  see them even if their YouTube CC preference was off.
+- **Automatic load** (remembered-track auto-sync on page load / SPA
+  navigation): the native control's own state is **adopted**. YouTube
+  persists the CC choice across reloads and videos, so the toggle survives a
+  hard reload; pushing our state here instead would overwrite that memory and
+  make CC appear to reset on every reload.
+
+`Binding.toggleSubtitles()` is the single entry point for the overlay button
+and the `toggleSubtitles` keybind: it flips the native control when it's in
+charge, else sends the classic `toggle-subtitles` runtime message (global
+setting + broadcast).
+
+Caveat: while `getOption('captions','track')` reports the selected track
+(incl. `translationLanguage`), it returns `{}` when captions are toggled off —
+any future native track-selection mirroring (gear menu → extension track load)
+must remember the last track itself rather than read it lazily.
 
 ### Other shadow surfaces
 

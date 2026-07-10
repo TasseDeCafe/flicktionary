@@ -199,6 +199,9 @@ export interface VideoOverlayModel {
   language?: string
   subtitleDisplaying: boolean
   subtitlesAreVisible: boolean
+  // The site's native caption control (e.g. YouTube's CC button) is the
+  // subtitle toggle for this video, so the overlay hides its own.
+  subtitleToggleHidden: boolean
   // Raw setting value — 'system' is resolved at the consumer edge (each realm's
   // own matchMedia), never in controllers.
   themeType: 'dark' | 'light' | 'system'

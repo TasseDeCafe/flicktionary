@@ -29,6 +29,7 @@ import {
   RegisterFlicktionarySubtitlesMessage,
   RegisterFlicktionarySubtitlesResponse,
   SaveWordFlicktionaryVideoContext,
+  ToggleSubtitlesMessage,
 } from '@asbplayer-fork/common'
 type FlicktionaryVideoContext = SaveWordFlicktionaryVideoContext
 import { v4 as uuidv4 } from 'uuid'
@@ -48,6 +49,7 @@ import { seekWithNudge } from '@asbplayer-fork/common/util'
 import ControlsController from '../controllers/controls-controller'
 import DragController from '../controllers/drag-controller'
 import { VideoOverlayController } from '../controllers/video-overlay-controller'
+import NativeCaptionsController from '../controllers/native-captions-controller'
 import NotificationController from '../controllers/notification-controller'
 import SubtitleController from '../controllers/subtitle-controller'
 import VideoDataSyncController from '../controllers/video-data-sync-controller'
@@ -88,6 +90,7 @@ export default class Binding {
   readonly dragController: DragController
   readonly notificationController: NotificationController
   readonly videoOverlayController: VideoOverlayController
+  readonly nativeCaptionsController: NativeCaptionsController
   readonly keyBindings: KeyBindings
   readonly settings: SettingsProvider
 
@@ -143,6 +146,7 @@ export default class Binding {
     this.keyBindings = new KeyBindings()
     this.notificationController = new NotificationController(this)
     this.videoOverlayController = new VideoOverlayController(this, OffsetAnchor.top)
+    this.nativeCaptionsController = new NativeCaptionsController(this)
     this.subtitleController.onOffsetChange = () => this.videoOverlayController.updateModel()
     this.maxImageWidth = 0
     this.maxImageHeight = 0
@@ -726,6 +730,7 @@ export default class Binding {
     this.keyBindings.unbind()
     this.videoDataSyncController.unbind()
     this.videoOverlayController.unbind()
+    this.nativeCaptionsController.unbind()
     this.notificationController.unbind()
     this.subscribed = false
 
@@ -808,6 +813,28 @@ export default class Binding {
     }
 
     this.video.pause()
+  }
+
+  // Single entry point for the user-facing subtitle toggle (overlay button +
+  // keyboard shortcut). While a native caption control drives visibility, the
+  // toggle flips it video-locally; otherwise it flips the persisted global
+  // setting through the background handler (which broadcasts settings-updated
+  // to every video element).
+  toggleSubtitles() {
+    if (this.nativeCaptionsController.controllingDisplay) {
+      this.nativeCaptionsController.toggleNativeCaptions()
+      return
+    }
+
+    const command: VideoToExtensionCommand<ToggleSubtitlesMessage> = {
+      sender: 'asbplayer-video',
+      message: {
+        command: 'toggle-subtitles',
+      },
+      src: this.video.src,
+    }
+
+    browser.runtime.sendMessage(command)
   }
 
   showVideoDataDialog(openedFromMiningCommand: boolean, fromAsbplayerId?: string) {
@@ -929,7 +956,10 @@ export default class Binding {
     return await cropAndResize(maxWidth, maxHeight, rect, tabImageDataUrl)
   }
 
-  async loadSubtitles(files: File[], flatten: boolean, syncWithAsbplayerId?: string) {
+  // userRequested: whether the user explicitly loaded these subtitles (dialog
+  // confirm, file open/drop, generate) as opposed to the silent auto-sync —
+  // governs whether a native caption control is forced ON or adopted as-is.
+  async loadSubtitles(files: File[], flatten: boolean, userRequested = true, syncWithAsbplayerId?: string) {
     const {
       streamingSubtitleListPreference,
       subtitleRegexFilter,
@@ -990,7 +1020,8 @@ export default class Binding {
             originalStart: s.start,
             originalEnd: s.end,
           })),
-          flatten ? [files[0].name] : files.map((f) => f.name)
+          flatten ? [files[0].name] : files.map((f) => f.name),
+          userRequested
         )
         // If target asbplayer is not specified, then sync with any already-synced asbplayer
         // Otherwise, sync with the target asbplayer
@@ -1003,7 +1034,7 @@ export default class Binding {
     }
   }
 
-  private _updateSubtitles(subtitles: IndexedSubtitleModel[], subtitleFileNames: string[]) {
+  private _updateSubtitles(subtitles: IndexedSubtitleModel[], subtitleFileNames: string[], userRequested = false) {
     this.subtitleController.subtitles = subtitles
     this.subtitleController.subtitleFileNames = subtitleFileNames
 
@@ -1020,9 +1051,18 @@ export default class Binding {
       this.playMode = PlayMode.normal
     }
 
-    this.subtitleController.notifySubtitlesLoaded()
+    this.subtitleController.notifySubtitlesLoaded(userRequested)
     this._synced = true
     this._syncedTimestamp = Date.now()
+
+    // Hand the subtitle toggle to the site's native caption control if the
+    // page script implements the protocol and reports one (YouTube's CC
+    // button); otherwise this is a no-op and the overlay toggle stays.
+    if (subtitles.length > 0 && this.hasPageScript) {
+      this.nativeCaptionsController.activate({ revealSubtitles: userRequested })
+    } else {
+      this.nativeCaptionsController.deactivate()
+    }
 
     if (this.video.paused) {
       this.videoOverlayController.show()
@@ -1053,6 +1093,7 @@ export default class Binding {
     this.subtitleController.reset()
     this._synced = false
     this._syncedTimestamp = undefined
+    this.nativeCaptionsController.deactivate()
     this.videoOverlayController.disposeOverlay()
   }
 
