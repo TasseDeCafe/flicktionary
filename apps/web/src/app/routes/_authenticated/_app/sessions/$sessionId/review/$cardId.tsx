@@ -11,7 +11,9 @@ import { FocusView } from '@/features/review/components/focus-view'
 // the dedicated exercise sessions) so close returns to the right screen.
 // 'strengthen' re-enters with `practiceSessionHard` (the again/hard bonus list
 // its route carries in the URL); 'warmup' re-enters with
-// `practiceStudySessionId` (the session scope its route requires).
+// `practiceStudySessionId` (the session scope its route requires);
+// 'flashcards' re-enters with `practiceFilter` (the composed route's search),
+// so the interrupted session's stashed snapshot matches and resumes.
 const focusViewSearchSchema = z.object({
   from: z.enum(['vocabulary', 'practice']).optional(),
   source: z.enum(['available']).optional(),
@@ -20,6 +22,16 @@ const focusViewSearchSchema = z.object({
   practiceMode: z.enum(['read', 'flashcards', 'strengthen', 'warmup']).optional(),
   practiceStudySessionId: z.string().uuid().optional().catch(undefined),
   practiceSessionHard: z.array(z.string().uuid()).optional().catch(undefined),
+  practiceFilter: z
+    .object({
+      pools: z.array(z.enum(['recognition', 'production'])).min(1),
+      scope: z.enum(['due_only', 'new_only', 'both']),
+      render: z.enum(['flashcards_only', 'exercises_only', 'both']),
+      autoWarmup: z.boolean(),
+      includeOptInNew: z.boolean(),
+    })
+    .optional()
+    .catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/sessions/$sessionId/review/$cardId')({

@@ -40,10 +40,18 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from, source, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard } =
-    useSearch({
-      from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
-    })
+  const {
+    from,
+    source,
+    practiceLang,
+    practicePool,
+    practiceMode,
+    practiceStudySessionId,
+    practiceSessionHard,
+    practiceFilter,
+  } = useSearch({
+    from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
+  })
   const fromVocabulary = from === 'vocabulary'
   const fromPractice = from === 'practice'
   // Practice & Vocabulary entries are language-wide views over kept chunks,
@@ -118,7 +126,7 @@ export const FocusView = () => {
   // language + pool so the back-route resolves to the sessionless review screen.
   const search = from
     ? fromPractice && practiceLang
-      ? { from, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard }
+      ? { from, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard, practiceFilter }
       : { from }
     : undefined
   const backToPractice = () => {
@@ -148,15 +156,18 @@ export const FocusView = () => {
       }
       return
     }
-    // Flashcards live in the composed queue now; close lands on a fresh
-    // everyday compose (the queue re-seeds from a fresh fetch anyway). A
+    // Flashcards live in the composed queue: close re-enters the composed
+    // route under the filter carried in `practiceFilter`, so the session
+    // snapshot stashed when the queue unmounted matches and resumes (a
+    // mismatched filter would compose fresh and re-run auto-warm-up). The
+    // fallback covers hand-edited URLs that dropped the filter. A
     // reading-mode origin returns to the reading route, scope reset to
     // 'mixed'.
     if (practiceMode === 'flashcards') {
       void navigate({
         to: '/practice/composed/$targetLanguage',
         params: { targetLanguage: practiceLang },
-        search: {
+        search: practiceFilter ?? {
           pools: ['production', 'recognition'],
           scope: 'both',
           render: 'both',

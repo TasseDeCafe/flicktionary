@@ -2,6 +2,7 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { dropTermFromComposedSession } from '../components/composed-session-snapshot'
 
 export const useDueSummary = () => {
   const { t } = useLingui()
@@ -214,6 +215,9 @@ export const useDeleteChunkFromPractice = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.deleteChunk.mutationOptions({
+      // An interrupted composed session stashed for resume must not re-serve
+      // the deleted term's cards/exercises.
+      onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
       meta: {
         invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
         errorMessage: t`Failed to delete term`,

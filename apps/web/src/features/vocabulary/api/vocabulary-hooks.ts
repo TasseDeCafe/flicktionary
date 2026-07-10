@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
+import { dropTermFromComposedSession } from '@/features/practice/components/composed-session-snapshot'
 import {
   getStudyTargetsKey,
   setRowProductionEnabled,
@@ -223,6 +224,9 @@ export const useDeleteChunk = () => {
           ),
         ]),
       onError: (_err, _vars, context) => context?.rollback(),
+      // An interrupted practice session stashed for resume must not re-serve
+      // the deleted term's cards/exercises.
+      onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
       meta: {
         invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
         errorMessage: t`Failed to delete term`,
