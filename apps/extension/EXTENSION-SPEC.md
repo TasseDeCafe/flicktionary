@@ -761,10 +761,76 @@ and the `toggleSubtitles` keybind: it flips the native control when it's in
 charge, else sends the classic `toggle-subtitles` runtime message (global
 setting + broadcast).
 
-Caveat: while `getOption('captions','track')` reports the selected track
-(incl. `translationLanguage`), it returns `{}` when captions are toggled off —
-any future native track-selection mirroring (gear menu → extension track load)
-must remember the last track itself rather than read it lazily.
+### Native track mirroring (YouTube gear → Subtitles/CC menu)
+
+While the native control is bound, YouTube's own subtitle menu (including
+Auto-translate) also selects the track the extension loads, and the extension
+mirrors its loads back so the menu's checkmark shows what is actually playing.
+Track identity across the two worlds is the **(lang, asr, tlang?) triple**
+(pure mapping helpers + the per-event decision logic live in
+`services/native-track-selection.ts`, unit-tested): it maps onto the published
+track list via the same identity the page script dedupes on
+(language + asr-ness), with Auto-translate corresponding 1:1 to the
+`${tlang}_from_${lang}` machine-translation variants.
+
+Two more protocol events:
+
+- `asbplayer-native-captions-track-selected` (page → content): the user picked
+  a track in the native menu. Detection is a `PerformanceObserver` on
+  `resource` entries — every native track change fetches `/api/timedtext`
+  carrying the triple in its query string. (Patching `window.fetch` misses
+  these: YouTube captures its network functions at boot, before a
+  content-script-injected patch lands. `getOption('captions','track')` can't be
+  read lazily either — it returns `{}` while CC is off.) The extension's own
+  subtitle fetches always carry `fmt=srv3` and are filtered out; the native
+  player requests json3.
+- `asbplayer-native-captions-select-track` (content → page): write-back. Sent
+  from `_recordSyncedTracks` after every successful sync whose slot-1 track
+  exists in YouTube's world (skipped for local files, generated transcripts and
+  Empty — the menu is left alone); the page script applies it via
+  `setOption('captions','track', { languageCode, kind?, translationLanguage? })`.
+  The write is **deferred while captions are toggled off** and (re-)applied on
+  every CC-on edge: `setOption` while captions are off force-enables them
+  (live-probed 2026-07-10), which would clobber the adopted CC-off state.
+
+Rules, in both directions:
+
+- **Extension auto-sync stays the initial source.** The page script only
+  forwards selections while **armed for the current video** (armed on
+  bind/write-back, disarmed on unbind or video-id change). This rejects
+  YouTube's own persisted-track fetch during the page-load / SPA-navigation
+  window before the extension has loaded anything — the remembered-pair
+  auto-sync, second track and human-translation pairing all survive, and the
+  write-back then aligns the native menu to what actually loaded.
+- **The native menu owns slot 1 only.** Slots 2/3 survive a native switch. The
+  dialog's translation-toggle overlay track (the appended 4th confirm track) is
+  tied to the previous primary and does not survive; the persisted
+  `streamingTranslationMode` reconstructs it on the next dialog confirm. For
+  a dual base+translation load, write-back mirrors slot 1 (the base track).
+- **Session-local, like the CC button**: a native pick never writes
+  `streamingLastLanguagesSynced` (the dialog's remember toggle stays the only
+  writer). A picked Auto-translate target IS recorded into
+  `streamingPages.youtube.targetLanguages` (same as a dialog confirm) so future
+  videos publish its `>> code` variants — that list offers, it never auto-loads.
+- **Any Auto-translate target works**, remembered or not: an unpublished
+  `${tlang}_from_${lang}` variant is synthesized from the base track and merged
+  into the published list after a successful load, so the reopened dialog can
+  represent it (it resolves loaded tracks against that list only).
+- **Echo-proof and serialized**: on the page side, only fetches matching the
+  player's *current* selection (`getOption('captions','track')`) are forwarded
+  — this drops YouTube's CC-on restore fetch of its own persisted track (the
+  deferred write-back applied on the same CC-on edge wins: microtask vs
+  network) and superseded fetches from rapid menu picks. On the content side,
+  selections equal to the loaded or currently loading track are dropped
+  (write-back itself triggers a native re-fetch), concurrent selections are
+  serialized latest-wins per binding, pending work is cleared on video
+  change/unbind, and only the binding whose video sits under `#movie_player`
+  reacts (Shorts/preview bindings ignore the event).
+
+Supporting fix shipped with this: `_syncSubtitles` awaits
+`Binding.loadSubtitles`, so `_recordSyncedTracks`/write-back run only after a
+load actually succeeded (and after `activate()` has bound the page), and load
+failures surface through the sync error path.
 
 ### Other shadow surfaces
 
