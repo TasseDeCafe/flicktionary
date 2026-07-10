@@ -81,6 +81,11 @@ export default class SubtitleController {
   subtitleFileNames?: string[]
   _forceHideSubtitles: boolean
   _displaySubtitles: boolean
+  // Per-video visibility layer on top of the global streamingDisplaySubtitles
+  // setting, driven by a site's native caption control (see
+  // NativeCaptionsController). undefined = no native control, fall back to the
+  // setting.
+  _displaySubtitlesOverride: boolean | undefined
   surroundingSubtitlesCountRadius: number
   surroundingSubtitlesTimeRadius: number
   autoCopyCurrentSubtitle: boolean
@@ -113,6 +118,7 @@ export default class SubtitleController {
     this.subtitleTrackAlignments = { 0: 'bottom' }
     this._forceHideSubtitles = false
     this._displaySubtitles = true
+    this._displaySubtitlesOverride = undefined
     this.lastOffsetChangeTimestamp = 0
     this.showingOffset = undefined
     this.surroundingSubtitlesCountRadius = 1
@@ -361,6 +367,15 @@ export default class SubtitleController {
     this.showingSubtitles = undefined
   }
 
+  set displaySubtitlesOverride(displaySubtitlesOverride: boolean | undefined) {
+    this._displaySubtitlesOverride = displaySubtitlesOverride
+    this.showingSubtitles = undefined
+  }
+
+  get effectiveDisplaySubtitles() {
+    return this._displaySubtitlesOverride ?? this._displaySubtitles
+  }
+
   set forceHideSubtitles(forceHideSubtitles: boolean) {
     this._forceHideSubtitles = forceHideSubtitles
     this.showingSubtitles = undefined
@@ -435,7 +450,7 @@ export default class SubtitleController {
       const shouldRenderOffset =
         (showOffset && offset !== this.showingOffset) || (!showOffset && this.showingOffset !== undefined)
 
-      if ((!showOffset && !this._displaySubtitles) || this._forceHideSubtitles) {
+      if ((!showOffset && !this.effectiveDisplaySubtitles) || this._forceHideSubtitles) {
         // Don't call hide() — that would dispose the host and leak the React
         // root. Hiding goes through a store flag (the app renders nothing); the
         // containers + host stay mounted.
@@ -655,19 +670,30 @@ export default class SubtitleController {
 
   // Sync feedback goes through the corner toaster, not the subtitle overlay —
   // the overlay only ever renders real cues. Tracks are auto-detected in this
-  // fork, so echoing file names carries no information; the case worth calling
-  // out explicitly is the empty track, which would otherwise be
-  // indistinguishable from a sync that silently failed.
-  notifySubtitlesLoaded() {
+  // fork, so echoing file names carries no information. Routine auto-sync
+  // success is silent (it happens on every video); a toast appears only when
+  // it says something: the user explicitly loaded subtitles (the dialog just
+  // closed — confirm it did something), an empty track loaded (otherwise
+  // indistinguishable from a sync that silently failed; load failures
+  // themselves reopen the track dialog with an inline error), or a remembered
+  // non-zero offset was restored (subs would look mysteriously shifted).
+  notifySubtitlesLoaded(userRequested: boolean) {
     if (this.subtitles.length === 0) {
       dispatchToast(() => toast(i18n._(msg`No subtitles found for this video`)))
       return
     }
 
     const offset = this._computeOffset()
-    const formattedOffset = this._formatOffset(offset)
-    const text = offset !== 0 ? i18n._(msg`Subtitles loaded (${formattedOffset})`) : i18n._(msg`Subtitles loaded`)
-    dispatchToast(() => toast(text))
+
+    if (offset !== 0) {
+      const formattedOffset = this._formatOffset(offset)
+      dispatchToast(() => toast(i18n._(msg`Subtitles loaded (${formattedOffset})`)))
+      return
+    }
+
+    if (userRequested) {
+      dispatchToast(() => toast(i18n._(msg`Subtitles loaded`)))
+    }
   }
 
   intersects(clientX: number, clientY: number): boolean {

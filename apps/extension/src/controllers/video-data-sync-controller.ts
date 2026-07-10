@@ -590,7 +590,7 @@ export default class VideoDataSyncController {
       const subtitles = openFileMessage.subtitles as SerializedSubtitleFile[]
 
       try {
-        await this._syncSubtitles(subtitles, false)
+        await this._syncSubtitles(subtitles, false, true)
         // Loaded files aren't in the page's track list — the reopened dialog
         // can't represent them, so fall back to the auto-match.
         this._lastSyncedTracks = undefined
@@ -740,7 +740,8 @@ export default class VideoDataSyncController {
       this._context.setFlicktionarySubtitleLanguageHint(data.find((track) => track.language)?.language)
       await this._syncSubtitles(
         subtitles,
-        data.some((track) => typeof track.url === 'object')
+        data.some((track) => typeof track.url === 'object'),
+        false
       )
       this._recordSyncedTracks(data)
       return true
@@ -775,6 +776,7 @@ export default class VideoDataSyncController {
       await this._syncSubtitles(
         subtitles,
         data.some((track) => typeof track.url === 'object'),
+        true,
         syncWithAsbplayerId
       )
       this._recordSyncedTracks(data)
@@ -788,15 +790,20 @@ export default class VideoDataSyncController {
     }
   }
 
+  // `userRequested` distinguishes explicit loads (dialog confirm, Open Files,
+  // Generate) from the silent auto-sync path — explicit loads force a native
+  // caption control ON so the user sees what they just loaded, while auto-sync
+  // adopts the native control's own persisted state.
   private async _syncSubtitles(
     serializedFiles: SerializedSubtitleFile[],
     flatten: boolean,
+    userRequested: boolean,
     syncWithAsbplayerId?: string
   ) {
     const files: File[] = await Promise.all(
       serializedFiles.map(async (f) => new File([base64ToBlob(f.base64, 'text/plain')], f.name))
     )
-    this._context.loadSubtitles(files, flatten, syncWithAsbplayerId)
+    this._context.loadSubtitles(files, flatten, userRequested, syncWithAsbplayerId)
   }
 
   private async _subtitlesForUrl(
@@ -974,7 +981,7 @@ export default class VideoDataSyncController {
           },
         ]
 
-        await this._syncSubtitles(subtitleFiles, false)
+        await this._syncSubtitles(subtitleFiles, false, true)
         // The generated track isn't in the page's track list — see openFile.
         this._lastSyncedTracks = undefined
         client.updateState({ isGeneratingSupadata: false })

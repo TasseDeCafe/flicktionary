@@ -1,5 +1,5 @@
 import { createElement } from 'react'
-import { VideoOverlayModel, VideoOverlayToVideoCommand, ToggleSubtitlesMessage } from '@asbplayer-fork/common'
+import { VideoOverlayModel } from '@asbplayer-fork/common'
 import Binding from '../services/binding'
 import { OffsetAnchor } from '../services/element-overlay'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
@@ -123,8 +123,9 @@ export class VideoOverlayController {
 
   // Command callbacks wired straight to the Binding — each mirrors the effect the
   // matching message used to trigger via the background handlers / binding.ts
-  // switch. toggle-subtitles stays a src-only runtime message (it toggles a
-  // setting and broadcasts to every video element through the background handler).
+  // switch. toggleSubtitles routes through the Binding so a native caption
+  // control (YouTube's CC button) is flipped video-locally when it drives
+  // visibility, and the global setting is toggled otherwise.
   private _shadowCommands(): VideoOverlayCommands {
     return {
       onLoadSubtitles: () => this._context.showVideoDataDialog(false),
@@ -136,14 +137,7 @@ export class VideoOverlayController {
       onPlayModeSelected: (playMode) => {
         this._context.playMode = playMode
       },
-      onToggleSubtitles: () => {
-        const command: VideoOverlayToVideoCommand<ToggleSubtitlesMessage> = {
-          sender: 'asbplayer-video-overlay-to-video',
-          message: { command: 'toggle-subtitles' },
-          src: this._context.video.src,
-        }
-        browser.runtime.sendMessage(command)
-      },
+      onToggleSubtitles: () => this._context.toggleSubtitles(),
     }
   }
 
@@ -209,11 +203,7 @@ export class VideoOverlayController {
     const subtitles = this._context.subtitleController.subtitles
     const subtitleDisplaying = subtitles.length > 0 && this._context.subtitleController.currentSubtitle()[0] !== null
     const timestamp = this._context.video.currentTime * 1000
-    const { language, themeType, streamingDisplaySubtitles } = await this._context.settings.get([
-      'language',
-      'themeType',
-      'streamingDisplaySubtitles',
-    ])
+    const { language, themeType } = await this._context.settings.get(['language', 'themeType'])
     const model: VideoOverlayModel = {
       offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
       playbackRate: this._context.video.playbackRate,
@@ -225,7 +215,11 @@ export class VideoOverlayController {
       currentTimestamp: timestamp,
       language,
       subtitleDisplaying,
-      subtitlesAreVisible: streamingDisplaySubtitles,
+      // Live effective visibility (global setting + any native-control
+      // override) rather than the raw setting, so the icon stays truthful on
+      // sites where the native CC button drives display.
+      subtitlesAreVisible: this._context.subtitleController.effectiveDisplaySubtitles,
+      subtitleToggleHidden: this._context.nativeCaptionsController.controllingDisplay,
       playMode: this._context.playMode,
       themeType,
     }

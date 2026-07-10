@@ -178,6 +178,55 @@ const includeTranslationsForLanguageCodes = async (tracks: VideoDataSubtitleTrac
   return tracksIncludingTranslations
 }
 
+// --- Native caption control ---
+// Implements the extension's native-captions protocol (see
+// NativeCaptionsController): while bound, YouTube's own CC button (and the `c`
+// shortcut) is the user-facing subtitle toggle. The page observes the button,
+// publishes its state to the content script, applies requested toggles through
+// the player API, and hides YouTube's own caption rendering so only the
+// extension overlay draws. The #movie_player API (isSubtitlesOn /
+// toggleSubtitles) is unofficial but mirrors the documented iframe player API.
+
+interface YtMoviePlayerElement extends HTMLElement {
+  isSubtitlesOn?: () => boolean
+  toggleSubtitles?: () => void
+}
+
+const moviePlayer = () => (document.getElementById('movie_player') ?? undefined) as YtMoviePlayerElement | undefined
+
+const nativeCaptionsButton = () => moviePlayer()?.querySelector<HTMLElement>('.ytp-subtitles-button') ?? undefined
+
+interface NativeCaptionsState {
+  available: boolean
+  on: boolean
+}
+
+// A usable control means: player API present, and the CC button rendered,
+// visible, and not disabled — YouTube hides/disables it on videos without
+// caption tracks, in which case the extension keeps its own toggle button.
+const currentNativeCaptionsState = (): NativeCaptionsState => {
+  try {
+    const player = moviePlayer()
+    const button = nativeCaptionsButton()
+
+    if (
+      !player ||
+      typeof player.isSubtitlesOn !== 'function' ||
+      typeof player.toggleSubtitles !== 'function' ||
+      !button ||
+      button.offsetParent === null ||
+      button.getAttribute('aria-disabled') === 'true'
+    ) {
+      return { available: false, on: false }
+    }
+
+    return { available: true, on: player.isSubtitlesOn() === true }
+  } catch (error) {
+    console.error(error)
+    return { available: false, on: false }
+  }
+}
+
 const publishCurrentTracks = async ({
   targetTranslationLanguageCodes,
 }: {
@@ -291,10 +340,111 @@ export default defineUnlistedScript(() => {
     false
   )
 
+  // --- Native caption control wiring ---
+
+  let captionControlBound = false
+  let observedCaptionsButton: HTMLElement | undefined
+  let lastPublishedCaptionsState: NativeCaptionsState | undefined
+  let captionsSuppressionStyle: HTMLStyleElement | undefined
+
+  const publishNativeCaptionsState = (force = false) => {
+    const state = currentNativeCaptionsState()
+
+    if (
+      !force &&
+      lastPublishedCaptionsState !== undefined &&
+      lastPublishedCaptionsState.available === state.available &&
+      lastPublishedCaptionsState.on === state.on
+    ) {
+      return
+    }
+
+    lastPublishedCaptionsState = state
+    document.dispatchEvent(new CustomEvent('asbplayer-native-captions-state', { detail: state }))
+  }
+
+  const captionsButtonObserver = new MutationObserver(() => publishNativeCaptionsState())
+
+  // (Re-)attach the observer to the current CC button node — YouTube can
+  // replace player chrome across SPA navigations, which silently kills an
+  // observer on the old node. Cheap, so re-checked from the interval below.
+  const ensureCaptionsButtonObserver = () => {
+    const button = nativeCaptionsButton()
+
+    if (button === observedCaptionsButton) {
+      return
+    }
+
+    captionsButtonObserver.disconnect()
+    observedCaptionsButton = button
+
+    if (button) {
+      captionsButtonObserver.observe(button, {
+        attributes: true,
+        attributeFilter: ['aria-pressed', 'aria-disabled', 'style', 'class'],
+      })
+    }
+
+    publishNativeCaptionsState()
+  }
+
+  // While the extension renders the subtitles, YouTube's own caption window
+  // would double-display underneath: the native CC state stays "on" (it is the
+  // user-facing toggle) but its rendering is hidden.
+  const suppressNativeCaptionsRendering = (suppress: boolean) => {
+    if (suppress) {
+      if (!captionsSuppressionStyle) {
+        captionsSuppressionStyle = document.createElement('style')
+        captionsSuppressionStyle.textContent = '.ytp-caption-window-container { display: none !important; }'
+      }
+
+      if (!captionsSuppressionStyle.isConnected) {
+        ;(document.head || document.documentElement).appendChild(captionsSuppressionStyle)
+      }
+    } else {
+      captionsSuppressionStyle?.remove()
+    }
+  }
+
+  document.addEventListener('asbplayer-native-captions-bind', () => {
+    captionControlBound = true
+    suppressNativeCaptionsRendering(true)
+    ensureCaptionsButtonObserver()
+    publishNativeCaptionsState(true)
+  })
+
+  document.addEventListener('asbplayer-native-captions-unbind', () => {
+    captionControlBound = false
+    suppressNativeCaptionsRendering(false)
+  })
+
+  document.addEventListener('asbplayer-native-captions-set', (e) => {
+    const on = (e as CustomEvent).detail === true
+
+    try {
+      const player = moviePlayer()
+
+      if (player?.isSubtitlesOn && player.toggleSubtitles && player.isSubtitlesOn() !== on) {
+        player.toggleSubtitles()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
+    publishNativeCaptionsState()
+  })
+
   let publishing = false
 
   // Handle YT shorts: Publish subtitle tracks according to current video ID
   setInterval(async () => {
+    if (captionControlBound) {
+      // Backstop for changes the attribute observer can't see: button node
+      // replacement and availability flips on SPA navigation.
+      ensureCaptionsButtonObserver()
+      publishNativeCaptionsState()
+    }
+
     if (publishing) {
       return
     }

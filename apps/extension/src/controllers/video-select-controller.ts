@@ -113,7 +113,7 @@ export default class VideoSelectController {
 
       if (binding !== undefined && binding.subscribed) {
         if (subtitleFiles !== undefined) {
-          binding.loadSubtitles(await this._filesForSubtitleFiles(subtitleFiles), false, fromAsbplayerId)
+          binding.loadSubtitles(await this._filesForSubtitleFiles(subtitleFiles), false, true, fromAsbplayerId)
         } else {
           binding.showVideoDataDialog(openedFromMiningCommand, fromAsbplayerId)
         }

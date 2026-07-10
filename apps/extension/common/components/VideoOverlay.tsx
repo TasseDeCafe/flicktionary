@@ -335,7 +335,7 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
           </span>
         </OverlayTooltip>
       )}
-      {!model.emptySubtitleTrack && (
+      {!model.emptySubtitleTrack && !model.subtitleToggleHidden && (
         <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Toggle subtitles`}>
           <span>
             <button
