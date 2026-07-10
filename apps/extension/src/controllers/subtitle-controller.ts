@@ -59,11 +59,9 @@ export default class SubtitleController {
   private readonly settings: SettingsProvider
 
   private showingSubtitles?: IndexedSubtitleModel[]
-  private lastLoadedMessageTimestamp: number
   private lastOffsetChangeTimestamp: number
   private showingOffset?: number
   private subtitlesInterval?: NodeJS.Timeout
-  private showingLoadedMessage: boolean
   private subtitleSettings?: SubtitleSettings
   private subtitleStyles?: string[]
   // Object-form styles (computeStyles, NOT computeStyleString) for the React
@@ -115,12 +113,10 @@ export default class SubtitleController {
     this.subtitleTrackAlignments = { 0: 'bottom' }
     this._forceHideSubtitles = false
     this._displaySubtitles = true
-    this.lastLoadedMessageTimestamp = 0
     this.lastOffsetChangeTimestamp = 0
     this.showingOffset = undefined
     this.surroundingSubtitlesCountRadius = 1
     this.surroundingSubtitlesTimeRadius = 5000
-    this.showingLoadedMessage = false
     this.autoCopyCurrentSubtitle = false
     this.refreshCurrentSubtitle = false
     const { subtitlesElementOverlay, topSubtitlesElementOverlay } = this._overlays()
@@ -404,17 +400,6 @@ export default class SubtitleController {
 
   bind() {
     this.subtitlesInterval = setInterval(() => {
-      if (this.lastLoadedMessageTimestamp > 0 && Date.now() - this.lastLoadedMessageTimestamp < 1000) {
-        return
-      }
-
-      if (this.showingLoadedMessage) {
-        // Invalidate so the block below re-pushes the real current subtitles
-        // over the loaded-message line.
-        this.showingSubtitles = undefined
-        this.showingLoadedMessage = false
-      }
-
       if (this.subtitles.length === 0) {
         return
       }
@@ -668,55 +653,21 @@ export default class SubtitleController {
     dispatchToast(() => toast.error(text))
   }
 
-  showLoadedMessage(nonEmptyTrackIndex: number[]) {
-    if (!this.subtitleFileNames) {
+  // Sync feedback goes through the corner toaster, not the subtitle overlay —
+  // the overlay only ever renders real cues. Tracks are auto-detected in this
+  // fork, so echoing file names carries no information; the case worth calling
+  // out explicitly is the empty track, which would otherwise be
+  // indistinguishable from a sync that silently failed.
+  notifySubtitlesLoaded() {
+    if (this.subtitles.length === 0) {
+      dispatchToast(() => toast(i18n._(msg`No subtitles found for this video`)))
       return
     }
 
-    let loadedMessage: string
-
-    const nonEmptySubtitleFileNames: string[] = this._nonEmptySubtitleNames(nonEmptyTrackIndex)
-
-    if (nonEmptySubtitleFileNames.length === 0) {
-      loadedMessage = this.subtitleFileNames[0]
-    } else {
-      loadedMessage = nonEmptySubtitleFileNames.join('<br>')
-    }
-
-    if (this.subtitles.length > 0) {
-      const offset = this.subtitles[0].start - this.subtitles[0].originalStart
-
-      if (offset !== 0) {
-        loadedMessage += `<br>${this._formatOffset(offset)}`
-      }
-    }
-
-    // Push the loaded message as a transient store line. Newline-joined (not
-    // <br>) since React renders it as text under `white-space: pre-wrap`.
-    // Show it once (bottom overlay when present); clear any other overlay.
-    const text = loadedMessage.replace(/<br>/g, '\n')
-    const primary: ReactOverlayKind = this._reactOverlays.bottom ? 'bottom' : 'top'
-    for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
-      const handle = this._reactOverlays[kind]
-      if (!handle) continue
-      handle.store.setVisible(true)
-      handle.store.setLines(
-        kind === primary ? [{ index: -1, track: 0, text, style: this._reactStyleForTrack(0), blurred: false }] : []
-      )
-    }
-    this.showingLoadedMessage = true
-    this.lastLoadedMessageTimestamp = Date.now()
-  }
-
-  private _nonEmptySubtitleNames(nonEmptyTrackIndex: number[]) {
-    if (nonEmptyTrackIndex.length === 0) return []
-
-    const nonEmptySubtitleFileNames = []
-    for (let i = 0; i < nonEmptyTrackIndex.length; i++) {
-      nonEmptySubtitleFileNames.push(this.subtitleFileNames![nonEmptyTrackIndex[i]])
-    }
-
-    return nonEmptySubtitleFileNames
+    const offset = this._computeOffset()
+    const formattedOffset = this._formatOffset(offset)
+    const text = offset !== 0 ? i18n._(msg`Subtitles loaded (${formattedOffset})`) : i18n._(msg`Subtitles loaded`)
+    dispatchToast(() => toast(text))
   }
 
   intersects(clientX: number, clientY: number): boolean {

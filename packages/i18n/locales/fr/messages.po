@@ -2721,6 +2721,10 @@ msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 msgid "No skills selected"
 msgstr "Aucune compétence sélectionnée"
 
+#: apps/extension/src/controllers/subtitle-controller.ts
+msgid "No subtitles found for this video"
+msgstr "Aucun sous-titre trouvé pour cette vidéo"
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
@@ -4178,6 +4182,14 @@ msgstr "Piste des sous-titres {0}"
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx
 msgid "Subtitles"
 msgstr "Subtitles"
+
+#: apps/extension/src/controllers/subtitle-controller.ts
+msgid "Subtitles loaded"
+msgstr "Sous-titres chargés"
+
+#: apps/extension/src/controllers/subtitle-controller.ts
+msgid "Subtitles loaded ({formattedOffset})"
+msgstr "Sous-titres chargés ({formattedOffset})"
 
 #: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Subtitles must be loaded before you can start mining."

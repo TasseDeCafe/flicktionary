@@ -1020,13 +1020,7 @@ export default class Binding {
       this.playMode = PlayMode.normal
     }
 
-    let nonEmptyTrackIndex: number[] = []
-    for (let i = 0; i < subtitles.length; i++) {
-      if (!nonEmptyTrackIndex.includes(subtitles[i].track)) {
-        nonEmptyTrackIndex.push(subtitles[i].track)
-      }
-    }
-    this.subtitleController.showLoadedMessage(nonEmptyTrackIndex)
+    this.subtitleController.notifySubtitlesLoaded()
     this._synced = true
     this._syncedTimestamp = Date.now()
 
