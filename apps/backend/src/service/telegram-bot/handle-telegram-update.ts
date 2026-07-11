@@ -53,6 +53,14 @@ const lastImportAttemptAtByChatId = new Map<string, number>()
 
 const CEFR_CALLBACK_PREFIX = 'cefr'
 
+// Google OAuth (and passkeys) cannot complete inside Telegram's in-app
+// browser, and pairing links can't sign the user in by themselves (there is
+// no paired account yet) — so pairing has to happen in the user's real
+// browser. Session links don't need this tip: they carry their own sign-in
+// nonce and work anywhere.
+const OPEN_IN_BROWSER_TIP =
+  "Tip: open that link in your usual browser (long-press it to copy, or tap the browser button inside Telegram's viewer) — signing in with Google doesn't work in Telegram's built-in browser."
+
 const cefrKeyboard = (targetLanguage: string) => {
   const levels = CefrLevelSchema.options
   const button = (level: string) => ({
@@ -191,7 +199,7 @@ const handleCommand = async (
   const link = await pairingLinkMessage(chatId, telegramUserId, deps)
   await telegramApi.sendMessage({
     chatId,
-    text: `${greeting}\n\nFirst, connect your Flicktionary account (I will remember it): ${link}`,
+    text: `${greeting}\n\nFirst, connect your Flicktionary account (I will remember it): ${link}\n\n${OPEN_IN_BROWSER_TIP}`,
   })
 }
 
@@ -234,7 +242,7 @@ const handleMessage = async (message: TelegramMessage, deps: TelegramBotDependen
     const link = await pairingLinkMessage(chatId, telegramUserId, deps)
     await telegramApi.sendMessage({
       chatId,
-      text: `To read this in Flicktionary, connect your account first (one time only): ${link}`,
+      text: `To read this in Flicktionary, connect your account first (one time only): ${link}\n\n${OPEN_IN_BROWSER_TIP}`,
     })
     return
   }
