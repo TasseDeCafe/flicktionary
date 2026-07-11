@@ -291,6 +291,23 @@ export default class SubtitleReader {
           }
 
           const rowEnd = start + duration
+          const filteredText = this._filterText(text)
+
+          // Fancy-styled tracks (e.g. MrBeast-style outlined karaoke captions)
+          // emit each cue TWICE: identical row, once per pen layer — only the
+          // <s p="..."> pen ids differ (an outline pen and a fill pen YouTube
+          // stacks in the same window to fake a thick border). Text-only
+          // rendering must keep ONE copy or every styled line paints twice.
+          // Same start + same text identifies the layer twin (a genuine
+          // repeated line starts later); keep the tighter end — the read-ahead
+          // clamp above may only have seen the following row on one copy. The
+          // `continue` also keeps the twin's word tokens out of the ASR
+          // re-chunker, which would otherwise double every chunk.
+          const previous = subtitles[subtitles.length - 1]
+          if (previous !== undefined && previous.start === start && previous.text === filteredText) {
+            previous.end = Math.min(previous.end, rowEnd)
+            continue
+          }
 
           if (rowTokens.length > 0) {
             let lastWordStart = start
@@ -321,7 +338,7 @@ export default class SubtitleReader {
           subtitles.push({
             start,
             end: rowEnd,
-            text: this._filterText(text),
+            text: filteredText,
             track,
           })
         }

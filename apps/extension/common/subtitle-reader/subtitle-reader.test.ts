@@ -132,3 +132,63 @@ describe('SubtitleReader dfxp timestamp handling', () => {
     expect(subtitles).toHaveLength(0)
   })
 })
+
+describe('SubtitleReader ytsrv3 pen-layer duplicate handling', () => {
+  const srv3File = (xml: string) => ({ name: 'test.ytsrv3', text: async () => xml }) as unknown as File
+  const parseSrv3 = (xml: string) => createReader().subtitles([srv3File(xml)])
+
+  it('keeps one copy of a cue emitted twice as pen layers', async () => {
+    // Fancy-styled tracks (e.g. MrBeast captions) emit each cue twice with
+    // identical timing/text — one row per pen layer (outline + fill); only the
+    // <s p="..."> pen ids differ. A genuine repeated line (same text, later
+    // start) must survive.
+    const xml =
+      '<timedtext format="3"><body>' +
+      '<p t="0" d="2000"><s p="3">Hello </s><s p="3" t="500">world</s></p>' +
+      '<p t="0" d="2000"><s p="4">Hello </s><s p="4" t="500">world</s></p>' +
+      '<p t="3000" d="1000">Plain line</p>' +
+      '<p t="5000" d="1000">Plain line</p>' +
+      '</body></timedtext>'
+
+    const subtitles = await parseSrv3(xml)
+
+    expect(subtitles).toHaveLength(3)
+    expect(subtitles[0]).toMatchObject({ start: 0, end: 2000, text: 'Hello world' })
+    expect(subtitles[1]).toMatchObject({ start: 3000, end: 4000, text: 'Plain line' })
+    expect(subtitles[2]).toMatchObject({ start: 5000, end: 6000, text: 'Plain line' })
+  })
+
+  it('keeps the tighter end when the layer copies were clamped differently', async () => {
+    // The read-ahead overlap clamp sees the following row only from the SECOND
+    // copy (the first copy's next row is its twin, not the '\n' separator), so
+    // the surviving cue must adopt the twin's tighter end.
+    const xml =
+      '<timedtext format="3"><body>' +
+      '<p t="0" d="5000"><s p="3">Hello</s></p>' +
+      '<p t="0" d="5000"><s p="4">Hello</s></p>' +
+      '<p t="2000" d="1">\n</p>' +
+      '<p t="2000" d="1000">Next</p>' +
+      '</body></timedtext>'
+
+    const subtitles = await parseSrv3(xml)
+
+    expect(subtitles).toHaveLength(2)
+    expect(subtitles[0]).toMatchObject({ start: 0, end: 2000, text: 'Hello' })
+  })
+
+  it('keeps the twin rows out of the ASR re-chunker word stream', async () => {
+    // Enough explicitly-timed words to trip the re-chunking path (>= 10):
+    // duplicated rows would otherwise double every word in each chunk.
+    const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+    const row = (pen: string) =>
+      `<p t="0" d="6000">${words.map((w, i) => `<s p="${pen}"${i > 0 ? ` t="${i * 400}"` : ''}>${w} </s>`).join('')}</p>`
+    const xml = `<timedtext format="3"><body>${row('3')}${row('4')}</body></timedtext>`
+
+    const subtitles = await parseSrv3(xml)
+
+    const joined = subtitles.map((s) => s.text).join(' ')
+    for (const word of words) {
+      expect(joined.match(new RegExp(`\\b${word}\\b`, 'g'))).toHaveLength(1)
+    }
+  })
+})
