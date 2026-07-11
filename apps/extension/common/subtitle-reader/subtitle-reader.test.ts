@@ -134,8 +134,8 @@ describe('SubtitleReader dfxp timestamp handling', () => {
 })
 
 describe('SubtitleReader ytsrv3 pen-layer duplicate handling', () => {
-  const srv3File = (xml: string) => ({ name: 'test.ytsrv3', text: async () => xml }) as unknown as File
-  const parseSrv3 = (xml: string) => createReader().subtitles([srv3File(xml)])
+  const srv3File = (xml: string, name = 'test.ytsrv3') => ({ name, text: async () => xml }) as unknown as File
+  const parseSrv3 = (xml: string, name?: string) => createReader().subtitles([srv3File(xml, name)])
 
   it('keeps one copy of a cue emitted twice as pen layers', async () => {
     // Fancy-styled tracks (e.g. MrBeast captions) emit each cue twice with
@@ -184,11 +184,42 @@ describe('SubtitleReader ytsrv3 pen-layer duplicate handling', () => {
       `<p t="0" d="6000">${words.map((w, i) => `<s p="${pen}"${i > 0 ? ` t="${i * 400}"` : ''}>${w} </s>`).join('')}</p>`
     const xml = `<timedtext format="3"><body>${row('3')}${row('4')}</body></timedtext>`
 
-    const subtitles = await parseSrv3(xml)
+    const subtitles = await parseSrv3(xml, 'test.asr.ytsrv3')
 
     const joined = subtitles.map((s) => s.text).join(' ')
     for (const word of words) {
       expect(joined.match(new RegExp(`\\b${word}\\b`, 'g'))).toHaveLength(1)
     }
+  })
+})
+
+describe('SubtitleReader ytsrv3 ASR re-chunk gating', () => {
+  const srv3File = (xml: string, name: string) => ({ name, text: async () => xml }) as unknown as File
+
+  // Two rows of continuous speech (no pause at the row boundary): the chunker
+  // merges them into one cue, while the row representation keeps two.
+  const words = (texts: string[], startOffset: number) =>
+    texts
+      .map((w, i) => `<s${i > 0 || startOffset > 0 ? ` t="${startOffset + i * 400}"` : ''}>${i > 0 ? ' ' : ''}${w}</s>`)
+      .join('')
+  const xml =
+    '<timedtext format="3"><body>' +
+    `<p t="0" d="2400">${words(['one', 'two', 'three', 'four', 'five', 'six'], 0)}</p>` +
+    `<p t="2400" d="2400">${words(['seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'], 0)}</p>` +
+    '</body></timedtext>'
+
+  it('re-chunks a word-timed track marked auto-generated', async () => {
+    const subtitles = await createReader().subtitles([srv3File(xml, 'test.asr.ytsrv3')])
+
+    expect(subtitles).toHaveLength(1)
+    expect(subtitles[0].text).toBe('one two three four five six seven eight nine ten eleven twelve')
+  })
+
+  it('preserves the authored cues of a word-timed track NOT marked auto-generated (karaoke)', async () => {
+    const subtitles = await createReader().subtitles([srv3File(xml, 'test.ytsrv3')])
+
+    expect(subtitles).toHaveLength(2)
+    expect(subtitles[0].text).toBe('one two three four five six')
+    expect(subtitles[1].text).toBe('seven eight nine ten eleven twelve')
   })
 })

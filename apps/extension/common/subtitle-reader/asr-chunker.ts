@@ -76,8 +76,9 @@ const MIN_EFF_CHARS = 12
 const SOFT_CAP_EFF_CHARS = 84
 const HARD_CAP_EFF_CHARS = 110
 // How many upcoming words the "sentence ends soon" lookahead considers.
-const SENTENCE_LOOKAHEAD_WORDS = 3
-// Minimum count of explicitly-timed words for a payload to qualify as ASR.
+const SENTENCE_LOOKAHEAD_WORDS = 5
+// Minimum count of explicitly-timed words for a payload to be re-chunkable —
+// without per-word timestamps there are no boundaries to re-decide.
 export const MIN_TIMED_WORDS_FOR_CHUNKING = 10
 
 // Effective display width: characters of no-space scripts are full-width and
@@ -88,23 +89,23 @@ const effectiveLength = (text: string): number => {
   return trimmed.length + wide
 }
 
-// Concatenate tokens preserving the payload's own spacing. Row-initial tokens
-// lack their leading space; re-insert one unless either neighbor character
-// belongs to a script written without spaces.
-const joinWords = (words: readonly TimedWord[]): string => {
-  let out = ''
-  for (const w of words) {
-    if (out.length > 0 && w.rowInitial && !/\s$/.test(out) && !/^\s/.test(w.text)) {
-      const before = out[out.length - 1]
-      const after = w.text[0]
-      if (!noSpaceScriptRegex.test(before) && !noSpaceScriptRegex.test(after)) {
-        out += ' '
-      }
+// One fold step of joinWords: append a token to the joined text, preserving
+// the payload's own spacing. Row-initial tokens lack their leading space;
+// re-insert one unless either neighbor character belongs to a script written
+// without spaces. Exposed separately so the chunking loop can grow its joined
+// text one word at a time instead of re-joining the whole chunk per word.
+const appendWord = (out: string, w: TimedWord): string => {
+  if (out.length > 0 && w.rowInitial && !/\s$/.test(out) && !/^\s/.test(w.text)) {
+    const before = out[out.length - 1]
+    const after = w.text[0]
+    if (!noSpaceScriptRegex.test(before) && !noSpaceScriptRegex.test(after)) {
+      out += ' '
     }
-    out += w.text
   }
-  return out.trim()
+  return out + w.text
 }
+
+const joinWords = (words: readonly TimedWord[]): string => words.reduce(appendWord, '').trim()
 
 const median = (values: number[]): number | undefined => {
   if (values.length === 0) {
@@ -138,14 +139,16 @@ export const chunkTimedWords = (inputWords: readonly TimedWord[]): AsrChunk[] =>
   const gapMs = adaptiveGapMs(inputWords)
   const chunks: TimedWord[][] = []
   let current: TimedWord[] = []
+  // The fold of appendWord over `current` (untrimmed), grown incrementally as
+  // words are pushed; currentLength is its effective (trimmed) width.
+  let currentText = ''
   let currentLength = 0
-  // Set when a speaker marker forces the next word to start a new cue.
-  let forceSplit = false
 
   const flush = () => {
     if (current.length > 0) {
       chunks.push(current)
       current = []
+      currentText = ''
       currentLength = 0
     }
   }
@@ -178,11 +181,11 @@ export const chunkTimedWords = (inputWords: readonly TimedWord[]): AsrChunk[] =>
     }
 
     if (current.length > 0) {
-      if (splitBefore.has(i) || forceSplit) {
+      if (splitBefore.has(i)) {
         flush()
-        forceSplit = false
         current.push(word)
-        currentLength = effectiveLength(joinWords(current))
+        currentText = appendWord(currentText, word)
+        currentLength = effectiveLength(currentText)
         continue
       }
 
@@ -235,7 +238,8 @@ export const chunkTimedWords = (inputWords: readonly TimedWord[]): AsrChunk[] =>
           const tail = current.splice(bestIndex)
           chunks.push(current)
           current = tail
-          currentLength = effectiveLength(joinWords(tail))
+          currentText = tail.reduce(appendWord, '')
+          currentLength = effectiveLength(currentText)
         } else {
           flush()
         }
@@ -245,7 +249,8 @@ export const chunkTimedWords = (inputWords: readonly TimedWord[]): AsrChunk[] =>
     }
 
     current.push(word)
-    currentLength = effectiveLength(joinWords(current))
+    currentText = appendWord(currentText, word)
+    currentLength = effectiveLength(currentText)
   }
 
   flush()
