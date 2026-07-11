@@ -5,6 +5,7 @@ import { TelegramUpdate } from '../../transport/third-party/telegram/telegram-ty
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import type { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import type { TelegramPairNoncesRepositoryInterface } from '../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
 import type {
   TelegramPendingImportRecord,
@@ -13,6 +14,7 @@ import type {
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 const NONCE = '00000000-0000-0000-0000-00000000abcd'
+const AUTH_NONCE = '00000000-0000-0000-0000-00000000beef'
 
 // Unique chat id per test: the per-chat import cooldown is module-level state.
 let nextChatId = 1000
@@ -48,6 +50,10 @@ const buildDeps = (
       getOrCreateForChat: vi.fn().mockResolvedValue(NONCE),
       deleteExpired: vi.fn().mockResolvedValue(0),
     } as unknown as TelegramPairNoncesRepositoryInterface,
+    telegramAuthNoncesRepository: {
+      createForUser: vi.fn().mockResolvedValue(AUTH_NONCE),
+      deleteExpired: vi.fn().mockResolvedValue(0),
+    } as unknown as TelegramAuthNoncesRepositoryInterface,
     telegramPendingImportsRepository: {
       upsertForChat: vi.fn().mockResolvedValue(undefined),
       popForChat: vi.fn().mockResolvedValue(pendingImport),
@@ -96,13 +102,13 @@ describe('handleTelegramUpdate', () => {
     expect(deps.studySessionsRepository.getOrCreateForImportedText).not.toHaveBeenCalled()
   })
 
-  test('paired chat with prefs in place: replies with the session link', async () => {
+  test('paired chat with prefs in place: replies with a self-signing session link', async () => {
     const deps = buildDeps()
     const chatId = freshChatId()
     await handleTelegramUpdate(textUpdate(chatId, 'Привет мир'), deps)
 
     expect(deps.telegramApi.sentMessages).toHaveLength(1)
-    expect(deps.telegramApi.sentMessages[0].text).toContain('/sessions/session-1')
+    expect(deps.telegramApi.sentMessages[0].text).toContain(`/sessions/session-1?auth=${AUTH_NONCE}`)
   })
 
   test('missing CEFR: stashes the message and asks with an A1-C2 inline keyboard', async () => {

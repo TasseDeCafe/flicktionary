@@ -93,6 +93,8 @@ import {
 import { TelegramBotDependencies } from './service/telegram-bot/handle-telegram-update'
 import { telegramWebhookRouter } from './router/webhooks/telegram/telegram-webhook-router'
 import { TelegramPairRouter } from './router/telegram-pair-router/telegram-pair-router'
+import { TelegramAuthRouter } from './router/telegram-auth-router/telegram-auth-router'
+import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
@@ -206,6 +208,7 @@ export const buildApp = ({
     telegramApi,
     usersRepository,
     telegramPairNoncesRepository: TelegramPairNoncesRepository(),
+    telegramAuthNoncesRepository: TelegramAuthNoncesRepository(),
     telegramPendingImportsRepository: TelegramPendingImportsRepository(),
     userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
     studySessionsRepository: StudySessionsRepository(),
@@ -264,6 +267,12 @@ export const buildApp = ({
 
   app.use(API_V1, authenticationRouter())
   app.use(API_V1, ContactEmailRouter(resendApi))
+
+  if (FEATURES.TELEGRAM) {
+    // Unauthenticated by design (the nonce is the credential) — must mount
+    // before the user-JWT middleware. See telegram-auth-contract.ts.
+    app.use(API_V1, TelegramAuthRouter(TelegramAuthNoncesRepository(), authUsersRepository))
+  }
 
   app.use(tokenAuthenticationMiddleware)
 
