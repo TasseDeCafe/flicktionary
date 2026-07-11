@@ -284,17 +284,23 @@ The page script publishes `VideoData.videoLanguage`, resolved best-signal-first
 (`services/youtube-audio-track.ts`, live-probed 2026-07-11 on a 25-track
 multi-dub video):
 
-1. the audio track the player is set to — **dubs included**, subs match what
-   the user hears (`#movie_player.getAudioTrack().id` embeds a base64url
-   xtags blob decoding to `{acont: original|dubbed|dubbed-auto, lang}`); read
-   at publish time only, mid-video audio switches are not chased;
-2. the sole ASR track's language (YouTube auto-generates captions only in the
-   original spoken language; dubs never get ASR);
-3. `audioTracks[defaultAudioTrackIndex].audioTrackId`'s language prefix from
+1. a **dub** the player is set to — subs match what the user hears
+   (`#movie_player.getAudioTrack().id` embeds a base64url xtags blob decoding
+   to `{acont: original|dubbed|dubbed-auto, lang}`; only `dubbed*` wins here);
+   read at publish time only, mid-video audio switches are not chased;
+2. the sole ASR track's language — YouTube runs speech recognition on the
+   original audio only (dubs never get ASR), so this reflects what is actually
+   spoken and **outranks the original audio track's own lang label**, which is
+   creator/YouTube metadata that can misstate the speech (live-probed
+   2026-07-12 on vf4OFZ87jWM: "English (US) original" audio whose sole ASR is
+   `ru` — the video is spoken in Russian);
+3. the playing audio track's xtags lang (original or unlabeled audio, when no
+   ASR signal exists);
+4. `audioTracks[defaultAudioTrackIndex].audioTrackId`'s language prefix from
    the in-realm web player response (YouTube labels that audio track
    "<language> original"; read only while the page global is still for this
    video — never re-fetched just for this);
-4. the single human caption track, when it is the only one on offer.
+5. the single human caption track, when it is the only one on offer.
 
 `selectVideoLanguageTrack` (`services/video-language-track-selection.ts`) then
 picks among tracks matching on the BCP-47 primary subtag: human over ASR, then
@@ -356,7 +362,25 @@ additionally offers:
   response (the in-realm `window.ytInitialPlayerResponse` global when fresh,
   else `fetchPlayerContextForPage`'s watch-page re-fetch) and merges — full
   translation list, plus missing tracks deduplicated on (language, asr-ness)
-  with POT-tokenized URLs. Confirming
+  with POT-tokenized URLs. **POT sourcing:** a web-response track URL without
+  a `pot` token returns HTTP 200 with an **empty body** (no error). The legacy
+  sessionStorage cache `decodePoToken` reads is no longer minted by current
+  YouTube, so the page script harvests the token from the native player's own
+  `/api/timedtext` fetches (seen by the same PerformanceObserver as track
+  mirroring, keyed by video id) and — when none has been observed — induces
+  one by flipping the CC toggle (off→on refetch, or on→off restore), only
+  while caption rendering is suppressed so nothing flashes. When the web
+  response is the **only** URL source, publishing polls for a token
+  (500 ms × 16, aborted on navigation) instead of wrongly marking a captioned
+  video subtitle-less — this is the age-restricted-video case, where the
+  ANDROID client answers LOGIN_REQUIRED with zero captionTracks even with web
+  cookies; metadata-only merges never wait. The ANDROID fetch itself is
+  **prefetched speculatively** at page-script startup (keyed by video id,
+  re-armed by the 500 ms interval on SPA navigations, retried until `ytcfg`
+  exists) so its round trip overlaps the content script's boot; relatedly the
+  video content script starts at `document_idle` without waiting for
+  `readyState === 'complete'` (that gate stalled subtitle takeover behind
+  every image on a cold load). Confirming
   with machine translation on records the code into
   `streamingPages.youtube.targetLanguages` (most-recent-first, limit 3 — the
   same setting the YouTube page-settings form edits): the page script then
@@ -803,7 +827,28 @@ Mechanics — a self-negotiating document-CustomEvent protocol between
   extension, so the native player remains the single source of truth.
 - `asbplayer-native-captions-unbind` (content → page): drop suppression; sent
   on subtitle reset/unbind. The native CC on/off state is deliberately left
-  as-is (it matches what the user last saw).
+  as-is (it matches what the user last saw). An unbind whose video id differs
+  from the bound one is the SPA-navigation reset: it transitions straight into
+  a provisional hide for the incoming video (below) instead of revealing.
+- `asbplayer-native-captions-decline` (content → page): the auto-sync decision
+  resolved to "load nothing" for the current video — release the provisional
+  hide. Sent from every no-load exit of `_setSyncedData` (no matching track,
+  sync failure, auto-sync off, no data), but only by the binding whose video
+  sits under `#movie_player` (a Shorts/preview binding declining would flash
+  the captions the main pipeline is about to replace). Ignored while bound.
+
+**Provisional suppression (no native-caption flash):** the subtitle pipeline
+(content-script boot → track-list fetch → srv3 fetch + parse) runs a second or
+two behind YouTube's own caption renderer, so with CC on the native captions
+would flash before the overlay takes over. The page script therefore hides the
+caption window the moment it detects a desktop `/watch` video — at
+document_start, before knowing whether the extension will bind — and reveals
+it again only when the takeover doesn't happen: the decline event above, or a
+10 s timeout as a safety net so an extension failure can never leave native
+captions permanently hidden. Watch pages only (m.youtube.com and Shorts never
+bind the native control, so a provisional hide there could not be reliably
+released); `bind` converts the provisional hide into the bound suppression
+with no visible transition.
 
 Visibility state model: the native state lands in
 `SubtitleController.displaySubtitlesOverride`, a **per-video layer over the

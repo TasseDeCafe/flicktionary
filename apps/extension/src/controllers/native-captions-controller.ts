@@ -87,6 +87,15 @@ export default class NativeCaptionsController {
     }
   }
 
+  // The subtitle pipeline resolved to "load nothing" for the current video:
+  // release the page script's provisional (pre-bind) native-caption hide — see
+  // the provisional-suppression section of youtube-page.ts. A no-op on page
+  // scripts that don't implement provisional suppression, and while bound (the
+  // page script only ever releases the provisional hide on this event).
+  decline() {
+    document.dispatchEvent(new CustomEvent('asbplayer-native-captions-decline'))
+  }
+
   // Ask the page script to flip the native control; the resulting state event
   // (from the page's own observer) is what updates the display override.
   setNativeCaptions(on: boolean) {

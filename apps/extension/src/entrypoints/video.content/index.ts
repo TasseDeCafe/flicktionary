@@ -265,14 +265,11 @@ export default defineContentScript({
       await bind()
     }
 
-    if (document.readyState === 'complete') {
-      start().catch(console.error)
-    } else {
-      document.addEventListener('readystatechange', (event) => {
-        if (document.readyState === 'complete') {
-          start().catch(console.error)
-        }
-      })
-    }
+    // document_idle is late enough (DOM parsed, platform boot scripts run) —
+    // gating on readyState 'complete' stalled subtitle loading behind every
+    // image/ad on the page (seconds on a YouTube cold load), and Binding
+    // already defers per-video work until the video itself is playable
+    // (canplay). Late-appearing videos are covered by the rebind interval.
+    start().catch(console.error)
   },
 })
