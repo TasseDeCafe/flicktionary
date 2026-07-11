@@ -56,6 +56,12 @@ interface PageConfig {
 
   // Whether to hide "remember track preferences" toggle
   hideRememberTrackPreferenceToggle?: boolean
+
+  // Auto-sync loads the track matching the video's own language (published as
+  // VideoData.videoLanguage by the page script) instead of the remembered
+  // per-site languages; no track / unknown language loads nothing, silently.
+  // Requires a page script that publishes videoLanguage (YouTube).
+  autoSyncVideoLanguage?: boolean
 }
 
 const settings = new SettingsProvider(new ExtensionSettingsStorage())

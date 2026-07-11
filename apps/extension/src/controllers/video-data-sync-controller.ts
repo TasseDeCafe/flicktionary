@@ -35,6 +35,7 @@ import {
   type NativeTrackTriple,
 } from '@/services/native-track-selection'
 import { normalizeSyncedTracks, resolveSyncedTrackId } from '@/services/synced-track-resolution'
+import { selectVideoLanguageTrack } from '@/services/video-language-track-selection'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/shadow-video-data-sync-app'
 import { createVideoDataSyncStore, type VideoDataSyncStore } from '@/ui/video-data-sync/video-data-sync-store'
@@ -489,6 +490,27 @@ export default class VideoDataSyncController {
 
           if (!this._isHidden()) {
             this._hideAndResume()
+          }
+          return
+        }
+
+        // Video-language policy (YouTube): auto-load the track matching the
+        // video's own language — human over ASR — so switching between videos
+        // in different languages just works, with no per-site remembering.
+        // Nothing matching (or no language signal) loads nothing, SILENTLY:
+        // popping the dialog on every casually-browsed video would be noise,
+        // and it stays reachable via the overlay/toolbar. Remembered-language
+        // matching and prompt-on-failure do not apply on such pages.
+        const page = await currentPageDelegate()
+        if (page?.config?.autoSyncVideoLanguage) {
+          const track = selectVideoLanguageTrack(this._syncedData.subtitles, this._syncedData.videoLanguage)
+
+          if (track !== undefined) {
+            await this._syncData([track, this._emptySubtitle, this._emptySubtitle])
+
+            if (!this._isHidden()) {
+              this._hideAndResume()
+            }
           }
           return
         }

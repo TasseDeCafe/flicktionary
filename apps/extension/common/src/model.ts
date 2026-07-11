@@ -105,6 +105,11 @@ export interface VideoData {
   // YouTube: language codes the player's translation service accepts for this
   // video (playerCaptionsTracklistRenderer.translationLanguages).
   translationLanguages?: string[]
+  // YouTube: BCP-47 code of the video's language — the audio track the player
+  // is set to (dubs included), falling back to original-language signals (see
+  // services/youtube-audio-track.ts). Drives the video-language auto-sync
+  // policy; undefined when every signal is ambiguous or absent.
+  videoLanguage?: string
 }
 
 export enum VideoDataUiOpenReason {

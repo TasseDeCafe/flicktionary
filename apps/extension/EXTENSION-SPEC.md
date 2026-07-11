@@ -272,10 +272,46 @@ next pairing.
 ### Subtitle loading (video-data-sync)
 
 On video detection the page script supplies available tracks; the track-selection
-dialog (shadow modal) offers up to three simultaneous tracks with per-domain
-"remember my choice". With `streamingAutoSync` (default **on**) the last-used
-language auto-loads without a dialog; on a failed match,
-`streamingAutoSyncPromptOnFailure` (default **on**) opens the dialog.
+dialog (shadow modal) offers up to three simultaneous tracks. With
+`streamingAutoSync` (default **on**) tracks auto-load without a dialog, under
+one of two per-page policies:
+
+**Video-language policy (YouTube — `autoSyncVideoLanguage` in `pages.json`):**
+auto-sync loads the track matching **the video's own language**, so switching
+between videos in different study languages just works with zero configuration
+— the multi-language counterpart of the web app's "no target-language toggle".
+The page script publishes `VideoData.videoLanguage`, resolved best-signal-first
+(`services/youtube-audio-track.ts`, live-probed 2026-07-11 on a 25-track
+multi-dub video):
+
+1. the audio track the player is set to — **dubs included**, subs match what
+   the user hears (`#movie_player.getAudioTrack().id` embeds a base64url
+   xtags blob decoding to `{acont: original|dubbed|dubbed-auto, lang}`); read
+   at publish time only, mid-video audio switches are not chased;
+2. the sole ASR track's language (YouTube auto-generates captions only in the
+   original spoken language; dubs never get ASR);
+3. `audioTracks[defaultAudioTrackIndex].audioTrackId`'s language prefix from
+   the in-realm web player response (YouTube labels that audio track
+   "<language> original"; read only while the page global is still for this
+   video — never re-fetched just for this);
+4. the single human caption track, when it is the only one on offer.
+
+`selectVideoLanguageTrack` (`services/video-language-track-selection.ts`) then
+picks among tracks matching on the BCP-47 primary subtag: human over ASR, then
+exact code over subtag match, then published order; synthetic `_from_`
+variants are never candidates. No match / no language signal → **nothing
+loads, silently** — no prompt-on-failure dialog (it would nag on every
+casually-browsed video); the dialog stays reachable via the overlay/toolbar.
+A different track picked in the native gear menu or the dialog is video-local
+(see Native track mirroring): the next video returns to its own language. The
+per-site remember toggle is hidden on YouTube
+(`hideRememberTrackPreferenceToggle`) and remembered
+`streamingLastLanguagesSynced` entries are ignored there. Cached Whisper
+transcripts still take precedence over both policies.
+
+**Remembered-language policy (all other sites):** the last-used language
+auto-loads; on a failed match, `streamingAutoSyncPromptOnFailure` (default
+**on**) opens the dialog.
 **Remembered-list semantics:** entries are slot-wise, `'-'` = "leave this slot
 empty". A list with no real language (never remembered, or remembered
 all-Empty — stored as `[]`; confirm normalizes all-`'-'` to `[]`) is never a
@@ -324,13 +360,15 @@ additionally offers:
   with machine translation on records the code into
   `streamingPages.youtube.targetLanguages` (most-recent-first, limit 3 — the
   same setting the YouTube page-settings form edits): the page script then
-  publishes `>> code` variants on future videos, which is what lets
-  remembered track choices auto-sync. **Republish trap:** the target codes
+  publishes `>> code` variants on future videos, so the dialog and the native
+  gear menu can offer them (they never auto-load — auto-sync is the
+  video-language policy). **Republish trap:** the target codes
   ride on each `asbplayer-get-synced-data` request (the page realm can't read
   settings); the page script's 500ms videoId-change republish (Shorts/SPA
   navigations) must reuse the last requested codes — publishing with `[]`
-  drops the `>>` variants from whichever publish wins the auto-sync race and
-  the dialog reopens despite a remembered translated track. Translated tracks carry interpolated
+  drops the `>>` variants from whichever publish wins the republish race, and
+  a reopened dialog could no longer represent a loaded translated track.
+  Translated tracks carry interpolated
   per-word timing + punctuation, so ASR re-chunking applies to them too,
 - **Whisper transcript generation** via an external transcript server
   (`TranscriptSettings`: `transcriptServerUrl`/`transcriptApiKey`; the
@@ -764,11 +802,12 @@ or sites. Who wins on first contact depends on how the subtitles loaded
 - **Explicit load** (dialog confirm, Open Files, drag-and-drop, Generate):
   the native control is forced ON — the user just loaded subtitles and must
   see them even if their YouTube CC preference was off.
-- **Automatic load** (remembered-track auto-sync on page load / SPA
+- **Automatic load** (video-language auto-sync on page load / SPA
   navigation): the native control's own state is **adopted**. YouTube
   persists the CC choice across reloads and videos, so the toggle survives a
   hard reload; pushing our state here instead would overwrite that memory and
-  make CC appear to reset on every reload.
+  make CC appear to reset on every reload — this adoption is also what keeps
+  auto-load-on-every-video non-intrusive (subs load hidden while CC is off).
 
 `Binding.toggleSubtitles()` is the single entry point for the overlay button
 and the `toggleSubtitles` keybind: it flips the native control when it's in
@@ -813,7 +852,7 @@ Rules, in both directions:
   forwards selections while **armed for the current video** (armed on
   bind/write-back, disarmed on unbind or video-id change). This rejects
   YouTube's own persisted-track fetch during the page-load / SPA-navigation
-  window before the extension has loaded anything — the remembered-pair
+  window before the extension has loaded anything — the video-language
   auto-sync, second track and human-translation pairing all survive, and the
   write-back then aligns the native menu to what actually loaded.
 - **The native menu owns slot 1 only.** Slots 2/3 survive a native switch. The
@@ -822,8 +861,9 @@ Rules, in both directions:
   `streamingTranslationMode` reconstructs it on the next dialog confirm. For
   a dual base+translation load, write-back mirrors slot 1 (the base track).
 - **Session-local, like the CC button**: a native pick never writes
-  `streamingLastLanguagesSynced` (the dialog's remember toggle stays the only
-  writer). A picked Auto-translate target IS recorded into
+  `streamingLastLanguagesSynced` (the dialog's remember toggle — hidden on
+  YouTube, where the video-language policy ignores that setting anyway —
+  stays the only writer). A picked Auto-translate target IS recorded into
   `streamingPages.youtube.targetLanguages` (same as a dialog confirm) so future
   videos publish its `>> code` variants — that list offers, it never auto-loads.
 - **Any Auto-translate target works**, remembered or not: an unpublished
@@ -1019,8 +1059,10 @@ the saved-highlights loader evicts an entry whose session no longer lists
 
 `pnpm build` (or `pnpm dev`) → load on a YouTube video with subs:
 
-1. Subtitles load (auto-sync or dialog) with NO backend write (check Network:
-   no find-or-create; the web app's sessions list stays clean).
+1. Subtitles auto-load in the video's own language (human track preferred,
+   else ASR; a video in another language loads that language) with NO backend
+   write (check Network: no find-or-create; the web app's sessions list stays
+   clean). No loadable language → nothing loads, no dialog.
 2. Hover a word → gloss popover shows **and dismisses**; moving onto the
    popover doesn't resume playback.
 3. Right-click save creates the session (first save = find-or-create) plus a

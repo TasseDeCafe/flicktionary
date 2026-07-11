@@ -1,6 +1,7 @@
 import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { trackFromDef, trackId } from '@/pages/util'
 import { timedtextTripleFromUrl, triplesEqual, type NativeTrackTriple } from '@/services/native-track-selection'
+import { parseAudioTrackXtags, resolveVideoLanguage } from '@/services/youtube-audio-track'
 import { decodePoToken, fetchPlayerContextForPage } from '@/services/youtube'
 
 // Minimal structural view of YouTube's untyped page-realm caption-track objects
@@ -18,6 +19,10 @@ interface YtPlayerResponse {
     playerCaptionsTracklistRenderer?: {
       captionTracks?: YtCaptionTrack[]
       translationLanguages?: unknown
+      // Multi-audio (dubbed) videos: one entry per audio track; the default
+      // index points at the original ("<language> original").
+      audioTracks?: { audioTrackId?: string }[]
+      defaultAudioTrackIndex?: number
     }
   }
 }
@@ -196,6 +201,10 @@ interface YtMoviePlayerElement extends HTMLElement {
     module: string,
     option: string
   ) => { languageCode?: string; kind?: string; translationLanguage?: { languageCode?: string } } | undefined
+  // The audio track the player is set to. Its `id` embeds the xtags blob the
+  // video-language detection decodes (`251;Cg8...` → acont/lang); the rest of
+  // the object is obfuscated and not relied upon.
+  getAudioTrack?: () => { id?: string } | undefined
 }
 
 const moviePlayer = () => (document.getElementById('movie_player') ?? undefined) as YtMoviePlayerElement | undefined
@@ -231,6 +240,32 @@ const currentNativeCaptionsState = (): NativeCaptionsState => {
     console.error(error)
     return { available: false, on: false }
   }
+}
+
+// The video's language for the auto-sync policy: the player's current audio
+// track first (dubs included — subs should match what the user hears), then
+// original-language signals. The renderer read uses ONLY the in-realm page
+// global, and only while it is still for this video — re-fetching the watch
+// page just for this fallback isn't worth a network round trip (the audio and
+// ASR signals cover virtually every video).
+const currentVideoLanguage = (videoId: string, tracks: VideoDataSubtitleTrack[]): string | undefined => {
+  let audioTrackId: string | undefined
+  try {
+    audioTrackId = moviePlayer()?.getAudioTrack?.()?.id
+  } catch (error) {
+    console.error(error)
+  }
+
+  const inline = window.ytInitialPlayerResponse
+  const renderer =
+    inline?.videoDetails?.videoId === videoId ? inline?.captions?.playerCaptionsTracklistRenderer : undefined
+
+  return resolveVideoLanguage({
+    audioTrackXtags: parseAudioTrackXtags(audioTrackId),
+    tracks,
+    rendererAudioTracks: renderer?.audioTracks,
+    defaultAudioTrackIndex: renderer?.defaultAudioTrackIndex,
+  })
 }
 
 const publishCurrentTracks = async ({
@@ -298,6 +333,10 @@ const publishCurrentTracks = async ({
         console.error(error)
       }
     }
+
+    // Resolved BEFORE the translation variants are appended, so the ASR /
+    // single-human-track heuristics see only real tracks.
+    response.videoLanguage = currentVideoLanguage(videoId, subtitles ?? [])
 
     if (subtitles !== undefined) {
       subtitles = await includeTranslationsForLanguageCodes(subtitles, targetTranslationLanguageCodes)
