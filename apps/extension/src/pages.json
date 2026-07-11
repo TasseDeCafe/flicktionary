@@ -17,6 +17,8 @@
             "autoSync": {
                 "enabled": true
             },
+            "autoSyncVideoLanguage": true,
+            "hideRememberTrackPreferenceToggle": true,
             "ignoreVideoElements": {
                 "closestSelector": "#inline-preview-player, #inline-player"
             }
