@@ -18,6 +18,7 @@ import { buildProcessingDependencies } from './service/processing/processing-dep
 import { TelegramApi } from './transport/third-party/telegram/telegram-api'
 import { TelegramPollingWorker } from './service/long-running/telegram-polling-worker/telegram-polling-worker'
 import { TelegramPairNoncesRepository } from './transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
+import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { TelegramPendingImportsRepository } from './transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { StudySessionsRepository } from './transport/database/study-sessions/study-sessions-repository'
@@ -47,6 +48,7 @@ const startServer = async () => {
       telegramApi,
       usersRepository,
       telegramPairNoncesRepository: TelegramPairNoncesRepository(),
+      telegramAuthNoncesRepository: TelegramAuthNoncesRepository(),
       telegramPendingImportsRepository: TelegramPendingImportsRepository(),
       userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
       studySessionsRepository: StudySessionsRepository(),

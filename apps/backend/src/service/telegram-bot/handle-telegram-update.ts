@@ -2,6 +2,7 @@ import { CefrLevelSchema } from '@flicktionary/api-client/orpc-contracts/common/
 import { getLanguageName, isSupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
 import { getConfig } from '../../config/environment-config'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { TelegramPairNoncesRepositoryInterface } from '../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
 import { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
@@ -20,6 +21,7 @@ export type TelegramBotDependencies = {
   telegramApi: TelegramApiInterface
   usersRepository: UsersRepositoryInterface
   telegramPairNoncesRepository: TelegramPairNoncesRepositoryInterface
+  telegramAuthNoncesRepository: TelegramAuthNoncesRepositoryInterface
   telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -35,6 +37,13 @@ export type TelegramBotDependencies = {
 // stashed text doesn't resurrect out of nowhere.
 const PAIR_NONCE_TTL_SECONDS = 60 * 60
 const PENDING_IMPORT_TTL_SECONDS = 24 * 60 * 60
+
+// Session links open in Telegram's in-app browser, which shares no cookies
+// with the user's real browser — so each link carries a single-use sign-in
+// nonce the web app exchanges for a session (telegramAuth.exchangeNonce).
+// Short TTL: the first tap happens right after the reply lands; an expired
+// nonce degrades to the normal login screen.
+const AUTH_NONCE_TTL_SECONDS = 10 * 60
 
 // Every content message triggers a Haiku language-detection call, and the
 // webhook mounts ahead of the global rate limiter — this per-chat cooldown is
@@ -86,9 +95,10 @@ export const runImportAttempt = async (
   )
 
   if (result.ok) {
+    const authNonce = await deps.telegramAuthNoncesRepository.createForUser(userId, AUTH_NONCE_TTL_SECONDS)
     await telegramApi.sendMessage({
       chatId,
-      text: `Ready to read: ${getConfig().webUrl}/sessions/${result.sessionId}`,
+      text: `Ready to read: ${getConfig().webUrl}/sessions/${result.sessionId}?auth=${authNonce}`,
     })
     return
   }

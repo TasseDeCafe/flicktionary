@@ -26,6 +26,8 @@ const link = new OpenAPILink(rootOrpcContract, {
   },
 })
 
-const orpcClient = createORPCClient(link) as JsonifiedClient<ContractRouterClient<typeof rootOrpcContract>>
+// Exported for the rare calls that run outside React Query (e.g. the
+// router-level Telegram nonce exchange in _authenticated's beforeLoad).
+export const orpcClient = createORPCClient(link) as JsonifiedClient<ContractRouterClient<typeof rootOrpcContract>>
 
 export const orpcQuery = createTanstackQueryUtils(orpcClient)

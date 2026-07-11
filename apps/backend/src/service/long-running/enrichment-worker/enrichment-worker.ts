@@ -147,6 +147,7 @@ export const EnrichmentWorker = (
     try {
       await processingDependencies.importBatchesRepository.deleteExpiredDrafts()
       await processingDependencies.telegramPendingImportsRepository.deleteExpired()
+      await processingDependencies.telegramAuthNoncesRepository.deleteExpired()
     } catch (e) {
       logCustomErrorMessageAndError('expiry sweep failed', e)
     }

@@ -18,6 +18,7 @@ import { TeacherProfilesRepository } from '../../transport/database/teacher-prof
 import { ProcessingJobsRepository } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { PracticeRatingEventsRepository } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { TelegramPendingImportsRepository } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { TelegramAuthNoncesRepository } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -38,6 +39,7 @@ import type { TeacherProfilesRepositoryInterface } from '../../transport/databas
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import type { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -60,6 +62,7 @@ export type ProcessingDependencies = {
   processingJobsRepository: ProcessingJobsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
+  telegramAuthNoncesRepository: TelegramAuthNoncesRepositoryInterface
 }
 
 // Repos are stateless factories over the shared postgres client, so the worker
@@ -86,4 +89,5 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   processingJobsRepository: ProcessingJobsRepository(),
   practiceRatingEventsRepository: PracticeRatingEventsRepository(),
   telegramPendingImportsRepository: TelegramPendingImportsRepository(),
+  telegramAuthNoncesRepository: TelegramAuthNoncesRepository(),
 })
