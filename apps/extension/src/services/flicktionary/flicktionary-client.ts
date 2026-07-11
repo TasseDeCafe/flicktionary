@@ -69,6 +69,14 @@ export interface FlicktionaryVideoClosures {
   getVideoUrl: () => string
   getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined
   getFlicktionarySaveDisabledReason: () => string | undefined
+  // Set by the overlay when a save reports UNSUPPORTED_LANGUAGE, so later gloss
+  // tooltips on the same video render saving as disabled (sessions are created
+  // lazily on first save — there is no load-time signal anymore).
+  setFlicktionarySaveDisabledReason: (reason: string) => void
+  // BCP-47 code of the loaded caption track (YouTube only). Tokenizer/gloss
+  // language until the server-detected language lands with the first save, and
+  // names the language in the "unsupported" notice.
+  getFlicktionarySubtitleLanguageHint: () => string | undefined
 }
 
 // Discriminated result of a save attempt, for the UI to act on. `highlight` is
@@ -85,6 +93,10 @@ export type SaveWordOutcome =
   // onboarding (which returns them to the video when done).
   | { kind: 'needs-onboarding' }
   | { kind: 'missing-cefr'; targetLanguage: string }
+  // The backend can't ingest the subtitle language — not fixable in-video. The
+  // caller composes the notice (it holds the caption-track language hint) and
+  // disables saving for the rest of the video.
+  | { kind: 'unsupported-language' }
   | { kind: 'error'; message: string }
 
 export type SetCefrResult = { ok: true } | { ok: false; message: string }
@@ -214,6 +226,10 @@ export async function saveWord({
   // picker, then retry the save (unless this already was the retry).
   if (response.code === 'MISSING_CEFR' && response.targetLanguage && !isCefrRetry) {
     return { kind: 'missing-cefr', targetLanguage: response.targetLanguage }
+  }
+
+  if (response.code === 'UNSUPPORTED_LANGUAGE') {
+    return { kind: 'unsupported-language' }
   }
 
   console.error('Failed to save word:', response.error)

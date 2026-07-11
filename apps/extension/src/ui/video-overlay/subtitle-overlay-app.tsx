@@ -20,6 +20,7 @@ import {
   startFlicktionaryPairing,
 } from '../../services/flicktionary/flicktionary-client'
 import { getFlicktionaryAuth, onFlicktionaryAuthChange } from '../../services/flicktionary/auth-storage'
+import { describeLanguageCode } from '../../services/flicktionary/youtube-context'
 import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
 import { SAVED_SPAN_CLASS, SELECTION_SPAN_CLASS, Word } from './word'
 import { GlossContent, GlossSaveOptions, GlossTooltip, SavedGlossTooltip } from './gloss-tooltip'
@@ -61,8 +62,9 @@ interface HoveredWord {
   element: HTMLElement
 }
 
-// `locale` is the session's server-detected subtitle language ('' until it is
-// known) — keeps Intl.Segmenter word boundaries identical to the web reader's.
+// `locale` is the video's language (server-detected once a session exists,
+// else the caption-track hint, '' while neither is known) — keeps
+// Intl.Segmenter word boundaries identical to the web reader's.
 const tokenizeLine = (line: SubtitleLineModel, locale: string): TokenizedLine => {
   const raw = tokenizeText(line.text, locale)
   const tokens: LineToken[] = []
@@ -236,24 +238,32 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const savedPopoverRef = useRef<SavedPopoverState | null>(null)
   savedPopoverRef.current = savedPopover
 
-  // Tokenize with the session's detected language once the saved-highlights
-  // load (or the first save) delivers it — '' (locale-less) until then. The
-  // re-tokenization when the locale lands is safe: the saved-span paint uses
-  // intersection, not exact offsets, so it tolerates the boundary shift.
+  // The video's language, best-effort: the server-detected language once the
+  // saved-highlights load (or the first save) delivers a session, else the
+  // loaded caption track's own code (sessions are created lazily on first
+  // save, so a fresh video has no server-detected language). Read per render —
+  // the hint lands right before a subtitle load, which re-renders the overlay
+  // via the lines snapshot.
+  const effectiveLanguage = savedTargetLanguage ?? closures.getFlicktionarySubtitleLanguageHint()
+
+  // Tokenize with the video's language — '' (locale-less) only while even the
+  // caption-track code is unknown. The re-tokenization when a better locale
+  // lands is safe: the saved-span paint uses intersection, not exact offsets,
+  // so it tolerates the boundary shift.
   const tokenized = useMemo(
-    () => snapshot.lines.map((line) => tokenizeLine(line, savedTargetLanguage ?? '')),
-    [snapshot.lines, savedTargetLanguage]
+    () => snapshot.lines.map((line) => tokenizeLine(line, effectiveLanguage ?? '')),
+    [snapshot.lines, effectiveLanguage]
   )
 
   const queryClient = useQueryClient()
   // The open popover's content. Keyed by (targetLanguage, word, sentence):
   // successes cache (re-hover is instant), errors throw and are NOT cached
   // (re-hover refetches — a "Sign in to translate" error must not survive
-  // sign-in). The video's detected language rides the request so the gloss is
-  // in the VIDEO'S language, not the user's primary target language; while
-  // it's still unknown the background falls back to the primary language, and
-  // the language landing changes the key so an open popover refetches.
-  const glossQuery = useGloss(gloss?.word, gloss?.sentence, gloss !== null, savedTargetLanguage ?? undefined)
+  // sign-in). The video's language rides the request so the gloss is in the
+  // VIDEO'S language, not the user's primary target language; while it's
+  // still unknown the background falls back to the primary language, and the
+  // language landing changes the key so an open popover refetches.
+  const glossQuery = useGloss(gloss?.word, gloss?.sentence, gloss !== null, effectiveLanguage)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
@@ -558,6 +568,26 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           hideSaveSourceGloss()
           setCefrState({ targetLanguage: outcome.targetLanguage, pendingSave: params })
           break
+        case 'unsupported-language': {
+          // Not fixable in-video (the backend can't ingest this language).
+          // Park the reason on the binding so every later gloss tooltip on this
+          // video renders saving as disabled, and toast it once. Sessions are
+          // created lazily on first save, so this is the earliest this can
+          // surface. Hover gloss stays available.
+          const languageName = describeLanguageCode(params.closures.getFlicktionarySubtitleLanguageHint())
+          const reason = languageName
+            ? i18n._(
+                msg`Flicktionary doesn't support ${languageName} subtitles yet — saving is disabled for this video.`
+              )
+            : i18n._(
+                msg`These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`
+              )
+          params.closures.setFlicktionarySaveDisabledReason(reason)
+          hideSaveSourceGloss()
+          showToast(reason, true)
+          clearSelection()
+          break
+        }
       }
     },
     [showToast, clearSelection, onSignIn, interaction, savedStore, loadSaved, hideGloss, video]
@@ -566,7 +596,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const saveSingle = useCallback(
     (line: SubtitleLineModel, token: LineToken, save?: GlossSaveOptions, handoff?: GlossSaveHandoff) => {
       const cachedGloss = queryClient.getQueryData<GlossData>(
-        glossQueryKey(token.text, line.text, savedStore.getState().targetLanguage ?? '')
+        // Same fallback chain as `effectiveLanguage` — the key must match what
+        // useGloss cached the preview under.
+        glossQueryKey(
+          token.text,
+          line.text,
+          savedStore.getState().targetLanguage ?? closures.getFlicktionarySubtitleLanguageHint() ?? ''
+        )
       )
       const translation = cachedGloss?.gloss ?? ''
       const fastGloss = cachedGloss
@@ -608,7 +644,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const first = selectedWords[0]
       const last = selectedWords[selectedWords.length - 1]
       const cachedGloss = queryClient.getQueryData<GlossData>(
-        glossQueryKey(words, tl.line.text, savedStore.getState().targetLanguage ?? '')
+        // Same fallback chain as `effectiveLanguage` — the key must match what
+        // useGloss cached the preview under.
+        glossQueryKey(
+          words,
+          tl.line.text,
+          savedStore.getState().targetLanguage ?? closures.getFlicktionarySubtitleLanguageHint() ?? ''
+        )
       )
       const translation = cachedGloss?.gloss ?? ''
       const fastGloss = cachedGloss

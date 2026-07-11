@@ -26,16 +26,12 @@ import {
   VideoHeartbeatMessage,
   VideoToExtensionCommand,
   IndexedSubtitleModel,
-  RegisterFlicktionarySubtitlesMessage,
-  RegisterFlicktionarySubtitlesResponse,
   SaveWordFlicktionaryVideoContext,
   ToggleSubtitlesMessage,
 } from '@asbplayer-fork/common'
 type FlicktionaryVideoContext = SaveWordFlicktionaryVideoContext
-import { v4 as uuidv4 } from 'uuid'
 import {
   computeSubtitlesContentHash,
-  describeLanguageCode,
   getCurrentYoutubeMetadata,
   isYoutubeWatchPage,
   normalizeYoutubeLanguageCode,
@@ -95,15 +91,16 @@ export default class Binding {
   readonly settings: SettingsProvider
 
   // Snapshot of the current YouTube video + parsed subtitles, populated by
-  // `_maybeRegisterFlicktionarySubtitles`. The React subtitle overlay reads
+  // `_prepareFlicktionaryVideoContext`. The React subtitle overlay reads
   // this through a closure so SaveWordMessage can carry a self-contained
-  // payload — letting the background recover when its session cache is cold.
+  // payload — the first save creates the backend session from it.
   private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined
 
   // BCP-47 language code of the YouTube caption track the user selected, set
-  // by the video-data-sync flow before subtitles load. Display-only: it names
-  // the language in the "unsupported" notice; the backend detects the real
-  // language from the text.
+  // by the video-data-sync flow before subtitles load. A hint only: the overlay
+  // uses it as the tokenizer/gloss language until the first save delivers the
+  // server-detected language, and to name the language in the "unsupported"
+  // notice. The backend always detects the real language from the text.
   private _flicktionarySubtitleLanguageHint: string | undefined
 
   // When set, saving is disabled for the current video (its subtitles are in
@@ -627,6 +624,13 @@ export default class Binding {
       getVideoUrl: () => window.location.href,
       getFlicktionaryVideoContext: () => this._flicktionaryVideoContext,
       getFlicktionarySaveDisabledReason: () => this._flicktionarySaveDisabledReason,
+      // The overlay learns "this video's language is unsupported" from a save
+      // attempt (sessions are created lazily on first save) and parks the
+      // reason here so subsequent gloss tooltips render saving as disabled.
+      setFlicktionarySaveDisabledReason: (reason: string) => {
+        this._flicktionarySaveDisabledReason = reason
+      },
+      getFlicktionarySubtitleLanguageHint: () => this._flicktionarySubtitleLanguageHint,
     }
   }
 
@@ -853,7 +857,12 @@ export default class Binding {
     this._flicktionarySubtitleLanguageHint = normalizeYoutubeLanguageCode(languageCode)
   }
 
-  private async _maybeRegisterFlicktionarySubtitles(subtitles: IndexedSubtitleModel[]) {
+  // Builds the self-contained video context (metadata + canonical segments +
+  // contentHash) the overlay's save and saved-highlights flows cite. Purely
+  // local prep — no backend call: the session is created lazily by the first
+  // save (save-word-handler's findOrCreate), so merely watching a video with
+  // subtitles never creates anything server-side.
+  private async _prepareFlicktionaryVideoContext(subtitles: IndexedSubtitleModel[]) {
     try {
       this._flicktionaryVideoContext = undefined
       this._flicktionarySaveDisabledReason = undefined
@@ -864,12 +873,7 @@ export default class Binding {
 
       const contentHash = await computeSubtitlesContentHash(segments)
 
-      // The backend detects the subtitle language from the segment text and
-      // uses it as both the content and target language. youtubeLanguageCode is
-      // display-only + YouTube-only (names the language in an "unsupported"
-      // notice); streaming carries no language hint.
       const onYoutube = isYoutubeWatchPage()
-      const youtubeLanguageCode = onYoutube ? this._flicktionarySubtitleLanguageHint : undefined
 
       let context: FlicktionaryVideoContext
       if (onYoutube) {
@@ -903,49 +907,10 @@ export default class Binding {
         }
       }
       this._flicktionaryVideoContext = context
-
-      const message: VideoToExtensionCommand<RegisterFlicktionarySubtitlesMessage> = {
-        sender: 'asbplayer-video',
-        message: {
-          command: 'register-flicktionary-subtitles',
-          messageId: uuidv4(),
-          source: context.source,
-          youtubeVideoId: context.youtubeVideoId,
-          videoTitle: context.videoTitle,
-          videoUrl: context.videoUrl,
-          youtubeLanguageCode,
-          contentHash: context.contentHash,
-          segments: context.segments,
-        },
-        src: this.video.src,
-      }
-
-      const response: RegisterFlicktionarySubtitlesResponse | undefined = await browser.runtime.sendMessage(message)
-      this._handleFlicktionaryRegisterResponse(response, youtubeLanguageCode)
     } catch (error) {
-      // Don't let registration failures break subtitle rendering — the
-      // save path can still cold-start its own findOrCreate call.
-      console.warn('[flicktionary] register-subtitles failed', error)
-    }
-  }
-
-  // Surfaces backend feedback once at video-load time. Only the unsupported
-  // case is handled here (it disables saving outright). MISSING_CEFR is left to
-  // the save path, which shows an inline CEFR picker on the first save attempt —
-  // toasting it at load too would be a redundant, non-actionable scare.
-  private _handleFlicktionaryRegisterResponse(
-    response: RegisterFlicktionarySubtitlesResponse | undefined,
-    youtubeLanguageCode: string | undefined
-  ) {
-    if (!response || response.success) return
-
-    if (response.code === 'UNSUPPORTED_LANGUAGE') {
-      const languageName = describeLanguageCode(youtubeLanguageCode)
-      const reason = languageName
-        ? `Flicktionary doesn't support ${languageName} subtitles yet — saving is disabled for this video.`
-        : `These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`
-      this._flicktionarySaveDisabledReason = reason
-      this.subtitleController.showTextNotification(reason)
+      // Don't let context-prep failures break subtitle rendering — saving is
+      // simply unavailable for the video (the overlay surfaces that).
+      console.warn('[flicktionary] preparing video context failed', error)
     }
   }
 
@@ -1041,11 +1006,10 @@ export default class Binding {
     // Keep the React overlay hosts in sync with the freshly-loaded subtitles.
     this.subtitleController.ensureReactOverlays(this._flicktionaryClosures())
 
-    // Fire-and-forget: tell the background which session this video maps to
-    // so save-word can cite real text_segments.id values without round
-    // trips. YouTube-only; other streaming sites have no Flicktionary
-    // session model yet.
-    void this._maybeRegisterFlicktionarySubtitles(subtitles)
+    // Fire-and-forget: snapshot the video context (segments + contentHash) the
+    // overlay needs for saved-highlight lookups and saves. Local-only — the
+    // backend session is created lazily on the first save.
+    void this._prepareFlicktionaryVideoContext(subtitles)
 
     if (this._playMode !== PlayMode.normal && (!subtitles || subtitles.length === 0)) {
       this.playMode = PlayMode.normal

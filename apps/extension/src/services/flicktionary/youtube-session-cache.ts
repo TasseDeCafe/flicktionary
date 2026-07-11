@@ -2,18 +2,18 @@
 // subtitle hash), here is the Flicktionary session + the segment-index →
 // segment-id map".
 //
-// Populated by `register-flicktionary-subtitles` when subtitles load. Read by
-// the save-word path so each saved highlight cites a real `text_segments.id`
-// without a round trip per save. Survives background-script restarts via
-// `browser.storage.local`; survives Supabase token refresh because it's
-// independent of auth state.
+// Populated by a video's first save (save-word-handler's findOrCreate) or by
+// the saved-highlights loader's session lookup. Read by the save-word path so
+// each saved highlight cites a real `text_segments.id` without a round trip
+// per save. Survives background-script restarts via `browser.storage.local`;
+// survives Supabase token refresh because it's independent of auth state.
 //
 // Keyed by (source, contentHash) so YouTube and streaming sessions never alias,
 // even in the (vanishingly unlikely) case of byte-identical subtitle content.
 
 // v3: entries gained `targetLanguage`. Bumping the key drops v2 entries
-// wholesale instead of migrating — re-registering is idempotent, so the next
-// video load simply repopulates the entry with the new field.
+// wholesale instead of migrating — find-or-create is idempotent, so the next
+// save simply repopulates the entry with the new field.
 const STORAGE_KEY = 'flicktionary.session-cache.v3'
 
 export interface FlicktionaryYoutubeSessionCacheEntry {

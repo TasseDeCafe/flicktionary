@@ -1864,6 +1864,12 @@ msgstr "Flashcards only"
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
+msgid "Flicktionary doesn't support {languageName} subtitles yet — saving is "
+"disabled for this video."
+msgstr "Flicktionary doesn't support {languageName} subtitles yet — saving is "
+"disabled for this video."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Flicktionary has two parts that work together: a <0>browser "
 "extension</0> and this <1>web app</1>."
@@ -4304,6 +4310,12 @@ msgstr "There was an error. Please contact support."
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
+
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
+msgid "These subtitles are in a language Flicktionary doesn't support yet — "
+"saving is disabled for this video."
+msgstr "These subtitles are in a language Flicktionary doesn't support yet — "
+"saving is disabled for this video."
 
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "These terms don't have meanings saved yet — open a term to fill in its "
