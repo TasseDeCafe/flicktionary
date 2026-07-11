@@ -1134,12 +1134,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           {tokenized.map((tl) => {
             const range = selectionForLine(tl.line.index, tl.wordTokens)
             const savedRanges = savedRangesByLine.get(tl.line.index)
+            // whitespace-normal (not pre-wrap): human-authored cues carry hard
+            // \n line breaks sized for YouTube's own renderer; at our container
+            // width they'd double-wrap into widowed lines. The \n stays in the
+            // DOM (tokenizer offsets, save coordinates and the contentHash all
+            // see the original text) — it just renders as a collapsible space.
+            // text-balance evens out the soft-wrapped lines so no single word
+            // is stranded on the last line.
             return (
               <div
                 key={tl.line.index}
                 data-track={tl.line.track}
                 style={tl.line.style}
-                className={`px-2.5 py-0.5 leading-normal whitespace-pre-wrap${
+                className={`px-2.5 py-0.5 leading-normal whitespace-normal text-balance${
                   tl.line.blurred ? ' blur-[10px] hover:blur-none' : ''
                 }`}
               >
