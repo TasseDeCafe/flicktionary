@@ -62,6 +62,35 @@ describe('resolveVideoLanguage', () => {
     ).toBe('ru')
   })
 
+  it('lets the sole ASR outrank a conflicting original-audio label', () => {
+    // Live-probed on vf4OFZ87jWM (2026-07-12): the audio track is labeled
+    // "English (US) original" but the only ASR track is ru — the speech is
+    // actually Russian. ASR is recognition of that very audio, so it wins
+    // over the metadata label.
+    expect(
+      resolveVideoLanguage({
+        audioTrackXtags: { lang: 'en-US', acont: 'original' },
+        tracks: [track('ru', true)],
+      })
+    ).toBe('ru')
+  })
+
+  it('uses the original-audio label when there is no ASR signal', () => {
+    expect(
+      resolveVideoLanguage({
+        audioTrackXtags: { lang: 'en-US', acont: 'original' },
+        tracks: [track('en'), track('ru')],
+      })
+    ).toBe('en-US')
+    // lang-only xtags (no acont decoded) behave like original audio
+    expect(
+      resolveVideoLanguage({
+        audioTrackXtags: { lang: 'pt-BR' },
+        tracks: [track('pt-BR'), track('es')],
+      })
+    ).toBe('pt-BR')
+  })
+
   it('falls back to the sole ASR track language', () => {
     expect(
       resolveVideoLanguage({
