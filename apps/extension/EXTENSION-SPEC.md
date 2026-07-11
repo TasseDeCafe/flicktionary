@@ -373,18 +373,27 @@ highlights stay on the old session).
 
 ### Session registration (backend coupling)
 
-When subtitles load, the binding awaits `register-flicktionary-subtitles`: the
-background calls `studySessions.findOrCreateForYoutubeVideo` (deduped on video
-id) or `findOrCreateForStreamingVideo` (any other platform), which creates the
+Sessions are created **lazily, on a video's first save** — never by merely
+loading or watching subtitles. When subtitles load, the binding only snapshots
+the local video context (metadata + canonical segments + contentHash,
+`_prepareFlicktionaryVideoContext`); the first `save-word` cold-starts
+`studySessions.findOrCreateForYoutubeVideo` (deduped on video id) or
+`findOrCreateForStreamingVideo` (any other platform), which creates the
 `content_source`/`text_track`/`text_segments` server-side and returns a
 segment-index → `text_segments.id` map plus the detected `targetLanguage`,
 cached per `(source, contentHash)` (`youtube-session-cache.ts`, storage key
 `flicktionary.session-cache.v3` — the v3 bump dropped v2 entries instead of
-migrating; re-registration is idempotent) so saves are a single round trip.
+migrating; find-or-create is idempotent) so later saves are a single round
+trip. Saved-highlight painting at load uses the cache or the lookup-only
+`lookupForVideo` (see below) — watching with subtitles costs zero backend
+writes, keeps the web sessions list free of never-studied videos, and leaves
+`last_target_language` (stamped inside find-or-create) untouched by casual
+viewing.
 
 The extension sends **no language** — the backend detects it (Haiku) and uses it
-as both content and target language. The two missing-prefs failures are
-**distinct codes** (the backend splits them so the extension picks the right
+as both content and target language. All three prefs/language failures surface
+on the save path (there is no load-time registration to carry them anymore),
+as **distinct codes** (the backend splits them so the extension picks the right
 recovery — conflating them once stranded users who had a CEFR but no native
 language in an unbreakable "set your level" loop):
 - `422 NEEDS_ONBOARDING` (no native language → onboarding incomplete) → not an
@@ -393,11 +402,12 @@ language in an unbreakable "set your level" loop):
   returns the user here when done). After onboarding, re-saving works.
 - `422 MISSING_CEFR` (native set, CEFR for the detected language missing) →
   surfaced at save time as the in-video CEFR picker (below) and retried.
-- `422 UNSUPPORTED_LANGUAGE` → one-time notice naming the language, saving
-  disabled for that video (hover gloss stays available). The platform's own
-  caption code (YouTube BCP-47) is used ONLY to name the language in this
-  notice — it is never trusted for storage; the server-detected language is
-  the truth.
+- `422 UNSUPPORTED_LANGUAGE` → on the first save attempt, a one-time notice
+  naming the language; the overlay parks the reason on the binding
+  (`setFlicktionarySaveDisabledReason`) so saving renders disabled for the
+  rest of the video (hover gloss stays available). The platform's own caption
+  code (YouTube BCP-47) is used ONLY to name the language in this notice — it
+  is never trusted for storage; the server-detected language is the truth.
 
 Unpaired users can still watch with subtitles; saving is simply unavailable (no
 local fallback).
@@ -414,9 +424,12 @@ session's server-detected subtitle language (delivered by the saved-highlights
 load / the first save's response, held in the saved-highlights store), matching
 what the web reader passes for the same text — `Intl.Segmenter` word rules are
 locale-sensitive, so this keeps word boundaries (and saved offsets) identical
-across platforms; `''` (locale-less) is the fallback until the language is
-known, and the re-tokenization when it lands is safe because saved-span paint
-uses intersection, not exact offsets.
+across platforms. Until a session exists (sessions are first-save-lazy) the
+loaded caption track's own code (`getFlicktionarySubtitleLanguageHint`, YouTube
+only) fills in, then `''` (locale-less); the same fallback chain feeds the
+hover-gloss `targetLanguage` and its query key. Re-tokenization when a better
+locale lands is safe because saved-span paint uses intersection, not exact
+offsets.
 
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
   (selection + context line + the video's detected target language when known,
@@ -518,7 +531,8 @@ uses intersection, not exact offsets.
   result. **No success toasts** in either direction: the span's yellow wash
   appearing/disappearing is the feedback (toasts per word got noisy at
   volume); failures still toast. Success clears the selection. Signed-out → a
-  "Sign in" action; registration-failed → disabled Save with the reason. The
+  "Sign in" action; an unsupported-language video → disabled Save with the
+  reason (set by the video's first save attempt, see Session registration). The
   save calls `highlights.create({sessionId, start/endSegmentId, offsets,
   selectionText, studyIntent?, fastGloss?})`; when the preview gloss is already
   loaded, the compact `{gloss, pos, register}` triple is persisted with the new
@@ -968,8 +982,8 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `extensionAuth.revokeSession` | sign-out |
 | `extensionAuth.setCefrLevel` | CEFR picker |
 | `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
-| `studySessions.findOrCreateForYoutubeVideo` | session registration (YouTube, deduped on video id) |
-| `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
+| `studySessions.findOrCreateForYoutubeVideo` | session registration on a video's first save (YouTube, deduped on video id) |
+| `studySessions.findOrCreateForStreamingVideo` | session registration on a video's first save (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
 | `studySessions.importText` | article/selection import |
 | `highlights.create` | saving a word/chunk, optionally with the preview `{gloss, pos, register}` persisted as `fastGloss` |
@@ -1005,18 +1019,21 @@ the saved-highlights loader evicts an entry whose session no longer lists
 
 `pnpm build` (or `pnpm dev`) → load on a YouTube video with subs:
 
-1. Subtitles load (auto-sync or dialog) and the registration call succeeds.
+1. Subtitles load (auto-sync or dialog) with NO backend write (check Network:
+   no find-or-create; the web app's sessions list stays clean).
 2. Hover a word → gloss popover shows **and dismisses**; moving onto the
    popover doesn't resume playback.
-3. Right-click save creates a highlight (verify in the backend / web app) and
-   the saved span paints immediately (teal underline).
+3. Right-click save creates the session (first save = find-or-create) plus a
+   highlight (verify in the backend / web app) and the saved span paints
+   immediately (teal underline).
 3a. Reload the page → the span reappears (cache); clear
     `flicktionary.session-cache.v3` from `chrome.storage.local` → it reappears
     via `lookupForVideo` with NO find-or-create issued (check Network). Click
     the span → saved popover: gloss renders, note edits persist to the web
     app, Remove syncs to the web app. Delete the session in the web app →
     reload → clean empty + cache evicted. Signed out → nothing painted.
-4. An unsupported-language video shows the one-time notice; saving disabled.
+4. An unsupported-language video: first save attempt toasts the one-time
+   notice; saving disabled for the rest of the video, gloss still works.
 5. Pause → controls overlay appears; toggle-subtitles works.
 6. Popup: pairing status, settings tabs, profile switching/deletion.
 7. On a news article: popup import creates a session.

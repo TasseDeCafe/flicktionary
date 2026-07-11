@@ -433,10 +433,10 @@ export interface FlicktionaryGlossResponse {
 //    selections leave endSegmentIndex absent.
 //  - startCharOffset / endCharOffset: char positions in each segment's
 //    canonical text (matching what the tokenizer rendered).
-//  - flicktionaryVideo: full video metadata + verbatim segments payload so the
-//    background can fall back to a fresh `findOrCreateForYoutubeVideo` call
-//    when its session cache is cold (e.g. the user saved before the
-//    register-subtitles ping had time to land).
+//  - flicktionaryVideo: full video metadata + verbatim segments payload. The
+//    background's session cache is cold until a video's first save — that save
+//    creates the session via `findOrCreateForYoutubeVideo` from this payload
+//    (sessions are never created by merely loading subtitles).
 export interface SaveWordFlicktionaryVideoContext {
   // Which ingestion flow this video uses: 'youtube' (keyed by youtubeVideoId)
   // or 'streaming' (Netflix/Prime/…, keyed by the subtitle contentHash). The
@@ -678,36 +678,6 @@ export interface SetFlicktionaryCefrMessage extends MessageWithId {
 export interface SetFlicktionaryCefrResponse {
   readonly success: boolean
   readonly error?: string
-}
-
-export interface RegisterFlicktionarySubtitlesMessage extends MessageWithId {
-  readonly command: 'register-flicktionary-subtitles'
-  // Ingestion flow for this video — see SaveWordFlicktionaryVideoContext.source.
-  readonly source: 'youtube' | 'streaming'
-  // Present only when source === 'youtube'.
-  readonly youtubeVideoId?: string
-  readonly videoTitle: string
-  readonly videoUrl: string
-  // BCP-47 language code of the selected YouTube caption track, when known.
-  // Display-only: it is NOT sent to the backend (which detects the language
-  // from the text). Used to name the language in the "unsupported" notice.
-  readonly youtubeLanguageCode?: string
-  readonly contentHash: string
-  readonly segments: ReadonlyArray<{
-    readonly index: number
-    readonly text: string
-    readonly startMs: number
-    readonly endMs: number
-  }>
-}
-
-export interface RegisterFlicktionarySubtitlesResponse {
-  readonly success: boolean
-  readonly sessionId?: string
-  readonly error?: string
-  // Backend error code (e.g. 'UNSUPPORTED_LANGUAGE', 'MISSING_CEFR') so the
-  // binding can react at video-load time — show a notice and disable saving.
-  readonly code?: string
 }
 
 // Supadata Subtitle Generation Messages
