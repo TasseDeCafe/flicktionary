@@ -119,6 +119,30 @@ const androidInnerTubeTracks = async (videoId: string) => {
   return { basename, subtitles, translationLanguages }
 }
 
+// Speculative InnerTube fetch for the current video, so the network round trip
+// overlaps the content script's own boot (video binding, settings reads) — by
+// the time asbplayer-get-synced-data arrives the tracks are usually already in
+// flight or done. ytcfg is populated by YouTube's inline boot scripts, so very
+// early in a cold load arming can fail; callers retry (script startup + the
+// 500 ms interval, which also re-arms on SPA navigations).
+let innerTubePrefetch:
+  | { videoId: string; promise: Promise<Awaited<ReturnType<typeof androidInnerTubeTracks>>> }
+  | undefined
+
+const armInnerTubePrefetch = () => {
+  const videoId = inferVideoId()
+
+  if (videoId === undefined || innerTubePrefetch?.videoId === videoId) {
+    return
+  }
+
+  if (typeof window.ytcfg?.get !== 'function' || !window.ytcfg.get('INNERTUBE_API_KEY')) {
+    return
+  }
+
+  innerTubePrefetch = { videoId, promise: androidInnerTubeTracks(videoId).catch(() => undefined) }
+}
+
 // The web-client player response for the current video: the page global when
 // it's fresh (zero cost — this script runs in the page realm), else the
 // watch-page re-fetch (the global can lag SPA navigations).
@@ -130,14 +154,136 @@ const pagePlayerResponse = async (videoId: string): Promise<YtPlayerResponse | u
   return await fetchPlayerContextForPage()
 }
 
+// POTs harvested from observed /api/timedtext fetches, keyed by video id: the
+// native caption renderer's own requests carry a token that timedtext accepts
+// for this fork's srv3 fetches too (verified live 2026-07-12 — signed URL
+// without a POT returns 200 with an empty body). The sessionStorage cache
+// decodePoToken reads is no longer minted in every session, so harvesting is
+// the primary source in practice.
+const harvestedTimedtextPots = new Map<string, string>()
+
+const harvestTimedtextPot = (resourceUrl: string) => {
+  try {
+    const url = new URL(resourceUrl)
+
+    if (!url.pathname.endsWith('/api/timedtext')) {
+      return
+    }
+
+    const videoId = url.searchParams.get('v')
+    const pot = url.searchParams.get('pot')
+
+    if (videoId && pot) {
+      harvestedTimedtextPots.set(videoId, pot)
+    }
+  } catch {
+    // Not a parseable URL — not a timedtext fetch.
+  }
+}
+
+const knownPoToken = (videoId: string): { poToken: string } | undefined => {
+  const cached = decodePoToken(videoId)
+
+  if (cached) {
+    return cached
+  }
+
+  const harvested = harvestedTimedtextPots.get(videoId)
+  return harvested ? { poToken: harvested } : undefined
+}
+
+// Whether the native caption window is currently hidden (provisional or bound
+// suppression) — gates the induced fetch below, which must never visibly
+// flash captions. Maintained by suppressNativeCaptionsRendering.
+let captionsRenderingSuppressed = false
+
+// Force the native player to issue a timedtext fetch we can harvest the POT
+// from, by flipping the CC toggle: on→(fetch)→off restore when CC was off,
+// off→on refetch when CC was on but its organic fetch hasn't been observed
+// yet (the captions module can lazy-load well after playback starts). Only
+// while rendering is suppressed, so nothing flashes; the CC state ends where
+// it started. Pre-bind the caption-state observer is not attached yet, so the
+// transient flip never reaches the content script.
+const induceNativeCaptionFetch = () => {
+  const flipBack = (toOn: boolean, delayMs: number) => {
+    setTimeout(() => {
+      try {
+        const player = moviePlayer()
+
+        if (player?.isSubtitlesOn && player.toggleSubtitles && player.isSubtitlesOn() !== toOn) {
+          player.toggleSubtitles()
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }, delayMs)
+  }
+
+  try {
+    const player = moviePlayer()
+
+    if (!player?.isSubtitlesOn || !player.toggleSubtitles || !captionsRenderingSuppressed) {
+      return
+    }
+
+    if (player.isSubtitlesOn() === true) {
+      player.toggleSubtitles()
+      flipBack(true, 300)
+    } else {
+      player.toggleSubtitles()
+      flipBack(false, 1500)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const POT_POLL_INTERVAL_MS = 500
+const POT_POLL_MAX_ATTEMPTS = 16
+// Poll iteration at which to induce a native fetch (~1.5s in) — gives an
+// organic CC-on fetch time to land first.
+const POT_INDUCE_ATTEMPT = 3
+
+// Waits for a POT to become available from any source. Gives up early when
+// the user navigates away from the video.
+const waitForPoToken = async (videoId: string) => {
+  for (let attempt = 0; attempt < POT_POLL_MAX_ATTEMPTS; attempt++) {
+    if (attempt === POT_INDUCE_ATTEMPT) {
+      induceNativeCaptionFetch()
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, POT_POLL_INTERVAL_MS))
+
+    if (inferVideoId() !== videoId) {
+      return undefined
+    }
+
+    const pot = knownPoToken(videoId)
+
+    if (pot !== undefined) {
+      return pot
+    }
+  }
+
+  return undefined
+}
+
 // Tracks + translation languages from the page's own (web-client) player
 // response. Track URLs from this source need a POT token to fetch; without one
 // only the metadata (basename, translationLanguages) is usable.
-const timedTextTracksFromPageContext = async (videoId: string) => {
-  const pot = decodePoToken(videoId)
+//
+// waitForPot: set when this response is the only usable URL source — the
+// ANDROID payload yielded no tracks, which happens on videos it is login-gated
+// for (e.g. age-restricted). Publishing without the POT then would wrongly
+// mark a captioned video subtitle-less, so poll for the token instead.
+// Metadata-only consultations (ANDROID already supplied URLs) never wait.
+const timedTextTracksFromPageContext = async (videoId: string, { waitForPot }: { waitForPot: boolean }) => {
   const playerContext = await pagePlayerResponse(videoId)
   const renderer = playerContext?.captions?.playerCaptionsTracklistRenderer
   const tracks = renderer?.captionTracks || []
+
+  const pot = knownPoToken(videoId) ?? (waitForPot && tracks.length > 0 ? await waitForPoToken(videoId) : undefined)
+
   const subtitles: VideoDataSubtitleTrack[] | undefined = pot
     ? tracks.map((track: YtCaptionTrack) => {
         const baseUrl = track.baseUrl as string
@@ -288,7 +434,10 @@ const publishCurrentTracks = async ({
     let subtitles: VideoDataSubtitleTrack[] | undefined
     let translationLanguages: string[] | undefined
 
-    const androidInnerTubeInfo = await androidInnerTubeTracks(videoId)
+    // A failed prefetch (resolved undefined) falls through to a direct fetch —
+    // the failure may have been transient.
+    const prefetched = innerTubePrefetch?.videoId === videoId ? await innerTubePrefetch.promise : undefined
+    const androidInnerTubeInfo = prefetched ?? (await androidInnerTubeTracks(videoId))
 
     if (androidInnerTubeInfo) {
       basename = androidInnerTubeInfo.basename
@@ -310,7 +459,7 @@ const publishCurrentTracks = async ({
 
     if (!androidLooksComplete) {
       try {
-        const pageInfo = await timedTextTracksFromPageContext(videoId)
+        const pageInfo = await timedTextTracksFromPageContext(videoId, { waitForPot: subtitles === undefined })
         basename = basename || pageInfo.basename || ''
 
         if (subtitles === undefined) {
@@ -453,6 +602,8 @@ export default defineUnlistedScript(() => {
   // would double-display underneath: the native CC state stays "on" (it is the
   // user-facing toggle) but its rendering is hidden.
   const suppressNativeCaptionsRendering = (suppress: boolean) => {
+    captionsRenderingSuppressed = suppress
+
     if (suppress) {
       if (!captionsSuppressionStyle) {
         captionsSuppressionStyle = document.createElement('style')
@@ -467,19 +618,101 @@ export default defineUnlistedScript(() => {
     }
   }
 
+  // --- Provisional native-caption suppression ---
+  // The subtitle pipeline (content-script boot → track-list fetch → srv3
+  // fetch + parse) runs a second or two behind YouTube's own caption renderer,
+  // so with CC on the native captions would flash before the overlay takes
+  // over. On watch pages the caption window is therefore hidden as soon as a
+  // video is detected — before knowing whether the extension will bind — and
+  // revealed again when it turns out not to: the content script declines
+  // (asbplayer-native-captions-decline, sent when auto-sync resolves to "load
+  // nothing"), or the timeout fires as a safety net so an extension failure
+  // can never leave native captions permanently hidden. Watch pages only:
+  // Shorts/preview bindings never speak for the whole page, so a provisional
+  // hide there could not be reliably released.
+  const PROVISIONAL_SUPPRESSION_TIMEOUT_MS = 10000
+  let provisionalVideoId: string | undefined
+  let provisionalSuppressionActive = false
+  let provisionalSuppressionTimeout: ReturnType<typeof setTimeout> | undefined
+
+  // Desktop watch pages only — on m.youtube.com the native-captions takeover
+  // degrades gracefully (no #movie_player on the content side), so neither
+  // bind nor decline would ever release a provisional hide there.
+  const watchPageVideoId = () =>
+    window.location.hostname !== 'm.youtube.com' && window.location.pathname === '/watch'
+      ? (new URLSearchParams(window.location.search).get('v') ?? undefined)
+      : undefined
+
+  const releaseProvisionalSuppression = () => {
+    if (provisionalSuppressionTimeout !== undefined) {
+      clearTimeout(provisionalSuppressionTimeout)
+      provisionalSuppressionTimeout = undefined
+    }
+
+    if (!provisionalSuppressionActive) {
+      return
+    }
+
+    provisionalSuppressionActive = false
+
+    if (!captionControlBound) {
+      suppressNativeCaptionsRendering(false)
+    }
+  }
+
+  const applyProvisionalSuppression = () => {
+    const videoId = watchPageVideoId()
+
+    if (videoId === provisionalVideoId) {
+      return
+    }
+
+    provisionalVideoId = videoId
+    releaseProvisionalSuppression()
+
+    if (videoId === undefined || captionControlBound) {
+      return
+    }
+
+    provisionalSuppressionActive = true
+    suppressNativeCaptionsRendering(true)
+    provisionalSuppressionTimeout = setTimeout(releaseProvisionalSuppression, PROVISIONAL_SUPPRESSION_TIMEOUT_MS)
+  }
+
+  document.addEventListener('asbplayer-native-captions-decline', () => {
+    releaseProvisionalSuppression()
+  })
+
   document.addEventListener('asbplayer-native-captions-bind', () => {
     captionControlBound = true
     armedTrackVideoId = inferVideoId()
+    // The bound suppression owns the style from here; drop the provisional
+    // timer so it can't fire mid-bind.
+    releaseProvisionalSuppression()
     suppressNativeCaptionsRendering(true)
     ensureCaptionsButtonObserver()
     publishNativeCaptionsState(true)
   })
 
   document.addEventListener('asbplayer-native-captions-unbind', () => {
+    const boundVideoId = armedTrackVideoId
     captionControlBound = false
     armedTrackVideoId = undefined
     requestedTrackTriple = undefined
-    suppressNativeCaptionsRendering(false)
+
+    // An unbind that is part of an SPA navigation (the content script resets
+    // subtitles before reloading for the incoming video) must not flash that
+    // video's native captions: transition straight into a provisional hide. A
+    // same-video unbind (the user unloaded subtitles) reveals immediately.
+    const videoId = watchPageVideoId()
+
+    if (videoId !== undefined && videoId !== boundVideoId) {
+      provisionalVideoId = undefined
+      applyProvisionalSuppression()
+    } else {
+      releaseProvisionalSuppression()
+      suppressNativeCaptionsRendering(false)
+    }
   })
 
   document.addEventListener('asbplayer-native-captions-set', (e) => {
@@ -578,6 +811,10 @@ export default defineUnlistedScript(() => {
 
   const timedtextObserver = new PerformanceObserver((entries) => {
     for (const entry of entries.getEntries()) {
+      // Regardless of arming/binding: every native timedtext fetch carries the
+      // POT the page-context track URLs need (see knownPoToken).
+      harvestTimedtextPot(entry.name)
+
       const triple = timedtextTripleFromUrl(entry.name)
 
       if (triple === undefined) {
@@ -606,8 +843,18 @@ export default defineUnlistedScript(() => {
 
   let publishing = false
 
+  // This script is injected at document_start: hide the caption window before
+  // YouTube can render a first cue, and start the track-list fetch early.
+  applyProvisionalSuppression()
+  armInnerTubePrefetch()
+
   // Handle YT shorts: Publish subtitle tracks according to current video ID
   setInterval(async () => {
+    // Covers SPA navigations (video-id changes) and, for the prefetch, cold
+    // loads where ytcfg wasn't ready at script startup.
+    applyProvisionalSuppression()
+    armInnerTubePrefetch()
+
     if (captionControlBound) {
       // Backstop for changes the attribute observer can't see: button node
       // replacement and availability flips on SPA navigation.

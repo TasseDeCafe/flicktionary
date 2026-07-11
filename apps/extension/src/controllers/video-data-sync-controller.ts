@@ -486,7 +486,11 @@ export default class VideoDataSyncController {
             label: 'Generated (Whisper)',
             extension: 'srt',
           }
-          await this._syncData([cachedTrack, this._emptySubtitle, this._emptySubtitle])
+          const synced = await this._syncData([cachedTrack, this._emptySubtitle, this._emptySubtitle])
+
+          if (!synced) {
+            this._declineNativeCaptions()
+          }
 
           if (!this._isHidden()) {
             this._hideAndResume()
@@ -506,11 +510,17 @@ export default class VideoDataSyncController {
           const track = selectVideoLanguageTrack(this._syncedData.subtitles, this._syncedData.videoLanguage)
 
           if (track !== undefined) {
-            await this._syncData([track, this._emptySubtitle, this._emptySubtitle])
+            const synced = await this._syncData([track, this._emptySubtitle, this._emptySubtitle])
+
+            if (!synced) {
+              this._declineNativeCaptions()
+            }
 
             if (!this._isHidden()) {
               this._hideAndResume()
             }
+          } else {
+            this._declineNativeCaptions()
           }
           return
         }
@@ -519,12 +529,17 @@ export default class VideoDataSyncController {
 
         if (subs.completeMatch) {
           const autoSelectedTracks: VideoDataSubtitleTrack[] = subs.autoSelectedTracks
-          await this._syncData(autoSelectedTracks)
+          const synced = await this._syncData(autoSelectedTracks)
+
+          if (!synced) {
+            this._declineNativeCaptions()
+          }
 
           if (!this._isHidden()) {
             this._hideAndResume()
           }
         } else {
+          this._declineNativeCaptions()
           const shouldPrompt = await this._settings.getSingle('streamingAutoSyncPromptOnFailure')
 
           if (shouldPrompt) {
@@ -533,11 +548,30 @@ export default class VideoDataSyncController {
         }
       }
     } else {
+      this._declineNativeCaptions()
       const client = this._clientIfLoaded()
       if (client !== undefined) {
         client.updateState(await this._buildModel({}))
       }
     }
+  }
+
+  // The auto-sync decision for this video resolved to "load nothing": let the
+  // page script drop the provisional native-caption hide it applies while the
+  // pipeline is still deciding (see youtube-page.ts). Only the main-player
+  // binding may speak for the page — a Shorts/preview binding declining while
+  // the main pipeline is still loading would flash the very captions the
+  // overlay is about to replace.
+  private _declineNativeCaptions() {
+    if (!this._context.hasPageScript) {
+      return
+    }
+
+    if (document.getElementById('movie_player')?.contains(this._context.video) !== true) {
+      return
+    }
+
+    this._context.nativeCaptionsController.decline()
   }
 
   private async _canAutoSync(): Promise<boolean> {
