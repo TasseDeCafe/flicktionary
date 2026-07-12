@@ -69,8 +69,9 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
   meaning skill first; sibling skills copy the payload — the pronunciation sibling only when it
   carries displayable form IPA).
 - `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
-- `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
-  count; it replaces the old `user_lookups.added_to_practice_at`.
+- `introduced_at` (on the two citation facets — recognition AND production, which share one
+  combined daily budget) is the source of truth for the daily-new count; it replaces the old
+  `user_lookups.added_to_practice_at`.
 - **Membership vs existence**: there is **no `learning_mode` column** (dropped in migration
   `drop_learning_mode`). "In production" means an *enabled*
   (`disabled_at IS NULL`) citation production facet, never mere row existence: a demoted term
@@ -220,19 +221,29 @@ clamps to [0, hard-max] and treats **both-zero as "fall back to defaults"** — 
 language is deliberately not expressible (the contract also rejects both-zero with a sum>0
 refine; the settings UI snaps invalid drafts back on blur).
 
-Caps are **per review mode** (recognition / production), not per skill. Production gets an
+Review caps are **per review mode** (recognition / production). Production gets an
 optional **review** cap only — `practice_max_review_terms_active` (nullable; **NULL = uncapped
-= hard ceiling**, the default). The settings UI
-(`cefr-per-language-list.tsx`) surfaces it: a Recognition group {New, Review} and a
-Production group {Review only}, where an empty Production-review input means uncapped (NULL).
-Production has **no** new cap: the citation recognition card is the only daily-new-capped facet,
-so production-new is uncapped by design (`isDailyNewCappedFacet`).
+= hard ceiling**, the default). The **new** budget is language-level and COMBINED: both pools'
+citation facets consume the one `practice_max_new_terms` allowance
+(`isDailyNewCappedFacet` = either citation skill; a both-pools term consumes two slots — the
+budget counts *introductions*, not terms). The settings UI (`cefr-per-language-list.tsx`)
+surfaces it as a language-level "New introductions per day" input, plus a Recognition group
+{Review} and a Production group {Review only}, where an empty Production-review input means
+uncapped (NULL).
+
+**Production-first is a per-compose rule, not a daily reservation**: within one
+compose/warm-up parking pass production parks before recognition, but across a day whichever
+path introduces first (reading, a direct rating, a compose) consumes budget in event order —
+deliberately, since a global priority would need cross-surface coordination for little gain.
 
 Daily budgets:
 
-- **New budget** (recognition only) = limit − count of citation-recognition facets with
-  `introduced_at` = today. Consumed by introductions (first citation-recognition rating), from
-  flashcards AND reading mode.
+- **New budget** (combined, both pools) = limit − count of citation facets (either pool) with
+  `introduced_at` = today. Consumed by introductions (first citation-facet rating or warm-up
+  park), from flashcards, warm-up AND reading mode. All capped guards compare against the same
+  combined-count subquery under one advisory lock key
+  (`flashcards:{userId}:{targetLanguage}`), so two pools introducing concurrently can't both
+  pass the count.
 - **Review budget** = limit − `COUNT(DISTINCT (user_lookup_id, skill, target_form))` of today's
   `practice_rating_events` where `skill = ANY(<mode's skills>)`, `was_introduction=false`,
   `prev_srs_state IN ('new','review')`, `reverted_at IS NULL`. Counting **distinct facets**
@@ -293,7 +304,8 @@ ordering, rehab graduation) and must not silently decay. All predicates are `NOW
 so `pnpm db:advance-day` time travel works.
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
-`(meaning_recognition,'')`, active → `(meaning_production,'')`). **Opt-in new** facets
+`(meaning_recognition,'')`, active → `(meaning_production,'')`; both draw on the one
+combined budget). **Opt-in new** facets
 (pronunciation/forms) bypass the daily-new cap but are served **only in `learn_new`**,
 never `mixed` — otherwise the primary Practice button would flood a session with every
 enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
@@ -347,13 +359,14 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   compose first parks eligible never-reviewed citation terms into warm-up — discovery is
   by (user, language) via `listEligibleNewCitationFacets` (tier-ordered like the flashcard
   new bucket, decayed terms excluded — see §4), the park
-  writes reuse the session warm-up's mechanism (`runWarmupParkingPass` helpers in
-  `warmup-parking.ts`). **Production parks first**, then recognition under the daily-new
-  cap (first `cap_reached` stops the pass → `dailyLimitReached`). The budget is
-  **coupled to serve slots**: at most
-  `min(MAX_WARMUP_INTRO_PER_SESSION, MAX_GATES_PER_COMPOSE − uncredited parked backlog)`
-  terms park per compose, so opening Practice never parks a term this session can't also
-  serve (no invisible introduced-but-unseen backlog). There are therefore **no new
+  writes reuse the session warm-up's mechanism (`runParkingPass` in
+  `warmup-parking.ts`, skill-aware, one pass per pool). **Production parks first**, then
+  recognition — both under the COMBINED daily budget (either pass's `cap_reached` →
+  `dailyLimitReached`). The per-compose budget is
+  `min(MAX_WARMUP_INTRO_PER_SESSION, remaining daily budget)` — deliberately NOT coupled
+  to the gate backlog (a full warm-up pipeline must not silently starve introductions);
+  newly-parked gates always serve ON TOP of the backlog slice, so a compose still never
+  parks a term this session doesn't also serve. There are therefore **no new
   citation flashcards** — new terms enter via ~3 gate-days, then graduate (soft
   re-entry).
 - **Serve pass**, production-first (`prod flashcards → prod gates → recog flashcards →
@@ -422,7 +435,7 @@ Both `rateTerm` and `undoRating` validate the **legal `(pool, skill)` pairing** 
    (accepted; un-parking an unparked term is a no-op — and undo's restore also clears it).
 
 `rateTerm` resolves the per-language new-cap itself after loading the lookup row (the row
-carries `target_language`); the active pool skips the fetch (no daily cap).
+carries `target_language`) — for both pools, since the citation intros share one budget.
 
 ### Undo (undoRating)
 
@@ -463,9 +476,9 @@ user-facing errors.
 ### Scopes and pools
 
 A text is scoped to one target language, one pool, and one scope. Pool `production` is the
-old active drill — it serves only terms with an enabled `(meaning_production, '')` facet
-and has **no daily new-term cap** (the cap is a recognition-only concept, intentionally not
-inherited so production reading never eats the recognition new-term allowance). Scopes:
+old active drill — it serves only terms with an enabled `(meaning_production, '')` facet;
+its new-term intake draws on the same combined daily budget as recognition (the reading
+chips cap the advertised production-new count by the remaining budget). Scopes:
 `review_due` (already-introduced due terms only), `learn_new` (unseen terms up to the
 remaining per-day allowance), `mixed` (default; both). The scope is a **live filter
 re-evaluated per text** (`listReviewTerms`), not a frozen snapshot, and an in-progress or
@@ -613,23 +626,22 @@ sets from the same column. Everything below "park" is shared.
   unreferenced: the session-vocabulary footer now opens the zero-SRS session recap
   instead (see docs/REVIEW-SPEC.md). Abandoned warm-ups need no dedicated resume surface, since
   the next Practice serves the parked terms' gates anyway.
-  `startWarmupSession` parks the session's not-yet-introduced kept terms in **two
-  independent passes** (shared with the composer via `runWarmupParkingPass` helpers): a
-  recognition pass via the **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps
-  `introduced_at` AND `leech_parked_at` in one tx, leaves `srs_state` NULL — so a crash can't
-  leave a term introduced-but-unparked; returns `'scaffolded' | 'cap_reached' | 'not_eligible'`,
-  the first cap hit stopping further **recognition** entries and flagging `dailyLimitReached`,
-  `not_eligible` skipped; `bypassCap` is the composer's learn-extra path), and an
-  independent production pass via
-  `initializeAndParkProductionCitationFacet` (`'scaffolded' | 'not_eligible'`, uncapped) that
-  **never inherits the recognition cap's stop**. The served queue is **mixed** (recognition ++
-  production); each `StrengthenExerciseEntry` carries its `pool` so the client merges
-  placeholders by `(pool, userLookupId)` (a both-skills term has one entry per pool with the
-  same id) and its `origin` (`onboarding`/`leech`, derived from `srs_state`) so mixed-origin
-  queues pick the right copy; `submitExerciseAnswer` routes to the right facet.
-- The recognition warm-up consumes the **same daily new-term budget** as flashcards on entry,
-  so over-cap terms wait for tomorrow; the production warm-up is **uncapped** (production is
-  never daily-new-capped) and never flags `dailyLimitReached`.
+  `startWarmupSession` parks the session's not-yet-introduced kept terms in two passes —
+  one per pool, both through the skill-aware `runParkingPass` (`warmup-parking.ts`) and the
+  **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps `introduced_at` AND
+  `leech_parked_at` in one tx, leaves `srs_state` NULL — so a crash can't leave a term
+  introduced-but-unparked; returns `'scaffolded' | 'cap_reached' | 'not_eligible'`, the
+  first cap hit stopping that pass, `not_eligible` skipped; `bypassCap` is the composer's
+  learn-extra path). Both pools consume the COMBINED daily budget; either pass's cap hit
+  flags `dailyLimitReached`, and neither pass inherits the other's stop (the shared guard
+  refuses over-budget entries per candidate anyway). The served queue is **mixed**
+  (recognition ++ production); each `StrengthenExerciseEntry` carries its `pool` so the
+  client merges placeholders by `(pool, userLookupId)` (a both-skills term has one entry per
+  pool with the same id) and its `origin` (`onboarding`/`leech`, derived from `srs_state`)
+  so mixed-origin queues pick the right copy; `submitExerciseAnswer` routes to the right
+  facet.
+- Warm-up entry consumes the **same combined daily new-term budget** as flashcard and
+  reading introductions, in both pools — over-cap terms wait for tomorrow.
   `initializeCitationFacetIfUnderDailyCap` also carries an `AND leech_parked_at IS NULL` guard
   so a parked warm-up facet is never re-introduced as a flashcard.
 - **Serve-only refresh.** `refreshWarmupSession` (session, both pools) re-serves with no

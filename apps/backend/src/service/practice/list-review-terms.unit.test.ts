@@ -75,7 +75,7 @@ describe('listReviewTerms (service caps)', () => {
     expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ scope: 'learn_new', maxNewTerms: 0 }))
   })
 
-  it('production pool: uncapped review (NULL cap) — uses the hard ceilings, no budget count', async () => {
+  it('production pool: uncapped review (NULL cap) uses the hard review ceilings, but the NEW budget is the shared daily remainder', async () => {
     const { deps, repoListReviewTerms, countReviewBudgetConsumedToday } = createDeps()
     await listReviewTerms(userId, 'es', 'production', 'review_due', deps)
     expect(countReviewBudgetConsumedToday).not.toHaveBeenCalled()
@@ -85,7 +85,9 @@ describe('listReviewTerms (service caps)', () => {
         scope: 'review_due',
         maxReviewTerms: 300,
         maxLearningTerms: 300,
-        maxNewTerms: 100,
+        // Combined budget: clamped limit (20) minus today's citation
+        // introductions across BOTH pools.
+        maxNewTerms: 20,
         maxOptInNewTerms: 0,
       })
     )

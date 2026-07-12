@@ -103,32 +103,39 @@ const PracticeLimitsRow = ({
       <div className='flex flex-col gap-1'>
         <span className='text-sm font-medium'>{t`Practice limits`}</span>
         <p className='text-muted-foreground text-xs'>
-          {t`New terms are capped per day. Follow-up sessions use up to this many review terms.`}
+          {t`Introductions are capped per day. Follow-up sessions use up to this many review terms.`}
         </p>
+      </div>
+
+      {/* Language-level: recognition and production introductions share ONE
+          combined daily budget (a term studied in both pools consumes two
+          slots), so the input sits outside the per-pool groups. */}
+      <div className='grid grid-cols-2 gap-3'>
+        <div className='flex flex-col gap-1.5'>
+          <Label htmlFor={`practice-max-new-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
+            {t`New introductions per day`}
+          </Label>
+          <Input
+            id={`practice-max-new-terms-${targetLanguage}`}
+            type='number'
+            inputMode='numeric'
+            min={0}
+            max={PRACTICE_MAX_NEW_TERMS_LIMIT}
+            value={draftNew}
+            disabled={isRowPending}
+            onChange={(event) => setDraftNew(event.target.value)}
+            onBlur={save}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+            }}
+          />
+          <p className='text-muted-foreground text-xs'>{t`Covers recognition and production combined.`}</p>
+        </div>
       </div>
 
       <div className='flex flex-col gap-1.5'>
         <span className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t`Recognition`}</span>
         <div className='grid grid-cols-2 gap-3'>
-          <div className='flex flex-col gap-1.5'>
-            <Label htmlFor={`practice-max-new-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
-              {t`New terms`}
-            </Label>
-            <Input
-              id={`practice-max-new-terms-${targetLanguage}`}
-              type='number'
-              inputMode='numeric'
-              min={0}
-              max={PRACTICE_MAX_NEW_TERMS_LIMIT}
-              value={draftNew}
-              disabled={isRowPending}
-              onChange={(event) => setDraftNew(event.target.value)}
-              onBlur={save}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') event.currentTarget.blur()
-              }}
-            />
-          </div>
           <div className='flex flex-col gap-1.5'>
             <Label htmlFor={`practice-max-review-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
               {t`Review terms`}

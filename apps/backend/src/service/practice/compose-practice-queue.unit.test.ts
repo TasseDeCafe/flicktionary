@@ -64,12 +64,12 @@ const createDeps = (params: {
       p.scope === 'learn_new' ? (params.optInByPool?.[p.pool] ?? []) : (params.dueByPool?.[p.pool] ?? [])
     )
   const listDueSummary = vi.fn().mockResolvedValue([{ targetLanguage: lang, newIntroducedTodayCount: 0 }])
+  // One skill-aware guard for both pools (combined daily budget).
   const initializeAndParkCitationFacetIfUnderDailyCap = vi
     .fn()
     .mockImplementation(async (p: { userLookupId: string; bypassCap?: boolean }) =>
       p.bypassCap ? 'scaffolded' : (params.parkOutcomes?.[p.userLookupId] ?? 'scaffolded')
     )
-  const initializeAndParkProductionCitationFacet = vi.fn().mockResolvedValue('scaffolded')
   const getPracticeLimitsForLanguage = vi
     .fn()
     .mockResolvedValue({ maxNewTerms: params.maxNewTerms ?? 20, maxReviewTerms: 100, maxReviewTermsProduction: null })
@@ -81,7 +81,7 @@ const createDeps = (params: {
 
   const deps = {
     userLookupsRepository: { listParkedTerms, listEligibleNewCitationFacets, listReviewTerms, listDueSummary },
-    studyFacetsRepository: { initializeAndParkCitationFacetIfUnderDailyCap, initializeAndParkProductionCitationFacet },
+    studyFacetsRepository: { initializeAndParkCitationFacetIfUnderDailyCap },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
     practiceExercisesRepository: { selectNextExercise, reserveSlots, listBonusForTerms, countGateBankSlots },
@@ -94,9 +94,11 @@ const createDeps = (params: {
     listEligibleNewCitationFacets,
     listReviewTerms,
     initializeAndParkCitationFacetIfUnderDailyCap,
-    initializeAndParkProductionCitationFacet,
   }
 }
+
+const callsForSkill = (guard: ReturnType<typeof vi.fn>, skill: string) =>
+  guard.mock.calls.filter((c) => c[0].skill === skill)
 
 const itemKey = (item: Awaited<ReturnType<typeof composePracticeQueue>>['items'][number]) =>
   item.type === 'flashcard' ? `flash:${item.card.id}` : `ex:${item.entry.pool}:${item.entry.userLookupId}`
@@ -133,38 +135,43 @@ describe('composePracticeQueue', () => {
     }
   })
 
-  it('auto-warm-up parks eligible-new terms production-first under the coupled budget', async () => {
+  it('auto-warm-up parks eligible-new terms production-first under the per-session budget', async () => {
     const production = ids(10, MAX_WARMUP_INTRO_PER_SESSION + 5)
     const recognition = ids(40, 5)
-    const { deps, initializeAndParkCitationFacetIfUnderDailyCap, initializeAndParkProductionCitationFacet } =
-      createDeps({ eligibleNewByPool: { production, recognition } })
+    const { deps, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
+      eligibleNewByPool: { production, recognition },
+    })
     await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    // Production eats the whole warm-up intro budget; recognition gets none.
-    expect(initializeAndParkProductionCitationFacet).toHaveBeenCalledTimes(MAX_WARMUP_INTRO_PER_SESSION)
-    expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
+    // Production eats the whole per-session intro budget; recognition gets none.
+    expect(callsForSkill(initializeAndParkCitationFacetIfUnderDailyCap, 'meaning_production')).toHaveLength(
+      MAX_WARMUP_INTRO_PER_SESSION
+    )
+    expect(callsForSkill(initializeAndParkCitationFacetIfUnderDailyCap, 'meaning_recognition')).toHaveLength(0)
   })
 
-  it('couples the parking budget to the remaining gate-serve slots', async () => {
+  it('the backlog does NOT couple the parking budget — a full pipeline still introduces', async () => {
     const backlogSize = MAX_GATES_PER_COMPOSE - 3
     const { deps, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
       backlogByPool: { recognition: ids(10, backlogSize) },
       eligibleNewByPool: { recognition: ids(50, 10) },
     })
     await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    // Only 3 serve slots left after the backlog → only 3 terms parked.
-    expect(initializeAndParkCitationFacetIfUnderDailyCap).toHaveBeenCalledTimes(3)
+    // All 10 park (min(MAX_WARMUP_INTRO_PER_SESSION, remaining budget 20)),
+    // regardless of the 17-gate backlog.
+    expect(initializeAndParkCitationFacetIfUnderDailyCap).toHaveBeenCalledTimes(MAX_WARMUP_INTRO_PER_SESSION)
   })
 
-  it('parks nothing when the backlog already fills the gate budget, and slices the served gates', async () => {
-    const { deps, initializeAndParkCitationFacetIfUnderDailyCap, initializeAndParkProductionCitationFacet } =
-      createDeps({
-        backlogByPool: { recognition: ids(10, MAX_GATES_PER_COMPOSE + 5) },
-        eligibleNewByPool: { recognition: ids(60, 4), production: ids(70, 2) },
-      })
+  it('a full backlog still introduces: newly-parked gates serve on top of the head-slice', async () => {
+    const { deps, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
+      backlogByPool: { recognition: ids(10, MAX_GATES_PER_COMPOSE + 5) },
+      eligibleNewByPool: { recognition: ids(60, 4), production: ids(70, 2) },
+    })
     const result = await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
-    expect(initializeAndParkProductionCitationFacet).not.toHaveBeenCalled()
-    expect(result.items).toHaveLength(MAX_GATES_PER_COMPOSE)
+    // 6 candidates park (production first), served ON TOP of the 20-gate
+    // backlog slice.
+    expect(callsForSkill(initializeAndParkCitationFacetIfUnderDailyCap, 'meaning_production')).toHaveLength(2)
+    expect(callsForSkill(initializeAndParkCitationFacetIfUnderDailyCap, 'meaning_recognition')).toHaveLength(4)
+    expect(result.items).toHaveLength(MAX_GATES_PER_COMPOSE + 6)
   })
 
   it('cap_reached stops recognition parking and reports dailyLimitReached; the over-cap term is served nowhere', async () => {
@@ -312,7 +319,7 @@ describe('composePracticeQueue', () => {
     for (const call of [...listParkedTerms.mock.calls, ...listEligibleNewCitationFacets.mock.calls]) {
       expect(call[0].pool).toBe('production')
     }
-    expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
+    expect(callsForSkill(initializeAndParkCitationFacetIfUnderDailyCap, 'meaning_recognition')).toHaveLength(0)
     expect(result.items.map(itemKey)).toEqual([`flash:${id(5)}`, `ex:production:${id(1)}`, `ex:production:${id(3)}`])
   })
 
@@ -351,11 +358,10 @@ describe('composePracticeQueue', () => {
   })
 
   it('serve-only re-entry (autoWarmup=false) parks nothing and re-serves the same backlog', async () => {
-    const { deps, initializeAndParkCitationFacetIfUnderDailyCap, initializeAndParkProductionCitationFacet } =
-      createDeps({
-        backlogByPool: { recognition: [id(1), id(2)] },
-        eligibleNewByPool: { recognition: [id(3)] },
-      })
+    const { deps, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
+      backlogByPool: { recognition: [id(1), id(2)] },
+      eligibleNewByPool: { recognition: [id(3)] },
+    })
     const result = await composePracticeQueue({
       userId,
       targetLanguage: lang,
@@ -363,7 +369,6 @@ describe('composePracticeQueue', () => {
       deps,
     })
     expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
-    expect(initializeAndParkProductionCitationFacet).not.toHaveBeenCalled()
     expect(result.items.map(itemKey)).toEqual([`ex:recognition:${id(1)}`, `ex:recognition:${id(2)}`])
     expect(result.dailyLimitReached).toBe(false)
   })

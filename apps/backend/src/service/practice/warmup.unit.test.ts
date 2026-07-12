@@ -41,7 +41,7 @@ const createDeps = (params: {
   facetStates: SessionKeptCitationFacet[]
   productionFacetStates?: SessionKeptCitationFacet[]
   parkOutcomes?: Record<string, 'scaffolded' | 'cap_reached' | 'not_eligible'>
-  productionParkOutcomes?: Record<string, 'scaffolded' | 'not_eligible'>
+  productionParkOutcomes?: Record<string, 'scaffolded' | 'cap_reached' | 'not_eligible'>
   maxNewTerms?: number
 }) => {
   const findByIdForUser = vi.fn().mockResolvedValue(params.session === undefined ? makeSession() : params.session)
@@ -54,13 +54,13 @@ const createDeps = (params: {
     .mockImplementation(async (_sessionId: string, skill: string = 'meaning_recognition') =>
       skill === 'meaning_production' ? (params.productionFacetStates ?? []) : params.facetStates
     )
+  // One skill-aware guard for both pools (they share the combined budget).
   const initializeAndParkCitationFacetIfUnderDailyCap = vi
     .fn()
-    .mockImplementation(async (p: { userLookupId: string }) => params.parkOutcomes?.[p.userLookupId] ?? 'scaffolded')
-  const initializeAndParkProductionCitationFacet = vi
-    .fn()
-    .mockImplementation(
-      async (p: { userLookupId: string }) => params.productionParkOutcomes?.[p.userLookupId] ?? 'scaffolded'
+    .mockImplementation(async (p: { userLookupId: string; skill: string }) =>
+      p.skill === 'meaning_production'
+        ? (params.productionParkOutcomes?.[p.userLookupId] ?? 'scaffolded')
+        : (params.parkOutcomes?.[p.userLookupId] ?? 'scaffolded')
     )
   // getStrengthenExercises (real) calls these; the warm-up has no bonus track.
   // The session warm-up always supplies a restrict set — serve exactly those
@@ -82,7 +82,6 @@ const createDeps = (params: {
     studyFacetsRepository: {
       listSessionKeptCitationFacets,
       initializeAndParkCitationFacetIfUnderDailyCap,
-      initializeAndParkProductionCitationFacet,
     },
     userLookupsRepository: { listParkedTerms },
     practiceExercisesRepository: { selectNextExercise, reserveSlots, listBonusForTerms, countGateBankSlots },
@@ -93,7 +92,6 @@ const createDeps = (params: {
     deps,
     findByIdForUser,
     initializeAndParkCitationFacetIfUnderDailyCap,
-    initializeAndParkProductionCitationFacet,
     listParkedTerms,
   }
 }
@@ -159,20 +157,22 @@ describe('startWarmupSession', () => {
     expect(restrict).toEqual([])
   })
 
-  it('production pass parks independently of the recognition cap (two independent passes)', async () => {
-    const { deps, initializeAndParkProductionCitationFacet, listParkedTerms } = createDeps({
+  it("a recognition cap hit doesn't stop the production pass, and either pass's cap flags the limit", async () => {
+    const { deps, initializeAndParkCitationFacetIfUnderDailyCap, listParkedTerms } = createDeps({
       // Recognition caps on its only term.
       facetStates: [facetState({ userLookupId: id(1) })],
       parkOutcomes: { [id(1)]: 'cap_reached' },
-      // A different term is eligible for production warm-up.
+      // A different term is eligible for production warm-up (the mock lets it
+      // through; in reality the shared guard decides per candidate).
       productionFacetStates: [facetState({ userLookupId: id(2) })],
     })
     const result = await startWarmupSession({ userId, studySessionId: sessionId, targetLanguage: lang, deps })
     // Recognition hit its cap...
     expect(result.ok && result.dailyLimitReached).toBe(true)
-    // ...but the production pass STILL parked its eligible term (no shared stop).
-    expect(initializeAndParkProductionCitationFacet).toHaveBeenCalledWith(
-      expect.objectContaining({ userLookupId: id(2) })
+    // ...but the production pass still ran its own guard, under the SAME
+    // combined budget (maxNewTerms passes through).
+    expect(initializeAndParkCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(
+      expect.objectContaining({ userLookupId: id(2), skill: 'meaning_production', maxNewTerms: 20 })
     )
     // Recognition serves nothing (its term was capped, not scaffolded); the
     // production serve covers id(2).

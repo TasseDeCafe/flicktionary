@@ -130,6 +130,9 @@ export type DueSummaryEntry = {
   learningDueCount: number
   nextLearningDueAt: string | null
   newCount: number
+  // Citation introductions consumed today across BOTH pools (facet-level: a
+  // both-pools term consumes two slots) — matches the atomic park guard's
+  // combined-count subquery.
   newIntroducedTodayCount: number
   // Recognition-facet stage populations from the shared vocabStageClauseSql
   // partition — identical predicates to the Vocabulary tab's stage filters, so
@@ -620,10 +623,13 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
           AND rf.leech_parked_at IS NULL
           AND ${newTermNotDecayedSql()}
       )::int AS new_count,
-      COUNT(*) FILTER (
+      (COUNT(*) FILTER (
         WHERE rf.introduced_at >= CURRENT_DATE
           AND rf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
-      )::int AS new_introduced_today_count,
+      ) + COUNT(*) FILTER (
+        WHERE pf.introduced_at >= CURRENT_DATE
+          AND pf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
+      ))::int AS new_introduced_today_count,
       COUNT(*) FILTER (WHERE ${vocabStageClauseSql('up_next')})::int AS up_next_count,
       COUNT(*) FILTER (WHERE ${vocabStageClauseSql('learning')})::int AS learning_count,
       COUNT(*) FILTER (WHERE ${vocabStageClauseSql('review')})::int AS review_count,

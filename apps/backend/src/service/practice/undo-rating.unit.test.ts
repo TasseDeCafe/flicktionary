@@ -144,6 +144,31 @@ describe('undoRating', () => {
     )
   })
 
+  it('undoing a production introduction refunds the combined budget (wasIntroduction clears introduced_at)', async () => {
+    const { deps, restoreSrsSnapshotForFacet } = createDeps({
+      lookup: makeLookup(),
+      latestEvent: makeEvent({
+        pool: 'production',
+        was_introduction: true,
+        prev_srs_state: null,
+        prev_srs_due: null,
+        prev_srs_stability: null,
+        prev_srs_difficulty: null,
+        prev_srs_last_review: null,
+        prev_srs_reps: null,
+        prev_srs_lapses: null,
+      }),
+    })
+    const result = await undoRating(lookupId, userId, 'production', 'meaning_production', '', eventId, deps)
+    expect(result).toEqual({ ok: true, undone: true })
+    // The facet-addressed restore clears introduced_at on wasIntroduction —
+    // production intros stamp it now, so the undo refunds a budget slot.
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'meaning_production', prevState: null, wasIntroduction: true }),
+      undefined
+    )
+  })
+
   it('passes causedParking through so the restore un-parks the leech', async () => {
     const { deps, restoreSrsSnapshotForFacet } = createDeps({
       lookup: makeLookup(),

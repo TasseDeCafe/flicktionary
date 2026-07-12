@@ -87,14 +87,29 @@ describe('planPracticeQueue', () => {
     expect(recognition.plannedIntroductionCount).toBe(4)
   })
 
-  it('couples the park budget to the gate slots left after the backlog', async () => {
-    const { deps } = createDeps({
-      backlogByPool: { recognition: ids(10, MAX_GATES_PER_COMPOSE - 3).map((i) => termRow(i)) },
-      eligibleNewByPool: { recognition: ids(50, 10) },
+  it('the park budget ignores the backlog and is bounded by the remaining daily budget', async () => {
+    const withBacklog = await planPracticeQueue({
+      userId,
+      targetLanguage: lang,
+      filter: filter(),
+      deps: createDeps({
+        backlogByPool: { recognition: ids(10, MAX_GATES_PER_COMPOSE - 3).map((i) => termRow(i)) },
+        eligibleNewByPool: { recognition: ids(50, 10) },
+      }).deps,
     })
-    const plan = await planPracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    expect(plan.parkBudget).toBe(3)
-    expect(plan.perPool.find((p) => p.pool === 'recognition')!.plannedIntroductionCount).toBe(3)
+    // A 17-gate backlog no longer starves introductions.
+    expect(withBacklog.parkBudget).toBe(MAX_WARMUP_INTRO_PER_SESSION)
+    expect(withBacklog.perPool.find((p) => p.pool === 'recognition')!.plannedIntroductionCount).toBe(10)
+
+    const lowBudget = await planPracticeQueue({
+      userId,
+      targetLanguage: lang,
+      filter: filter(),
+      deps: createDeps({ eligibleNewByPool: { recognition: ids(50, 10) }, maxNewTerms: 20, introducedToday: 17 }).deps,
+    })
+    // remaining 3 bounds the session's introductions.
+    expect(lowBudget.parkBudget).toBe(3)
+    expect(lowBudget.perPool.find((p) => p.pool === 'recognition')!.plannedIntroductionCount).toBe(3)
   })
 
   it('head-slices the backlog to MAX_GATES_PER_COMPOSE across pools, production first, and splits served origins', async () => {
@@ -115,7 +130,6 @@ describe('planPracticeQueue', () => {
     // first, then 2 leech rows.
     expect(recognition.backlogServedOnboardingCount).toBe(10)
     expect(recognition.backlogServedLeechCount).toBe(2)
-    expect(plan.parkBudget).toBe(0)
   })
 
   it('classifies the actual due rows by srs_state (form/pronunciation facets included, unlike the summary)', async () => {
@@ -146,14 +160,27 @@ describe('planPracticeQueue', () => {
     expect(plan.perPool.find((p) => p.pool === 'recognition')!.plannedIntroductionCount).toBe(0)
   })
 
-  it('does not flag the daily limit when the backlog (not the budget) is what blocks introductions', async () => {
+  it('does not flag the daily limit when session PACING (not the budget) stops at 10', async () => {
+    const { deps } = createDeps({ eligibleNewByPool: { recognition: ids(10, 30) }, maxNewTerms: 20 })
+    const plan = await planPracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
+    // 10 of 20 budget slots used; candidates remain but tomorrow isn't needed
+    // — the next compose introduces more TODAY.
+    expect(plan.parkBudget).toBe(MAX_WARMUP_INTRO_PER_SESSION)
+    expect(plan.dailyLimitReached).toBe(false)
+  })
+
+  it('flags the daily limit when the last budget slots are consumed with candidates left', async () => {
     const { deps } = createDeps({
-      backlogByPool: { recognition: ids(10, MAX_GATES_PER_COMPOSE + 5).map((i) => termRow(i)) },
-      eligibleNewByPool: { recognition: ids(60, 4) },
+      eligibleNewByPool: { production: ids(10, 2), recognition: ids(30, 6) },
+      maxNewTerms: 20,
+      introducedToday: 15,
     })
     const plan = await planPracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    expect(plan.parkBudget).toBe(0)
-    expect(plan.dailyLimitReached).toBe(false)
+    // remaining 5: production takes 2, recognition 3; candidates remain -> the
+    // budget is spent after this compose.
+    expect(plan.perPool.find((p) => p.pool === 'production')!.plannedIntroductionCount).toBe(2)
+    expect(plan.perPool.find((p) => p.pool === 'recognition')!.plannedIntroductionCount).toBe(3)
+    expect(plan.dailyLimitReached).toBe(true)
   })
 
   it('canLearnExtra: recognition candidates beyond the planned introductions', async () => {
@@ -174,13 +201,12 @@ describe('planPracticeQueue', () => {
     expect(no.canLearnExtra).toBe(false)
   })
 
-  it('learn-extra plans past the cap without duplicating the normal introductions, above the gate ceiling', async () => {
-    const backlog = ids(100, MAX_GATES_PER_COMPOSE - 2).map((i) => termRow(i))
+  it('learn-extra plans past the cap without duplicating the normal introductions', async () => {
     const candidates = ids(10, 8)
     const { deps } = createDeps({
-      backlogByPool: { recognition: backlog },
       eligibleNewByPool: { recognition: candidates },
       maxNewTerms: 20,
+      introducedToday: 18,
     })
     const plan = await planPracticeQueue({
       userId,
@@ -189,8 +215,8 @@ describe('planPracticeQueue', () => {
       deps,
     })
     const recognition = plan.perPool.find((p) => p.pool === 'recognition')!
-    // Normal pass takes the coupled 2; extras take the NEXT 4 candidates —
-    // no overlap, exact requested count, regardless of the 20-gate ceiling.
+    // Normal pass takes the remaining budget (2); extras take the NEXT 4
+    // candidates — no overlap, exact requested count, past the cap.
     expect(plan.parkBudget).toBe(2)
     expect(recognition.plannedIntroductionCount).toBe(2)
     expect(recognition.plannedExtraIntroductionIds).toEqual(candidates.slice(2, 6))

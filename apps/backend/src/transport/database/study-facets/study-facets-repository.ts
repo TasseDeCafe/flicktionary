@@ -38,13 +38,14 @@ export const skillsForPool = (pool: PracticePool): string[] =>
 export const poolForSkill = (skill: string): PracticePool =>
   skill === 'meaning_production' ? 'production' : 'recognition'
 
-// The ONLY daily-new-capped facet is the citation recognition card ("I'm
-// starting to learn this word"). Pronunciation, production, and every
-// form/skill toggled in the matrix bypass the daily-new cap — they're explicit
-// opt-ins, born `new`, entered via "learn new" at the user's pace. `skill` is a
-// raw string so a future 'pronunciation'/form facet routes correctly here too.
+// The daily-new-capped facets are the two CITATION cards — recognition and
+// production share ONE combined introductions-per-day budget (a both-pools
+// term consumes two slots). Pronunciation and every form facet toggled in the
+// matrix bypass the cap — they're explicit opt-ins, born `new`, entered via
+// "learn new" at the user's pace. `skill` is a raw string so a future
+// 'pronunciation'/form facet routes correctly here too.
 export const isDailyNewCappedFacet = (skill: string, targetForm: string): boolean =>
-  skill === 'meaning_recognition' && targetForm === CITATION_FORM
+  (skill === 'meaning_recognition' || skill === 'meaning_production') && targetForm === CITATION_FORM
 
 // `pool` (the session queue / wire param) names which queue you entered, not
 // card identity. These are the legal (pool, skill) pairs — the recognition
@@ -228,10 +229,29 @@ const applyStudyIntentFacets = async (
 // (user, language); the count + update decision runs one-at-a-time. There is
 // no cap bypass here — the explicit past-the-cap path (Learn extra) goes
 // through the warm-up park guard below instead.
+
+// Citation introductions consumed today, counted across BOTH pools — the two
+// citation skills share one combined daily budget, so every capped guard must
+// compare against the same subquery (and take the same advisory lock, or two
+// pools introducing concurrently could both pass the count).
+const citationIntroductionsTodaySql = (userId: string, targetLanguage: string) => sql`
+  SELECT COUNT(*)
+  FROM public.study_facets f2
+  JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
+  WHERE ul2.user_id = ${userId}
+    AND ul2.target_language = ${targetLanguage}
+    AND ul2.count > 0
+    AND ul2.deleted_at IS NULL
+    AND f2.skill IN ('meaning_recognition', 'meaning_production')
+    AND f2.target_form = ${CITATION_FORM}
+    AND f2.introduced_at >= CURRENT_DATE
+    AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
+`
 const initializeCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
+  skill: 'meaning_recognition' | 'meaning_production'
   maxNewTerms: number
 }): Promise<boolean> => {
   return await beginTx(async (tx) => {
@@ -247,7 +267,7 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
       FROM public.user_lookups ul
       WHERE f.user_lookup_id = ul.id
         AND f.user_lookup_id = ${params.userLookupId}
-        AND f.skill = 'meaning_recognition'
+        AND f.skill = ${params.skill}
         AND f.target_form = ${CITATION_FORM}
         AND f.srs_state IS NULL
         AND f.leech_parked_at IS NULL
@@ -255,34 +275,23 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.count > 0
         AND ul.deleted_at IS NULL
-        AND (
-          SELECT COUNT(*)
-          FROM public.study_facets f2
-          JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
-          WHERE ul2.user_id = ${params.userId}
-            AND ul2.target_language = ${params.targetLanguage}
-            AND ul2.count > 0
-            AND ul2.deleted_at IS NULL
-            AND f2.skill = 'meaning_recognition'
-            AND f2.target_form = ${CITATION_FORM}
-            AND f2.introduced_at >= CURRENT_DATE
-            AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
-        ) < ${params.maxNewTerms}
+        AND (${citationIntroductionsTodaySql(params.userId, params.targetLanguage)}) < ${params.maxNewTerms}
       RETURNING f.id
     `) as Array<{ id: string }>
     return rows.length > 0
   })
 }
 
-// Atomic "enter exercise-first warm-up" for the citation recognition facet:
-// stamp introduced_at (consuming today's daily-new budget, like a flashcard
-// introduction) AND park the facet (leech_parked_at) in ONE transaction, so a
-// crash can't leave the term introduced-and-in-the-flashcard-queue but
-// unparked. Unlike initializeCitationFacetIfUnderDailyCap it deliberately
-// leaves srs_state NULL — parked already keeps it out of the flashcard queue,
-// and a NULL state keeps the onboarding (parked + never-reviewed) shape clean
-// for derivation. Graduation's unparkAndSoftReentryFacet later overwrites
-// srs_state and never touches introduced_at.
+// Atomic "enter exercise-first warm-up" for a CITATION facet (either pool —
+// both share the combined daily budget): stamp introduced_at (consuming
+// today's budget, like a flashcard introduction) AND park the facet
+// (leech_parked_at) in ONE transaction, so a crash can't leave the term
+// introduced-and-in-the-flashcard-queue but unparked. Unlike
+// initializeCitationFacetIfUnderDailyCap it deliberately leaves srs_state
+// NULL — parked already keeps it out of the flashcard queue, and a NULL state
+// keeps the onboarding (parked + never-reviewed) shape clean for derivation.
+// Graduation's unparkAndSoftReentryFacet later overwrites srs_state and never
+// touches introduced_at.
 //
 // SELECT-then-decide under the advisory lock so the 3-valued result is
 // unambiguous (the UPDATE's row count can't say WHY it matched nothing):
@@ -292,6 +301,7 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
 //                    maxNewTerms.
 //   'scaffolded'   — introduced + parked.
 //
+// One lock key covers BOTH pools — required for a race-safe combined count.
 // `bypassCap` (an explicit learn-extra request) skips ONLY the cap comparison:
 // the lock, the eligibility checks and the introduced_at stamp all stay, so
 // bypassed warm-up entries still count toward today's introductions.
@@ -299,6 +309,7 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
+  skill: 'meaning_recognition' | 'meaning_production'
   maxNewTerms: number
   bypassCap?: boolean
 }): Promise<'scaffolded' | 'cap_reached' | 'not_eligible'> => {
@@ -311,7 +322,7 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
       FROM public.study_facets f
       JOIN public.user_lookups ul ON ul.id = f.user_lookup_id
       WHERE f.user_lookup_id = ${params.userLookupId}
-        AND f.skill = 'meaning_recognition'
+        AND f.skill = ${params.skill}
         AND f.target_form = ${CITATION_FORM}
         AND ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
@@ -325,17 +336,7 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
 
     if (!params.bypassCap) {
       const countRows = (await tx`
-        SELECT COUNT(*)::int AS introduced_today
-        FROM public.study_facets f2
-        JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
-        WHERE ul2.user_id = ${params.userId}
-          AND ul2.target_language = ${params.targetLanguage}
-          AND ul2.count > 0
-          AND ul2.deleted_at IS NULL
-          AND f2.skill = 'meaning_recognition'
-          AND f2.target_form = ${CITATION_FORM}
-          AND f2.introduced_at >= CURRENT_DATE
-          AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
+        SELECT (${citationIntroductionsTodaySql(params.userId, params.targetLanguage)})::int AS introduced_today
       `) as Array<{ introduced_today: number }>
       if ((countRows[0]?.introduced_today ?? 0) >= params.maxNewTerms) return 'cap_reached' as const
     }
@@ -348,50 +349,11 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
           leech_rehab_last_correct_on = NULL,
           updated_at = NOW()
       WHERE user_lookup_id = ${params.userLookupId}
-        AND skill = 'meaning_recognition'
+        AND skill = ${params.skill}
         AND target_form = ${CITATION_FORM}
     `
     return 'scaffolded' as const
   })
-}
-
-// Production-pool counterpart of the warm-up park, WITHOUT the daily-new cap
-// (production introductions are never daily-capped — isDailyNewCappedFacet is
-// recognition-citation only). Parks the citation meaning_production facet:
-// stamps leech_parked_at, resets rehab progress, leaves srs_state AND
-// introduced_at untouched (NULL srs_state keeps the onboarding shape clean;
-// production never consumed a daily-new slot, so there is nothing to stamp). A
-// single guarded UPDATE is atomic and race-safe — the leech_parked_at IS NULL
-// guard makes a concurrent double-park a no-op (returns 'not_eligible'), like
-// parkLeechFacet. Eligible iff the facet exists, is ENABLED (disabled_at IS NULL
-// — a demoted production facet is never warmed), is never-reviewed (srs_state IS
-// NULL), and is not already parked.
-const initializeAndParkProductionCitationFacet = async (params: {
-  userLookupId: string
-  userId: string
-  targetLanguage: string
-}): Promise<'scaffolded' | 'not_eligible'> => {
-  const rows = (await sql`
-    UPDATE public.study_facets f
-    SET leech_parked_at = NOW(),
-        leech_rehab_correct_days = 0,
-        leech_rehab_last_correct_on = NULL,
-        updated_at = NOW()
-    FROM public.user_lookups ul
-    WHERE f.user_lookup_id = ${params.userLookupId}
-      AND f.skill = 'meaning_production'
-      AND f.target_form = ${CITATION_FORM}
-      AND f.disabled_at IS NULL
-      AND f.srs_state IS NULL
-      AND f.leech_parked_at IS NULL
-      AND ul.id = f.user_lookup_id
-      AND ul.user_id = ${params.userId}
-      AND ul.target_language = ${params.targetLanguage}
-      AND ul.count > 0
-      AND ul.deleted_at IS NULL
-    RETURNING f.id
-  `) as Array<{ id: string }>
-  return rows.length > 0 ? ('scaffolded' as const) : ('not_eligible' as const)
 }
 
 // The citation facet state (for `skill`, default meaning_recognition) of every
@@ -444,9 +406,11 @@ const listSessionKeptCitationFacets = async (
   }))
 }
 
-// Unconditional facet introduction (no daily-new cap) — the production-citation
-// path. It does NOT stamp introduced_at, because production was never
-// daily-new-capped. No-op if the facet is already seen.
+// Unconditional facet introduction (no daily-new cap) — the OPT-IN facet path
+// (pronunciation / specific forms): each was individually enabled, so the
+// first rating must never be refused by the budget. It does NOT stamp
+// introduced_at — only the two citation facets consume the combined daily
+// budget. No-op if the facet is already seen.
 const initializeFacet = async (params: FacetAddress): Promise<void> => {
   await sql`
     UPDATE public.study_facets
@@ -617,20 +581,17 @@ export interface StudyFacetsRepositoryInterface {
     userLookupId: string
     userId: string
     targetLanguage: string
+    skill: 'meaning_recognition' | 'meaning_production'
     maxNewTerms: number
   }) => Promise<boolean>
   initializeAndParkCitationFacetIfUnderDailyCap: (params: {
     userLookupId: string
     userId: string
     targetLanguage: string
+    skill: 'meaning_recognition' | 'meaning_production'
     maxNewTerms: number
     bypassCap?: boolean
   }) => Promise<'scaffolded' | 'cap_reached' | 'not_eligible'>
-  initializeAndParkProductionCitationFacet: (params: {
-    userLookupId: string
-    userId: string
-    targetLanguage: string
-  }) => Promise<'scaffolded' | 'not_eligible'>
   listSessionKeptCitationFacets: (studySessionId: string, skill?: FacetSkill) => Promise<SessionKeptCitationFacet[]>
   initializeFacet: (params: FacetAddress) => Promise<void>
   applyFsrsResultForFacet: (
@@ -693,7 +654,6 @@ export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   ensureFacet,
   initializeCitationFacetIfUnderDailyCap,
   initializeAndParkCitationFacetIfUnderDailyCap,
-  initializeAndParkProductionCitationFacet,
   listSessionKeptCitationFacets,
   initializeFacet,
   applyFsrsResultForFacet,

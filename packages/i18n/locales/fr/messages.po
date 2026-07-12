@@ -1068,6 +1068,10 @@ msgstr "Impossible de supprimer la forme"
 msgid "Couldn't save the form's data"
 msgstr "Impossible d'enregistrer les données de la forme"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Covers recognition and production combined."
+msgstr "Couvre reconnaissance et production combinées."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Create an account (or sign in) here in the web app."
 msgstr "Créez un compte (ou connectez-vous) ici dans l'application web."
@@ -2306,6 +2310,12 @@ msgstr "Intermédiaire — gérer la plupart des voyages et sujets quotidiens."
 msgid "Introduce your card details and get instant access"
 msgstr "Introduisez les détails de votre carte et obtenez accès instantané"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Introductions are capped per day. Follow-up sessions use up to this many "
+"review terms."
+msgstr "Les introductions sont plafonnées par jour. Les sessions de suivi "
+"utilisent jusqu'à ce nombre de termes de révision."
+
 #: apps/native/src/config/react-query-config.ts
 msgid "Invalid token. Please sign in again."
 msgstr "Jeton invalide. Veuillez vous reconnecter."
@@ -2646,6 +2656,10 @@ msgstr "Nouveau"
 msgid "New cards"
 msgstr "Nouvelles cartes"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "New introductions per day"
+msgstr "Nouvelles introductions par jour"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New only"
 msgstr "Nouveau seulement"
@@ -2659,16 +2673,6 @@ msgstr "Les nouvelles cartes de prononciation/forme sont des introductions — "
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "New session"
 msgstr "Nouvelle session"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
-msgid "New terms"
-msgstr "Nouveaux termes"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
-msgid "New terms are capped per day. Follow-up sessions use up to this many "
-"review terms."
-msgstr "Les nouveaux termes sont limités par jour. Les sessions de suivi "
-"utilisent jusqu'à ce nombre de termes de révision."
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include "

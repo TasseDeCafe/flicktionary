@@ -52,23 +52,33 @@ export const getRemainingCounts = (queue: ComposedQueueItem[], index: number): Q
 
 // Drifting New/Learning/Review counts for a (language, pool), derived from the
 // landing summary — feeds the reading-mode status chips, which serve no
-// warm-up gates (warmup stays 0). Replaces the old finite progress bar — there
-// is no frozen denominator now, just live counts that shrink as the user rates.
+// warm-up gates (warmup stays 0). Both pools' `new` counts are capped by the
+// COMBINED remaining daily budget (newIntroducedTodayCount spans both pools'
+// citation introductions) — the backend refuses intros past it, so
+// advertising more would promise terms reading mode can't serve. Replaces the
+// old finite progress bar — there is no frozen denominator now, just live
+// counts that shrink as the user rates.
 export const getReviewCounts = (
   entry: PracticeDueSummaryEntry | null | undefined,
   pool: PracticePool,
-  dailyNewAvailable: number
+  maxNewTerms: number
 ): QueueCounts => {
   if (!entry) return { new: 0, warmup: 0, learning: 0, review: 0 }
+  const remainingBudget = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
   if (pool === 'production') {
     return {
-      new: entry.productionNewCount,
+      new: Math.min(entry.productionNewCount, remainingBudget),
       warmup: 0,
       learning: entry.productionLearningDueCount,
       review: entry.productionReviewDueCount,
     }
   }
-  return { new: dailyNewAvailable, warmup: 0, learning: entry.learningDueCount, review: entry.reviewDueCount }
+  return {
+    new: Math.min(entry.newCount, remainingBudget),
+    warmup: 0,
+    learning: entry.learningDueCount,
+    review: entry.reviewDueCount,
+  }
 }
 
 export const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {

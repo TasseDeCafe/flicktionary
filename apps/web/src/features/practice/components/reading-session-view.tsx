@@ -5,7 +5,7 @@ import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useDueSummary } from '../api/practice-hooks'
 import { ReadingModeView } from './reading-mode-view'
-import { getDailyNewAvailable, getReviewCounts } from './review-counts'
+import { getReviewCounts } from './review-counts'
 
 // The reading-mode session screen. Flashcards moved to the composed queue
 // (/practice/composed); this route only hosts Read, entered from Custom
@@ -20,8 +20,7 @@ export const ReadingSessionView = () => {
   const languageName = getLanguageName(targetLanguage)
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const { maxNewTerms } = getPracticeLimitsForLanguage(prefs, targetLanguage)
-  const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
-  const counts = getReviewCounts(entry, pool, dailyNewAvailable)
+  const counts = getReviewCounts(entry, pool, maxNewTerms)
 
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
 

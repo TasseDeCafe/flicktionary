@@ -14,10 +14,7 @@ import {
   type StudyFacetsRepositoryInterface,
 } from '../../transport/database/study-facets/study-facets-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
-import {
-  HARD_MAX_PRACTICE_NEW_TERMS,
-  type UserTargetLanguagePrefsRepositoryInterface,
-} from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { applyRating, type AppRating } from './fsrs'
 import { isParked, shouldParkLeech } from './leech-config'
 import { clampPracticeSessionLimits } from './review-caps'
@@ -106,17 +103,18 @@ export const applyTermRating = async (params: {
 
   if (introducedNew) {
     if (isDailyNewCappedFacet(skill, targetForm)) {
-      // The citation recognition facet is the ONLY daily-new-capped facet.
+      // Citation facets of BOTH pools share the combined daily budget.
       const introduced = await deps.studyFacetsRepository.initializeCitationFacetIfUnderDailyCap({
         userLookupId: lookup.id,
         userId,
         targetLanguage: lookup.target_language,
+        skill: skill as 'meaning_recognition' | 'meaning_production',
         maxNewTerms,
       })
       if (!introduced) return { ok: false, reason: 'daily_cap_reached' }
     } else {
-      // Production citation, and (Phase 4) opt-in pronunciation/form facets:
-      // never daily-new-capped, so the first rating must NOT be refused by the
+      // Opt-in pronunciation/form facets: never daily-new-capped — each was
+      // individually enabled, so the first rating must NOT be refused by the
       // cap guard (Trap 18). Initialize unconditionally.
       await deps.studyFacetsRepository.initializeFacet({ userLookupId: lookup.id, skill, targetForm })
     }
@@ -252,13 +250,10 @@ export const rateTerm = async (
 
   // Pass the FULL clamped per-language daily cap: the atomic guard does its
   // own today-count comparison against it (subtracting here would
-  // double-count). The production pool isn't daily-capped, so skip the fetch.
-  const maxNewTerms =
-    pool === 'production'
-      ? HARD_MAX_PRACTICE_NEW_TERMS
-      : clampPracticeSessionLimits(
-          await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, lookup.target_language)
-        ).maxNewTerms
+  // double-count). Both pools' citation intros consume the combined budget.
+  const maxNewTerms = clampPracticeSessionLimits(
+    await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, lookup.target_language)
+  ).maxNewTerms
 
   const result = await applyTermRating({
     lookup: facetRow,
