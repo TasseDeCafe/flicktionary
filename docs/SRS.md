@@ -533,13 +533,18 @@ informs the SRS.
 **Peek + save unannotated spans.** Tap-to-select on plain body text (not covered by an
 annotation) opens a `LookupSheet` with a fast one-line gloss + optional POS / register
 chips. A single click/tap selects one `Intl.Segmenter` word in the text's target
-language; press-and-drag extends to a word range. Annotation taps stay reserved for the
-`RateSheet`, and ranges that cross an annotation are rejected rather than snapped. The
-gloss reuses the same Haiku-powered `fastGlossPass` as tap-to-select in the session view,
-exposed as `practice.fastGloss` keyed to the text body (no highlight row needed, no
-server-side cache). `Save to vocabulary` routes the selection into the `cards.createAdhoc`
-adhoc flow (passing the text body as the LLM context, truncated to 2000 chars), then
-navigates to the new card's focus view with `?from=practice`.
+language; press-and-drag extends to a word range — a range may sweep across annotations
+(the gloss handles the full phrase); a stationary tap on an annotation stays reserved for
+the `RateSheet`. The gloss is the stateless `glosses.fastGloss` (the same Haiku-powered
+`fastGlossPass` as the session view and the extension): the client passes the text body
+as the context line and renders the server-picked dialect-correct `ipaDisplay` verbatim.
+`Save to vocabulary` fires the `cards.createAdhoc` adhoc flow (passing the text body as
+the LLM context, truncated to 2000 chars) **fire-and-forget**: the button morphs to a
+disabled `Saved` state with an (i) popover pointing at the Vocabulary tab (newest terms
+sort first) and the session stays put — no navigation to the focus view. Failures surface
+as error toasts that survive closing the sheet; a missing CEFR level opens the inline
+CEFR dialog while the selection is still on screen. Closing the sheet clears the
+selection paint.
 
 ### Advance (advanceReadingText)
 
