@@ -259,6 +259,10 @@ const stripExercisePayload = (
         sentence: payload.sentence,
         prompt: payload.prompt,
         options: payload.options,
+        // Absent on rows generated before the term span existed; the wire
+        // schema keeps them optional so old rows serve unchanged.
+        termStart: payload.termStart,
+        termEnd: payload.termEnd,
       }
     case 'production_cloze':
       return {

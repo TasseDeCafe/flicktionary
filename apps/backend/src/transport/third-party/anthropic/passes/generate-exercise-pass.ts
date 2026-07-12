@@ -38,6 +38,10 @@ export type GeneratedMcComprehension = {
     prompt: string
     options: string[]
     answerIndex: number
+    // Where the term's surface form sits in the sentence — the client
+    // underlines it and blocks select-to-gloss over it before the answer.
+    termStart: number
+    termEnd: number
   }
 }
 
@@ -134,6 +138,11 @@ const buildComprehensionTool = (): Anthropic.Tool => ({
         description:
           'One natural sentence (10–25 words) in the target language containing the term, possibly inflected. Surrounding language stays at B1–B2 grammar.',
       },
+      surface_form: {
+        type: 'string',
+        description:
+          'The exact substring of sentence that realizes the term (inflected as it appears, matching casing). The server locates the term from this string — DO NOT output character offsets.',
+      },
       prompt: {
         type: 'string',
         description:
@@ -150,7 +159,7 @@ const buildComprehensionTool = (): Anthropic.Tool => ({
           'Exactly 3 plausible but clearly wrong answers. None may be defensibly correct. Same length/register as the correct option so form does not give the answer away.',
       },
     },
-    required: ['sentence', 'prompt', 'correct_option', 'distractors'],
+    required: ['sentence', 'surface_form', 'prompt', 'correct_option', 'distractors'],
   },
 })
 
@@ -205,6 +214,7 @@ Hard rules:
 - Write one natural sentence (10–25 words) using the term in its stored sense. Inflect to fit. Surrounding language stays at B1–B2 grammar.
 - The question must hinge on understanding the TERM in this sentence — a reader who knows every other word but not the term should not be able to answer.
 - Write the question and all options in ${promptLanguage}.
+- surface_form is the EXACT substring of sentence realizing the term (matching casing/punctuation). The server computes the term's position from it.
 - The 3 distractors must be plausible but clearly wrong; none may be defensibly correct. Match the correct option's length and register so form gives nothing away.
 
 Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
@@ -336,6 +346,9 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
     const correctOption = String(input.correct_option ?? '')
     const distractors = readStringArray(input.distractors)
     if (!prompt || !correctOption) throw new Error('Exercise generation returned an empty prompt/correct_option')
+    // Same locate-don't-trust-offsets approach as the cloze blanks; a miss
+    // throws and the bank's retry loop regenerates.
+    const { blankStart: termStart, blankEnd: termEnd } = locateBlank(sentence, String(input.surface_form ?? ''))
     const { options, answerIndex } = buildMultipleChoiceOptions(correctOption, distractors)
     return {
       type: 'mc_comprehension',
@@ -344,6 +357,8 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
         prompt,
         options,
         answerIndex,
+        termStart,
+        termEnd,
       },
     }
   }

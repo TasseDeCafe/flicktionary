@@ -25,12 +25,15 @@ const parkedTerm = (overrides: Partial<DbUserLookupWithFacet> = {}): DbUserLooku
     ...overrides,
   }) as DbUserLookupWithFacet
 
-const readyExercise = (type: DbPracticeExercise['exercise_type']): DbPracticeExercise =>
+const readyExercise = (
+  type: DbPracticeExercise['exercise_type'],
+  payloadOverrides: Record<string, unknown> = {}
+): DbPracticeExercise =>
   ({
     id: '00000000-0000-0000-0000-0000000000b1',
     exercise_type: type,
     status: 'ready',
-    payload: { type, sentence: 's', prompt: 'p', options: ['a', 'b', 'c', 'd'], answerIndex: 0 },
+    payload: { type, sentence: 's', prompt: 'p', options: ['a', 'b', 'c', 'd'], answerIndex: 0, ...payloadOverrides },
   }) as unknown as DbPracticeExercise
 
 const createDeps = (params: {
@@ -169,6 +172,25 @@ describe('getHintExercise', () => {
     // The answer truth never leaves the server on a serve.
     expect(hint!.payload).not.toHaveProperty('answerIndex')
     expect(hint!.payload).toHaveProperty('options')
+  })
+
+  it('passes the comprehension term span through the strip', async () => {
+    const { deps } = createHintDeps({
+      selectByType: (type) =>
+        type === 'mc_comprehension' ? readyExercise('mc_comprehension', { termStart: 3, termEnd: 9 }) : null,
+    })
+    const hint = await getHintExercise({ userId, userLookupId: lookupId, pool: 'recognition', deps })
+    expect(hint!.payload).toMatchObject({ termStart: 3, termEnd: 9 })
+    expect(hint!.payload).not.toHaveProperty('answerIndex')
+  })
+
+  it('serves pre-span comprehension rows without term offsets', async () => {
+    const { deps } = createHintDeps({
+      selectByType: (type) => (type === 'mc_comprehension' ? readyExercise('mc_comprehension') : null),
+    })
+    const hint = await getHintExercise({ userId, userLookupId: lookupId, pool: 'recognition', deps })
+    expect((hint!.payload as Record<string, unknown>).termStart).toBeUndefined()
+    expect((hint!.payload as Record<string, unknown>).termEnd).toBeUndefined()
   })
 
   it('serves the production hint type (mc_cloze — mc_comprehension would leak the headword)', async () => {
