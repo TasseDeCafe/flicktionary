@@ -34,6 +34,7 @@ const cardItem = (userLookupId: string): ComposedQueueItem => ({
 const exerciseItem = (userLookupId: string): ComposedQueueItem => ({
   type: 'exercise',
   entry: { userLookupId } as StrengthenExerciseEntry,
+  isNewIntroduction: false,
 })
 
 const snapshot = (over: Partial<ComposedSessionSnapshot> = {}): ComposedSessionSnapshot => ({
@@ -42,6 +43,7 @@ const snapshot = (over: Partial<ComposedSessionSnapshot> = {}): ComposedSessionS
   queue: [cardItem('u1'), exerciseItem('u2')],
   index: 0,
   dailyLimitReached: false,
+  canLearnExtra: false,
   capNoticeShown: false,
   sessionHard: new Set(),
   ratingRecords: new Map(),

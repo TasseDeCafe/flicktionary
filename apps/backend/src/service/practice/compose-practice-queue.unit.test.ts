@@ -316,6 +316,40 @@ describe('composePracticeQueue', () => {
     expect(result.items.map(itemKey)).toEqual([`flash:${id(5)}`, `ex:production:${id(1)}`, `ex:production:${id(3)}`])
   })
 
+  it('marks newly-parked gates isNewIntroduction=true and backlog gates false', async () => {
+    const { deps } = createDeps({
+      backlogByPool: { recognition: [id(1)] },
+      eligibleNewByPool: { recognition: [id(2)] },
+    })
+    const result = await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
+    const flags = new Map(
+      result.items.flatMap((item) =>
+        item.type === 'exercise' ? [[item.entry.userLookupId, item.isNewIntroduction]] : []
+      )
+    )
+    expect(flags.get(id(1))).toBe(false)
+    expect(flags.get(id(2))).toBe(true)
+  })
+
+  it('flags dailyLimitReached when the budget is pre-exhausted (no pass runs) and candidates remain', async () => {
+    const { deps, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
+      eligibleNewByPool: { recognition: ids(10, 5) },
+      maxNewTerms: 15,
+    })
+    // All 15 introductions already consumed today.
+    ;(deps.userLookupsRepository.listDueSummary as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { targetLanguage: lang, newIntroducedTodayCount: 15 },
+    ])
+    const result = await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
+    // remaining=0 and parkBudget=10: the pass runs and the guard refuses, but
+    // even a guard-free path must flag — the planner predicts it.
+    expect(result.dailyLimitReached).toBe(true)
+    expect(result.canLearnExtra).toBe(true)
+    expect(
+      initializeAndParkCitationFacetIfUnderDailyCap.mock.calls.filter((c) => c[0].bypassCap !== true).length
+    ).toBeLessThanOrEqual(5)
+  })
+
   it('serve-only re-entry (autoWarmup=false) parks nothing and re-serves the same backlog', async () => {
     const { deps, initializeAndParkCitationFacetIfUnderDailyCap, initializeAndParkProductionCitationFacet } =
       createDeps({

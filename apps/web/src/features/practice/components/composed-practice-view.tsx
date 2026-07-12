@@ -43,7 +43,7 @@ import {
   type RatingRecord,
 } from './composed-session-snapshot'
 import { ReviewQueueStats } from './review-queue-stats'
-import type { QueueCounts } from './review-counts'
+import { getRemainingCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
 import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
@@ -78,39 +78,6 @@ type HintOutcome = {
   correct: boolean
   rating: RateValue
 }
-
-const getRemainingCounts = (queue: ComposedQueueItem[], index: number): QueueCounts =>
-  queue.slice(index).reduce<QueueCounts>(
-    (counts, item) => {
-      if (item.type === 'exercise') {
-        // Bucket by learning stage, not render type: a warm-up gate is the
-        // term's first encounter, a rehab gate is a term being re-learned.
-        // (Bonus entries — null origin — never reach the composed queue.)
-        if (item.entry.origin === 'onboarding') counts.new += 1
-        else counts.learning += 1
-        return counts
-      }
-      if (item.requeuedForAgain) {
-        counts.learning += 1
-        return counts
-      }
-      switch (item.card.srsState) {
-        case null:
-          counts.new += 1
-          break
-        case 'review':
-          counts.review += 1
-          break
-        case 'new':
-        case 'learning':
-        case 'relearning':
-          counts.learning += 1
-          break
-      }
-      return counts
-    },
-    { new: 0, learning: 0, review: 0 }
-  )
 
 const copyVariantFor = (origin: 'onboarding' | 'leech' | null): ExerciseCopyVariant =>
   origin === 'leech' ? 'rehab' : 'warmup'
@@ -163,6 +130,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   const [revealed, setRevealed] = useState(false)
   const [capNoticeShown, setCapNoticeShown] = useState(resumedSession?.capNoticeShown ?? false)
   const [dailyLimitReached, setDailyLimitReached] = useState(resumedSession?.dailyLimitReached ?? false)
+  // Whether recognition intro candidates remain for a Learn-extra batch — the
+  // compose response knows; a bare dailyLimitReached no longer implies it.
+  const [canLearnExtra, setCanLearnExtra] = useState(resumedSession?.canLearnExtra ?? false)
   // Peek-back: how many items behind the live index we're re-viewing read-only.
   const [peekBack, setPeekBack] = useState(0)
   // A resumed session is already started — the compose effect must not run.
@@ -202,6 +172,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         onSuccess: (resp) => {
           setQueue(resp.data.items.map(toComposedQueueItem))
           setDailyLimitReached(resp.data.dailyLimitReached)
+          setCanLearnExtra(resp.data.canLearnExtra)
         },
       }
     )
@@ -209,8 +180,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   // Live mirror of the snapshot-worthy state for the unmount save below (a
   // cleanup closure would otherwise see the mount render's values).
-  const sessionStateRef = useRef({ queue, index, dailyLimitReached, capNoticeShown })
-  sessionStateRef.current = { queue, index, dailyLimitReached, capNoticeShown }
+  const sessionStateRef = useRef({ queue, index, dailyLimitReached, canLearnExtra, capNoticeShown })
+  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown }
   useEffect(
     () => () => {
       const snapshot = sessionStateRef.current
@@ -229,6 +200,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         queue: snapshot.queue,
         index: snapshot.index,
         dailyLimitReached: snapshot.dailyLimitReached,
+        canLearnExtra: snapshot.canLearnExtra,
         capNoticeShown: snapshot.capNoticeShown,
         sessionHard: sessionHardRef.current,
         ratingRecords: ratingRecordsRef.current,
@@ -551,6 +523,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         onSuccess: (resp) => {
           setQueue(resp.data.items.map(toComposedQueueItem))
           setDailyLimitReached(resp.data.dailyLimitReached)
+          setCanLearnExtra(resp.data.canLearnExtra)
         },
       }
     )
@@ -745,7 +718,10 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         : filter.scope === 'due_only'
           ? t`No reviews are due right now.`
           : t`Nothing to practice right now.`
-    const showLearnExtra = (dailyLimitReached || capNoticeShown) && filter.autoWarmup && filter.scope !== 'due_only'
+    // canLearnExtra gates on actual candidates: with the budget exhausted but
+    // nothing left to introduce, the offer would compose an empty batch.
+    const showLearnExtra =
+      canLearnExtra && (dailyLimitReached || capNoticeShown) && filter.autoWarmup && filter.scope !== 'due_only'
     return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>

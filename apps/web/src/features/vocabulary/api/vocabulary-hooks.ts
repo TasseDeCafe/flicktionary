@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
 import { dropTermFromComposedSession } from '@/features/practice/components/composed-session-snapshot'
+import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import {
   getStudyTargetsKey,
   setRowProductionEnabled,
@@ -98,7 +99,7 @@ export const useSetFacetEnabled = () => {
         // term has no IPA).
         invalidates: [
           orpcQuery.chunks.listChunks.key(),
-          orpcQuery.practice.dueSummary.key(),
+          ...practiceSummaryKeys(),
           orpcQuery.cards.get.key(),
           orpcQuery.cards.listBySession.key(),
           orpcQuery.chunks.getStudyTargets.key(),
@@ -148,7 +149,7 @@ export const useGenerateFacetData = () => {
   return useMutation(
     orpcQuery.chunks.generateFacetData.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.chunks.getStudyTargets.key(), orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.chunks.getStudyTargets.key(), ...practiceSummaryKeys()],
         errorMessage: t`Couldn't generate the form's data`,
         showErrorModal: true,
       },
@@ -169,7 +170,7 @@ export const useSetFacetPayload = () => {
       meta: {
         invalidates: [
           orpcQuery.chunks.getStudyTargets.key(),
-          orpcQuery.practice.dueSummary.key(),
+          ...practiceSummaryKeys(),
           orpcQuery.cards.get.key(),
           orpcQuery.cards.listBySession.key(),
         ],
@@ -189,7 +190,7 @@ export const useDeleteFacet = () => {
   return useMutation(
     orpcQuery.chunks.deleteFacet.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.chunks.getStudyTargets.key(), orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.chunks.getStudyTargets.key(), ...practiceSummaryKeys()],
         errorMessage: t`Couldn't remove the form`,
         showErrorModal: true,
       },
@@ -228,7 +229,7 @@ export const useDeleteChunk = () => {
       // the deleted term's cards/exercises.
       onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()],
         errorMessage: t`Failed to delete term`,
         showErrorModal: true,
       },

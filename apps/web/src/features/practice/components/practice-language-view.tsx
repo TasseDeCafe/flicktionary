@@ -5,50 +5,41 @@ import { useLingui } from '@lingui/react/macro'
 import { BookOpen, Brain, ChevronLeft, CircleCheck, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
-import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { useDueSummary } from '../api/practice-hooks'
+import { useDueSummary, usePreviewPracticeQueue } from '../api/practice-hooks'
 import { CustomPracticeOverlay } from './custom-practice-overlay'
-import { getDailyNewAvailable } from './review-counts'
-
-const formatCount = (count: number) => count.toLocaleString()
+import { PracticeFunnel } from './practice-funnel'
+import { SessionPlanCard } from './session-plan-card'
 
 // The per-language landing: ONE primary Practice button entering the composed
 // queue (gate exercises + due flashcards, production-first — the system makes
 // the strategic decision), a Custom practice overlay for every secondary mode,
-// and a one-line status summary that absorbs the old per-pool cards and the
-// standalone "warming up" / "parked" banners.
+// and two truth-telling surfaces replacing the old counter tiles:
+//   - the session-plan card: what pressing Practice will actually serve, in
+//     the same four buckets as the in-session chips (server-computed from the
+//     same plan the compose executes — the numbers can't disagree);
+//   - the funnel: the deck's stage pipeline, each row deep-linking into the
+//     Vocabulary tab pre-filtered to that stage.
 export const PracticeLanguageView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/language/$targetLanguage' })
   const { data: summary, isLoading } = useDueSummary()
-  const { data: prefs } = useGetUserPrefs()
   const [customOpen, setCustomOpen] = useState(false)
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
-  const { maxNewTerms, maxReviewTerms } = getPracticeLimitsForLanguage(prefs, targetLanguage)
+  const { data: preview, isLoading: previewLoading } = usePreviewPracticeQueue(entry ? targetLanguage : null)
 
-  const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
-  // The review-due count is capped by what's left of today's review budget —
-  // due cards beyond the spent budget won't be served until tomorrow, so the
-  // landing must not advertise them as ready work.
-  const reviewBudgetLeft = Math.max(0, maxReviewTerms - (entry?.reviewedTodayCount ?? 0))
-  const servableReviewDue = entry ? Math.min(entry.reviewDueCount, reviewBudgetLeft) : 0
-  const recognitionDue = entry ? servableReviewDue + entry.learningDueCount : 0
+  // Servable work = what the next session actually contains (the preview runs
+  // the compose's own plan). The old client-side budget math lived here; it
+  // now has exactly one home, server-side.
+  const previewTotal = preview
+    ? preview.counts.new + preview.counts.warmup + preview.counts.learning + preview.counts.review
+    : 0
+  const hasWork = previewTotal > 0
   const productionTotal = entry?.productionTotal ?? 0
-  const productionDue = entry ? entry.productionReviewDueCount + entry.productionLearningDueCount : 0
-
-  // Both pools fold into one line — the composed queue serves them in one
-  // session, so the landing reports one workload.
-  const reviewsDue = recognitionDue + productionDue
-  const newToday = dailyNewAvailable + (entry?.productionNewCount ?? 0)
-  const warmingUp = (entry?.warmupCount ?? 0) + (entry?.productionWarmupCount ?? 0)
-  const parked = (entry?.parkedCount ?? 0) + (entry?.productionParkedCount ?? 0)
-  const hasWork = reviewsDue + newToday + warmingUp + parked > 0
 
   const handleBack = () => void navigate({ to: '/practice' })
 
@@ -64,25 +55,6 @@ export const PracticeLanguageView = () => {
         includeOptInNew: false,
       },
     })
-
-  // Precedence once nothing is servable: review-limit reached (due work exists
-  // only beyond the spent budget) > new-limit reached > all caught up.
-  // Learning follow-ups due always count as servable work (budget-exempt).
-  const statusLine = (() => {
-    if (!entry) return ''
-    if (hasWork) {
-      const parts = [
-        reviewsDue > 0 ? plural(reviewsDue, { one: '# to review', other: '# to review' }) : null,
-        newToday > 0 ? t`${newToday} new today` : null,
-        warmingUp > 0 ? t`${warmingUp} warming up` : null,
-        parked > 0 ? t`${parked} to strengthen` : null,
-      ].filter((p): p is string => p != null)
-      return parts.join(' · ')
-    }
-    if (entry.reviewDueCount > 0 && reviewBudgetLeft <= 0) return t`Daily review limit reached.`
-    if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached.`
-    return t`No terms are ready right now.`
-  })()
 
   // An open reading-mode text is otherwise invisible from the landing (it's
   // only reachable by re-entering Read mode, and only under its own scope —
@@ -134,16 +106,10 @@ export const PracticeLanguageView = () => {
                   <Skeleton className='h-10 w-full' />
                 </div>
               </section>
-              <section className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
-                <SkeletonList
-                  count={4}
-                  renderItem={() => (
-                    <div className='bg-card rounded-xl border p-4'>
-                      <Skeleton className='h-3 w-16' />
-                      <Skeleton className='mt-3 h-7 w-10' />
-                    </div>
-                  )}
-                />
+              <section className='bg-card rounded-xl border p-4'>
+                <Skeleton className='h-5 w-36' />
+                <Skeleton className='mt-3 h-2.5 w-full rounded-full' />
+                <SkeletonList count={5} className='mt-4 h-10 w-full' />
               </section>
             </>
           )}
@@ -161,15 +127,19 @@ export const PracticeLanguageView = () => {
             <>
               <section className='bg-card rounded-xl border p-4'>
                 <div className='flex items-start gap-3'>
-                  {hasWork ? (
+                  {hasWork || previewLoading ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600 dark:text-yellow-400' />
                   ) : (
                     <CircleCheck className='mt-1 h-5 w-5 text-emerald-600' />
                   )}
                   <div className='min-w-0 flex-1'>
-                    <h3 className='font-semibold'>{hasWork ? t`Ready to practice` : t`All caught up`}</h3>
-                    {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
+                    <h3 className='font-semibold'>
+                      {hasWork || previewLoading ? t`Your next session` : t`All caught up`}
+                    </h3>
                   </div>
+                </div>
+                <div className='mt-3'>
+                  <SessionPlanCard preview={preview} isLoading={previewLoading} />
                 </div>
                 {renderReadingAffordance('recognition')}
                 {renderReadingAffordance('production')}
@@ -191,12 +161,11 @@ export const PracticeLanguageView = () => {
                 </div>
               </section>
 
-              <section className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
-                <PracticeMetric label={t`Follow-ups`} value={formatCount(reviewsDue)} />
-                <PracticeMetric label={t`New today`} value={formatCount(newToday)} />
-                <PracticeMetric label={t`Unseen`} value={formatCount(entry.newCount)} />
-                <PracticeMetric label={t`Total`} value={formatCount(entry.totalKept)} />
-              </section>
+              <PracticeFunnel
+                entry={entry}
+                targetLanguage={targetLanguage}
+                nextSessionIntake={preview ? preview.plannedIntroductions.recognition : null}
+              />
 
               <CustomPracticeOverlay
                 open={customOpen}
@@ -211,10 +180,3 @@ export const PracticeLanguageView = () => {
     </div>
   )
 }
-
-const PracticeMetric = ({ label, value }: { label: string; value: string }) => (
-  <div className='bg-card rounded-xl border p-4'>
-    <div className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{label}</div>
-    <div className='mt-2 text-2xl font-semibold tabular-nums'>{value}</div>
-  </div>
-)

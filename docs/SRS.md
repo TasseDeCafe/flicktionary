@@ -326,6 +326,23 @@ never-reviewed opt-in facet → flashcard. The filter spec
 `PracticeQueueFilterSchema`) only selects which populations participate; the Custom
 practice presets are just named filter specs.
 
+**Plan/execute split.** All selection and budget arithmetic lives in `planPracticeQueue`
+(`plan-practice-queue.ts`): the daily-budget numbers, the coupled park budget, the
+sequential production-first introduction allocation, the cross-pool gate head-slice, the
+exact due-row fetch, the learn-extra slice, and the predicted `dailyLimitReached` /
+`canLearnExtra` flags. `composePracticeQueue` EXECUTES that plan (parking mutations,
+exercise fetch); the read-only `previewPracticeQueue` endpoint (GET
+`/practice/queue/preview`, input `{targetLanguage}` only — always the default filter)
+returns the plan's counts for the landing's session-plan card. One function computes
+both, so the plan card and the session chips cannot disagree. Each served queue item
+carries **`isNewIntroduction`** (exercise items): true iff THIS compose parked the term —
+the client's "New" chip bucket, vs "Warm-up" for backlog gates.
+`dailyLimitReached` = planner-predicted (budget exhausted while capped-pool candidates
+remain — covers the pass-never-ran case) OR the transactional `cap_reached` outcome
+(covers races the prediction can't see); **`canLearnExtra`** (recognition intro
+candidates remain beyond the planned introductions) gates the Learn-extra CTA, which
+additionally requires `autoWarmup && scope !== 'due_only'` client-side.
+
 - **Parking pass (auto-warm-up).** With `autoWarmup` on (the default Practice), the
   compose first parks eligible never-reviewed citation terms into warm-up — discovery is
   by (user, language) via `listEligibleNewCitationFacets` (tier-ordered like the flashcard
@@ -861,21 +878,23 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   never-swapped items still name the term).
 - **Status row**: the sticky bottom control area is ONE row shared by every item type —
   flashcards, exercises, hint mode, and peeked items alike: peek chevrons framing colored
-  remaining-count chips (derived from the remaining local queue, `getRemainingCounts`).
-  Chips bucket by **learning stage, not render type** — `new` (never-reviewed flashcards +
-  warm-up gates: a warm-up gate IS the term's first encounter), `learning`
-  (learning/relearning flashcards + `Again`-redrills + rehab gates), `review` — so a fresh
-  user who just added terms sees "7 New", not "7 Exercises" beside three zeros. Each chip
-  is a press target opening a short explanation popover (click/tap only, never hover — the
-  chips sit next to the answer buttons, where hover-open would misfire constantly); below
-  the `sm` breakpoint the chip labels collapse to screen-reader-only (dot + count) so the
-  row fits phone widths. The back chevron is withheld while a live exercise or hint is
-  displayed (peeking away would unmount it, and an already-consumed exercise can't be
-  re-answered on remount).
-- Landing/status lines compute servable work client-side from the due summary + per-language
-  limits (`getPracticeLimitsForLanguage`): `servableReviewDue = min(reviewDueCount,
-  reviewBudgetLeft)`; precedence when nothing is servable: "Daily review limit reached." >
-  "Daily new limit reached." > "No terms are ready right now.".
+  remaining-count chips (derived from the remaining local queue, `getRemainingCounts` in
+  `review-counts.ts`). Chips bucket by **learning stage, not render type**, four buckets:
+  `new` (gates whose term THIS compose introduced — `isNewIntroduction` — plus
+  never-reviewed opt-in flashcards), `warmup` (returning backlog gates from earlier
+  composes; the pill hides at 0 — reading mode and gate-free sessions never have any),
+  `learning` (learning/relearning flashcards + `Again`-redrills + rehab gates), `review`.
+  The split makes introductions visible in-session and matches the landing's vocabulary:
+  the session-plan card shows the same four numbers before the user presses Practice.
+  Each chip is a press target opening a short explanation popover (click/tap only, never
+  hover — the chips sit next to the answer buttons, where hover-open would misfire
+  constantly); below the `sm` breakpoint the chip labels collapse to screen-reader-only
+  (dot + count) so the row fits phone widths. The back chevron is withheld while a live
+  exercise or hint is displayed (peeking away would unmount it, and an already-consumed
+  exercise can't be re-answered on remount).
+- The per-language landing derives servable work from the `previewPracticeQueue` response
+  (§4b) — no client-side budget math; the `/practice` selector rows still compute their
+  one-line summaries client-side from the due summary + `getPracticeLimitsForLanguage`.
 
 ### Landing + language action screen
 
@@ -887,29 +906,55 @@ summary appends `· N active`; when any terms are warming up it appends `· N wa
 when any terms are leech-parked it appends `· N parked` (both pools' leeches — warm-up
 terms are counted separately under "warming up").
 
-`/practice/language/$targetLanguage` is ONE card — the system makes the strategic
-decision, not the user. A single primary **Practice** button enters the composed queue
-(`/practice/composed/$targetLanguage`). A secondary **Custom practice** button opens an
+`/practice/language/$targetLanguage` is the per-language landing — the system makes the
+strategic decision, not the user. Two truth-telling surfaces replaced the old one-line
+status summary and stat cards (Follow-ups / New today / Unseen / Total):
+
+- **The session-plan card** (`session-plan-card.tsx`, inside the "Your next session"
+  section next to the primary **Practice** button): what pressing Practice will actually
+  serve, rendered with the SAME four-pill component as the in-session chips
+  (New = introductions this compose makes / Warm-up = backlog gates / Learning /
+  Review) and fed by `previewPracticeQueue` (§4b) — server-computed from the plan the
+  compose executes, so the card and the session open with identical numbers. Below the
+  pills, a budget line ("N of M new introductions used today", or the limit notice when
+  `dailyLimitReached`). `hasWork` (and the "All caught up" flip) is `Σ preview counts >
+  0` — the old client-side budget math is gone from the view.
+- **The funnel** (`practice-funnel.tsx`): the deck's stage pipeline — a slim proportion
+  bar over the five ACTIVE stages (Up next / Warming up / Learning / Review /
+  Strengthen; Unseen is a row but never a bar segment — it usually dwarfs the rest and
+  would crush the bar) plus tappable rows (≥52px, dot + label + count + chevron) that
+  deep-link to `/vocabulary?lang=<lang>&status=<stage>`. Counts come from the due
+  summary's stage populations (below), which share `vocabStageClauseSql` with the
+  Vocabulary filters — the row count and the filtered list agree by construction. The
+  Up next row's second line shows the preview's `plannedIntroductions.recognition`
+  ("N enter your next session") so the waiting total can't read as a session promise.
+  Recognition lifecycle only; production work shows in the plan card. Strengthen hides
+  at 0; stage colors rhyme with the chips (blue/amber/rose/emerald + violet).
+
+A secondary **Custom practice** button opens an
 overlay with the focused presets (`Review (due, no new)`, `Flashcards only`, `Learn new`,
 `Exercises only`, `Production focus` — each just a composed-queue filter spec), the `Read`
 reading mode, per-pool reading history, and a build-your-own filter panel (pools / scope /
 item types / opt-in-new toggle, with inline reasons on contradictory combos — e.g.
-new-only + flashcards-only without opt-in cards is empty by construction). A one-line
-status summary folds both pools (`N to review · N new today · N warming up ·
-N to strengthen`), absorbing the old standalone "warming up — continue" and "parked —
-strengthen" banners; in-progress reading texts keep their per-pool resume chips on the
-card. The stat cards (Follow-ups / New today / Unseen / Total) render below.
+new-only + flashcards-only without opt-in cards is empty by construction). In-progress
+reading texts keep their per-pool resume chips on the card.
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
-(off the event log), `parkedCount`, `warmupCount`, and the `production*` mirrors
-(`productionParkedCount`, `productionWarmupCount`, …). The parked population is split by
+(off the event log), `parkedCount`, `warmupCount`, the `production*` mirrors
+(`productionParkedCount`, `productionWarmupCount`, …), and the recognition **stage
+populations** `upNextCount` / `learningCount` / `reviewCount` / `unseenCount`
+(`vocabStageClauseSql` — see SPEC.md's Vocabulary section for the partition semantics).
+The parked population is split by
 origin **on both pools**: `parkedCount` / `productionParkedCount` are leech-only (parked +
 `srs_state IS NOT NULL`), `warmupCount` / `productionWarmupCount` are onboarding (parked +
-`srs_state IS NULL`); the landing folds them into the status line (warming-up and
-strengthen counts), and the composed queue serves both origins' gates in one session.
+`srs_state IS NULL`); the composed queue serves both origins' gates in one session.
 `newCount` / `productionNewCount` exclude parked rows so a warm-up term is never advertised
-as servable-new.
+as servable-new. On the client, `dueSummary` and `previewPracticeQueue` are ONE
+invalidation unit (`practiceSummaryKeys()` in `practice-hooks.ts`, spread by every
+mutation that can move practice state — including the vocabulary / review /
+lesson-import / prefs hooks); a mutation that refreshed one but not the other would leave
+the plan card promising a session the compose no longer produces.
 
 ### Flashcard faces
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PracticeQueueItemSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { computeIpaSource, toQueueItemDto, toServeOnlyFilter } from './practice-router'
+import { computeIpaSource, toPreviewDto, toQueueItemDto, toServeOnlyFilter } from './practice-router'
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { StrengthenExerciseEntry } from '../../service/practice/exercise-bank'
 
@@ -91,11 +91,18 @@ describe('toQueueItemDto', () => {
   })
 
   it('maps an exercise item (stripped payload passes the discriminated union)', () => {
-    const dto = toQueueItemDto({ type: 'exercise', entry: exerciseEntry })
+    const dto = toQueueItemDto({ type: 'exercise', entry: exerciseEntry, isNewIntroduction: false })
     expect(dto).toMatchObject({
       type: 'exercise',
       entry: { userLookupId: exerciseEntry.userLookupId, pool: 'recognition', track: 'gate', status: 'ready' },
+      isNewIntroduction: false,
     })
+    expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
+  })
+
+  it('passes isNewIntroduction through to the wire item', () => {
+    const dto = toQueueItemDto({ type: 'exercise', entry: exerciseEntry, isNewIntroduction: true })
+    expect(dto).toMatchObject({ type: 'exercise', isNewIntroduction: true })
     expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
   })
 
@@ -103,8 +110,54 @@ describe('toQueueItemDto', () => {
     const dto = toQueueItemDto({
       type: 'exercise',
       entry: { ...exerciseEntry, exerciseId: null, exerciseType: null, payload: null, status: 'generating' },
+      isNewIntroduction: false,
     })
     expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
+  })
+})
+
+describe('toPreviewDto', () => {
+  const dueRow = (srsState: string | null) => ({ srs_state: srsState }) as DbUserLookupWithFacet
+
+  it('collapses the plan into chip-aligned counts (new/warmup/learning/review)', () => {
+    const dto = toPreviewDto({
+      dailyBudget: { max: 15, introducedToday: 3, remaining: 12 },
+      parkBudget: 10,
+      dailyLimitReached: false,
+      canLearnExtra: true,
+      perPool: [
+        {
+          pool: 'production',
+          dueRows: [dueRow('review'), dueRow('learning')],
+          backlogIds: [],
+          backlogServedIds: [],
+          backlogServedOnboardingCount: 0,
+          backlogServedLeechCount: 0,
+          introCandidateIds: ['a', 'b'],
+          plannedIntroductionCount: 2,
+          plannedExtraIntroductionIds: [],
+        },
+        {
+          pool: 'recognition',
+          dueRows: [dueRow('review'), dueRow('review'), dueRow('new'), dueRow('relearning')],
+          backlogIds: ['p1', 'p2', 'p3'],
+          backlogServedIds: ['p1', 'p2', 'p3'],
+          backlogServedOnboardingCount: 2,
+          backlogServedLeechCount: 1,
+          introCandidateIds: ['c'],
+          plannedIntroductionCount: 1,
+          plannedExtraIntroductionIds: [],
+        },
+      ],
+    })
+    expect(dto).toEqual({
+      // new = planned introductions across pools, NOT per-pool min() sums.
+      counts: { new: 3, warmup: 2, learning: 1 + 1 + 2, review: 1 + 2 },
+      dailyLimitReached: false,
+      canLearnExtra: true,
+      dailyBudget: { max: 15, introducedToday: 3, remaining: 12 },
+      plannedIntroductions: { recognition: 1, production: 2 },
+    })
   })
 })
 

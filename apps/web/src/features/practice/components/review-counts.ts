@@ -2,34 +2,73 @@ import type {
   PracticeDueSummaryEntry,
   PracticePool,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { ComposedQueueItem } from './composed-queue-merge'
 
 // Buckets follow the learner's mental model (learning stage), not the render
-// type: in a composed queue a warm-up gate counts as `new` (it IS the term's
-// first encounter) and a rehab gate as `learning` — there is no separate
-// exercises bucket.
+// type: `new` is a term introduced by THIS session's compose, `warmup` a
+// returning warm-up gate from an earlier compose (the landing's "warming up"
+// stage), a rehab gate counts as `learning` — there is no separate exercises
+// bucket. The session-plan card on the landing shows these same four buckets,
+// computed by the server from the same plan the compose executes.
 export type QueueCounts = {
   new: number
+  warmup: number
   learning: number
   review: number
 }
 
+// Remaining counts for the not-yet-reached tail of a composed session queue.
+export const getRemainingCounts = (queue: ComposedQueueItem[], index: number): QueueCounts =>
+  queue.slice(index).reduce<QueueCounts>(
+    (counts, item) => {
+      if (item.type === 'exercise') {
+        // (Bonus entries — null origin — never reach the composed queue.)
+        if (item.isNewIntroduction) counts.new += 1
+        else if (item.entry.origin === 'onboarding') counts.warmup += 1
+        else counts.learning += 1
+        return counts
+      }
+      if (item.requeuedForAgain) {
+        counts.learning += 1
+        return counts
+      }
+      switch (item.card.srsState) {
+        case null:
+          counts.new += 1
+          break
+        case 'review':
+          counts.review += 1
+          break
+        case 'new':
+        case 'learning':
+        case 'relearning':
+          counts.learning += 1
+          break
+      }
+      return counts
+    },
+    { new: 0, warmup: 0, learning: 0, review: 0 }
+  )
+
 // Drifting New/Learning/Review counts for a (language, pool), derived from the
-// landing summary. Replaces the old finite progress bar — there is no frozen
-// denominator now, just live counts that shrink as the user rates.
+// landing summary — feeds the reading-mode status chips, which serve no
+// warm-up gates (warmup stays 0). Replaces the old finite progress bar — there
+// is no frozen denominator now, just live counts that shrink as the user rates.
 export const getReviewCounts = (
   entry: PracticeDueSummaryEntry | null | undefined,
   pool: PracticePool,
   dailyNewAvailable: number
 ): QueueCounts => {
-  if (!entry) return { new: 0, learning: 0, review: 0 }
+  if (!entry) return { new: 0, warmup: 0, learning: 0, review: 0 }
   if (pool === 'production') {
     return {
       new: entry.productionNewCount,
+      warmup: 0,
       learning: entry.productionLearningDueCount,
       review: entry.productionReviewDueCount,
     }
   }
-  return { new: dailyNewAvailable, learning: entry.learningDueCount, review: entry.reviewDueCount }
+  return { new: dailyNewAvailable, warmup: 0, learning: entry.learningDueCount, review: entry.reviewDueCount }
 }
 
 export const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {

@@ -131,6 +131,14 @@ export type DueSummaryEntry = {
   nextLearningDueAt: string | null
   newCount: number
   newIntroducedTodayCount: number
+  // Recognition-facet stage populations from the shared vocabStageClauseSql
+  // partition — identical predicates to the Vocabulary tab's stage filters, so
+  // the practice landing's funnel and the filtered lists agree by construction.
+  // warmupCount / parkedCount below carry the warming_up / strengthen stages.
+  upNextCount: number
+  learningCount: number
+  reviewCount: number
+  unseenCount: number
   // Unseen OPT-IN facets (pronunciation / specific forms — everything except
   // the daily-new-capped citation facet of each pool) that are enabled+ready,
   // split by pool. These are served only in learn-new sessions, so the
@@ -616,6 +624,10 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE rf.introduced_at >= CURRENT_DATE
           AND rf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
+      COUNT(*) FILTER (WHERE ${vocabStageClauseSql('up_next')})::int AS up_next_count,
+      COUNT(*) FILTER (WHERE ${vocabStageClauseSql('learning')})::int AS learning_count,
+      COUNT(*) FILTER (WHERE ${vocabStageClauseSql('review')})::int AS review_count,
+      COUNT(*) FILTER (WHERE ${vocabStageClauseSql('unseen')})::int AS unseen_count,
       COUNT(*) FILTER (
         WHERE rf.disabled_at IS NULL AND rf.leech_parked_at IS NOT NULL
           AND rf.srs_state IS NOT NULL
@@ -706,6 +718,10 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       : null,
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
+    upNextCount: row.up_next_count as number,
+    learningCount: row.learning_count as number,
+    reviewCount: row.review_count as number,
+    unseenCount: row.unseen_count as number,
     optInNewCount: (optInByLanguage.get(row.target_language as string)?.opt_in_new_count as number) ?? 0,
     productionOptInNewCount:
       (optInByLanguage.get(row.target_language as string)?.production_opt_in_new_count as number) ?? 0,

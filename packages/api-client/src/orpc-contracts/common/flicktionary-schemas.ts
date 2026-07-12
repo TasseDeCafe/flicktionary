@@ -524,6 +524,14 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
+  // Recognition-facet stage populations (the vocabStageClauseSql partition —
+  // identical predicates to the Vocabulary tab's stage filters, so the
+  // practice landing's funnel and the filtered lists agree by construction).
+  // warmupCount / parkedCount below already carry the other two stages.
+  upNextCount: z.number().int(),
+  learningCount: z.number().int(),
+  reviewCount: z.number().int(),
+  unseenCount: z.number().int(),
   // Unseen opt-in facets (pronunciation / specific forms), enabled+ready, per
   // pool. Served only in learn-new sessions — newCount/productionNewCount
   // stay citation-only because the mixed Practice queue never serves opt-ins.
@@ -725,10 +733,13 @@ export const DEFAULT_PRACTICE_QUEUE_FILTER: PracticeQueueFilter = {
 }
 
 // One composed-queue item. Reuses the flashcard and exercise wire shapes
-// verbatim; the client dispatches its renderer on `type`.
+// verbatim; the client dispatches its renderer on `type`. isNewIntroduction
+// marks a gate whose term THIS compose introduced (the client's "New" chip
+// bucket) vs a backlog gate from an earlier compose ("Warm-up"). Composed
+// queue only — the dedicated warmup/strengthen endpoints ship bare entries.
 export const PracticeQueueItemSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('flashcard'), card: ReviewTermSchema }),
-  z.object({ type: z.literal('exercise'), entry: StrengthenExerciseEntrySchema }),
+  z.object({ type: z.literal('exercise'), entry: StrengthenExerciseEntrySchema, isNewIntroduction: z.boolean() }),
 ])
 export type PracticeQueueItem = z.infer<typeof PracticeQueueItemSchema>
 

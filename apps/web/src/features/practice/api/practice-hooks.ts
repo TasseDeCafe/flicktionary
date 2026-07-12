@@ -4,6 +4,17 @@ import { useLingui } from '@lingui/react/macro'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { dropTermFromComposedSession } from '../components/composed-session-snapshot'
 
+// The landing's two summary queries — the drifting due summary and the
+// session-plan preview — are ONE invalidation unit: anything that can change
+// practice state must refresh both, or the plan card keeps promising a
+// session the compose no longer produces. Every mutation that used to
+// invalidate dueSummary alone (here and in vocabulary / review / lesson-import
+// hooks) spreads this instead.
+export const practiceSummaryKeys = () => [
+  orpcQuery.practice.dueSummary.key(),
+  orpcQuery.practice.previewPracticeQueue.key(),
+]
+
 export const useDueSummary = () => {
   const { t } = useLingui()
   return useQuery(
@@ -11,6 +22,23 @@ export const useDueSummary = () => {
       input: {},
       select: (response) => response.data.perLanguage,
       meta: { errorMessage: t`Failed to load practice summary` },
+    })
+  )
+}
+
+export type PracticeQueuePreview = NonNullable<ReturnType<typeof usePreviewPracticeQueue>['data']>
+
+// What pressing the primary Practice button will serve, in the in-session
+// chips' own buckets — the server runs the same plan the compose executes.
+// Point-in-time; compose remains the source of truth at press.
+export const usePreviewPracticeQueue = (targetLanguage: string | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.practice.previewPracticeQueue.queryOptions({
+      input: { targetLanguage: targetLanguage ?? '' },
+      enabled: targetLanguage != null,
+      select: (response) => response.data,
+      meta: { errorMessage: t`Failed to load session preview` },
     })
   )
 }
@@ -23,7 +51,7 @@ export const useRateTerm = () => {
   return useMutation(
     orpcQuery.practice.rateTerm.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to record rating`,
       },
     })
@@ -39,7 +67,7 @@ export const useUndoRating = () => {
   return useMutation(
     orpcQuery.practice.undoRating.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to undo rating`,
       },
     })
@@ -66,7 +94,7 @@ export const useStartWarmupSession = () => {
   return useMutation(
     orpcQuery.practice.startWarmupSession.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to start warm-up`,
       },
     })
@@ -92,7 +120,7 @@ export const useComposePracticeQueue = () => {
   return useMutation(
     orpcQuery.practice.composePracticeQueue.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to load practice queue`,
       },
     })
@@ -119,7 +147,7 @@ export const useSubmitExerciseAnswer = () => {
   return useMutation(
     orpcQuery.practice.submitExerciseAnswer.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key(), orpcQuery.practice.getHintExercise.key()],
+        invalidates: [...practiceSummaryKeys(), orpcQuery.practice.getHintExercise.key()],
         errorMessage: t`Failed to submit answer`,
       },
     })
@@ -134,7 +162,7 @@ export const useStudyParkedTermAsFlashcard = () => {
   return useMutation(
     orpcQuery.practice.studyParkedTermAsFlashcard.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to move the term to flashcards`,
       },
     })
@@ -164,7 +192,7 @@ export const useGenerateNextReadingText = () => {
   return useMutation(
     orpcQuery.practice.generateNextReadingText.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to generate next text`,
       },
     })
@@ -189,7 +217,7 @@ export const useAdvanceReadingText = () => {
   return useMutation(
     orpcQuery.practice.advanceReadingText.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [...practiceSummaryKeys()],
         errorMessage: t`Failed to advance`,
       },
     })
@@ -219,7 +247,7 @@ export const useDeleteChunkFromPractice = () => {
       // the deleted term's cards/exercises.
       onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()],
         errorMessage: t`Failed to delete term`,
       },
     })
@@ -233,7 +261,7 @@ export const useRestoreChunkFromPractice = () => {
   return useMutation(
     orpcQuery.chunks.restoreChunk.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()],
         errorMessage: t`Failed to restore term`,
       },
     })

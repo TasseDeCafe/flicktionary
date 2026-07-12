@@ -97,10 +97,14 @@ A separate top-level destination from the per-session review flow. Practice is
 record), and each studied skill × form of a term is an independently-scheduled FSRS
 **facet** (`study_facets`). The surfaces, in one breath:
 
-- **`/practice`** — per-language landing → a one-card language action screen whose primary
+- **`/practice`** — per-language landing → a language action screen whose primary
   **Practice** button serves the **composed queue**: gate exercises for parked terms
   (warm-up + leech rehab) interleaved with due flashcards across both pools,
-  production-first. **Custom practice** holds the focused presets, a build-your-own filter
+  production-first. A **session-plan card** shows what that button will serve (same four
+  buckets as the in-session chips, server-computed from the compose's own plan) plus the
+  daily introduction budget, and a **stage funnel** (proportion bar + tappable rows) maps
+  the deck's pipeline, deep-linking each stage into the Vocabulary tab's filters.
+  **Custom practice** holds the focused presets, a build-your-own filter
   panel, and the `Read` mode.
 - **Reading mode** — short LLM-generated texts (~80–120 words) weaving in due terms as
   tappable annotations; anything not explicitly rated auto-rates `good` on advance.

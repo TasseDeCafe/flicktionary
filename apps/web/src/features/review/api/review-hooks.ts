@@ -2,6 +2,7 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import {
   cancelCardCaches,
   cancelCardCachesOptionalSession,
@@ -77,7 +78,9 @@ export const useRemoveCardFromSession = (sessionId: string) => {
         // Removing a kept card changes downstream counts; invalidate vocabulary
         // list + practice due summary so chips and counts refresh.
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+        for (const key of practiceSummaryKeys()) {
+          queryClient.invalidateQueries({ queryKey: key })
+        }
       },
       meta: { errorMessage: t`Failed to remove term` },
     })
