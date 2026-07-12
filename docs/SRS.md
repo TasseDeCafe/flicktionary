@@ -264,7 +264,10 @@ active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) an
 **New-term priority tiers** (`new-term-priority.ts` — the single home of the constants and
 SQL fragments). Both new buckets order by a computed tier, then `zipf_estimate DESC NULLS
 LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
-the stable tiebreak. The tier, from three signal columns on `user_lookups`:
+the stable tiebreak, closed by `headword ASC, sense ASC, id ASC` so the ordering is strictly
+unique — the Vocabulary tab's `Up next` filter pages this exact ordering with a keyset
+cursor, so the list a user inspects there is the introduction order. The tier, from three
+signal columns on `user_lookups`:
 
 1. **revealed demand** — `encounter_count >= 2`: the term was encountered again at a
    user-intent boundary (a re-save, or a lesson import confirming it as a duplicate).
