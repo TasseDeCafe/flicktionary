@@ -13,8 +13,8 @@ import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
-// Stateless gloss lookups (browser-extension subtitle hover). Mirrors the
-// practice.fastGloss handler but takes the context line directly and is bound
+// Stateless gloss lookups (browser-extension subtitle hover, the web app's
+// practice-surface lookup sheet). Takes the context line directly and is bound
 // to no highlight or practice_text — nothing is persisted.
 export const GlossesRouter = (
   usersRepository: UsersRepositoryInterface,

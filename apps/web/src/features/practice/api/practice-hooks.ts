@@ -274,14 +274,3 @@ export const useRestoreChunkFromPractice = () => {
     })
   )
 }
-
-// Selection-driven gloss for a span in the practice text. No server-side cache —
-// TanStack Query handles re-selection of the same span via its in-memory cache.
-export const usePracticeFastGloss = () => {
-  const { t } = useLingui()
-  return useMutation(
-    orpcQuery.practice.fastGloss.mutationOptions({
-      meta: { errorMessage: t`Failed to fetch translation` },
-    })
-  )
-}

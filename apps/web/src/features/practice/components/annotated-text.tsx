@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useEffect, useId } from 'react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { getWordRanges } from '@/lib/dom/word-segmenter'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
@@ -46,6 +46,10 @@ interface AnnotatedTextProps {
   // not mounted and word tokenization is skipped — the paragraph renders as
   // flat plain-text spans + annotation buttons.
   enabled?: boolean
+  // Selection paint persists past pointerup (it marks what the open sheet
+  // refers to), so the sheet-close handler must clear it. This ref hands the
+  // parent the internal clearPaint for exactly that.
+  clearPaintRef?: React.RefObject<(() => void) | null>
 }
 
 // Renders body with each annotation wrapped in a clickable span. We sort by
@@ -59,6 +63,7 @@ export const AnnotatedText = ({
   onAnnotationClick,
   onPlainSelection,
   enabled = true,
+  clearPaintRef,
 }: AnnotatedTextProps) => {
   // Stable owner key for the word-span contract — `useId` is constant across
   // re-renders within a single mounted text.
@@ -118,6 +123,14 @@ export const AnnotatedText = ({
       onPlainSelection({ text, charStart, charEnd, rect })
     },
   })
+
+  useEffect(() => {
+    if (!clearPaintRef) return
+    clearPaintRef.current = clearPaint
+    return () => {
+      clearPaintRef.current = null
+    }
+  }, [clearPaintRef, clearPaint])
 
   // Tokenizes a text region into selectable per-word spans. Shared by plain
   // regions and annotation buttons so a drag can sweep continuously across

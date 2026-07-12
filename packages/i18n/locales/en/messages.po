@@ -253,6 +253,10 @@ msgstr "About"
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
 
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "About saved terms"
+msgstr "About saved terms"
+
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 msgid "Access exclusive premium features available to subscribers."
 msgstr "Access exclusive premium features available to subscribers."
@@ -1539,10 +1543,6 @@ msgstr "Failed to export vocabulary"
 msgid "Failed to fetch subscription details"
 msgstr "Failed to fetch subscription details"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to fetch translation"
-msgstr "Failed to fetch translation"
-
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
@@ -1995,7 +1995,6 @@ msgstr "Generating full exploration… this takes a few seconds."
 msgid "Generating..."
 msgstr "Generating..."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -3591,6 +3590,12 @@ msgstr "Review"
 msgid "Review (due, no new)"
 msgstr "Review (due, no new)"
 
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "Review it any time from the Vocabulary tab — newest terms are listed "
+"first."
+msgstr "Review it any time from the Vocabulary tab — newest terms are listed "
+"first."
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Review terms"
 msgstr "Review terms"
@@ -3631,6 +3636,7 @@ msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved"
 msgstr "Saved"
@@ -3647,6 +3653,10 @@ msgstr "Saved but not queued yet"
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Saved to this card's chat — delete the highlight to change it."
 msgstr "Saved to this card's chat — delete the highlight to change it."
+
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "Saved to your vocabulary"
+msgstr "Saved to your vocabulary"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx

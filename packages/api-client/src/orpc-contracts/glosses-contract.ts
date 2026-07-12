@@ -5,9 +5,9 @@ import { GrammarIpaBagSchema } from './common/flicktionary-schemas'
 
 export const glossesContract = {
   // Stateless gloss for an arbitrary selection in its sentence context. Re-uses
-  // the same Haiku prompt as highlights.fastGloss / practice.fastGloss, but is
-  // not tied to a highlight or practice_text and creates NO rows — built for
-  // transient lookups like the browser extension's subtitle hover. Native
+  // the same Haiku prompt as highlights.fastGloss, but is not tied to a
+  // highlight and creates NO rows — built for transient lookups like the
+  // browser extension's subtitle hover or the web practice LookupSheet. Native
   // language and hide-translation mode are resolved from the caller's prefs
   // server-side. No persistence; callers cache client-side.
   fastGloss: oc
