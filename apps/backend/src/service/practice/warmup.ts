@@ -4,7 +4,7 @@ import type { PracticePool } from '../../transport/database/user-lookups/user-lo
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
 import { getStrengthenExercises } from './exercise-bank'
 import { clampPracticeSessionLimits } from './review-caps'
-import { runProductionParkingPass, runRecognitionParkingPass } from './warmup-parking'
+import { runParkingPass } from './warmup-parking'
 
 export type WarmupDependencies = ExerciseBankDependencies & {
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -48,14 +48,10 @@ const serveOnboarding = (params: {
 // existing rehab counter; after the graduation threshold each term soft-re-enters
 // the FSRS flashcard queue.
 //
-// Both pools are warmed in two INDEPENDENT passes over the session's kept terms:
-//   - recognition: the citation meaning_recognition facet, DAILY-NEW-CAPPED. The
-//     first cap_reached stops further recognition entries and reports
-//     dailyLimitReached.
-//   - production: the citation meaning_production facet, UNCAPPED (production is
-//     never daily-new-capped). This pass MUST NOT inherit the recognition cap's
-//     stop — a recognition cap hit must not block parking a later term's
-//     production facet.
+// Both pools are warmed in two passes over the session's kept terms — the two
+// citation facets consume ONE combined daily budget, and either pass's
+// cap_reached reports dailyLimitReached. The passes don't inherit each
+// other's stop (each guard refuses over-budget entries itself).
 // The served queue is mixed (recognition exercises ++ production exercises); each
 // exercise carries its own pool so answering routes to the right facet.
 export const startWarmupSession = async (params: {
@@ -70,9 +66,11 @@ export const startWarmupSession = async (params: {
   if (!session) return { ok: false, reason: 'not_found' }
   if (session.target_language !== targetLanguage) return { ok: false, reason: 'language_mismatch' }
 
-  // Recognition pass (daily-new-capped). The FULL clamped per-language daily-new
-  // cap — the atomic init+park method does its own today-count comparison
-  // against it (so subtracting here would double-count).
+  // Both pools' citation facets consume ONE combined daily budget. The FULL
+  // clamped per-language cap — the atomic init+park method does its own
+  // today-count comparison against it (so subtracting here would
+  // double-count). A cap hit in one pass doesn't stop the other (a later
+  // term's facet in the other pool would be refused by its own guard anyway).
   const maxNewTerms = clampPracticeSessionLimits(
     await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, targetLanguage)
   ).maxNewTerms
@@ -81,30 +79,32 @@ export const startWarmupSession = async (params: {
     studySessionId,
     'meaning_recognition'
   )
-  const recognitionPass = await runRecognitionParkingPass({
+  const recognitionPass = await runParkingPass({
     userId,
     targetLanguage,
+    pool: 'recognition',
     candidateUserLookupIds: eligibleToEnter(recognitionFacets).map((f) => f.userLookupId),
     maxNewTerms,
     deps,
   })
-  const dailyLimitReached = recognitionPass.dailyLimitReached
   const recognitionIds = Array.from(
     new Set([...alreadyOnboardingIds(recognitionFacets), ...recognitionPass.scaffolded])
   )
 
-  // Production pass (uncapped, independent — never stops on the recognition cap).
   const productionFacets = await deps.studyFacetsRepository.listSessionKeptCitationFacets(
     studySessionId,
     'meaning_production'
   )
-  const productionPass = await runProductionParkingPass({
+  const productionPass = await runParkingPass({
     userId,
     targetLanguage,
+    pool: 'production',
     candidateUserLookupIds: eligibleToEnter(productionFacets).map((f) => f.userLookupId),
+    maxNewTerms,
     deps,
   })
   const productionIds = Array.from(new Set([...alreadyOnboardingIds(productionFacets), ...productionPass.scaffolded]))
+  const dailyLimitReached = recognitionPass.dailyLimitReached || productionPass.dailyLimitReached
 
   const [recognitionExercises, productionExercises] = await Promise.all([
     serveOnboarding({ userId, targetLanguage, pool: 'recognition', restrictToUserLookupIds: recognitionIds, deps }),

@@ -38,17 +38,17 @@ export type ReviewCapsDependencies = {
 //     follow-ups are exempt: maxLearningTerms is a hard ceiling, never a
 //     budget, so a failed card's relearning step can't be stranded by a spent
 //     budget.
-//   - new budget: the clamped daily limit minus today's introductions. The
-//     explicit past-the-cap path is the composed queue's Learn extra, which
-//     lives on the PARKING side (`bypassCap` on the warm-up park guard) — this
-//     resolver never loosens the new budget.
+//   - new budget: the clamped daily limit minus today's introductions —
+//     COMBINED across both pools' citation facets (a both-pools term consumes
+//     two slots). The explicit past-the-cap path is the composed queue's Learn
+//     extra, which lives on the PARKING side (`bypassCap` on the warm-up park
+//     guard) — this resolver never loosens the new budget.
 //
-// The production pool's NEW intake is never daily-capped (production
-// introductions don't consume the recognition new allowance), so maxNewTerms
-// stays the hard ceiling. Its REVIEW cap is per-pool and optional: NULL (the
-// default until the Phase-3 UI sets it) means uncapped — the hard ceiling —
-// preserving today's behavior; a set value runs the same remaining-budget math
-// against the production-pool rating log.
+// The production pool shares the combined new budget (its maxNewTerms runs
+// the same remaining math). Its REVIEW cap is per-pool and optional: NULL
+// (the default until the Phase-3 UI sets it) means uncapped — the hard
+// ceiling; a set value runs the same remaining-budget math against the
+// production-pool rating log.
 export const resolveReviewCaps = async (params: {
   userId: string
   targetLanguage: string
@@ -76,12 +76,20 @@ export const resolveReviewCaps = async (params: {
   // enabled), so this is a hard ceiling, gated on the explicit learn-new entry.
   const maxOptInNewTerms = params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0
 
+  const limits = clampPracticeSessionLimits(rawLimits)
+  // Combined new budget: newIntroducedTodayCount counts BOTH pools' citation
+  // introductions (matching the atomic guard's subquery).
+  const summary = (await params.deps.userLookupsRepository.listDueSummary(params.userId)).find(
+    (s) => s.targetLanguage === params.targetLanguage
+  )
+  const maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
+
   if (params.pool === 'production') {
     if (rawLimits.maxReviewTermsProduction == null) {
       return {
         maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
         maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-        maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
+        maxNewTerms,
         maxOptInNewTerms,
       }
     }
@@ -94,12 +102,10 @@ export const resolveReviewCaps = async (params: {
     return {
       maxReviewTerms: Math.max(0, cap - consumedProductionReviews),
       maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-      maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
+      maxNewTerms,
       maxOptInNewTerms,
     }
   }
-
-  const limits = clampPracticeSessionLimits(rawLimits)
 
   const consumedReviewsToday = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
     userId: params.userId,
@@ -107,11 +113,6 @@ export const resolveReviewCaps = async (params: {
     pool: 'recognition',
   })
   const remainingReviews = Math.max(0, limits.maxReviewTerms - consumedReviewsToday)
-
-  const summary = (await params.deps.userLookupsRepository.listDueSummary(params.userId)).find(
-    (s) => s.targetLanguage === params.targetLanguage
-  )
-  const maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
 
   return {
     maxReviewTerms: remainingReviews,

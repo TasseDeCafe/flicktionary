@@ -96,6 +96,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: a.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
     })
     expect(first).toBe(true)
@@ -105,6 +106,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: b.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
     })
     expect(second).toBe(false)
@@ -125,6 +127,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: lookup.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 10,
     })
     expect(warmup).toBe('scaffolded')
@@ -133,6 +136,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: lookup.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 10,
     })
     expect(introduced).toBe(false)
@@ -153,6 +157,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: a.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
     })
     expect(first).toBe('scaffolded')
@@ -161,6 +166,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: b.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
     })
     expect(second).toBe('cap_reached')
@@ -171,6 +177,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: b.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
       bypassCap: true,
     })
@@ -186,6 +193,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: b.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 1,
       bypassCap: true,
     })
@@ -201,6 +209,7 @@ describe('study-facets-repository integration tests', () => {
       userLookupId: lookup.id,
       userId,
       targetLanguage: 'es',
+      skill: 'meaning_recognition',
       maxNewTerms: 10,
     })
 
@@ -272,14 +281,57 @@ describe('study-facets-repository integration tests', () => {
     await repo.ensureCitationFacet(lookup.id)
     await repo.ensureFacet({ userLookupId: lookup.id, skill: 'meaning_production', targetForm: '' })
 
-    await repo.initializeFacet({ userLookupId: lookup.id, skill: 'meaning_production', targetForm: '' })
+    const introduced = await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: lookup.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_production',
+      maxNewTerms: 10,
+    })
+    expect(introduced).toBe(true)
 
     const recognition = await repo.getFacet({ userLookupId: lookup.id, skill: 'meaning_recognition', targetForm: '' })
     const production = await repo.getFacet({ userLookupId: lookup.id, skill: 'meaning_production', targetForm: '' })
-    // Initializing production left recognition untouched (still unseen).
+    // Introducing production left recognition untouched (still unseen).
     expect(recognition?.srs_state).toBeNull()
     expect(production?.srs_state).toBe('new')
-    // initializeFacet (production path) does NOT stamp introduced_at.
-    expect(production?.introduced_at).toBeNull()
+    // Production citation intros consume the combined budget -> stamped.
+    expect(production?.introduced_at).not.toBeNull()
+  })
+
+  test('both pools consume ONE combined daily budget (a production intro blocks a recognition one)', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const prodTerm = await createKeptTerm(userId, 'uno')
+    const recogTerm = await createKeptTerm(userId, 'dos')
+    await repo.ensureCitationFacet(prodTerm.id)
+    await repo.ensureCitationFacet(recogTerm.id)
+    await repo.ensureFacet({ userLookupId: prodTerm.id, skill: 'meaning_production', targetForm: '' })
+
+    const production = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: prodTerm.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_production',
+      maxNewTerms: 1,
+    })
+    expect(production).toBe('scaffolded')
+
+    // The single slot is spent by the production intro — recognition refuses.
+    const recognition = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: recogTerm.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_recognition',
+      maxNewTerms: 1,
+    })
+    expect(recognition).toBe('cap_reached')
+
+    // Opt-in facets never touch the budget: a pronunciation intro still lands
+    // for a capped-out user, and stays unstamped.
+    await repo.ensureFacet({ userLookupId: recogTerm.id, skill: 'pronunciation', targetForm: '' })
+    await repo.initializeFacet({ userLookupId: recogTerm.id, skill: 'pronunciation', targetForm: '' })
+    const pron = await repo.getFacet({ userLookupId: recogTerm.id, skill: 'pronunciation', targetForm: '' })
+    expect(pron?.srs_state).toBe('new')
+    expect(pron?.introduced_at).toBeNull()
   })
 })

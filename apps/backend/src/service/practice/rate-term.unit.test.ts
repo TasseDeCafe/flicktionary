@@ -142,23 +142,28 @@ describe('rateTerm', () => {
     )
   })
 
-  it('routes production-pool ratings to the production facet with no daily cap', async () => {
+  it('routes a production citation intro through the combined daily-cap guard', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, initializeFacet, applyFsrsResultForFacet } = createDeps(
       makeLookup(),
       makeFacet({ skill: 'meaning_production' })
     )
     const result = await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
-    expect(initializeCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
-    expect(initializeFacet).toHaveBeenCalledWith({
-      userLookupId: lookupId,
-      skill: 'meaning_production',
-      targetForm: '',
-    })
+    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(
+      expect.objectContaining({ userLookupId: lookupId, skill: 'meaning_production' })
+    )
+    expect(initializeFacet).not.toHaveBeenCalled()
     expect(applyFsrsResultForFacet).toHaveBeenCalledWith(
       expect.objectContaining({ skill: 'meaning_production', targetForm: '' }),
       undefined
     )
+  })
+
+  it('a production citation intro can be refused by the combined cap', async () => {
+    const refusing = createDeps(makeLookup(), makeFacet({ skill: 'meaning_production' }))
+    refusing.initializeCitationFacetIfUnderDailyCap.mockResolvedValue(false)
+    const result = await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', '', refusing.deps)
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null })
   })
 
   it('refuses production-pool ratings for terms not promoted to production learning (disabled production facet)', async () => {

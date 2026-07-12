@@ -38,14 +38,17 @@ export type PoolQueuePlan = {
 }
 
 export type PracticeQueuePlan = {
-  // The daily-new budget (recognition citation introductions).
+  // The combined daily-new budget (citation introductions across BOTH pools —
+  // a both-pools term consumes two slots).
   dailyBudget: { max: number; introducedToday: number; remaining: number }
-  // The coupled per-compose parking budget:
-  // min(MAX_WARMUP_INTRO_PER_SESSION, gate slots left after the backlog).
+  // The per-compose parking budget: min(MAX_WARMUP_INTRO_PER_SESSION, today's
+  // remaining budget). Deliberately NOT coupled to the gate backlog — a full
+  // warm-up pipeline must not silently starve introductions; newly-parked
+  // gates are always served on top of the backlog slice.
   parkBudget: number
-  // Predicted: the recognition parking pass would run into the daily cap with
-  // candidates left over. Compose ORs this with the transactional cap_reached
-  // outcome (races can make the two differ).
+  // Predicted: after this compose's planned introductions the daily budget is
+  // exhausted while intro candidates remain. Compose ORs this with the
+  // transactional cap_reached outcome (races can make the two differ).
   dailyLimitReached: boolean
   // Recognition intro candidates remain beyond the planned introductions, so
   // a learn-extra request (bypassCap) has something to serve.
@@ -74,9 +77,10 @@ export const planPracticeQueue = async (params: {
   const gateParkedOrigin = filter.scope === 'new_only' ? ('onboarding' as const) : undefined
   const runParking = filter.autoWarmup && wantExercises && filter.scope !== 'due_only'
 
-  // Daily-new budget. The clamped limit is also what the atomic park guard
-  // compares its own today-count against, so compose passes dailyBudget.max
-  // through to the pass.
+  // Combined daily-new budget (both pools' citation introductions). The
+  // clamped limit is also what the atomic park guard compares its own
+  // today-count against, so compose passes dailyBudget.max through to the
+  // pass.
   const clamped = clampPracticeSessionLimits(
     await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, targetLanguage)
   )
@@ -107,11 +111,11 @@ export const planPracticeQueue = async (params: {
     })
     backlogRowsByPool.set(pool, rows)
   }
-  const backlogCount = [...backlogRowsByPool.values()].reduce((n, rows) => n + rows.length, 0)
-
-  const parkBudget = runParking
-    ? Math.max(0, Math.min(MAX_WARMUP_INTRO_PER_SESSION, MAX_GATES_PER_COMPOSE - backlogCount))
-    : 0
+  // Per-session introduction pacing bounded by today's remaining budget. NOT
+  // coupled to the backlog: a full warm-up pipeline used to zero this out and
+  // silently starve introductions for days — newly-parked gates are served on
+  // top of the ≤MAX_GATES_PER_COMPOSE backlog slice instead.
+  const parkBudget = runParking ? Math.min(MAX_WARMUP_INTRO_PER_SESSION, dailyBudget.remaining) : 0
 
   // Intro candidates per pool (introduction-ordered). Recognition candidates
   // are needed even at parkBudget 0 — learn-extra and canLearnExtra read them.
@@ -124,18 +128,20 @@ export const planPracticeQueue = async (params: {
   }
 
   // Sequential allocation of the shared park budget: production first,
-  // recognition takes what's left, additionally bounded by the daily budget.
+  // recognition takes what's left (parkBudget is already bounded by the
+  // remaining combined daily budget).
   const productionCandidates = introCandidatesByPool.get('production') ?? []
   const recognitionCandidates = introCandidatesByPool.get('recognition') ?? []
   const plannedProduction = Math.min(parkBudget, productionCandidates.length)
-  const parkBudgetAfterProduction = parkBudget - plannedProduction
-  const plannedRecognition = Math.min(parkBudgetAfterProduction, dailyBudget.remaining, recognitionCandidates.length)
+  const plannedRecognition = Math.min(parkBudget - plannedProduction, recognitionCandidates.length)
+  const totalPlanned = plannedProduction + plannedRecognition
+  const totalCandidates = productionCandidates.length + recognitionCandidates.length
 
-  // Predicted cap hit: the recognition pass attempts min(budget-slots,
-  // candidates) parks and the (remaining+1)-th attempt is refused. This
-  // mirrors the transactional pass exactly, so on the race-free path
-  // prediction and outcome agree.
-  const dailyLimitReached = Math.min(parkBudgetAfterProduction, recognitionCandidates.length) > dailyBudget.remaining
+  // Predicted cap hit, forward-looking: after this compose's introductions the
+  // combined budget is spent while candidates remain. When session PACING is
+  // what stops at MAX_WARMUP_INTRO_PER_SESSION with budget left over, the flag
+  // stays false — the next compose introduces more today.
+  const dailyLimitReached = runParking && dailyBudget.remaining - totalPlanned === 0 && totalCandidates > totalPlanned
 
   const plannedExtraIntroductionIds =
     runParking && filter.learnExtraCount != null && filter.learnExtraCount > 0
@@ -146,8 +152,8 @@ export const planPracticeQueue = async (params: {
 
   // Cross-pool gate head-slice: MAX_GATES_PER_COMPOSE serve slots, production
   // first, oldest-parked kept (listParkedTerms returns oldest first). Newly
-  // parked terms are always served ON TOP of this slice — the coupled park
-  // budget already reserved their slots.
+  // parked terms are always served ON TOP of this slice, so a compose never
+  // introduces a term it doesn't also serve.
   let backlogSlotsLeft = MAX_GATES_PER_COMPOSE
   const perPool: PoolQueuePlan[] = []
   for (const pool of pools) {

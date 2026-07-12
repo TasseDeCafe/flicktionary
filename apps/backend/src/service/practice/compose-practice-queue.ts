@@ -4,7 +4,7 @@ import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-targe
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
 import { getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
 import { planPracticeQueue } from './plan-practice-queue'
-import { runProductionParkingPass, runRecognitionParkingPass } from './warmup-parking'
+import { runParkingPass } from './warmup-parking'
 
 export type ComposePracticeQueueDependencies = ExerciseBankDependencies & {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
@@ -53,9 +53,9 @@ export type ComposePracticeQueueResult = {
 // the ordering rationale). Selection and budget arithmetic live in
 // planPracticeQueue — shared verbatim with the preview endpoint — and this
 // function EXECUTES the plan: composing is a MUTATION when autoWarmup is on,
-// parking eligible new terms (stamping introduced_at, consuming the daily-new
-// budget) before serving. The coupled budget guarantees a compose never parks
-// more terms than it can serve in the same session, so opening Practice and
+// parking eligible new terms (stamping introduced_at, consuming the combined
+// daily budget) before serving. Newly-parked terms are always served in the
+// same compose (on top of the backlog gate slice), so opening Practice and
 // leaving never burns budget on terms the user was never shown.
 export const composePracticeQueue = async (params: {
   userId: string
@@ -75,50 +75,54 @@ export const composePracticeQueue = async (params: {
   const runParking = filter.autoWarmup && wantExercises && filter.scope !== 'due_only'
 
   // Parking pass (auto-warm-up), executing the plan's sequential allocation:
-  // production parks first, recognition eats what's left under its daily cap.
-  // The passes run over the FULL candidate lists (not the planned slice) so a
-  // concurrent tab's 'not_eligible' races backfill from later candidates.
+  // production parks first, recognition eats what's left — both under the
+  // COMBINED daily budget (the atomic guard compares against dailyBudget.max
+  // itself). The passes run over the FULL candidate lists (not the planned
+  // slice) so a concurrent tab's 'not_eligible' races backfill from later
+  // candidates.
   let transactionalCapReached = false
   const newlyParkedByPool = new Map<PracticePool, string[]>()
   if (runParking) {
     let parkBudget = plan.parkBudget
     const productionPlan = plan.perPool.find((p) => p.pool === 'production')
     if (productionPlan && parkBudget > 0) {
-      const pass = await runProductionParkingPass({
+      const pass = await runParkingPass({
         userId,
         targetLanguage,
+        pool: 'production',
         candidateUserLookupIds: productionPlan.introCandidateIds,
+        maxNewTerms: plan.dailyBudget.max,
         maxCount: parkBudget,
         deps,
       })
       newlyParkedByPool.set('production', pass.scaffolded)
+      transactionalCapReached = pass.dailyLimitReached
       parkBudget -= pass.scaffolded.length
     }
     const recognitionPlan = plan.perPool.find((p) => p.pool === 'recognition')
     if (recognitionPlan) {
-      // The FULL clamped per-language daily-new cap — the atomic park method
-      // does its own today-count comparison against it.
-      const maxNewTerms = plan.dailyBudget.max
       if (parkBudget > 0) {
-        const pass = await runRecognitionParkingPass({
+        const pass = await runParkingPass({
           userId,
           targetLanguage,
+          pool: 'recognition',
           candidateUserLookupIds: recognitionPlan.introCandidateIds,
-          maxNewTerms,
+          maxNewTerms: plan.dailyBudget.max,
           maxCount: parkBudget,
           deps,
         })
         newlyParkedByPool.set('recognition', pass.scaffolded)
-        transactionalCapReached = pass.dailyLimitReached
+        transactionalCapReached = transactionalCapReached || pass.dailyLimitReached
       }
       // Learn extra: the user explicitly asked for N more, so this pass
-      // ignores both the daily cap (bypassCap) and the coupled budget — the
-      // extra gates are always served, even past MAX_GATES_PER_COMPOSE.
+      // ignores both the daily cap (bypassCap) and the per-session budget —
+      // the extra gates are always served, even past MAX_GATES_PER_COMPOSE.
       if (filter.learnExtraCount != null && filter.learnExtraCount > 0) {
         const alreadyParked = new Set(newlyParkedByPool.get('recognition') ?? [])
-        const extra = await runRecognitionParkingPass({
+        const extra = await runParkingPass({
           userId,
           targetLanguage,
+          pool: 'recognition',
           candidateUserLookupIds: recognitionPlan.introCandidateIds.filter((id) => !alreadyParked.has(id)),
           maxNewTerms: plan.dailyBudget.max,
           maxCount: filter.learnExtraCount,

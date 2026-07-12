@@ -20,15 +20,14 @@ export const LEECH_GRADUATION_DAYS = 3
 // generate+verify cycles per exercise slot before the slot is marked failed.
 export const MAX_GEN_ATTEMPTS = 3
 
-// Composed-queue bounds (compose-practice-queue.ts). MAX_GATES_PER_COMPOSE
-// caps how many parked terms one compose/refresh SERVES — and therefore how
-// many ensureExerciseBank top-ups can fire per call — independent of how large
-// the parked population grows. MAX_WARMUP_INTRO_PER_SESSION caps how many new
-// terms one compose may auto-PARK into warm-up across both pools (recognition
-// is additionally daily-new-capped; this is the bound for production, which
-// has no daily cap, and for a first-ever large vocabulary). The effective
-// parking budget is further coupled to the serve slots left after the existing
-// backlog, so a compose never parks a term it can't serve in the same session.
+// Composed-queue bounds (compose-practice-queue.ts / plan-practice-queue.ts).
+// MAX_GATES_PER_COMPOSE caps how many BACKLOG gates one compose/refresh serves
+// — and therefore how many ensureExerciseBank top-ups can fire per call —
+// independent of how large the parked population grows; newly-parked gates
+// always serve on top of that slice. MAX_WARMUP_INTRO_PER_SESSION paces how
+// many new terms one compose may auto-PARK into warm-up across both pools;
+// the effective parking budget is min(this, the remaining combined daily-new
+// budget).
 export const MAX_WARMUP_INTRO_PER_SESSION = 10
 export const MAX_GATES_PER_COMPOSE = 20
 
