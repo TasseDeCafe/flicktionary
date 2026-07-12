@@ -1,7 +1,9 @@
 import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 
-// The Vocabulary tab's URL search shape (sort & filter state).
+// The Vocabulary tab's URL search shape (sort & filter state + deep-linked
+// target language).
 export type VocabularySearch = {
+  lang?: string
   sort?: ChunksSort
   status?: VocabStatus
   skills?: VocabFilterSkill[]

@@ -77,7 +77,8 @@ const toChunkRowDto = (row: ChunkRow) => ({
 // from decode means "ignore the cursor and start from page 1" — the
 // frontend should only ever feed us cursors we just emitted, so we treat a
 // malformed cursor as "fall back to page 1" rather than 400ing.
-const decodeCursor = (raw: string | null | undefined): ChunksCursor | null => {
+// Exported for unit tests.
+export const decodeCursor = (raw: string | null | undefined): ChunksCursor | null => {
   if (!raw) return null
   try {
     const json = Buffer.from(raw, 'base64').toString('utf8')
@@ -88,7 +89,7 @@ const decodeCursor = (raw: string | null | undefined): ChunksCursor | null => {
   }
 }
 
-const encodeCursor = (cursor: ChunksCursor | null): string | null => {
+export const encodeCursor = (cursor: ChunksCursor | null): string | null => {
   if (!cursor) return null
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }

@@ -39,23 +39,25 @@ export const VocabularyListView = () => {
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
   // Sort & filter state lives in the URL (see the route's search schema). Drop
-  // default/empty values when writing back so the URL stays clean.
+  // default/empty values when writing back so the URL stays clean. Every
+  // write goes through buildSearch so `lang` survives filter changes — a
+  // rebuilt search object that omitted it would silently kick a deep-linked
+  // user back to their default language.
   const filters: VocabFilters = {
     sort: search.sort ?? 'recent',
     status: search.status,
     skills: search.skills ?? [],
     hasMultipleForms: search.forms ?? false,
   }
+  const buildSearch = (lang: string | null, next: VocabFilters) => ({
+    ...(lang ? { lang } : {}),
+    ...(next.sort !== 'recent' ? { sort: next.sort } : {}),
+    ...(next.status ? { status: next.status } : {}),
+    ...(next.skills.length > 0 ? { skills: next.skills } : {}),
+    ...(next.hasMultipleForms ? { forms: true } : {}),
+  })
   const setFilters = (next: VocabFilters) => {
-    void navigate({
-      to: '/vocabulary',
-      search: {
-        ...(next.sort !== 'recent' ? { sort: next.sort } : {}),
-        ...(next.status ? { status: next.status } : {}),
-        ...(next.skills.length > 0 ? { skills: next.skills } : {}),
-        ...(next.hasMultipleForms ? { forms: true } : {}),
-      },
-    })
+    void navigate({ to: '/vocabulary', search: buildSearch(search.lang ?? null, next) })
   }
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -70,8 +72,20 @@ export const VocabularyListView = () => {
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
-  // The first language is the default until the user picks one via the switcher.
-  const selectedLanguage = pickedLanguage ?? languages?.[0] ?? null
+  // Deep-linked language wins, but only if the user actually has it: once the
+  // languages list arrives, a stale `?lang=` falls back to the saved/first
+  // language instead of rendering an unexplained empty list. While the list is
+  // still loading we trust the URL so the chunks query can start immediately.
+  const urlLang = search.lang && (languages ? languages.includes(search.lang) : true) ? search.lang : null
+  // URL > user's in-session pick > first language.
+  const selectedLanguage = urlLang ?? pickedLanguage ?? languages?.[0] ?? null
+
+  const handleLanguageSwitch = (next: string) => {
+    setSelectedLanguage(next)
+    // Keep the URL's language in sync so filter writes (which preserve
+    // search.lang) don't resurrect a previously deep-linked language.
+    void navigate({ to: '/vocabulary', search: buildSearch(next, filters) })
+  }
 
   const {
     data,
@@ -184,6 +198,27 @@ export const VocabularyListView = () => {
     )
   }
 
+  const stageDescription = (() => {
+    switch (filters.status) {
+      case 'due':
+        return t`Terms with a review waiting right now.`
+      case 'up_next':
+        return t`Never-studied terms in the order practice will introduce them.`
+      case 'warming_up':
+        return t`Being introduced through warm-up exercises before their first flashcard.`
+      case 'learning':
+        return t`In short-term learning — follow-ups come back within days.`
+      case 'review':
+        return t`Graduated to long-term review.`
+      case 'strengthen':
+        return t`Set aside after repeated misses — practice serves them as strengthen exercises.`
+      case 'unseen':
+        return t`Never studied and not queued — saving or encountering them again moves them up.`
+      default:
+        return null
+    }
+  })()
+
   const isInitialLoad = chunksLoading && rows.length === 0
   const showEmpty = !chunksLoading && !languagesLoading && rows.length === 0 && (languages?.length ?? 0) === 0
   const showLanguageEmpty = !chunksLoading && !languagesLoading && rows.length === 0 && (languages?.length ?? 0) > 0
@@ -208,17 +243,17 @@ export const VocabularyListView = () => {
       {languagesLoading && <VocabularyLanguageSwitcherSkeleton />}
 
       {languages && languages.length > 1 && selectedLanguage && (
-        <VocabularyLanguageSwitcher
-          languages={languages}
-          value={selectedLanguage}
-          onChange={(next) => setSelectedLanguage(next)}
-        />
+        <VocabularyLanguageSwitcher languages={languages} value={selectedLanguage} onChange={handleLanguageSwitch} />
       )}
 
       <div className='flex items-center gap-2'>
         <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='flex-1' />
         <VocabularyFilterControl filters={filters} onChange={setFilters} />
       </div>
+
+      {/* Deep-links (the practice landing's stage rows) drop users straight
+          into a filtered list — the one-liner says what the bucket means. */}
+      {stageDescription && <p className='text-muted-foreground -mt-1 text-xs'>{stageDescription}</p>}
 
       {showEmpty && <VocabularyEmptyState />}
 

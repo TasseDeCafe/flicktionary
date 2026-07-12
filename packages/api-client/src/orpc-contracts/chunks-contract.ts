@@ -24,7 +24,19 @@ export const VOCAB_FILTER_SKILLS = ['recognition', 'production', 'pronunciation'
 export const VocabFilterSkillSchema = z.enum(VOCAB_FILTER_SKILLS)
 export type VocabFilterSkill = z.infer<typeof VocabFilterSkillSchema>
 
-export const VocabStatusSchema = z.enum(['due', 'unseen'])
+// SRS stages of the citation recognition facet. The six stages are DISJOINT
+// and partition a language's kept terms exactly (the practice landing's
+// segmented bar depends on that): up_next = eligible to be introduced (the
+// stage IS the introduction queue, so it forces queue ordering server-side),
+// warming_up = parked before first review, learning = in short-term learning
+// states, review = graduated, strengthen = leech-parked, unseen = everything
+// never studied and not currently introducible (missing/disabled facet, or
+// decayed out of freshness).
+export const VOCAB_STAGES = ['up_next', 'warming_up', 'learning', 'review', 'strengthen', 'unseen'] as const
+export const VocabStageSchema = z.enum(VOCAB_STAGES)
+export type VocabStage = z.infer<typeof VocabStageSchema>
+
+export const VocabStatusSchema = z.enum(['due', ...VOCAB_STAGES])
 export type VocabStatus = z.infer<typeof VocabStatusSchema>
 
 export const ChunksCursorSchema = z.union([
@@ -42,6 +54,18 @@ export const ChunksCursorSchema = z.union([
   z.object({
     sort: z.literal('due'),
     phase: z.literal('unscheduled'),
+    id: z.string().uuid(),
+  }),
+  // status='up_next' pages in introduction order (newTermOrderSql): tier, zipf
+  // DESC, created_at, headword, sense, id. All keys ride the cursor so one row
+  // comparison resumes the scan; zipfKey carries COALESCE(zipf_estimate, -1).
+  z.object({
+    sort: z.literal('queue'),
+    tier: z.number().int(),
+    zipfKey: z.number(),
+    createdAt: z.string(),
+    headword: z.string(),
+    sense: z.string(),
     id: z.string().uuid(),
   }),
 ])
@@ -143,7 +167,9 @@ export const chunksContract = {
         // serialization; the server splits + validates, ignoring unknown tokens.
         skills: z.string().optional(),
         // Study-state bucket on the citation recognition facet: 'due' = a review
-        // is waiting now, 'unseen' = never studied. Omitted = no status filter.
+        // is waiting now; the six VOCAB_STAGES partition the kept terms (see
+        // VocabStageSchema). 'up_next' additionally forces introduction-queue
+        // ordering server-side — `sort` is ignored for it. Omitted = no filter.
         status: VocabStatusSchema.optional(),
         // Keep only terms studied in at least one inflected form (an enabled
         // facet with a non-empty target_form). GET delivers the boolean as a
