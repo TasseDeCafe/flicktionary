@@ -10,7 +10,8 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { RecapQueueItem } from '../utils/build-recap-questions'
 import { ExerciseLayout } from './exercise-layout'
-import { BlankedSentence } from './blanked-sentence'
+import { GlossableArea } from './glossable-area'
+import { SelectableSentence } from './selectable-sentence'
 
 type TypedItem = Extract<RecapQueueItem, { kind: 'typed' }>
 
@@ -42,6 +43,7 @@ export const RecapTypedExercise = ({
   const [text, setText] = useState('')
   const [result, setResult] = useState<boolean | null>(null)
   const [gaveUp, setGaveUp] = useState(false)
+  const [glossOpen, setGlossOpen] = useState(false)
 
   // With the blanked sentence shown, its context pins the verbal aspect; when
   // the sentence is withheld the gloss alone is ambiguous between aspect twins
@@ -77,12 +79,15 @@ export const RecapTypedExercise = ({
   // Enter-to-submit; single letters must type, not skip) — so besides the
   // post-answer advance, only Escape (which the input can't consume) rides
   // the global hook: it's the skip key that works mid-typing.
-  useHotkeys([
-    { key: 'enter', enabled: result === null, onPress: handleSubmit },
-    { key: 'escape', enabled: result === null, allowInEditable: true, onPress: onSkip },
-    { key: 'enter', enabled: result !== null, allowInEditable: true, onPress: onNext },
-    { key: 'space', enabled: result !== null, allowInEditable: true, onPress: onNext },
-  ])
+  useHotkeys(
+    [
+      { key: 'enter', enabled: result === null, onPress: handleSubmit },
+      { key: 'escape', enabled: result === null, allowInEditable: true, onPress: onSkip },
+      { key: 'enter', enabled: result !== null, allowInEditable: true, onPress: onNext },
+      { key: 'space', enabled: result !== null, allowInEditable: true, onPress: onNext },
+    ],
+    !glossOpen
+  )
 
   return (
     <ExerciseLayout
@@ -154,7 +159,26 @@ export const RecapTypedExercise = ({
       </div>
 
       {item.blanked && (
-        <BlankedSentence sentence={item.blanked.sentence} blankStart={item.blanked.start} blankEnd={item.blanked.end} />
+        <GlossableArea
+          targetLanguage={targetLanguage}
+          owners={{
+            stem: {
+              sourceText: item.blanked.sentence,
+              contextText: item.blanked.sentence,
+              // The blanked span IS the answer — permanently rejected.
+              rejectedRanges: [{ start: item.blanked.start, end: item.blanked.end }],
+            },
+          }}
+          onOpenChange={setGlossOpen}
+        >
+          <SelectableSentence
+            text={item.blanked.sentence}
+            targetLanguage={targetLanguage}
+            ownerKey='stem'
+            blank={{ start: item.blanked.start, end: item.blanked.end }}
+            className='text-lg leading-relaxed'
+          />
+        </GlossableArea>
       )}
 
       <input

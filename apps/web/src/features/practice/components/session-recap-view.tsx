@@ -164,6 +164,7 @@ const RecapQuiz = ({
     <RecapMcExercise
       key={current.key}
       item={current}
+      targetLanguage={targetLanguage}
       header={header}
       onAnswered={handleAnswered}
       onSkip={handleSkip}

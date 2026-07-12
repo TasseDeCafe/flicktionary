@@ -8,8 +8,10 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
-import { BlankedSentence } from './blanked-sentence'
+import type { GlossOwner } from '../utils/resolve-gloss-selection'
 import { ExerciseLayout } from './exercise-layout'
+import { GlossableArea } from './glossable-area'
+import { SelectableSentence } from './selectable-sentence'
 import { MeaningLine, RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
@@ -21,6 +23,7 @@ type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_com
 export const McExercise = ({
   exerciseId,
   payload,
+  targetLanguage,
   meaning,
   header,
   statusBar,
@@ -33,6 +36,7 @@ export const McExercise = ({
 }: {
   exerciseId: string
   payload: McPayload
+  targetLanguage: string
   // The term's resolved meaning line (see useTermMeaning). On mc_cloze it
   // powers an opt-in Hint button — never shown unprompted, so the gate stays a
   // fair test. mc_comprehension gets no hint (its options ARE meaning
@@ -59,8 +63,38 @@ export const McExercise = ({
   const [selected, setSelected] = useState<number | null>(null)
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
   const [hintRevealed, setHintRevealed] = useState(false)
+  const [glossOpen, setGlossOpen] = useState(false)
 
   const hintAvailable = payload.type === 'mc_cloze' && !!meaning
+
+  // Select-to-gloss gating. The cloze blank is ALWAYS rejected (the served
+  // sentence contains the hidden answer at that span); the comprehension term
+  // is rejected until the answer lands, then unlocks. Rows generated before
+  // the term span existed can't be gated word-by-word, so their whole sentence
+  // stays gloss-locked pre-answer instead.
+  const blankSpan = payload.type === 'mc_cloze' ? { start: payload.blankStart, end: payload.blankEnd } : null
+  const termSpan =
+    payload.type === 'mc_comprehension' && payload.termStart != null && payload.termEnd != null
+      ? { start: payload.termStart, end: payload.termEnd }
+      : null
+  const stemRejectedRanges = blankSpan ? [blankSpan] : termSpan && !result ? [termSpan] : []
+  // mc_cloze options are target-language words — glossable once the answer is
+  // in. mc_comprehension options are native-language paraphrases; never
+  // tokenized (a native→native gloss is useless).
+  const optionsGlossable = payload.type === 'mc_cloze' && !!result
+  const glossOwners: Record<string, GlossOwner> = {
+    stem: { sourceText: payload.sentence, contextText: payload.sentence, rejectedRanges: stemRejectedRanges },
+    ...(optionsGlossable
+      ? Object.fromEntries(
+          payload.options.map((option, index): [string, GlossOwner] => [
+            `option-${index}`,
+            // The stem is the gloss context: a lone option word carries no
+            // usable context of its own.
+            { sourceText: option, contextText: payload.sentence, rejectedRanges: [] },
+          ])
+        )
+      : {}),
+  }
 
   const handleSelect = (index: number) => {
     if (result || isPending) return
@@ -92,7 +126,7 @@ export const McExercise = ({
       { key: 'enter', enabled: !!result, onPress: onNext },
       { key: 'space', enabled: !!result, onPress: onNext },
     ],
-    hotkeysEnabled
+    hotkeysEnabled && !glossOpen
   )
 
   // flex-1 only when sharing a row with the Hint button — standalone in the
@@ -159,46 +193,84 @@ export const McExercise = ({
         )
       }
     >
-      {payload.type === 'mc_cloze' ? (
-        <BlankedSentence sentence={payload.sentence} blankStart={payload.blankStart} blankEnd={payload.blankEnd} />
-      ) : (
-        <div className='flex flex-col gap-3'>
-          <p className='text-lg leading-relaxed'>{payload.sentence}</p>
-          <p className='font-medium'>{payload.prompt}</p>
+      <GlossableArea
+        targetLanguage={targetLanguage}
+        owners={glossOwners}
+        onOpenChange={setGlossOpen}
+        className='flex flex-col gap-5'
+      >
+        {payload.type === 'mc_cloze' ? (
+          <SelectableSentence
+            text={payload.sentence}
+            targetLanguage={targetLanguage}
+            ownerKey='stem'
+            blank={blankSpan}
+            className='text-lg leading-relaxed'
+          />
+        ) : (
+          <div className='flex flex-col gap-3'>
+            <SelectableSentence
+              text={payload.sentence}
+              targetLanguage={targetLanguage}
+              ownerKey='stem'
+              // Pre-span rows can't block the term word-by-word, so the whole
+              // sentence stays unselectable until answered.
+              enabled={termSpan !== null || !!result}
+              highlight={termSpan}
+              blockedRanges={stemRejectedRanges}
+              className='text-lg leading-relaxed'
+            />
+            <p className='font-medium'>{payload.prompt}</p>
+          </div>
+        )}
+
+        {hintRevealed && !result && meaning && (
+          <p className='text-muted-foreground text-sm'>
+            {t`Hint:`} {meaning}
+          </p>
+        )}
+
+        <div className='flex flex-col gap-2'>
+          {payload.options.map((option, index) => {
+            const isSelected = selected === index
+            const isCorrectOption = result?.correctIndex === index
+            return (
+              <button
+                key={index}
+                type='button'
+                // A disabled button swallows the pointer events the gloss
+                // gesture needs, so once cloze options become glossable the
+                // button stays enabled and handleSelect's result-guard does
+                // the disabling instead.
+                disabled={optionsGlossable ? isPending : !!result || isPending}
+                aria-disabled={!!result}
+                onClick={() => handleSelect(index)}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                  !result && 'hover:bg-accent active:bg-accent',
+                  result && 'cursor-default',
+                  isSelected && !result && 'border-foreground',
+                  result && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
+                  result && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',
+                  result && !isSelected && !isCorrectOption && 'opacity-60'
+                )}
+              >
+                {showKbd && <Kbd className='shrink-0'>{index + 1}</Kbd>}
+                {optionsGlossable ? (
+                  <SelectableSentence
+                    text={option}
+                    targetLanguage={targetLanguage}
+                    ownerKey={`option-${index}`}
+                    as='span'
+                  />
+                ) : (
+                  <span>{option}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
-      )}
-
-      {hintRevealed && !result && meaning && (
-        <p className='text-muted-foreground text-sm'>
-          {t`Hint:`} {meaning}
-        </p>
-      )}
-
-      <div className='flex flex-col gap-2'>
-        {payload.options.map((option, index) => {
-          const isSelected = selected === index
-          const isCorrectOption = result?.correctIndex === index
-          return (
-            <button
-              key={index}
-              type='button'
-              disabled={!!result || isPending}
-              onClick={() => handleSelect(index)}
-              className={cn(
-                'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
-                !result && 'hover:bg-accent active:bg-accent',
-                isSelected && !result && 'border-foreground',
-                result && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
-                result && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',
-                result && !isSelected && !isCorrectOption && 'opacity-60'
-              )}
-            >
-              {showKbd && <Kbd className='shrink-0'>{index + 1}</Kbd>}
-              <span>{option}</span>
-            </button>
-          )
-        })}
-      </div>
+      </GlossableArea>
     </ExerciseLayout>
   )
 }

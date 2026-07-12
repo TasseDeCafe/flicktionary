@@ -8,8 +8,9 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
-import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
+import { GlossableArea } from './glossable-area'
+import { SelectableSentence } from './selectable-sentence'
 import { MeaningLine, RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'production_cloze' }>
@@ -23,6 +24,7 @@ type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'produc
 export const ProductionClozeExercise = ({
   exerciseId,
   payload,
+  targetLanguage,
   meaning,
   header,
   statusBar,
@@ -33,6 +35,7 @@ export const ProductionClozeExercise = ({
 }: {
   exerciseId: string
   payload: ProductionClozePayload
+  targetLanguage: string
   // The term's resolved meaning line (see useTermMeaning). Behind an opt-in
   // Hint button — the payload's own generation-time hint is the fallback for
   // terms whose lookup has neither translation nor definition.
@@ -54,9 +57,14 @@ export const ProductionClozeExercise = ({
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
   const [hintRevealed, setHintRevealed] = useState(false)
   const [gaveUp, setGaveUp] = useState(false)
+  const [glossOpen, setGlossOpen] = useState(false)
 
   const hintText = meaning ?? payload.hint
   const hintAvailable = !!hintText
+
+  // The blank is the answer — permanently rejected so a drag sweeping across
+  // it can't surface the hidden text in the gloss sheet.
+  const blankSpan = { start: payload.blankStart, end: payload.blankEnd }
 
   const handleSubmit = () => {
     const trimmed = text.trim()
@@ -100,7 +108,7 @@ export const ProductionClozeExercise = ({
       { key: 'enter', enabled: !!result, allowInEditable: true, onPress: onNext },
       { key: 'space', enabled: !!result, allowInEditable: true, onPress: onNext },
     ],
-    hotkeysEnabled
+    hotkeysEnabled && !glossOpen
   )
 
   return (
@@ -202,7 +210,21 @@ export const ProductionClozeExercise = ({
         )
       }
     >
-      <BlankedSentence sentence={payload.sentence} blankStart={payload.blankStart} blankEnd={payload.blankEnd} />
+      <GlossableArea
+        targetLanguage={targetLanguage}
+        owners={{
+          stem: { sourceText: payload.sentence, contextText: payload.sentence, rejectedRanges: [blankSpan] },
+        }}
+        onOpenChange={setGlossOpen}
+      >
+        <SelectableSentence
+          text={payload.sentence}
+          targetLanguage={targetLanguage}
+          ownerKey='stem'
+          blank={blankSpan}
+          className='text-lg leading-relaxed'
+        />
+      </GlossableArea>
       {hintRevealed && !result && hintText && (
         <p className='text-muted-foreground text-sm'>
           {t`Hint:`} {hintText}
