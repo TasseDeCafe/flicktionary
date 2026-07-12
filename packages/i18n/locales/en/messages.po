@@ -1048,6 +1048,10 @@ msgstr "Couldn't remove the form"
 msgid "Couldn't save the form's data"
 msgstr "Couldn't save the form's data"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Covers recognition and production combined."
+msgstr "Covers recognition and production combined."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Create an account (or sign in) here in the web app."
 msgstr "Create an account (or sign in) here in the web app."
@@ -2271,6 +2275,12 @@ msgstr "Intermediate — handle most travel and everyday topics."
 msgid "Introduce your card details and get instant access"
 msgstr "Introduce your card details and get instant access"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Introductions are capped per day. Follow-up sessions use up to this many "
+"review terms."
+msgstr "Introductions are capped per day. Follow-up sessions use up to this "
+"many review terms."
+
 #: apps/native/src/config/react-query-config.ts
 msgid "Invalid token. Please sign in again."
 msgstr "Invalid token. Please sign in again."
@@ -2609,6 +2619,10 @@ msgstr "New"
 msgid "New cards"
 msgstr "New cards"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "New introductions per day"
+msgstr "New introductions per day"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New only"
 msgstr "New only"
@@ -2622,16 +2636,6 @@ msgstr "New pronunciation/form cards are introductions — not available in a "
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "New session"
 msgstr "New session"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
-msgid "New terms"
-msgstr "New terms"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
-msgid "New terms are capped per day. Follow-up sessions use up to this many "
-"review terms."
-msgstr "New terms are capped per day. Follow-up sessions use up to this many "
-"review terms."
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include "
