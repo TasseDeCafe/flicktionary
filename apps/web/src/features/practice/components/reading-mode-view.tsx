@@ -72,6 +72,9 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [lookupSelection, setLookupSelection] = useState<PlainSelection | null>(null)
   const [lookupOpen, setLookupOpen] = useState(false)
+  // Selection paint persists while the lookup sheet is open; the close handler
+  // must sweep it up (see the use-word-selection contract).
+  const clearLookupPaintRef = useRef<(() => void) | null>(null)
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
 
   const liveText = history[history.length - 1] ?? null
@@ -350,6 +353,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
                   annotations={annotations}
                   onAnnotationClick={handleAnnotationClick}
                   onPlainSelection={handlePlainSelection}
+                  clearPaintRef={clearLookupPaintRef}
                 />
               </article>
             )
@@ -437,15 +441,16 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         isDeleting={isDeleting}
         onConfirm={handleDeleteConfirm}
       />
-      {liveText?.body && liveText.id && (
+      {liveText?.body && (
         <LookupSheet
           open={lookupOpen}
           selection={lookupSelection}
-          practiceTextId={liveText.id}
+          contextText={liveText.body}
           targetLanguage={targetLanguage}
-          pool={pool}
-          practiceTextBody={liveText.body}
-          onClose={() => setLookupOpen(false)}
+          onClose={() => {
+            setLookupOpen(false)
+            clearLookupPaintRef.current?.()
+          }}
         />
       )}
     </div>

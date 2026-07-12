@@ -50,10 +50,7 @@ import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/r
 import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
 import { generateReadingText, prepareNextReadingText } from '../../service/practice/generate-reading-text'
 import { advanceReadingText, type AdvanceReadingTextDependencies } from '../../service/practice/advance-reading-text'
-import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
-import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 
 export type PracticeRouterDependencies = {
   practiceTextsRepository: PracticeTextsRepositoryInterface
@@ -63,7 +60,6 @@ export type PracticeRouterDependencies = {
   studyFacetsRepository: StudyFacetsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
-  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
 }
 
@@ -754,41 +750,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         deps: { studyFacetsRepository: deps.studyFacetsRepository },
       })
       return { data: { unparked } }
-    }),
-
-    fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const found = await deps.practiceTextsRepository.findByIdForUser(input.practiceTextId, userId)
-      if (!found) {
-        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
-      }
-      const body = found.practiceText.body
-      if (!body || body.length === 0) {
-        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Practice text has no body yet' }] } })
-      }
-      const languagePrefs = await getLanguageMode({
-        userId,
-        targetLanguage: found.targetLanguage,
-        usersRepository: deps.usersRepository,
-        targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
-      })
-      if (!languagePrefs.nativeLanguage) {
-        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
-      }
-      const gloss = await fastGlossPass({
-        targetLanguage: found.targetLanguage,
-        nativeLanguage: languagePrefs.nativeLanguage,
-        hideTranslationFields: languagePrefs.hideTranslationFields,
-        contextLine: body,
-        selectionText: input.selectionText,
-      })
-      const ipaResult = await lookupFastGlossIpa({
-        targetLanguage: found.targetLanguage,
-        selectionText: input.selectionText,
-        pos: gloss.pos,
-        wiktionaryEntriesRepository: deps.wiktionaryEntriesRepository,
-      })
-      return { data: { ...gloss, ipa: ipaResult?.ipa ?? null, ipaLemma: ipaResult?.lemma ?? null } }
     }),
   })
 

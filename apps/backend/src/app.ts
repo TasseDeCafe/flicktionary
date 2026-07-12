@@ -459,7 +459,6 @@ export const buildApp = ({
       studyFacetsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
-      wiktionaryEntriesRepository,
       studySessionsRepository,
     })
   )

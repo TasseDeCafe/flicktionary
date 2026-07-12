@@ -6,7 +6,6 @@ import {
   ExerciseAnswerSchema,
   ExerciseTypeSchema,
   FacetSkillSchema,
-  GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticePoolSchema,
   PracticeQueueFilterSchema,
@@ -475,35 +474,4 @@ export const practiceContract = {
       })
     )
     .output(z.object({ data: z.object({ unparked: z.boolean() }) })),
-
-  // Selection-driven gloss for a practice text. Re-uses the same Haiku prompt
-  // as highlights.fastGloss, but keyed to a practice_text (so the LLM can use
-  // the body as context) without requiring a highlight row. No persistence —
-  // the client caches via TanStack Query keyed on (textId, selectionText).
-  fastGloss: oc
-    .route({ method: 'POST', path: '/practice/texts/{practiceTextId}/fast-gloss', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        practiceTextId: z.string().uuid(),
-        selectionText: z.string().trim().min(1).max(200),
-      })
-    )
-    .output(
-      z.object({
-        data: z.object({
-          gloss: z.string(),
-          pos: z.string().nullable(),
-          register: z.string().nullable(),
-          ipa: GrammarIpaBagSchema.nullable(),
-          // Lemma the IPA was sourced from on form-of fallback — see
-          // glosses-contract's fastGloss output for the convention.
-          ipaLemma: z.string().nullable(),
-        }),
-      })
-    ),
 } as const
