@@ -691,14 +691,17 @@ sets from the same column. Everything below "park" is shared.
   fail with zero reasons — a state the verify prompt forbids — is re-verified once before
   it counts, so a malformed tool call can't silently convert passes into rejections. Blank
   offsets are computed server-side by substring search over the emitted `surface_form`
-  (never LLM char arithmetic); a deterministic guard rejects any sentence/`surface_form`
-  containing underscores — the generator occasionally writes the sentence pre-blanked and
-  echoes the blank back as the surface form, which would store the underscores as the
-  answer — so the retry cycle regenerates instead (both cloze prompts also forbid it
-  explicitly); options are shuffled server-side. Generation prompts work
-  from headword + sense (+ definition/translation when present) — no dependency on stored
-  examples. `use_in_sentence` payloads are built deterministically (no LLM at generation
-  time).
+  (never LLM char arithmetic); `mc_comprehension` requires a `surface_form` too and
+  locates the term the same way, storing `termStart`/`termEnd` in the payload (served as
+  optional fields — rows generated before the span existed serve without them, and the
+  bank refreshes naturally since exercises are consume-on-answer). A deterministic guard
+  rejects any sentence/`surface_form` containing underscores — the generator occasionally
+  writes the sentence pre-blanked and echoes the blank back as the surface form, which
+  would store the underscores as the answer — so the retry cycle regenerates instead
+  (the cloze and comprehension prompts also forbid it explicitly); options are shuffled
+  server-side. Generation prompts work from headword + sense (+ definition/translation
+  when present) — no dependency on stored examples. `use_in_sentence` payloads are built
+  deterministically (no LLM at generation time).
 - **Grading is server-side only.** Served payloads are stripped of `answer` /
   `answerIndex` / `acceptedForms`; the truth (`correctIndex` / `correctAnswer`) is
   revealed only in the answer response, after the exercise is consumed. MC = index
@@ -843,6 +846,27 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   always visible, height-capped — instead of the scrollable body.
   Flashcard items render `FlashcardFace` (the extracted presentational card body) +
   `RateButtons`.
+- **Select-to-gloss on exercise sentences.** Exercise stems render through
+  `SelectableSentence` (word pieces per the `use-word-selection` span contract) inside a
+  per-exercise `GlossableArea`, which owns the gesture and mounts the same fire-and-forget
+  `LookupSheet` as reading mode (stateless `glosses.fastGloss`, `cards.createAdhoc` save;
+  the stem sentence is the context). Gating, enforced by a pure resolver
+  (`resolveGlossSelection`) that rejects any selection overlapping a rejected range:
+  - The **cloze blank** (`mc_cloze` / `production_cloze`) renders as the `______` gap and
+    its span is **always** rejected — the served sentence physically contains the hidden
+    answer there, so a drag sweeping across it must never reach the sheet.
+  - The **comprehension term** (`mc_comprehension`) is underlined via the served
+    `termStart`/`termEnd` (same style as the recap quiz) and its span is rejected until
+    the answer lands, then unlocks. Pre-span rows (no offsets in the payload) can't be
+    gated word-by-word, so their whole sentence stays unselectable pre-answer.
+  - **Options**: only `mc_cloze` options become glossable, post-answer (they're
+    target-language words; the stem is their gloss context). `mc_comprehension` options
+    are native-language paraphrases and stay plain.
+  Exercise hotkeys (numbers, Skip, Enter/Space, production's Escape) are inert while a
+  gloss sheet is open; closing the sheet clears the selection paint. Saved terms land
+  Unseen, exactly like reading-mode saves — no effect on the running session or budgets.
+  Applies to every exercise host: warm-up/strengthen sessions, the composed queue, and
+  flashcard-hint mode (the session-recap quiz mirrors this — see REVIEW-SPEC).
 - **Flashcard hint**: on the un-flipped front of a live citation-meaning flashcard, a
   `Hint` button appears beside `Show answer` when `practice.getHintExercise` has a ready
   exercise (availability is best-effort — null or a failed check just hides the button;

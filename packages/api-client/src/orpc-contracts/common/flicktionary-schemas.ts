@@ -595,6 +595,12 @@ export const McComprehensionPayloadSchema = z.object({
   sentence: z.string(),
   prompt: z.string(),
   options: z.array(z.string()).length(4),
+  // Where the term's surface form sits in the sentence (underline +
+  // select-to-gloss blocking). Optional: rows generated before the span
+  // existed lack it — clients fall back to no underline and keep the sentence
+  // gloss locked until the exercise is answered.
+  termStart: z.number().int().optional(),
+  termEnd: z.number().int().optional(),
 })
 export const ProductionClozePayloadSchema = z.object({
   type: z.literal('production_cloze'),

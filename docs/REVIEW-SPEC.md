@@ -91,6 +91,15 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   "Nothing to quiz yet" empty state.
   Per-session CSV export is gone from this screen — exports happen from the
   Vocabulary tab instead.
+  **Select-to-gloss**: the quiz sentences are glossable like practice exercises
+  (per-exercise `GlossableArea` + the fire-and-forget `LookupSheet`; see
+  docs/SRS.md's select-to-gloss section). On the MC stem the underlined term's
+  span is blocked until answered (glossing it would answer the question); on
+  the typed question's blanked sentence the blank span is permanently blocked
+  (it IS the answer). MC options stay plain (native-language glosses). This is
+  the one deliberate exception to "zero-LLM": an on-demand gloss/save is a
+  user-initiated lookup, not part of the quiz — the quiz itself still makes no
+  backend calls, and quiz hotkeys are inert while a gloss sheet is open.
 - No chat here. This layer is for fast review.
 
 ## Layer 2 — Focus view (modal screen pushed above the tab navigator)

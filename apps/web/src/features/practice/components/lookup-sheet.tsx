@@ -46,6 +46,9 @@ interface LookupSheetProps {
   // line AND as the adhoc card's LLM context.
   contextText: string
   targetLanguage: string
+  // Forwarded to FloatingSheet so pointerdowns on selectable word pieces swap
+  // the sheet's content in place instead of dismissing it.
+  ignoreOutsidePointerDownSelector?: string
   onClose: () => void
 }
 
@@ -53,7 +56,14 @@ const CONTEXT_MAX = 2000
 
 const selectionKeyOf = (selection: PlainSelection) => `${selection.charStart}:${selection.text}`
 
-export const LookupSheet = ({ open, selection, contextText, targetLanguage, onClose }: LookupSheetProps) => {
+export const LookupSheet = ({
+  open,
+  selection,
+  contextText,
+  targetLanguage,
+  ignoreOutsidePointerDownSelector,
+  onClose,
+}: LookupSheetProps) => {
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
   const { mutateAsync: fetchGloss } = useStatelessGloss()
@@ -183,6 +193,7 @@ export const LookupSheet = ({ open, selection, contextText, targetLanguage, onCl
         anchor={selection?.rect ?? null}
         modal={false}
         closeOnScroll
+        ignoreOutsidePointerDownSelector={ignoreOutsidePointerDownSelector}
       >
         <FloatingSheetContent>
           <FloatingSheetHeader>

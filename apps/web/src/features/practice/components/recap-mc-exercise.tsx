@@ -8,6 +8,8 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import type { RecapQueueItem } from '../utils/build-recap-questions'
 import { ExerciseLayout } from './exercise-layout'
+import { GlossableArea } from './glossable-area'
+import { SelectableSentence } from './selectable-sentence'
 
 type McItem = Extract<RecapQueueItem, { kind: 'mc' }>
 
@@ -18,12 +20,14 @@ type McItem = Extract<RecapQueueItem, { kind: 'mc' }>
 // doesn't spoil a meaning question.
 export const RecapMcExercise = ({
   item,
+  targetLanguage,
   header,
   onAnswered,
   onSkip,
   onNext,
 }: {
   item: McItem
+  targetLanguage: string
   header: ReactNode
   onAnswered: (correct: boolean) => void
   // Skip = "I don't know": advances without revealing the answer (pick an
@@ -35,10 +39,16 @@ export const RecapMcExercise = ({
   const isMobile = useIsMobile()
   const showKbd = !isMobile
   const [selected, setSelected] = useState<number | null>(null)
+  const [glossOpen, setGlossOpen] = useState(false)
 
   const answered = selected !== null
   const correct = selected === item.answerIndex
   const headword = item.term.headword
+
+  // The underlined term IS the question pre-answer — glossing it would answer
+  // the exercise, so its span is rejected until the answer lands. Options stay
+  // plain: they're native-language glosses.
+  const stemSpan = item.stem ? { start: item.stem.start, end: item.stem.end } : null
 
   const handleSelect = (index: number) => {
     if (answered) return
@@ -46,19 +56,22 @@ export const RecapMcExercise = ({
     onAnswered(index === item.answerIndex)
   }
 
-  useHotkeys([
-    ...item.options.map(
-      (_, index): HotkeyBinding => ({
-        key: String(index + 1),
-        enabled: !answered,
-        onPress: () => handleSelect(index),
-      })
-    ),
-    { key: 's', enabled: !answered, onPress: onSkip },
-    { key: 'escape', enabled: !answered, onPress: onSkip },
-    { key: 'enter', enabled: answered, onPress: onNext },
-    { key: 'space', enabled: answered, onPress: onNext },
-  ])
+  useHotkeys(
+    [
+      ...item.options.map(
+        (_, index): HotkeyBinding => ({
+          key: String(index + 1),
+          enabled: !answered,
+          onPress: () => handleSelect(index),
+        })
+      ),
+      { key: 's', enabled: !answered, onPress: onSkip },
+      { key: 'escape', enabled: !answered, onPress: onSkip },
+      { key: 'enter', enabled: answered, onPress: onNext },
+      { key: 'space', enabled: answered, onPress: onNext },
+    ],
+    !glossOpen
+  )
 
   return (
     <ExerciseLayout
@@ -91,16 +104,28 @@ export const RecapMcExercise = ({
       }
     >
       {item.stem ? (
-        <div className='flex flex-col gap-3'>
-          <p className='text-lg leading-relaxed'>
-            {item.stem.sentence.slice(0, item.stem.start)}
-            <span className='font-semibold underline decoration-yellow-400 decoration-2 underline-offset-4'>
-              {item.stem.sentence.slice(item.stem.start, item.stem.end)}
-            </span>
-            {item.stem.sentence.slice(item.stem.end)}
-          </p>
+        <GlossableArea
+          targetLanguage={targetLanguage}
+          owners={{
+            stem: {
+              sourceText: item.stem.sentence,
+              contextText: item.stem.sentence,
+              rejectedRanges: answered || !stemSpan ? [] : [stemSpan],
+            },
+          }}
+          onOpenChange={setGlossOpen}
+          className='flex flex-col gap-3'
+        >
+          <SelectableSentence
+            text={item.stem.sentence}
+            targetLanguage={targetLanguage}
+            ownerKey='stem'
+            highlight={stemSpan}
+            blockedRanges={answered || !stemSpan ? [] : [stemSpan]}
+            className='text-lg leading-relaxed'
+          />
           <p className='font-medium'>{t`What does the highlighted term mean?`}</p>
-        </div>
+        </GlossableArea>
       ) : (
         <p className='font-medium'>{t`What does “${headword}” mean?`}</p>
       )}
