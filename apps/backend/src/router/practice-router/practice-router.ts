@@ -4,6 +4,7 @@ import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normali
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
+import { DEFAULT_PRACTICE_QUEUE_FILTER } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import {
   mergeFacet,
@@ -41,6 +42,7 @@ import {
   type ComposedQueueItem,
   type ComposePracticeQueueDependencies,
 } from '../../service/practice/compose-practice-queue'
+import { planPracticeQueue, type PracticeQueuePlan } from '../../service/practice/plan-practice-queue'
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/rehab'
@@ -171,7 +173,40 @@ const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
 export const toQueueItemDto = (item: ComposedQueueItem) =>
   item.type === 'flashcard'
     ? { type: 'flashcard' as const, card: toReviewTermDto(item.card) }
-    : { type: 'exercise' as const, entry: { ...item.entry, payload: item.entry.payload as never } }
+    : {
+        type: 'exercise' as const,
+        entry: { ...item.entry, payload: item.entry.payload as never },
+        isNewIntroduction: item.isNewIntroduction,
+      }
+
+// Collapses a queue plan into the session-plan card's counts. The buckets
+// mirror the client's getRemainingCounts exactly: new = introductions this
+// compose makes (warm-up gates parked now), warmup = backlog onboarding gates,
+// learning = rehab gates + due rows in short-term states, review = due rows in
+// review state. Exported for unit tests.
+export const toPreviewDto = (plan: PracticeQueuePlan) => {
+  const sum = (pick: (pool: PracticeQueuePlan['perPool'][number]) => number) =>
+    plan.perPool.reduce((n, pool) => n + pick(pool), 0)
+  return {
+    counts: {
+      new: sum((pool) => pool.plannedIntroductionCount),
+      warmup: sum((pool) => pool.backlogServedOnboardingCount),
+      learning: sum(
+        (pool) =>
+          pool.backlogServedLeechCount +
+          pool.dueRows.filter((row) => row.srs_state != null && row.srs_state !== 'review').length
+      ),
+      review: sum((pool) => pool.dueRows.filter((row) => row.srs_state === 'review').length),
+    },
+    dailyLimitReached: plan.dailyLimitReached,
+    canLearnExtra: plan.canLearnExtra,
+    dailyBudget: plan.dailyBudget,
+    plannedIntroductions: {
+      recognition: plan.perPool.find((pool) => pool.pool === 'recognition')?.plannedIntroductionCount ?? 0,
+      production: plan.perPool.find((pool) => pool.pool === 'production')?.plannedIntroductionCount ?? 0,
+    },
+  }
+}
 
 // The refresh endpoint is serve-only: whatever the client sent, polling must
 // never introduce or park. Exported for unit tests.
@@ -508,9 +543,24 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       return {
         data: {
           dailyLimitReached: result.dailyLimitReached,
+          canLearnExtra: result.canLearnExtra,
           items: result.items.map((item) => toQueueItemDto(item)),
         },
       }
+    }),
+
+    previewPracticeQueue: implementer.previewPracticeQueue.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      // Read-only: the same plan the compose mutation executes, for the
+      // landing's session-plan card. The filter is pinned to the primary
+      // Practice button's default — that's the one thing the card describes.
+      const plan = await planPracticeQueue({
+        userId,
+        targetLanguage: input.targetLanguage,
+        filter: DEFAULT_PRACTICE_QUEUE_FILTER,
+        deps: composeDeps,
+      })
+      return { data: toPreviewDto(plan) }
     }),
 
     refreshPracticeQueue: implementer.refreshPracticeQueue.handler(async ({ input, context }) => {

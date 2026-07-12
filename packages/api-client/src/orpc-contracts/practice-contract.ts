@@ -300,6 +300,48 @@ export const practiceContract = {
         data: z.object({
           items: z.array(PracticeQueueItemSchema),
           dailyLimitReached: z.boolean(),
+          // Recognition intro candidates remain beyond this compose's
+          // introductions — gates whether the Learn-extra CTA has anything to
+          // serve (a bare dailyLimitReached no longer implies candidates).
+          canLearnExtra: z.boolean(),
+        }),
+      })
+    ),
+
+  // Read-only preview of what the primary Practice button will serve — the
+  // same planPracticeQueue arithmetic the compose mutation executes, with the
+  // DEFAULT filter pinned (this describes the one main button, and a bare
+  // GET dodges nested-object query serialization). counts mirror the
+  // in-session chips 1:1: new = introductions this compose would make,
+  // warmup = backlog gates served, learning/review = the actual due rows
+  // classified by srs_state. Point-in-time: a concurrent tab can consume
+  // budget between preview and press — compose remains the source of truth.
+  previewPracticeQueue: oc
+    .route({ method: 'GET', path: '/practice/queue/preview', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .output(
+      z.object({
+        data: z.object({
+          counts: z.object({
+            new: z.number().int(),
+            warmup: z.number().int(),
+            learning: z.number().int(),
+            review: z.number().int(),
+          }),
+          dailyLimitReached: z.boolean(),
+          canLearnExtra: z.boolean(),
+          dailyBudget: z.object({
+            max: z.number().int(),
+            introducedToday: z.number().int(),
+            remaining: z.number().int(),
+          }),
+          plannedIntroductions: z.object({
+            recognition: z.number().int(),
+            production: z.number().int(),
+          }),
         }),
       })
     ),
