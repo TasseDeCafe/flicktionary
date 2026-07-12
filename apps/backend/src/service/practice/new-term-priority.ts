@@ -43,8 +43,11 @@ export const newTermNotDecayedSql = () => sql`
 
 // Full new-bucket ordering: tier, then most-frequent-first within the tier
 // (NULL zipf = not yet estimated, sorts last), then the pre-tier FIFO order as
-// the stable tiebreak.
+// the stable tiebreak. `ul.id` closes the ordering as a strictly-unique final
+// key so the Vocabulary tab's up_next cursor can resume the scan with a row
+// comparison — every consumer shares this exact ordering, so the list a user
+// inspects IS the order the queue introduces.
 export const newTermOrderSql = () => sql`
   ${newTermTierSql()} ASC, ul.zipf_estimate DESC NULLS LAST,
-  ul.created_at ASC, ul.headword ASC, ul.sense ASC
+  ul.created_at ASC, ul.headword ASC, ul.sense ASC, ul.id ASC
 `

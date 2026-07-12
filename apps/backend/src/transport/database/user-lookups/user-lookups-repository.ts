@@ -1304,6 +1304,13 @@ const listKeptChunksForExport = async (params: {
 
 export type ChunksSort = 'recent' | 'due'
 
+// SRS stages of the citation recognition facet. The six stages are disjoint
+// and partition a language's kept terms exactly — the practice landing's
+// segmented bar and the vocabulary Stage filter both rely on that, and
+// vocabStageClauseSql is the single predicate source for both.
+export type VocabStage = 'up_next' | 'warming_up' | 'learning' | 'review' | 'strengthen' | 'unseen'
+export type VocabStatus = 'due' | VocabStage
+
 // Cursor wire format. Encoded base64 by the contract layer; the repo deals in
 // the structured form.
 //
@@ -1312,10 +1319,15 @@ export type ChunksSort = 'recent' | 'due'
 // srs_due NOT NULL ordered (srs_due ASC, id ASC); when that phase exhausts,
 // we flip to phase 'unscheduled' which walks the srs_due IS NULL tail
 // ordered by id ASC.
+// `queue` pages the up_next stage in introduction order (newTermOrderSql);
+// every ordering key rides the cursor so one row comparison resumes the scan.
+// zipfKey carries COALESCE(zipf_estimate, -1) (zipf is never negative, so -1
+// reproduces DESC NULLS LAST when the comparison negates both sides).
 export type ChunksCursor =
   | { sort: 'recent'; createdAt: string; id: string }
   | { sort: 'due'; phase: 'scheduled'; srsDue: string; id: string }
   | { sort: 'due'; phase: 'unscheduled'; id: string }
+  | { sort: 'queue'; tier: number; zipfKey: number; createdAt: string; headword: string; sense: string; id: string }
 
 export type ChunkRow = {
   id: string
@@ -1347,8 +1359,10 @@ export type ChunkRow = {
   sourceAvailable: boolean
 }
 
-const SELECT_CHUNK_ROW_SQL = sql`
-  SELECT
+// Projection and FROM/joins kept separate so a branch can append extra
+// SELECT columns (the up_next queue branch selects its cursor keys) while
+// every consumer shares one column list and join set.
+const CHUNK_ROW_COLUMNS_SQL = sql`
     ul.id,
     ul.user_id,
     ul.target_language,
@@ -1376,6 +1390,9 @@ const SELECT_CHUNK_ROW_SQL = sql`
     c.segment_id AS first_card_segment_id,
     c.study_session_id,
     (s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available
+`
+
+const CHUNK_ROW_FROM_SQL = sql`
   FROM public.user_lookups ul
   LEFT JOIN public.study_facets rf
     ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
@@ -1384,6 +1401,12 @@ const SELECT_CHUNK_ROW_SQL = sql`
   LEFT JOIN public.cards c ON c.id = ul.first_card_id
   LEFT JOIN public.study_sessions s ON s.id = c.study_session_id AND s.deleted_at IS NULL
   LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+`
+
+const SELECT_CHUNK_ROW_SQL = sql`
+  SELECT
+    ${CHUNK_ROW_COLUMNS_SQL}
+  ${CHUNK_ROW_FROM_SQL}
 `
 
 const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
@@ -1649,6 +1672,45 @@ const parseSkillFilter = (csv: string | null | undefined): FacetSkill[] => {
   return [...new Set(mapped)]
 }
 
+// One boolean fragment per stage, on the citation recognition facet (`rf`
+// alias, LEFT-joined; `ul` for the decay signals). The single predicate source
+// for the vocabulary Stage filter AND the practice landing's stage counts —
+// the two surfaces agree by construction. The stages are disjoint and their
+// union is TRUE for every kept term (partition of totalKept):
+// parked rows split into warming_up/strengthen by srs_state, unparked rows
+// split into up_next/learning/review/unseen by srs_state + decay, and rows
+// with a missing or disabled facet land in unseen.
+export const vocabStageClauseSql = (stage: VocabStage) => {
+  switch (stage) {
+    case 'up_next':
+      // Mirrors listEligibleNewCitationFacets exactly — deliberately NO
+      // data_status check: the composed queue parks these terms regardless of
+      // card-data readiness, so the stage must count them the same way.
+      return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.srs_state IS NULL
+        AND rf.leech_parked_at IS NULL AND ${newTermNotDecayedSql()})`
+    case 'warming_up':
+      return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL
+        AND rf.leech_parked_at IS NOT NULL AND rf.srs_state IS NULL)`
+    case 'learning':
+      return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.leech_parked_at IS NULL
+        AND rf.srs_state IN ('new', 'learning', 'relearning'))`
+    case 'review':
+      return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.leech_parked_at IS NULL
+        AND rf.srs_state = 'review')`
+    case 'strengthen':
+      return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL
+        AND rf.leech_parked_at IS NOT NULL AND rf.srs_state IS NOT NULL)`
+    case 'unseen':
+      // Explicit disjuncts, NOT a negation of the other stages: under SQL
+      // three-valued logic a NOT over the rf columns is NULL (not TRUE) for
+      // missing-facet rows, which would silently drop them from the bucket.
+      // (ul.last_encountered_at is NOT NULL by schema, so negating the decay
+      // predicate is safe.)
+      return sql`(rf.id IS NULL OR rf.disabled_at IS NOT NULL
+        OR (rf.srs_state IS NULL AND rf.leech_parked_at IS NULL AND NOT (${newTermNotDecayedSql()})))`
+  }
+}
+
 const listChunksForLanguage = async (params: {
   userId: string
   targetLanguage: string
@@ -1657,7 +1719,7 @@ const listChunksForLanguage = async (params: {
   limit: number
   q: string | null
   skills?: string | null
-  status?: 'due' | 'unseen' | null
+  status?: VocabStatus | null
   hasMultipleForms?: boolean | null
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
@@ -1665,14 +1727,13 @@ const listChunksForLanguage = async (params: {
   const searchClause = buildSearchClause(params.q)
 
   // Study-state filter on the citation recognition facet (rf, joined in
-  // SELECT_CHUNK_ROW_SQL): the same facet whose state the old per-row Due/New
-  // chip read. 'due' = a review is waiting now; 'unseen' = no recognition facet
-  // state yet (never reviewed, or no recognition facet at all).
+  // SELECT_CHUNK_ROW_SQL). 'due' = a review is waiting now; the six stages
+  // come from the shared vocabStageClauseSql partition.
   const statusClause =
     params.status === 'due'
       ? sql`AND rf.srs_state IS NOT NULL AND rf.srs_due IS NOT NULL AND rf.srs_due <= now()`
-      : params.status === 'unseen'
-        ? sql`AND rf.srs_state IS NULL`
+      : params.status
+        ? sql`AND ${vocabStageClauseSql(params.status)}`
         : sql``
 
   // Skill-membership filter: keep terms with an enabled facet of any selected
@@ -1702,6 +1763,54 @@ const listChunksForLanguage = async (params: {
 
   // Composed once, injected verbatim into every sort/phase branch below.
   const filterClause = sql`${statusClause} ${skillsClause} ${formsClause}`
+
+  // status='up_next' overrides `sort`: the stage IS the introduction queue, so
+  // it pages in newTermOrderSql order — the list a user inspects here is
+  // exactly the order the composed queue will introduce these terms. The
+  // cursor keys (tier/zipf) are selected alongside the row columns; the row
+  // comparison negates zipf on both sides so every key ascends (zipf is never
+  // negative, so COALESCE(zipf, -1) reproduces DESC NULLS LAST).
+  if (params.status === 'up_next') {
+    const cursor = params.cursor && params.cursor.sort === 'queue' ? params.cursor : null
+    const rows = (await sql`
+      SELECT
+        ${CHUNK_ROW_COLUMNS_SQL},
+        ${newTermTierSql()} AS queue_tier,
+        COALESCE(ul.zipf_estimate, -1) AS queue_zipf_key
+      ${CHUNK_ROW_FROM_SQL}
+      WHERE ul.user_id = ${params.userId}
+        AND ul.target_language = ${params.targetLanguage}
+        AND ul.deleted_at IS NULL
+        AND ul.count > 0
+        ${searchClause}
+        ${filterClause}
+        AND ${
+          cursor
+            ? sql`(${newTermTierSql()}, -COALESCE(ul.zipf_estimate, -1), ul.created_at, ul.headword, ul.sense, ul.id)
+                > (${cursor.tier}, ${-cursor.zipfKey}, ${cursor.createdAt}::timestamptz, ${cursor.headword}, ${cursor.sense}, ${cursor.id}::uuid)`
+            : sql`TRUE`
+        }
+      ORDER BY ${newTermOrderSql()}
+      LIMIT ${fetchLimit}
+    `) as Array<Record<string, unknown>>
+
+    const hasMore = rows.length > limit
+    const sliced = hasMore ? rows.slice(0, limit) : rows
+    const last = sliced[sliced.length - 1]
+    const nextCursor: ChunksCursor | null =
+      hasMore && last
+        ? {
+            sort: 'queue',
+            tier: last.queue_tier as number,
+            zipfKey: Number(last.queue_zipf_key),
+            createdAt: last.created_at as string,
+            headword: last.headword as string,
+            sense: (last.sense as string) ?? '',
+            id: last.id as string,
+          }
+        : null
+    return { rows: sliced.map(mapChunkRow), nextCursor }
+  }
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -2039,7 +2148,7 @@ export interface UserLookupsRepositoryInterface {
     limit: number
     q: string | null
     skills?: string | null
-    status?: 'due' | 'unseen' | null
+    status?: VocabStatus | null
     hasMultipleForms?: boolean | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
