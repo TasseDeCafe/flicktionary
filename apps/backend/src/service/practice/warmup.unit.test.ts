@@ -97,10 +97,10 @@ const createDeps = (params: {
 }
 
 // listParkedTerms is called once per pool; pick the call for a given pool by
-// the parkedOrigin+restrict shape isn't enough, so use the invocation order:
-// recognition serve is always evaluated before production in the Promise.all.
-const recognitionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[0][0]
-const productionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[1][0]
+// the parkedOrigin+restrict shape isn't enough, so use the production-first
+// invocation order shared with the composed queue.
+const productionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[0][0]
+const recognitionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[1][0]
 
 describe('startWarmupSession', () => {
   beforeEach(() => vi.restoreAllMocks())
@@ -186,7 +186,7 @@ describe('startWarmupSession', () => {
     }
   })
 
-  it('serves a MIXED queue (recognition ++ production) for a both-skills term', async () => {
+  it('serves a production-first mixed queue for a both-skills term', async () => {
     const { deps } = createDeps({
       facetStates: [facetState({ userLookupId: id(1) })],
       productionFacetStates: [facetState({ userLookupId: id(1) })],
@@ -197,8 +197,8 @@ describe('startWarmupSession', () => {
       // Same userLookupId, two entries, one per pool — exactly the case the
       // client merge must key on (pool, userLookupId).
       expect(result.exercises).toEqual([
-        expect.objectContaining({ userLookupId: id(1), pool: 'recognition' }),
         expect.objectContaining({ userLookupId: id(1), pool: 'production' }),
+        expect.objectContaining({ userLookupId: id(1), pool: 'recognition' }),
       ])
     }
   })

@@ -10,9 +10,8 @@ export type ParkingPassResult = {
   dailyLimitReached: boolean
 }
 
-// The warm-up PARKING mechanism, shared by the session-scoped warm-up
-// (startWarmupSession) and the composed queue's auto-warm-up, one pass per
-// pool — both pools' citation facets consume the SAME combined daily budget.
+// The session-scoped warm-up PARKING mechanism, one pass per pool — both
+// pools' citation facets consume the SAME combined daily budget.
 // Candidates must already be filtered to eligible-to-enter terms (facet
 // exists, enabled, never-reviewed, not parked) — the atomic park method
 // re-checks eligibility anyway, so a race merely yields a skipped
@@ -21,9 +20,8 @@ export type ParkingPassResult = {
 // The first genuine 'cap_reached' stops the pass and reports
 // dailyLimitReached. 'not_eligible' (e.g. a concurrent tab already parked the
 // term) is skipped, NOT a cap hit, so repeat/concurrent runs never show a
-// bogus daily message. `maxCount` bounds how many terms this pass may park
-// (the composer's per-session budget); `bypassCap` is the explicit learn-extra
-// path — it skips only the cap comparison, introductions still stamp
+// bogus daily message. Optional bounds/bypass parameters keep the primitive
+// usable for explicit bounded warm-up operations; introductions always stamp
 // introduced_at and count toward today.
 export const runParkingPass = async (params: {
   userId: string

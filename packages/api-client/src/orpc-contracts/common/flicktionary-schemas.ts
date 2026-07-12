@@ -698,10 +698,9 @@ export type ReviewTerm = z.infer<typeof ReviewTermSchema>
 // Composed practice queue (flashcards + gate exercises in one session)
 // =========================================================================
 
-// Selects which term populations the composed queue serves. Render type is
-// derived from term state (parked → gate exercise; due/graduated → flashcard;
-// new opt-in facet → flashcard), never chosen per item — the filter only
-// scopes populations. All fields default to the primary "Practice" behavior,
+// Selects which term populations the composed queue serves. Planned citation
+// introductions and parked terms render as gates; due/graduated terms and new
+// opt-in facets render as flashcards. All fields default to primary Practice,
 // so `{}` is the everyday queue.
 export const PracticeQueueFilterSchema = z.object({
   pools: z.array(PracticePoolSchema).min(1).default(['production', 'recognition']),
@@ -709,14 +708,14 @@ export const PracticeQueueFilterSchema = z.object({
   // (+ opt-in-new flashcards when enabled) only.
   scope: z.enum(['due_only', 'new_only', 'both']).default('both'),
   render: z.enum(['flashcards_only', 'exercises_only', 'both']).default('both'),
-  // Auto-park eligible new terms into warm-up before serving. Forced off
-  // server-side on the refresh endpoint (polling must never introduce).
+  // Plan eligible new terms as warm-up gates. The client claims each one only
+  // when it reaches the item, so composition and refresh are SRS-read-only.
   autoWarmup: z.boolean().default(true),
   // Serve never-reviewed opt-in (pronunciation/form) facets as flashcards —
   // their only introduction path, reserved for the Learn-new preset.
   includeOptInNew: z.boolean().default(false),
-  // Explicit learn-extra batch: park up to this many recognition terms past
-  // the daily-new cap. Compose-only; ignored by refresh.
+  // Explicit learn-extra batch: plan up to this many recognition terms past
+  // the daily-new cap.
   learnExtraCount: z.number().int().min(1).max(20).optional(),
 })
 export type PracticeQueueFilter = z.infer<typeof PracticeQueueFilterSchema>
@@ -734,12 +733,17 @@ export const DEFAULT_PRACTICE_QUEUE_FILTER: PracticeQueueFilter = {
 
 // One composed-queue item. Reuses the flashcard and exercise wire shapes
 // verbatim; the client dispatches its renderer on `type`. isNewIntroduction
-// marks a gate whose term THIS compose introduced (the client's "New" chip
-// bucket) vs a backlog gate from an earlier compose ("Warm-up"). Composed
-// queue only — the dedicated warmup/strengthen endpoints ship bare entries.
+// marks a planned onboarding gate (the client's "New" chip bucket) vs an
+// already-parked backlog gate ("Warm-up"). Composed queue only — the dedicated
+// warmup/strengthen endpoints ship bare entries.
 export const PracticeQueueItemSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('flashcard'), card: ReviewTermSchema }),
-  z.object({ type: z.literal('exercise'), entry: StrengthenExerciseEntrySchema, isNewIntroduction: z.boolean() }),
+  z.object({
+    type: z.literal('exercise'),
+    entry: StrengthenExerciseEntrySchema,
+    isNewIntroduction: z.boolean(),
+    bypassDailyCap: z.boolean(),
+  }),
 ])
 export type PracticeQueueItem = z.infer<typeof PracticeQueueItemSchema>
 

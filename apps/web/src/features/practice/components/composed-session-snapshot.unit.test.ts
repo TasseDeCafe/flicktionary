@@ -35,6 +35,7 @@ const exerciseItem = (userLookupId: string): ComposedQueueItem => ({
   type: 'exercise',
   entry: { userLookupId } as StrengthenExerciseEntry,
   isNewIntroduction: false,
+  bypassDailyCap: false,
 })
 
 const snapshot = (over: Partial<ComposedSessionSnapshot> = {}): ComposedSessionSnapshot => ({

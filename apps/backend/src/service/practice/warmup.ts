@@ -52,8 +52,8 @@ const serveOnboarding = (params: {
 // citation facets consume ONE combined daily budget, and either pass's
 // cap_reached reports dailyLimitReached. The passes don't inherit each
 // other's stop (each guard refuses over-budget entries itself).
-// The served queue is mixed (recognition exercises ++ production exercises); each
-// exercise carries its own pool so answering routes to the right facet.
+// Production runs and serves first so its smaller volume is never buried by
+// recognition work; each exercise carries its pool for answer routing.
 export const startWarmupSession = async (params: {
   userId: string
   studySessionId: string
@@ -75,6 +75,20 @@ export const startWarmupSession = async (params: {
     await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, targetLanguage)
   ).maxNewTerms
 
+  const productionFacets = await deps.studyFacetsRepository.listSessionKeptCitationFacets(
+    studySessionId,
+    'meaning_production'
+  )
+  const productionPass = await runParkingPass({
+    userId,
+    targetLanguage,
+    pool: 'production',
+    candidateUserLookupIds: eligibleToEnter(productionFacets).map((f) => f.userLookupId),
+    maxNewTerms,
+    deps,
+  })
+  const productionIds = Array.from(new Set([...alreadyOnboardingIds(productionFacets), ...productionPass.scaffolded]))
+
   const recognitionFacets = await deps.studyFacetsRepository.listSessionKeptCitationFacets(
     studySessionId,
     'meaning_recognition'
@@ -90,28 +104,14 @@ export const startWarmupSession = async (params: {
   const recognitionIds = Array.from(
     new Set([...alreadyOnboardingIds(recognitionFacets), ...recognitionPass.scaffolded])
   )
-
-  const productionFacets = await deps.studyFacetsRepository.listSessionKeptCitationFacets(
-    studySessionId,
-    'meaning_production'
-  )
-  const productionPass = await runParkingPass({
-    userId,
-    targetLanguage,
-    pool: 'production',
-    candidateUserLookupIds: eligibleToEnter(productionFacets).map((f) => f.userLookupId),
-    maxNewTerms,
-    deps,
-  })
-  const productionIds = Array.from(new Set([...alreadyOnboardingIds(productionFacets), ...productionPass.scaffolded]))
   const dailyLimitReached = recognitionPass.dailyLimitReached || productionPass.dailyLimitReached
 
-  const [recognitionExercises, productionExercises] = await Promise.all([
-    serveOnboarding({ userId, targetLanguage, pool: 'recognition', restrictToUserLookupIds: recognitionIds, deps }),
+  const [productionExercises, recognitionExercises] = await Promise.all([
     serveOnboarding({ userId, targetLanguage, pool: 'production', restrictToUserLookupIds: productionIds, deps }),
+    serveOnboarding({ userId, targetLanguage, pool: 'recognition', restrictToUserLookupIds: recognitionIds, deps }),
   ])
 
-  return { ok: true, exercises: [...recognitionExercises, ...productionExercises], dailyLimitReached }
+  return { ok: true, exercises: [...productionExercises, ...recognitionExercises], dailyLimitReached }
 }
 
 export type RefreshWarmupResult =
@@ -135,19 +135,12 @@ export const refreshWarmupSession = async (params: {
   if (!session) return { ok: false, reason: 'not_found' }
   if (session.target_language !== targetLanguage) return { ok: false, reason: 'language_mismatch' }
 
-  const [recognitionFacets, productionFacets] = await Promise.all([
-    deps.studyFacetsRepository.listSessionKeptCitationFacets(studySessionId, 'meaning_recognition'),
+  const [productionFacets, recognitionFacets] = await Promise.all([
     deps.studyFacetsRepository.listSessionKeptCitationFacets(studySessionId, 'meaning_production'),
+    deps.studyFacetsRepository.listSessionKeptCitationFacets(studySessionId, 'meaning_recognition'),
   ])
 
-  const [recognitionExercises, productionExercises] = await Promise.all([
-    serveOnboarding({
-      userId,
-      targetLanguage,
-      pool: 'recognition',
-      restrictToUserLookupIds: alreadyOnboardingIds(recognitionFacets),
-      deps,
-    }),
+  const [productionExercises, recognitionExercises] = await Promise.all([
     serveOnboarding({
       userId,
       targetLanguage,
@@ -155,7 +148,14 @@ export const refreshWarmupSession = async (params: {
       restrictToUserLookupIds: alreadyOnboardingIds(productionFacets),
       deps,
     }),
+    serveOnboarding({
+      userId,
+      targetLanguage,
+      pool: 'recognition',
+      restrictToUserLookupIds: alreadyOnboardingIds(recognitionFacets),
+      deps,
+    }),
   ])
 
-  return { ok: true, exercises: [...recognitionExercises, ...productionExercises] }
+  return { ok: true, exercises: [...productionExercises, ...recognitionExercises] }
 }

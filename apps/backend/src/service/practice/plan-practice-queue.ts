@@ -27,13 +27,13 @@ export type PoolQueuePlan = {
   // Eligible never-introduced citation terms, introduction-ordered. Empty when
   // the filter rules parking out.
   introCandidateIds: string[]
-  // How many of introCandidateIds this compose would introduce, from the
-  // SEQUENTIAL allocation of the shared park budget (production first,
+  // How many of introCandidateIds this compose plans, from the SEQUENTIAL
+  // allocation of the shared introduction budget (production first,
   // recognition under the daily budget) — never a per-pool min() over the
   // shared budget, which would double-count it.
   plannedIntroductionCount: number
   // Explicit learn-extra introductions (recognition only): past the daily cap
-  // and the park budget, excluding the terms the normal pass already takes.
+  // and the standard budget, excluding the terms the normal pass already takes.
   plannedExtraIntroductionIds: string[]
 }
 
@@ -41,14 +41,14 @@ export type PracticeQueuePlan = {
   // The combined daily-new budget (citation introductions across BOTH pools —
   // a both-pools term consumes two slots).
   dailyBudget: { max: number; introducedToday: number; remaining: number }
-  // The per-compose parking budget: min(MAX_WARMUP_INTRO_PER_SESSION, today's
+  // The per-compose planned-introduction budget: min(MAX_WARMUP_INTRO_PER_SESSION, today's
   // remaining budget). Deliberately NOT coupled to the gate backlog — a full
-  // warm-up pipeline must not silently starve introductions; newly-parked
-  // gates are always served on top of the backlog slice.
+  // warm-up pipeline must not silently starve introductions; planned gates
+  // are always served on top of the backlog slice.
   parkBudget: number
   // Predicted: after this compose's planned introductions the daily budget is
-  // exhausted while intro candidates remain. Compose ORs this with the
-  // transactional cap_reached outcome (races can make the two differ).
+  // exhausted while intro candidates remain. A display-time claim can still
+  // report a concurrent cap race separately.
   dailyLimitReached: boolean
   // Recognition intro candidates remain beyond the planned introductions, so
   // a learn-extra request (bypassCap) has something to serve.
@@ -57,9 +57,9 @@ export type PracticeQueuePlan = {
 }
 
 // The read-only selection/budget arithmetic behind one composed practice
-// queue. composePracticeQueue executes this plan (running the parking
-// mutations and fetching exercises); the preview endpoint returns its counts
-// directly — one function, so the plan card and the session can't disagree.
+// queue. composePracticeQueue materializes it without changing SRS state; the
+// preview endpoint returns its counts directly — one function, so the plan
+// card and the session can't disagree.
 export const planPracticeQueue = async (params: {
   userId: string
   targetLanguage: string
@@ -113,7 +113,7 @@ export const planPracticeQueue = async (params: {
   }
   // Per-session introduction pacing bounded by today's remaining budget. NOT
   // coupled to the backlog: a full warm-up pipeline used to zero this out and
-  // silently starve introductions for days — newly-parked gates are served on
+  // silently starve introductions for days — planned gates are served on
   // top of the ≤MAX_GATES_PER_COMPOSE backlog slice instead.
   const parkBudget = runParking ? Math.min(MAX_WARMUP_INTRO_PER_SESSION, dailyBudget.remaining) : 0
 
@@ -127,7 +127,7 @@ export const planPracticeQueue = async (params: {
     )
   }
 
-  // Sequential allocation of the shared park budget: production first,
+  // Sequential allocation of the shared introduction budget: production first,
   // recognition takes what's left (parkBudget is already bounded by the
   // remaining combined daily budget).
   const productionCandidates = introCandidatesByPool.get('production') ?? []
@@ -148,12 +148,14 @@ export const planPracticeQueue = async (params: {
       ? recognitionCandidates.slice(plannedRecognition, plannedRecognition + filter.learnExtraCount)
       : []
 
-  const canLearnExtra = runParking && pools.includes('recognition') && recognitionCandidates.length > plannedRecognition
+  const canLearnExtra =
+    runParking &&
+    pools.includes('recognition') &&
+    recognitionCandidates.length > plannedRecognition + plannedExtraIntroductionIds.length
 
-  // Cross-pool gate head-slice: MAX_GATES_PER_COMPOSE serve slots, production
-  // first, oldest-parked kept (listParkedTerms returns oldest first). Newly
-  // parked terms are always served ON TOP of this slice, so a compose never
-  // introduces a term it doesn't also serve.
+  // Cross-pool backlog head-slice: MAX_GATES_PER_COMPOSE serve slots,
+  // production first, oldest-parked kept. Planned introductions are served on
+  // top and remain uncommitted until reached.
   let backlogSlotsLeft = MAX_GATES_PER_COMPOSE
   const perPool: PoolQueuePlan[] = []
   for (const pool of pools) {

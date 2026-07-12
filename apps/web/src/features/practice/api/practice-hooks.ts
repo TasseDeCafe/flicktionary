@@ -29,7 +29,7 @@ export const useDueSummary = () => {
 export type PracticeQueuePreview = NonNullable<ReturnType<typeof usePreviewPracticeQueue>['data']>
 
 // What pressing the primary Practice button will serve, in the in-session
-// chips' own buckets — the server runs the same plan the compose executes.
+// chips' own buckets — the server runs the same plan composition materializes.
 // Point-in-time; compose remains the source of truth at press.
 export const usePreviewPracticeQueue = (targetLanguage: string | null) => {
   const { t } = useLingui()
@@ -112,24 +112,31 @@ export const useRefreshWarmupSession = () => {
   )
 }
 
-// Compose the unified Practice queue (gate exercises + due flashcards). A
-// mutation: with autoWarmup on it parks eligible new terms into warm-up
-// (consuming the daily new-term budget), so the landing counts shift.
+// Compose the unified Practice queue. It may warm exercise banks, but does not
+// change SRS state; planned introductions are committed only when reached.
 export const useComposePracticeQueue = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.practice.composePracticeQueue.mutationOptions({
+      meta: { errorMessage: t`Failed to load practice queue` },
+    })
+  )
+}
+
+export const useClaimPracticeIntroduction = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.claimPracticeIntroduction.mutationOptions({
       meta: {
         invalidates: [...practiceSummaryKeys()],
-        errorMessage: t`Failed to load practice queue`,
+        errorMessage: t`Failed to start this exercise`,
       },
     })
   )
 }
 
-// Serve-only re-fetch of the composed queue, polled while exercise
-// placeholders generate. The server forces auto-warm-up off, so nothing to
-// invalidate; a failed poll is silent (the placeholder stays until next tick).
+// Read-only re-fetch of the composed plan, polled while exercise placeholders
+// generate. A failed poll is silent (the placeholder stays until next tick).
 export const useRefreshPracticeQueue = () => {
   return useMutation(
     orpcQuery.practice.refreshPracticeQueue.mutationOptions({

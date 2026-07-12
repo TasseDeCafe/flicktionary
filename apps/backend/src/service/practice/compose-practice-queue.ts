@@ -2,27 +2,25 @@ import type { DbUserLookupWithFacet, PracticePool } from '../../transport/databa
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
-import { getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
+import { getIntroductionExercises, getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
 import { planPracticeQueue } from './plan-practice-queue'
-import { runParkingPass } from './warmup-parking'
 
 export type ComposePracticeQueueDependencies = ExerciseBankDependencies & {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
 }
 
-// Which terms are in scope, and how they render. Render type is DERIVED from
-// term state, never chosen per item: a parked term is a gate exercise, a
-// graduated (or due) term is a flashcard, a new opt-in facet is a flashcard.
-// The filter only selects which of those populations participate.
+// Which terms are in scope, and how they render. Planned citation introductions
+// and parked terms are gates; due/graduated terms and new opt-in facets are
+// flashcards. The filter only selects which populations participate.
 export type ComposeQueueFilter = {
   pools: PracticePool[]
-  // 'due_only' skips the parking pass and the opt-in-new pass entirely;
+  // 'due_only' skips planned introductions and the opt-in-new pass entirely;
   // 'new_only' skips due flashcards and restricts gates to onboarding-parked
   // terms (warm-up gates — a leech's rehab is due work, not new work).
   scope: 'due_only' | 'new_only' | 'both'
   render: 'flashcards_only' | 'exercises_only' | 'both'
-  // Park eligible new terms into warm-up before serving (the "no new citation
-  // flashcards" on-ramp). Refresh forces this off server-side.
+  // Plan eligible new terms as onboarding gates (the "no new citation
+  // flashcards" on-ramp). Each gate is parked only when reached.
   autoWarmup: boolean
   // Serve never-reviewed opt-in (non-citation) facets — pronunciation and
   // form cards — as flashcards. They never park (the exercise bank has no
@@ -30,17 +28,22 @@ export type ComposeQueueFilter = {
   // reserved for the explicit Learn-new preset, mirroring the old rule that
   // opt-in new facets are served only in learn_new scope, never mixed.
   includeOptInNew: boolean
-  // Explicit "learn extra" request: park up to this many more recognition
-  // terms past the daily-new cap (bypassCap). They still stamp introduced_at.
+  // Explicit "learn extra" request: plan up to this many more recognition
+  // terms past the daily-new cap. They still stamp introduced_at when reached.
   learnExtraCount?: number
 }
 
 export type ComposedQueueItem =
   | { type: 'flashcard'; card: DbUserLookupWithFacet }
-  // isNewIntroduction marks a gate whose term THIS compose introduced (the
-  // parking pass just stamped it) — the client's "New" bucket, vs "Warm-up"
-  // for a backlog gate parked by an earlier compose.
-  | { type: 'exercise'; entry: StrengthenExerciseEntry; isNewIntroduction: boolean }
+  // New introductions are planned without mutating SRS state. bypassDailyCap
+  // is true only for an explicit Learn-extra batch and is consumed by the
+  // claim endpoint when this item is reached.
+  | {
+      type: 'exercise'
+      entry: StrengthenExerciseEntry
+      isNewIntroduction: boolean
+      bypassDailyCap: boolean
+    }
 
 export type ComposePracticeQueueResult = {
   items: ComposedQueueItem[]
@@ -52,18 +55,16 @@ export type ComposePracticeQueueResult = {
 // rehab) interleaved with due flashcards, production first (the plan encodes
 // the ordering rationale). Selection and budget arithmetic live in
 // planPracticeQueue — shared verbatim with the preview endpoint — and this
-// function EXECUTES the plan: composing is a MUTATION when autoWarmup is on,
-// parking eligible new terms (stamping introduced_at, consuming the combined
-// daily budget) before serving. Newly-parked terms are always served in the
-// same compose (on top of the backlog gate slice), so opening Practice and
-// leaving never burns budget on terms the user was never shown.
+// function materializes the plan without changing SRS state. Planned new gates
+// are claimed individually when the client reaches them, so opening and
+// leaving a session cannot consume the daily introduction budget.
 export const composePracticeQueue = async (params: {
   userId: string
   targetLanguage: string
   filter: ComposeQueueFilter
   // Fire-and-forget hint-exercise generation for served flashcard terms whose
-  // bank has no hint-type slot. True only for the compose mutation — the
-  // serve-only refresh is polled and must never kick LLM work.
+  // bank has no hint-type slot. True only for the initial compose request —
+  // the polled refresh must never kick LLM work.
   warmHintBanks?: boolean
   deps: ComposePracticeQueueDependencies
 }): Promise<ComposePracticeQueueResult> => {
@@ -72,67 +73,6 @@ export const composePracticeQueue = async (params: {
   const wantFlashcards = filter.render !== 'exercises_only'
   const wantExercises = filter.render !== 'flashcards_only'
   const gateParkedOrigin = filter.scope === 'new_only' ? ('onboarding' as const) : undefined
-  const runParking = filter.autoWarmup && wantExercises && filter.scope !== 'due_only'
-
-  // Parking pass (auto-warm-up), executing the plan's sequential allocation:
-  // production parks first, recognition eats what's left — both under the
-  // COMBINED daily budget (the atomic guard compares against dailyBudget.max
-  // itself). The passes run over the FULL candidate lists (not the planned
-  // slice) so a concurrent tab's 'not_eligible' races backfill from later
-  // candidates.
-  let transactionalCapReached = false
-  const newlyParkedByPool = new Map<PracticePool, string[]>()
-  if (runParking) {
-    let parkBudget = plan.parkBudget
-    const productionPlan = plan.perPool.find((p) => p.pool === 'production')
-    if (productionPlan && parkBudget > 0) {
-      const pass = await runParkingPass({
-        userId,
-        targetLanguage,
-        pool: 'production',
-        candidateUserLookupIds: productionPlan.introCandidateIds,
-        maxNewTerms: plan.dailyBudget.max,
-        maxCount: parkBudget,
-        deps,
-      })
-      newlyParkedByPool.set('production', pass.scaffolded)
-      transactionalCapReached = pass.dailyLimitReached
-      parkBudget -= pass.scaffolded.length
-    }
-    const recognitionPlan = plan.perPool.find((p) => p.pool === 'recognition')
-    if (recognitionPlan) {
-      if (parkBudget > 0) {
-        const pass = await runParkingPass({
-          userId,
-          targetLanguage,
-          pool: 'recognition',
-          candidateUserLookupIds: recognitionPlan.introCandidateIds,
-          maxNewTerms: plan.dailyBudget.max,
-          maxCount: parkBudget,
-          deps,
-        })
-        newlyParkedByPool.set('recognition', pass.scaffolded)
-        transactionalCapReached = transactionalCapReached || pass.dailyLimitReached
-      }
-      // Learn extra: the user explicitly asked for N more, so this pass
-      // ignores both the daily cap (bypassCap) and the per-session budget —
-      // the extra gates are always served, even past MAX_GATES_PER_COMPOSE.
-      if (filter.learnExtraCount != null && filter.learnExtraCount > 0) {
-        const alreadyParked = new Set(newlyParkedByPool.get('recognition') ?? [])
-        const extra = await runParkingPass({
-          userId,
-          targetLanguage,
-          pool: 'recognition',
-          candidateUserLookupIds: recognitionPlan.introCandidateIds.filter((id) => !alreadyParked.has(id)),
-          maxNewTerms: plan.dailyBudget.max,
-          maxCount: filter.learnExtraCount,
-          bypassCap: true,
-          deps,
-        })
-        newlyParkedByPool.set('recognition', [...(newlyParkedByPool.get('recognition') ?? []), ...extra.scaffolded])
-      }
-    }
-  }
 
   const items: ComposedQueueItem[] = []
   for (const poolPlan of plan.perPool) {
@@ -144,19 +84,13 @@ export const composePracticeQueue = async (params: {
       items.push(...poolPlan.dueRows.map((card) => ({ type: 'flashcard' as const, card })))
     }
     if (wantExercises) {
-      const newlyParked = newlyParkedByPool.get(poolPlan.pool) ?? []
-      const newlyParkedSet = new Set(newlyParked)
-      // The plan's head-slice keeps the longest-waiting gates; newly-parked
-      // terms are served on top (their slots were reserved by the coupled
-      // budget; learn-extra may exceed the cap — an explicit user request).
-      const serveIds = Array.from(new Set([...poolPlan.backlogServedIds, ...newlyParked]))
-      if (serveIds.length > 0) {
+      if (poolPlan.backlogServedIds.length > 0) {
         const exercises = await getStrengthenExercises({
           userId,
           targetLanguage,
           pool: poolPlan.pool,
           sessionHardUserLookupIds: [],
-          restrictToUserLookupIds: serveIds,
+          restrictToUserLookupIds: poolPlan.backlogServedIds,
           parkedOrigin: gateParkedOrigin,
           deps,
         })
@@ -164,7 +98,29 @@ export const composePracticeQueue = async (params: {
           ...exercises.map((entry) => ({
             type: 'exercise' as const,
             entry,
-            isNewIntroduction: newlyParkedSet.has(entry.userLookupId),
+            isNewIntroduction: false,
+            bypassDailyCap: false,
+          }))
+        )
+      }
+      const standardIds = poolPlan.introCandidateIds.slice(0, poolPlan.plannedIntroductionCount)
+      const extraIds = poolPlan.plannedExtraIntroductionIds
+      const plannedIds = [...standardIds, ...extraIds]
+      if (plannedIds.length > 0) {
+        const exercises = await getIntroductionExercises({
+          userId,
+          targetLanguage,
+          pool: poolPlan.pool,
+          userLookupIds: plannedIds,
+          deps,
+        })
+        const extraSet = new Set(extraIds)
+        items.push(
+          ...exercises.map((entry) => ({
+            type: 'exercise' as const,
+            entry,
+            isNewIntroduction: true,
+            bypassDailyCap: extraSet.has(entry.userLookupId),
           }))
         )
       }
@@ -198,12 +154,9 @@ export const composePracticeQueue = async (params: {
     }).catch((err) => console.error('hint bank warmer threw', { err }))
   }
 
-  // Predicted OR transactional: the prediction covers the budget-already-
-  // exhausted case (the pass never runs at parkBudget 0), the transactional
-  // outcome covers races the prediction can't see.
   return {
     items,
-    dailyLimitReached: plan.dailyLimitReached || transactionalCapReached,
+    dailyLimitReached: plan.dailyLimitReached,
     canLearnExtra: plan.canLearnExtra,
   }
 }

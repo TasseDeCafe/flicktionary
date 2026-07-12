@@ -26,6 +26,7 @@ import type {
   StrengthenExercisePayload,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
+  useClaimPracticeIntroduction,
   useComposePracticeQueue,
   useHintExercise,
   useRateTerm,
@@ -112,17 +113,18 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   }
 
   const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
+  const { mutateAsync: claimIntroduction } = useClaimPracticeIntroduction()
   const { mutateAsync: refreshQueue } = useRefreshPracticeQueue()
   const { mutate: rateTerm } = useRateTerm()
   const { mutate: undoRating } = useUndoRating()
 
   // An interrupted same-day session (edit-term detour, back gesture) resumes
-  // where it stood instead of re-composing — a fresh compose would run the
-  // auto-warm-up parking pass and turn an almost-finished session into a new
-  // batch of introductions. Lazy initializer: the take consumes the stash
+  // where it stood instead of re-composing a new onboarding batch. Lazy
+  // initializer: the take consumes the stash
   // exactly once per mount, and every piece of session state seeds from it.
   const [resumedSession] = useState(() => takeComposedSession(targetLanguage, filter))
   const [queue, setQueue] = useState<ComposedQueueItem[] | null>(resumedSession?.queue ?? null)
+  const [queueFilter, setQueueFilter] = useState<PracticeQueueFilter>(resumedSession?.filter ?? filter)
   const [index, setIndex] = useState(resumedSession?.index ?? 0)
   // Mirror of `index` for async rate callbacks: rolling back an optimistic
   // redrill copy must know whether the copy was already consumed.
@@ -162,6 +164,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // again). Both are keyed to the queue item and cleared on advance.
   const [activeHint, setActiveHint] = useState<ActiveHint | null>(null)
   const [hintOutcome, setHintOutcome] = useState<HintOutcome | null>(null)
+  const claimedIntroductionsRef = useRef(new Set<string>())
+  const [claimIntroductionErrorKey, setClaimIntroductionErrorKey] = useState<string | null>(null)
+  const [claimRetry, setClaimRetry] = useState(0)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -180,8 +185,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   // Live mirror of the snapshot-worthy state for the unmount save below (a
   // cleanup closure would otherwise see the mount render's values).
-  const sessionStateRef = useRef({ queue, index, dailyLimitReached, canLearnExtra, capNoticeShown })
-  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown }
+  const sessionStateRef = useRef({ queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter })
+  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter }
   useEffect(
     () => () => {
       const snapshot = sessionStateRef.current
@@ -196,7 +201,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       }
       saveComposedSession({
         targetLanguage,
-        filter,
+        filter: snapshot.queueFilter,
         queue: snapshot.queue,
         index: snapshot.index,
         dailyLimitReached: snapshot.dailyLimitReached,
@@ -224,7 +229,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       if (pollingRef.current) return
       pollingRef.current = true
       try {
-        const resp = await refreshQueue({ targetLanguage, filter })
+        const resp = await refreshQueue({ targetLanguage, filter: queueFilter })
         setQueue((prev) => (prev ? mergeComposedPlaceholders(prev, resp.data.items, index) : prev))
       } catch {
         // Polling is best-effort; keep the placeholder and try again next tick.
@@ -233,12 +238,51 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       }
     }, POLL_INTERVAL_MS)
     return () => clearInterval(interval)
-  }, [refreshQueue, targetLanguage, filter, hasPendingAhead, index])
+  }, [refreshQueue, targetLanguage, queueFilter, hasPendingAhead, index])
 
   const remainingCounts = queue ? getRemainingCounts(queue, index) : null
   const isPeeking = peekBack > 0
   const displayedIndex = index - peekBack
   const current = queue?.[displayedIndex]
+  const liveIntroduction = !isPeeking && current?.type === 'exercise' && current.isNewIntroduction ? current : null
+  const liveIntroductionKey = liveIntroduction
+    ? `${liveIntroduction.entry.pool}:${liveIntroduction.entry.userLookupId}`
+    : null
+  const introductionBlocked = liveIntroductionKey != null && !claimedIntroductionsRef.current.has(liveIntroductionKey)
+
+  useEffect(() => {
+    if (!liveIntroduction || !liveIntroductionKey) return
+    if (claimedIntroductionsRef.current.has(liveIntroductionKey)) return
+    if (claimIntroductionErrorKey === liveIntroductionKey) return
+
+    let cancelled = false
+    void claimIntroduction({
+      userLookupId: liveIntroduction.entry.userLookupId,
+      targetLanguage,
+      pool: liveIntroduction.entry.pool,
+      bypassDailyCap: liveIntroduction.bypassDailyCap,
+    })
+      .then((response) => {
+        if (cancelled) return
+        const status = response.data.status
+        if (status === 'claimed' || status === 'already_claimed') {
+          claimedIntroductionsRef.current.add(liveIntroductionKey)
+        } else {
+          setQueue((existing) => (existing ? existing.filter((item) => item !== liveIntroduction) : existing))
+          if (status === 'daily_cap_reached') {
+            setDailyLimitReached(true)
+            setCapNoticeShown(true)
+          }
+        }
+      })
+      .catch(() => {
+        if (cancelled) return
+        setClaimIntroductionErrorKey(liveIntroductionKey)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [claimIntroduction, claimIntroductionErrorKey, claimRetry, liveIntroduction, liveIntroductionKey, targetLanguage])
 
   // A hint only exists for the LIVE, unrevealed flashcard of a citation
   // MEANING facet — the exercise bank tests meaning and has no facet identity,
@@ -515,10 +559,12 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     setCurrentAnswered(false)
     setActiveHint(null)
     setHintOutcome(null)
+    const extraFilter = { ...filter, learnExtraCount }
+    setQueueFilter(extraFilter)
     ratingRecordsRef.current.clear()
     exerciseOutcomesRef.current.clear()
     composeQueue(
-      { targetLanguage, filter: { ...filter, learnExtraCount } },
+      { targetLanguage, filter: extraFilter },
       {
         onSuccess: (resp) => {
           setQueue(resp.data.items.map(toComposedQueueItem))
@@ -542,6 +588,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // (Enter/Space = study as flashcard, S/Esc = skip).
   const exercisePlaceholderLive =
     !isPeeking &&
+    !introductionBlocked &&
     current?.type === 'exercise' &&
     current.entry.status !== 'failed' &&
     (current.entry.status === 'generating' || !current.entry.exerciseId || !current.entry.payload)
@@ -706,6 +753,27 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   if (composePending || queue === null) {
     return wrap(<PracticeLoader label={t`Preparing your session…`} />)
+  }
+
+  if (introductionBlocked) {
+    if (claimIntroductionErrorKey === liveIntroductionKey) {
+      return wrap(
+        <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
+          <p className='text-lg font-semibold'>{t`Couldn't start this exercise.`}</p>
+          <Button
+            type='button'
+            size='lg'
+            onClick={() => {
+              setClaimIntroductionErrorKey(null)
+              setClaimRetry((value) => value + 1)
+            }}
+          >
+            {t`Try again`}
+          </Button>
+        </div>
+      )
+    }
+    return wrap(<PracticeLoader label={t`Preparing your next exercise…`} />)
   }
 
   // Done: live queue exhausted (also the empty-compose case).

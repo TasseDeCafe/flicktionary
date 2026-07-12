@@ -1175,8 +1175,8 @@ const listParkedTerms = async (params: {
 // Terms whose citation facet for the pool's skill could ENTER warm-up
 // scaffolding right now: kept, live term; facet exists, enabled, never
 // reviewed, not parked. The by-(user, language) counterpart of warmup.ts's
-// session-scoped eligibleToEnter — feeds the composed queue's auto-warm-up
-// discovery. Tier-ordered (see new-term-priority.ts), so the daily-new cap
+// session-scoped eligibleToEnter — feeds composed-queue onboarding plans.
+// Tier-ordered (see new-term-priority.ts), so the daily-new cap
 // admits terms in the same order the flashcard new bucket serves them; decayed
 // never-encountered-lately terms are off the shelf here too.
 const listEligibleNewCitationFacets = async (params: {
@@ -1706,7 +1706,7 @@ export const vocabStageClauseSql = (stage: VocabStage) => {
   switch (stage) {
     case 'up_next':
       // Mirrors listEligibleNewCitationFacets exactly — deliberately NO
-      // data_status check: the composed queue parks these terms regardless of
+      // data_status check: the composed queue plans these terms regardless of
       // card-data readiness, so the stage must count them the same way.
       return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.srs_state IS NULL
         AND rf.leech_parked_at IS NULL AND ${newTermNotDecayedSql()})`

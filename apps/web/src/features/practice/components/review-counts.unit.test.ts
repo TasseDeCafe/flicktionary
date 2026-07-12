@@ -17,6 +17,7 @@ const gate = (over: {
     origin: over.origin ?? 'onboarding',
   } as StrengthenExerciseEntry,
   isNewIntroduction: over.isNewIntroduction ?? false,
+  bypassDailyCap: false,
 })
 
 const flashcard = (srsState: ReviewTerm['srsState'], requeuedForAgain = false): ComposedQueueItem => ({
