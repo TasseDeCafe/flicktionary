@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
 import type { Highlight, StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
 // Temp ids for optimistically-inserted highlight rows (the create response
 // swaps in the real row). Anything keyed on a highlight id (delete, fastGloss,
@@ -570,7 +571,9 @@ export const useSetPracticeLimitsForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setPracticeLimitsForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // The limits feed the practice landing's budgets and session-plan
+        // preview, so those must recompute alongside the prefs themselves.
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), ...practiceSummaryKeys()],
         errorMessage: t`Failed to update practice limits`,
         showErrorModal: true,
       },

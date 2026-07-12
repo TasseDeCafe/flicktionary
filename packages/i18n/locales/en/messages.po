@@ -108,17 +108,17 @@ msgstr "{highlightCount} highlight(s)"
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} highlight(s) saved."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "{newToday} new today"
-msgstr "{newToday} new today"
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "{intake} enter your next session"
+msgstr "{intake} enter your next session"
+
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "{introducedToday} of {budgetMax} new introductions used today"
+msgstr "{introducedToday} of {budgetMax} new introductions used today"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "{parked} to strengthen"
-msgstr "{parked} to strengthen"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{parkedTotal} parked"
@@ -132,16 +132,11 @@ msgstr "{productionCount} in production"
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "{reviewsDue, plural, one {# to review} other {# to review}}"
-msgstr "{reviewsDue, plural, one {# to review} other {# to review}}"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
 msgstr "{selectedSheetCount} of {sheetCount} sheets selected"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "{warmingUp} warming up"
 msgstr "{warmingUp} warming up"
 
@@ -1085,9 +1080,9 @@ msgstr "Customer Center"
 msgid "Daily new limit reached"
 msgstr "Daily new limit reached"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Daily new limit reached."
-msgstr "Daily new limit reached."
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "Daily new-term limit reached — more enter tomorrow."
+msgstr "Daily new-term limit reached — more enter tomorrow."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Daily new-term limit reached — more terms enter tomorrow."
@@ -1098,10 +1093,6 @@ msgid "Daily new-term limit reached — the rest of these terms will warm up "
 "tomorrow."
 msgstr "Daily new-term limit reached — the rest of these terms will warm up "
 "tomorrow."
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Daily review limit reached."
-msgstr "Daily review limit reached."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Danger zone"
@@ -1624,6 +1615,10 @@ msgstr "Failed to load session"
 msgid "Failed to load session counts"
 msgstr "Failed to load session counts"
 
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to load session preview"
+msgstr "Failed to load session preview"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to load session status"
 msgstr "Failed to load session status"
@@ -1891,10 +1886,6 @@ msgstr "Flicktionary updated to version {0}. Check out the <0>release "
 msgid "Flicktionary User Guide"
 msgstr "Flicktionary User Guide"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Follow-ups"
-msgstr "Follow-ups"
-
 #: apps/web/src/features/review/components/per-form-card-editor.tsx
 msgid "Form"
 msgstr "Form"
@@ -2035,6 +2026,10 @@ msgstr "Government"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Government / case requirement"
 msgstr "Government / case requirement"
+
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Graduated to long-term review"
+msgstr "Graduated to long-term review"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Graduated to long-term review."
@@ -2219,6 +2214,10 @@ msgstr "Importing articles"
 msgid "Importing…"
 msgstr "Importing…"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "In introduction exercises before their first flashcard"
+msgstr "In introduction exercises before their first flashcard"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "In short-term learning — follow-ups come back within days."
 msgstr "In short-term learning — follow-ups come back within days."
@@ -2370,6 +2369,7 @@ msgstr "Learn a language from the videos you already watch and the articles you 
 msgid "Learn new"
 msgstr "Learn new"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Learning"
@@ -2639,10 +2639,6 @@ msgid "New terms enter as exercises, so there are no new flashcards — include 
 msgstr "New terms enter as exercises, so there are no new flashcards — include "
 "exercises or the new pronunciation/form cards."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "New today"
-msgstr "New today"
-
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
@@ -2725,10 +2721,6 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "No terms are ready right now."
-msgstr "No terms are ready right now."
-
 #: apps/web/src/features/review/components/session-vocabulary-view.tsx
 msgid "No terms yet. Select some highlights in the source text to add terms."
 msgstr "No terms yet. Select some highlights in the source text to add terms."
@@ -2762,6 +2754,10 @@ msgstr "No vocabulary yet"
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
+
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "none enter your next session yet"
+msgstr "none enter your next session yet"
 
 #: apps/extension/common/components/PlayModeSelector.tsx
 msgid "Normal"
@@ -2808,6 +2804,10 @@ msgstr "Nothing to practice right now."
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Nothing to quiz yet."
 msgstr "Nothing to quiz yet."
+
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "Nothing to serve right now."
+msgstr "Nothing to serve right now."
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Nothing to strengthen right now."
@@ -3366,10 +3366,6 @@ msgstr "Reading in progress ({0, plural, one {# term} other {# terms}}) — "
 msgid "Reading the notes — this takes about a minute…"
 msgstr "Reading the notes — this takes about a minute…"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Ready to practice"
-msgstr "Ready to practice"
-
 #: apps/web/src/features/practice/components/strengthen-types.tsx
 msgid "Ready! This term is moving into your flashcards."
 msgstr "Ready! This term is moving into your flashcards."
@@ -3554,10 +3550,17 @@ msgstr "Return to Login"
 msgid "Return to the extension"
 msgstr "Return to the extension"
 
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
+msgid "Returning warm-up exercises for recently introduced terms — a few "
+"correct days graduate them to flashcards."
+msgstr "Returning warm-up exercises for recently introduced terms — a few "
+"correct days graduate them to flashcards."
+
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Revert"
 msgstr "Revert"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 #: apps/web/src/features/review/components/session-vocabulary-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3616,6 +3619,10 @@ msgstr "Saved"
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved — click to remove highlight"
 msgstr "Saved — click to remove highlight"
+
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Saved but not queued yet"
+msgstr "Saved but not queued yet"
 
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Saved to this card's chat — delete the highlight to change it."
@@ -3798,6 +3805,10 @@ msgstr "Session vocabulary"
 msgid "Sessions"
 msgstr "Sessions"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Set aside after repeated misses"
+msgstr "Set aside after repeated misses"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Set aside after repeated misses — practice serves them as strengthen "
 "exercises."
@@ -3849,6 +3860,10 @@ msgstr "Share your feedback or suggest improvements to the founders. We read "
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Short paraphrase in the target language."
 msgstr "Short paraphrase in the target language."
+
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Short-term follow-ups, coming back within days"
+msgstr "Short-term follow-ups, coming back within days"
 
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "Show"
@@ -4026,6 +4041,7 @@ msgid "Streaming Video"
 msgstr "Streaming Video"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Strengthen"
 msgstr "Strengthen"
@@ -4257,6 +4273,10 @@ msgstr "terms"
 msgid "Terms coming back for their scheduled review."
 msgstr "Terms coming back for their scheduled review."
 
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
+msgid "Terms introduced for the first time in this session."
+msgstr "Terms introduced for the first time in this session."
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Terms that aren't in your vocabulary yet"
 msgstr "Terms that aren't in your vocabulary yet"
@@ -4264,12 +4284,6 @@ msgstr "Terms that aren't in your vocabulary yet"
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Terms with a review waiting right now."
 msgstr "Terms with a review waiting right now."
-
-#: apps/web/src/features/practice/components/review-queue-stats.tsx
-msgid "Terms you're meeting for the first time, including warm-up exercises for "
-"freshly added terms."
-msgstr "Terms you're meeting for the first time, including warm-up exercises "
-"for freshly added terms."
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms you're still working on: recently introduced, recently missed, or "
@@ -4456,6 +4470,10 @@ msgstr "To change your current plan type, please click on \"Manage "
 msgid "Today"
 msgstr "Today"
 
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "Today's new-term budget is spent."
+msgstr "Today's new-term budget is spent."
+
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Toggle auto-pause"
 msgstr "Toggle auto-pause"
@@ -4522,10 +4540,6 @@ msgstr "Too much text selected — import fewer sheets at a time"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Top"
 msgstr "Top"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Total"
-msgstr "Total"
 
 #. placeholder {0}: i + 1
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
@@ -4649,7 +4663,7 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Unseen"
 msgstr "Unseen"
@@ -4664,6 +4678,7 @@ msgstr "Untitled"
 msgid "Unverified"
 msgstr "Unverified"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Up next"
 msgstr "Up next"
@@ -4795,6 +4810,10 @@ msgstr "Vocabulary"
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Waiting to be introduced, in this order"
+msgstr "Waiting to be introduced, in this order"
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Want to keep going anyway?"
 msgstr "Want to keep going anyway?"
@@ -4805,6 +4824,7 @@ msgstr "Warm up your terms · {languageName}"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Warm-up"
 msgstr "Warm-up"
 
@@ -4826,6 +4846,7 @@ msgid "Warm-up progress: day {days} of 3. A correct answer today still counts �
 msgstr "Warm-up progress: day {days} of 3. A correct answer today still counts "
 "— try again with a fresh exercise."
 
+#: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Warming up"
 msgstr "Warming up"
@@ -5078,6 +5099,14 @@ msgid "Your next exercise is still being prepared — it'll appear here "
 "automatically."
 msgstr "Your next exercise is still being prepared — it'll appear here "
 "automatically."
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx
+msgid "Your next session"
+msgstr "Your next session"
+
+#: apps/web/src/features/practice/components/practice-funnel.tsx
+msgid "Your vocabulary"
+msgstr "Your vocabulary"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx

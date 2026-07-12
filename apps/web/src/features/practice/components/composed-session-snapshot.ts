@@ -19,6 +19,10 @@ export type ComposedSessionSnapshot = {
   queue: ComposedQueueItem[]
   index: number
   dailyLimitReached: boolean
+  // Whether recognition intro candidates remained beyond this compose's
+  // introductions — the Learn-extra CTA is dead without it, so it must
+  // survive the resume round-trip like the limit flags do.
+  canLearnExtra: boolean
   capNoticeShown: boolean
   sessionHard: Set<string>
   ratingRecords: Map<ComposedQueueItem, RatingRecord>

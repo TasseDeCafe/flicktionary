@@ -7,7 +7,9 @@ import { entryKey } from './exercise-queue-merge'
 
 // Local queue item of the composed practice session. Flashcard items carry the
 // same redrill/retry bookkeeping the dedicated flashcard queue used; exercise
-// items wrap the served entry unchanged.
+// items wrap the served entry plus the compose's isNewIntroduction verdict
+// (this compose parked the term = the "New" chip bucket; a backlog gate from
+// an earlier compose = "Warm-up").
 export type ComposedQueueItem =
   | {
       type: 'flashcard'
@@ -17,12 +19,12 @@ export type ComposedQueueItem =
       // the item into the learning bucket of the remaining counts).
       requeuedForAgain: boolean
     }
-  | { type: 'exercise'; entry: StrengthenExerciseEntry }
+  | { type: 'exercise'; entry: StrengthenExerciseEntry; isNewIntroduction: boolean }
 
 export const toComposedQueueItem = (item: PracticeQueueItem): ComposedQueueItem =>
   item.type === 'flashcard'
     ? { type: 'flashcard', card: item.card, retryCount: 0, requeuedForAgain: false }
-    : { type: 'exercise', entry: item.entry }
+    : { type: 'exercise', entry: item.entry, isNewIntroduction: item.isNewIntroduction }
 
 // The heterogeneous-queue counterpart of mergePlaceholders: swap
 // not-yet-reached 'generating' exercise placeholders for their refreshed
@@ -45,7 +47,10 @@ export const mergeComposedPlaceholders = (
     const updated = freshByKey.get(entryKey(item.entry))
     if (updated && (updated.status === 'ready' || updated.status === 'failed')) {
       changed = true
-      return { type: 'exercise' as const, entry: updated }
+      // Keep the ORIGINAL compose's isNewIntroduction: the refresh is
+      // serve-only (it never parks), so its items all report false — trusting
+      // it would silently demote a just-introduced term to the Warm-up chip.
+      return { type: 'exercise' as const, entry: updated, isNewIntroduction: item.isNewIntroduction }
     }
     return item
   })

@@ -45,11 +45,15 @@ describe('mergeComposedPlaceholders', () => {
   it('upgrades a not-yet-reached generating exercise in place and never touches flashcards', () => {
     const prev = [
       toComposedQueueItem({ type: 'flashcard', card: card({}) }),
-      toComposedQueueItem({ type: 'exercise', entry: exercise({}) }),
+      toComposedQueueItem({ type: 'exercise', entry: exercise({}), isNewIntroduction: false }),
     ]
     const fresh: PracticeQueueItem[] = [
       { type: 'flashcard', card: card({ headword: 'changed' }) },
-      { type: 'exercise', entry: exercise({ status: 'ready', exerciseId: 'e1', exerciseType: 'mc_cloze' }) },
+      {
+        type: 'exercise',
+        entry: exercise({ status: 'ready', exerciseId: 'e1', exerciseType: 'mc_cloze' }),
+        isNewIntroduction: false,
+      },
     ]
     const next = mergeComposedPlaceholders(prev, fresh, 0)
     // Flashcard item untouched (refresh only upgrades exercise placeholders).
@@ -59,11 +63,15 @@ describe('mergeComposedPlaceholders', () => {
 
   it('keys on (pool, userLookupId) so a both-skills term upgrades per pool', () => {
     const prev = [
-      toComposedQueueItem({ type: 'exercise', entry: exercise({ pool: 'production' }) }),
-      toComposedQueueItem({ type: 'exercise', entry: exercise({ pool: 'recognition' }) }),
+      toComposedQueueItem({ type: 'exercise', entry: exercise({ pool: 'production' }), isNewIntroduction: false }),
+      toComposedQueueItem({ type: 'exercise', entry: exercise({ pool: 'recognition' }), isNewIntroduction: false }),
     ]
     const fresh: PracticeQueueItem[] = [
-      { type: 'exercise', entry: exercise({ pool: 'recognition', status: 'ready', exerciseId: 'e-rec' }) },
+      {
+        type: 'exercise',
+        entry: exercise({ pool: 'recognition', status: 'ready', exerciseId: 'e-rec' }),
+        isNewIntroduction: false,
+      },
     ]
     const next = mergeComposedPlaceholders(prev, fresh, 0)
     expect(next[0]).toMatchObject({ entry: { pool: 'production', status: 'generating' } })
@@ -71,15 +79,35 @@ describe('mergeComposedPlaceholders', () => {
   })
 
   it('never appends fresh items and leaves passed positions untouched (same ref when no change)', () => {
-    const prev = [toComposedQueueItem({ type: 'exercise', entry: exercise({}) })]
+    const prev = [toComposedQueueItem({ type: 'exercise', entry: exercise({}), isNewIntroduction: false })]
     const fresh: PracticeQueueItem[] = [
-      { type: 'exercise', entry: exercise({ status: 'ready', exerciseId: 'e1' }) },
-      { type: 'exercise', entry: exercise({ userLookupId: 'brand-new', status: 'ready', exerciseId: 'e2' }) },
+      { type: 'exercise', entry: exercise({ status: 'ready', exerciseId: 'e1' }), isNewIntroduction: false },
+      {
+        type: 'exercise',
+        entry: exercise({ userLookupId: 'brand-new', status: 'ready', exerciseId: 'e2' }),
+        isNewIntroduction: false,
+      },
     ]
     // fromIndex past the placeholder → nothing changes, same reference, and
     // the brand-new server-side entry is NOT appended.
     const same = mergeComposedPlaceholders(prev, fresh, 1)
     expect(same).toBe(prev)
     expect(same).toHaveLength(1)
+  })
+})
+
+describe('toComposedQueueItem / isNewIntroduction', () => {
+  it('carries the compose verdict onto the local item', () => {
+    const item = toComposedQueueItem({ type: 'exercise', entry: exercise({}), isNewIntroduction: true })
+    expect(item).toMatchObject({ type: 'exercise', isNewIntroduction: true })
+  })
+
+  it('the placeholder merge keeps the ORIGINAL flag — the serve-only refresh always reports false', () => {
+    const prev = [toComposedQueueItem({ type: 'exercise', entry: exercise({}), isNewIntroduction: true })]
+    const fresh: PracticeQueueItem[] = [
+      { type: 'exercise', entry: exercise({ status: 'ready', exerciseId: 'e1' }), isNewIntroduction: false },
+    ]
+    const next = mergeComposedPlaceholders(prev, fresh, 0)
+    expect(next[0]).toMatchObject({ entry: { status: 'ready' }, isNewIntroduction: true })
   })
 })

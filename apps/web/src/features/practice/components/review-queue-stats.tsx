@@ -13,11 +13,26 @@ export const ReviewQueueStats = ({ counts }: { counts: QueueCounts }) => {
     {
       key: 'new',
       label: t`New`,
-      description: t`Terms you're meeting for the first time, including warm-up exercises for freshly added terms.`,
+      description: t`Terms introduced for the first time in this session.`,
       value: counts.new,
       className: 'bg-blue-50 text-blue-700 ring-blue-100 hover:bg-blue-100 active:bg-blue-100',
       dotClassName: 'bg-blue-500',
     },
+    // The warm-up pill hides at 0 rather than showing dead weight: reading
+    // mode and gate-free sessions never serve returning warm-up gates, and a
+    // phone-width bottom bar barely fits four pills.
+    ...(counts.warmup > 0
+      ? [
+          {
+            key: 'warmup',
+            label: t`Warm-up`,
+            description: t`Returning warm-up exercises for recently introduced terms — a few correct days graduate them to flashcards.`,
+            value: counts.warmup,
+            className: 'bg-amber-50 text-amber-700 ring-amber-100 hover:bg-amber-100 active:bg-amber-100',
+            dotClassName: 'bg-amber-500',
+          },
+        ]
+      : []),
     {
       key: 'learning',
       label: t`Learning`,
