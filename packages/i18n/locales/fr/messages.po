@@ -263,6 +263,10 @@ msgstr "À propos"
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "About saved terms"
+msgstr "À propos des termes enregistrés"
+
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 msgid "Access exclusive premium features available to subscribers."
 msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les "
@@ -1567,10 +1571,6 @@ msgstr "Échec de l'export du vocabulaire"
 msgid "Failed to fetch subscription details"
 msgstr "Échec de la récupération des détails de l'abonnement"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to fetch translation"
-msgstr "Échec de la récupération de la traduction"
-
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to generate exploration"
 msgstr "Échec de la génération de l'exploration"
@@ -2024,7 +2024,6 @@ msgstr "Génération de l'exploration complète… cela prend quelques secondes.
 msgid "Generating..."
 msgstr "Génération..."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -3639,6 +3638,12 @@ msgstr "Réviser"
 msgid "Review (due, no new)"
 msgstr "Révision (dû, pas de nouveau)"
 
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "Review it any time from the Vocabulary tab — newest terms are listed "
+"first."
+msgstr "Consultez-le à tout moment depuis l'onglet Vocabulaire — les termes les "
+"plus récents sont listés en premier."
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Review terms"
 msgstr "Termes à réviser"
@@ -3680,6 +3685,7 @@ msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved"
 msgstr "Enregistré"
@@ -3697,6 +3703,10 @@ msgstr "Enregistré mais pas encore en file d'attente"
 msgid "Saved to this card's chat — delete the highlight to change it."
 msgstr "Enregistré dans le chat de cette carte — supprimez le surlignage pour "
 "le modifier."
+
+#: apps/web/src/features/practice/components/lookup-sheet.tsx
+msgid "Saved to your vocabulary"
+msgstr "Enregistré dans votre vocabulaire"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
