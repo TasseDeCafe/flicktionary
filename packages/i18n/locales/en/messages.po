@@ -663,6 +663,11 @@ msgstr "Base form"
 msgid "Beginner — basic phrases and immediate needs."
 msgstr "Beginner — basic phrases and immediate needs."
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Being introduced through warm-up exercises before their first flashcard."
+msgstr "Being introduced through warm-up exercises before their first "
+"flashcard."
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "best value"
 msgstr "best value"
@@ -2031,6 +2036,10 @@ msgstr "Government"
 msgid "Government / case requirement"
 msgstr "Government / case requirement"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Graduated to long-term review."
+msgstr "Graduated to long-term review."
+
 #: apps/web/src/features/practice/components/strengthen-types.tsx
 msgid "Graduated! This term is back in your practice rotation."
 msgstr "Graduated! This term is back in your practice rotation."
@@ -2210,6 +2219,10 @@ msgstr "Importing articles"
 msgid "Importing…"
 msgstr "Importing…"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "In short-term learning — follow-ups come back within days."
+msgstr "In short-term learning — follow-ups come back within days."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Inanimate"
 msgstr "Inanimate"
@@ -2358,6 +2371,7 @@ msgid "Learn new"
 msgstr "Learn new"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Learning"
 msgstr "Learning"
 
@@ -2574,6 +2588,16 @@ msgstr "Needs data — open to generate"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Neuter"
 msgstr "Neuter"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Never studied and not queued — saving or encountering them again moves "
+"them up."
+msgstr "Never studied and not queued — saving or encountering them again moves "
+"them up."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Never-studied terms in the order practice will introduce them."
+msgstr "Never-studied terms in the order practice will introduce them."
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
@@ -3536,6 +3560,7 @@ msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 #: apps/web/src/features/review/components/session-vocabulary-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Review"
 msgstr "Review"
 
@@ -3773,6 +3798,12 @@ msgstr "Session vocabulary"
 msgid "Sessions"
 msgstr "Sessions"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Set aside after repeated misses — practice serves them as strengthen "
+"exercises."
+msgstr "Set aside after repeated misses — practice serves them as strengthen "
+"exercises."
+
 #: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Set this once to start importing text in this language."
 msgstr "Set this once to start importing text in this language."
@@ -3995,6 +4026,7 @@ msgid "Streaming Video"
 msgstr "Streaming Video"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Strengthen"
 msgstr "Strengthen"
 
@@ -4228,6 +4260,10 @@ msgstr "Terms coming back for their scheduled review."
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Terms that aren't in your vocabulary yet"
 msgstr "Terms that aren't in your vocabulary yet"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+msgid "Terms with a review waiting right now."
+msgstr "Terms with a review waiting right now."
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms you're meeting for the first time, including warm-up exercises for "
@@ -4628,6 +4664,10 @@ msgstr "Untitled"
 msgid "Unverified"
 msgstr "Unverified"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Up next"
+msgstr "Up next"
+
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "Update Now"
 msgstr "Update Now"
@@ -4785,6 +4825,10 @@ msgid "Warm-up progress: day {days} of 3. A correct answer today still counts �
 "try again with a fresh exercise."
 msgstr "Warm-up progress: day {days} of 3. A correct answer today still counts "
 "— try again with a fresh exercise."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Warming up"
+msgstr "Warming up"
 
 #: apps/web/src/features/practice/components/strengthen-types.tsx
 msgid "Warming up — day {days} of 3. Come back tomorrow for the next step."

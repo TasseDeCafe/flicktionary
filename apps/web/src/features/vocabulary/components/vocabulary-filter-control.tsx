@@ -61,6 +61,37 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <h3 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>{children}</h3>
 )
 
+// Wrapping single-select pill grid for option sets too wide for the segmented
+// row (the Status section's 8 stages). Same chip language as the language
+// switcher, sized up for comfortable tapping.
+const PillGrid = <T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T
+  options: Array<{ value: T; label: string }>
+  onChange: (next: T) => void
+}) => (
+  <div className='flex flex-wrap gap-2'>
+    {options.map((opt) => (
+      <button
+        key={opt.value}
+        type='button'
+        onClick={() => onChange(opt.value)}
+        className={cn(
+          'rounded-full border px-3.5 py-2 text-sm font-medium transition-colors',
+          opt.value === value
+            ? 'border-yellow-500 bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'
+            : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent active:bg-accent'
+        )}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+)
+
 // The shared panel body, rendered inside the desktop popover and the mobile
 // sheet alike.
 const FilterPanel = ({ filters, onChange }: Props) => {
@@ -96,12 +127,20 @@ const FilterPanel = ({ filters, onChange }: Props) => {
 
       <section className='flex flex-col gap-1.5'>
         <SectionLabel>{t`Status`}</SectionLabel>
-        <Segmented<VocabStatus | 'all'>
+        {/* One single-select bucket: 'due' plus the six SRS stages (disjoint,
+            defined on the citation recognition facet — same partition the
+            practice landing shows). 'Up next' lists in introduction order. */}
+        <PillGrid<VocabStatus | 'all'>
           value={statusValue}
           onChange={(next) => onChange({ ...filters, status: next === 'all' ? undefined : next })}
           options={[
             { value: 'all', label: t`All` },
             { value: 'due', label: t`Due` },
+            { value: 'up_next', label: t`Up next` },
+            { value: 'warming_up', label: t`Warming up` },
+            { value: 'learning', label: t`Learning` },
+            { value: 'review', label: t`Review` },
+            { value: 'strengthen', label: t`Strengthen` },
             { value: 'unseen', label: t`Unseen` },
           ]}
         />
