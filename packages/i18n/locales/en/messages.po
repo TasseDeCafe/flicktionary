@@ -1048,6 +1048,10 @@ msgstr "Couldn't remove the form"
 msgid "Couldn't save the form's data"
 msgstr "Couldn't save the form's data"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Couldn't start this exercise."
+msgstr "Couldn't start this exercise."
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Covers recognition and production combined."
 msgstr "Covers recognition and production combined."
@@ -1079,6 +1083,10 @@ msgstr "Custom practice"
 #: apps/native/src/features/profile/components/profile-view.tsx
 msgid "Customer Center"
 msgstr "Customer Center"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx
+msgid "Daily introduction limit reached"
+msgstr "Daily introduction limit reached"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Daily new limit reached"
@@ -1755,6 +1763,10 @@ msgstr "Failed to set native language"
 #: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
 msgid "Failed to start the import"
 msgstr "Failed to start the import"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to start this exercise"
+msgstr "Failed to start this exercise"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to start warm-up"
@@ -3207,6 +3219,10 @@ msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Preparing your next exercise…"
+msgstr "Preparing your next exercise…"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Preparing your session…"
 msgstr "Preparing your session…"
 
@@ -3788,6 +3804,10 @@ msgstr "Session"
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Session not found."
 msgstr "Session not found."
+
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "Session preview couldn't be loaded."
+msgstr "Session preview couldn't be loaded."
 
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Session recap · {languageName}"
@@ -4596,6 +4616,8 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "Try again"
 msgstr "Try again"
 

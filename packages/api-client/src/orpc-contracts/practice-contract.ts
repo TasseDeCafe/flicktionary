@@ -275,14 +275,9 @@ export const practiceContract = {
     )
     .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
 
-  // The unified Practice session: ONE ordered queue of gate exercises (parked
-  // warm-up + rehab terms) and due flashcards, production-first. A MUTATION —
-  // with autoWarmup on it parks eligible new terms into warm-up (stamping
-  // introduced_at, consuming the daily-new budget) before serving, bounded so
-  // it never parks more than this session will serve. dailyLimitReached=true
-  // when the per-language new-term cap stopped further recognition entries
-  // (the client offers a one-tap Learn extra, which re-composes with
-  // learnExtraCount).
+  // The unified Practice session: ONE ordered queue of gate exercises and due
+  // flashcards, production-first. Composition plans new gates without changing
+  // SRS state; the client claims one immediately before displaying it.
   composePracticeQueue: oc
     .route({ method: 'POST', path: '/practice/queue/compose', successStatus: 200 })
     .errors({
@@ -308,8 +303,32 @@ export const practiceContract = {
       })
     ),
 
+  // Commit one planned onboarding gate at its display boundary. The atomic
+  // guard owns both eligibility and the combined cross-pool daily budget.
+  claimPracticeIntroduction: oc
+    .route({ method: 'POST', path: '/practice/queue/introduction/claim', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        userLookupId: z.string().uuid(),
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema,
+        bypassDailyCap: z.boolean().default(false),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          status: z.enum(['claimed', 'already_claimed', 'daily_cap_reached', 'unavailable']),
+        }),
+      })
+    ),
+
   // Read-only preview of what the primary Practice button will serve — the
-  // same planPracticeQueue arithmetic the compose mutation executes, with the
+  // same planPracticeQueue arithmetic composition materializes, with the
   // DEFAULT filter pinned (this describes the one main button, and a bare
   // GET dodges nested-object query serialization). counts mirror the
   // in-session chips 1:1: new = introductions this compose would make,
@@ -346,9 +365,8 @@ export const practiceContract = {
       })
     ),
 
-  // Serve-only re-fetch of the composed queue (NO parking / NO introductions —
-  // the handler forces autoWarmup off and drops learnExtraCount), safe to poll
-  // while exercise placeholders generate. The client only uses it to swap
+  // Read-only re-fetch of the same composed plan, safe to poll while exercise
+  // placeholders generate. The client only uses it to swap
   // 'generating' entries to 'ready'/'failed' in place; it never appends items
   // to the running session (one-shot snapshot rule).
   refreshPracticeQueue: oc

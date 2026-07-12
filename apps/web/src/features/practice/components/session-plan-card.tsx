@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Flame } from 'lucide-react'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { Button } from '@flicktionary/ui/components/button'
 import type { PracticeQueuePreview } from '../api/practice-hooks'
 import { ReviewQueueStats } from './review-queue-stats'
 
@@ -14,13 +15,17 @@ import { ReviewQueueStats } from './review-queue-stats'
 export const SessionPlanCard = ({
   preview,
   isLoading,
+  isError,
+  onRetry,
 }: {
   preview: PracticeQueuePreview | undefined
   isLoading: boolean
+  isError: boolean
+  onRetry: () => void
 }) => {
   const { t } = useLingui()
 
-  if (isLoading || !preview) {
+  if (isLoading) {
     return (
       <div className='flex flex-col items-center gap-2 py-1'>
         <Skeleton className='h-6 w-56 rounded-full' />
@@ -29,10 +34,22 @@ export const SessionPlanCard = ({
     )
   }
 
-  const { counts, dailyBudget, dailyLimitReached } = preview
+  if (isError || !preview) {
+    return (
+      <div className='flex flex-col items-center gap-2 py-1 text-center'>
+        <p className='text-muted-foreground text-sm'>{t`Session preview couldn't be loaded.`}</p>
+        <Button type='button' variant='outline' size='sm' onClick={onRetry}>
+          {t`Try again`}
+        </Button>
+      </div>
+    )
+  }
+
+  const { counts, dailyBudget } = preview
   const total = counts.new + counts.warmup + counts.learning + counts.review
   const introducedToday = dailyBudget.introducedToday
   const budgetMax = dailyBudget.max
+  const budgetAlreadySpent = dailyBudget.remaining === 0
 
   return (
     <div className='flex flex-col items-center gap-2 py-1'>
@@ -43,14 +60,14 @@ export const SessionPlanCard = ({
       )}
       {/* The budget line makes the daily countdown visible: introductions are
           a per-day allowance, not a per-session one. */}
-      {(introducedToday > 0 || counts.new > 0 || dailyLimitReached) && (
+      {(introducedToday > 0 || counts.new > 0) && (
         <p className='text-muted-foreground text-xs'>
-          {dailyLimitReached
+          {budgetAlreadySpent
             ? t`Daily new-term limit reached — more enter tomorrow.`
             : t`${introducedToday} of ${budgetMax} new introductions used today`}
         </p>
       )}
-      {dailyLimitReached && total === 0 && (
+      {budgetAlreadySpent && total === 0 && (
         <div className='flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-300'>
           <Flame className='h-3.5 w-3.5 shrink-0' />
           {t`Today's new-term budget is spent.`}

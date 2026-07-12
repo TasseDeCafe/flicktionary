@@ -1068,6 +1068,10 @@ msgstr "Impossible de supprimer la forme"
 msgid "Couldn't save the form's data"
 msgstr "Impossible d'enregistrer les données de la forme"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Couldn't start this exercise."
+msgstr "Impossible de démarrer cet exercice."
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Covers recognition and production combined."
 msgstr "Couvre reconnaissance et production combinées."
@@ -1099,6 +1103,10 @@ msgstr "Pratique personnalisée"
 #: apps/native/src/features/profile/components/profile-view.tsx
 msgid "Customer Center"
 msgstr "Centre Client"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx
+msgid "Daily introduction limit reached"
+msgstr "Limite quotidienne d'introduction atteinte"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Daily new limit reached"
@@ -1784,6 +1792,10 @@ msgstr "Échec de la définition de la langue maternelle"
 #: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
 msgid "Failed to start the import"
 msgstr "Échec du démarrage de l'importation"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to start this exercise"
+msgstr "Échec du démarrage de cet exercice"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to start warm-up"
@@ -3254,6 +3266,10 @@ msgid "Preparing your answer…"
 msgstr "Préparation de votre réponse…"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Preparing your next exercise…"
+msgstr "Préparation de votre prochain exercice…"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Preparing your session…"
 msgstr "Préparation de votre session…"
 
@@ -3838,6 +3854,10 @@ msgstr "Session"
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Session not found."
 msgstr "Session introuvable."
+
+#: apps/web/src/features/practice/components/session-plan-card.tsx
+msgid "Session preview couldn't be loaded."
+msgstr "Impossible de charger l'aperçu de la session."
 
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Session recap · {languageName}"
@@ -4656,6 +4676,8 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "Try again"
 msgstr "Réessayer"
 

@@ -220,6 +220,19 @@ describe('planPracticeQueue', () => {
     expect(plan.parkBudget).toBe(2)
     expect(recognition.plannedIntroductionCount).toBe(2)
     expect(recognition.plannedExtraIntroductionIds).toEqual(candidates.slice(2, 6))
+    expect(plan.canLearnExtra).toBe(true)
+
+    const exact = await planPracticeQueue({
+      userId,
+      targetLanguage: lang,
+      filter: filter({ learnExtraCount: 4 }),
+      deps: createDeps({
+        eligibleNewByPool: { recognition: candidates.slice(0, 6) },
+        maxNewTerms: 20,
+        introducedToday: 18,
+      }).deps,
+    })
+    expect(exact.canLearnExtra).toBe(false)
   })
 
   it('serve-only and due_only plans park nothing and fetch no candidates', async () => {

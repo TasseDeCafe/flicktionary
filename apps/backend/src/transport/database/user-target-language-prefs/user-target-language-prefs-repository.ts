@@ -8,8 +8,8 @@ export const DEFAULT_PRACTICE_MAX_REVIEW_TERMS = 100
 export const HARD_MAX_PRACTICE_NEW_TERMS = 100
 export const HARD_MAX_PRACTICE_REVIEW_TERMS = 300
 
-// The recognition-pool daily caps — set together by the existing UI, clamped
-// as a pair. (Unprefixed for history; these are the recognition limits.)
+// The language-level new-introduction cap and recognition review cap, set
+// together by the existing UI and clamped as a pair.
 export type PracticeSessionLimits = {
   maxNewTerms: number
   maxReviewTerms: number
@@ -17,9 +17,8 @@ export type PracticeSessionLimits = {
 
 // Full per-pool practice limits for a language. `maxReviewTermsProduction` is
 // the production review cap: NULL = uncapped (hard ceiling), preserving the
-// historical production behavior until the Phase-3 UI sets it. Production has
-// no NEW cap by design (the citation recognition card is the only
-// daily-new-capped facet — see the production-cap migration).
+// existing uncapped production-review behavior until the UI sets it. Both
+// citation pools share maxNewTerms; only their review caps differ.
 export type PracticeLimits = PracticeSessionLimits & {
   maxReviewTermsProduction: number | null
 }

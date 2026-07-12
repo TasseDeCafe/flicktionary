@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PracticeQueueItemSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { computeIpaSource, toPreviewDto, toQueueItemDto, toServeOnlyFilter } from './practice-router'
+import { computeIpaSource, toPreviewDto, toQueueItemDto } from './practice-router'
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { StrengthenExerciseEntry } from '../../service/practice/exercise-bank'
 
@@ -91,18 +91,29 @@ describe('toQueueItemDto', () => {
   })
 
   it('maps an exercise item (stripped payload passes the discriminated union)', () => {
-    const dto = toQueueItemDto({ type: 'exercise', entry: exerciseEntry, isNewIntroduction: false })
+    const dto = toQueueItemDto({
+      type: 'exercise',
+      entry: exerciseEntry,
+      isNewIntroduction: false,
+      bypassDailyCap: false,
+    })
     expect(dto).toMatchObject({
       type: 'exercise',
       entry: { userLookupId: exerciseEntry.userLookupId, pool: 'recognition', track: 'gate', status: 'ready' },
       isNewIntroduction: false,
+      bypassDailyCap: false,
     })
     expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
   })
 
   it('passes isNewIntroduction through to the wire item', () => {
-    const dto = toQueueItemDto({ type: 'exercise', entry: exerciseEntry, isNewIntroduction: true })
-    expect(dto).toMatchObject({ type: 'exercise', isNewIntroduction: true })
+    const dto = toQueueItemDto({
+      type: 'exercise',
+      entry: exerciseEntry,
+      isNewIntroduction: true,
+      bypassDailyCap: true,
+    })
+    expect(dto).toMatchObject({ type: 'exercise', isNewIntroduction: true, bypassDailyCap: true })
     expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
   })
 
@@ -111,6 +122,7 @@ describe('toQueueItemDto', () => {
       type: 'exercise',
       entry: { ...exerciseEntry, exerciseId: null, exerciseType: null, payload: null, status: 'generating' },
       isNewIntroduction: false,
+      bypassDailyCap: false,
     })
     expect(() => PracticeQueueItemSchema.parse(dto)).not.toThrow()
   })
@@ -158,19 +170,5 @@ describe('toPreviewDto', () => {
       dailyBudget: { max: 15, introducedToday: 3, remaining: 12 },
       plannedIntroductions: { recognition: 1, production: 2 },
     })
-  })
-})
-
-describe('toServeOnlyFilter', () => {
-  it('forces autoWarmup off and drops learnExtraCount, keeping the rest of the filter', () => {
-    const filter = {
-      pools: ['production' as const],
-      scope: 'both' as const,
-      render: 'both' as const,
-      autoWarmup: true,
-      includeOptInNew: true,
-      learnExtraCount: 5,
-    }
-    expect(toServeOnlyFilter(filter)).toEqual({ ...filter, autoWarmup: false, learnExtraCount: undefined })
   })
 })

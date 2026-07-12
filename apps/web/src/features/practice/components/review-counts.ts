@@ -9,7 +9,7 @@ import type { ComposedQueueItem } from './composed-queue-merge'
 // returning warm-up gate from an earlier compose (the landing's "warming up"
 // stage), a rehab gate counts as `learning` — there is no separate exercises
 // bucket. The session-plan card on the landing shows these same four buckets,
-// computed by the server from the same plan the compose executes.
+// computed by the server from the same plan composition materializes.
 export type QueueCounts = {
   new: number
   warmup: number

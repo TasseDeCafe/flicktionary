@@ -43,6 +43,7 @@ import {
   type ComposePracticeQueueDependencies,
 } from '../../service/practice/compose-practice-queue'
 import { planPracticeQueue, type PracticeQueuePlan } from '../../service/practice/plan-practice-queue'
+import { claimPracticeIntroduction } from '../../service/practice/claim-practice-introduction'
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/rehab'
@@ -177,6 +178,7 @@ export const toQueueItemDto = (item: ComposedQueueItem) =>
         type: 'exercise' as const,
         entry: { ...item.entry, payload: item.entry.payload as never },
         isNewIntroduction: item.isNewIntroduction,
+        bypassDailyCap: item.bypassDailyCap,
       }
 
 // Collapses a queue plan into the session-plan card's counts. The buckets
@@ -207,14 +209,6 @@ export const toPreviewDto = (plan: PracticeQueuePlan) => {
     },
   }
 }
-
-// The refresh endpoint is serve-only: whatever the client sent, polling must
-// never introduce or park. Exported for unit tests.
-export const toServeOnlyFilter = <T extends { autoWarmup: boolean; learnExtraCount?: number }>(filter: T): T => ({
-  ...filter,
-  autoWarmup: false,
-  learnExtraCount: undefined,
-})
 
 // Builds the (headword, sense) -> content map for the row's annotations by
 // hitting user_lookups once per practice text. Returns an empty map when the
@@ -549,9 +543,25 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       }
     }),
 
+    claimPracticeIntroduction: implementer.claimPracticeIntroduction.handler(async ({ input, context }) => {
+      const status = await claimPracticeIntroduction({
+        userId: context.res.locals.userId,
+        userLookupId: input.userLookupId,
+        targetLanguage: input.targetLanguage,
+        pool: input.pool,
+        bypassDailyCap: input.bypassDailyCap,
+        deps: {
+          studyFacetsRepository: deps.studyFacetsRepository,
+          userLookupsRepository: deps.userLookupsRepository,
+          userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+        },
+      })
+      return { data: { status } }
+    }),
+
     previewPracticeQueue: implementer.previewPracticeQueue.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      // Read-only: the same plan the compose mutation executes, for the
+      // Read-only: the same plan composition materializes, for the
       // landing's session-plan card. The filter is pinned to the primary
       // Practice button's default — that's the one thing the card describes.
       const plan = await planPracticeQueue({
@@ -568,7 +578,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await composePracticeQueue({
         userId,
         targetLanguage: input.targetLanguage,
-        filter: toServeOnlyFilter(input.filter),
+        filter: input.filter,
         deps: composeDeps,
       })
       return { data: { items: result.items.map((item) => toQueueItemDto(item)) } }

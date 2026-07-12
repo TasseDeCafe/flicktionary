@@ -220,10 +220,9 @@ const applyStudyIntentFacets = async (
   return executor ? await run(executor) : await beginTx(run)
 }
 
-// Race-safe daily-new-cap guard for the citation recognition facet — the ONLY
-// daily-new-capped facet. Introduces the never-seen facet (srs_state='new', due
-// now, introduced_at stamped) only when the day's introduced count for this
-// (user, language) is still under maxNewTerms.
+// Race-safe daily-new-cap guard for either citation meaning facet. Introduces
+// the never-seen facet (srs_state='new', due now, introduced_at stamped) only
+// when the combined citation count for this (user, language) is under the cap.
 //
 // The advisory transaction lock serializes flashcard introductions per
 // (user, language); the count + update decision runs one-at-a-time. There is

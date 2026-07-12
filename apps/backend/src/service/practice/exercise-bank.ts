@@ -327,6 +327,65 @@ const toEntry = (
   }
 }
 
+const getGateExerciseEntry = async (params: {
+  lookup: DbUserLookup
+  pool: PracticePool
+  rehabCorrectDays: number
+  origin: 'onboarding' | 'leech'
+  deps: ExerciseBankDependencies
+}): Promise<StrengthenExerciseEntry> => {
+  const { lookup, pool, rehabCorrectDays, origin, deps } = params
+  const tierType = gateTypeForTier(pool, rehabCorrectDays)
+  const exercise =
+    (await deps.practiceExercisesRepository.selectNextExercise({
+      userLookupId: lookup.id,
+      pool,
+      gateEligible: true,
+      type: tierType,
+    })) ??
+    (await deps.practiceExercisesRepository.selectNextExercise({
+      userLookupId: lookup.id,
+      pool,
+      gateEligible: true,
+    }))
+  if (exercise) return toEntry(lookup, pool, 'gate', exercise, origin)
+
+  const gateTypes = gateCapableTypes(pool)
+  const bank = await deps.practiceExercisesRepository.countGateBankSlots({
+    userLookupId: lookup.id,
+    pool,
+    types: gateTypes,
+  })
+  if (bank.inflight > 0) return placeholderEntry(lookup, pool, 'gate', 'generating', origin)
+  if (bank.failedTypes >= gateTypes.length) return placeholderEntry(lookup, pool, 'gate', 'failed', origin)
+
+  void ensureExerciseBank({ lookup, pool, deps })
+  return placeholderEntry(lookup, pool, 'gate', 'generating', origin)
+}
+
+// Build onboarding gate entries without changing SRS state. Queue composition
+// can prepare exercise banks and show placeholders safely; the introduction is
+// claimed separately when the client actually reaches the item.
+export const getIntroductionExercises = async (params: {
+  userId: string
+  targetLanguage: string
+  pool: PracticePool
+  userLookupIds: string[]
+  deps: ExerciseBankDependencies
+}): Promise<StrengthenExerciseEntry[]> => {
+  const { userId, targetLanguage, pool, deps } = params
+  const lookups = await Promise.all(
+    params.userLookupIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId))
+  )
+  const eligible = lookups.filter(
+    (lookup): lookup is DbUserLookup =>
+      lookup != null && lookup.deleted_at == null && lookup.target_language === targetLanguage && lookup.count > 0
+  )
+  return Promise.all(
+    eligible.map((lookup) => getGateExerciseEntry({ lookup, pool, rehabCorrectDays: 0, origin: 'onboarding', deps }))
+  )
+}
+
 // Build the Strengthen session: one gate exercise per parked term (rehab
 // track), plus one bonus exercise per this-session again/hard term. Terms with
 // nothing ready get a 'generating' placeholder (and a bank top-up kick) rather
@@ -395,41 +454,15 @@ export const getStrengthenExercises = async (params: {
     // whose required type can't be generated (the verifier keeps refusing it, as
     // for a malformed headword) must still progress. Graduation is gated on N
     // distinct days, not a strict type sequence, so any gate exercise counts.
-    const tierType = gateTypeForTier(pool, rehabCorrectDaysFor(lookup))
-    const exercise =
-      (await deps.practiceExercisesRepository.selectNextExercise({
-        userLookupId: lookup.id,
+    entries.push(
+      await getGateExerciseEntry({
+        lookup,
         pool,
-        gateEligible: true,
-        type: tierType,
-      })) ??
-      (await deps.practiceExercisesRepository.selectNextExercise({
-        userLookupId: lookup.id,
-        pool,
-        gateEligible: true,
-      }))
-    if (exercise) {
-      entries.push(toEntry(lookup, pool, 'gate', exercise, originOf(lookup)))
-      continue
-    }
-    // Nothing ready. Distinguish "still cooking" from "terminally exhausted"
-    // (every candidate gate slot failed) so the client shows a clear failed
-    // state instead of an endless hourglass — and so we stop re-reserving
-    // doomed slots for a term the LLM can't build an exercise for.
-    const gateTypes = gateCapableTypes(pool)
-    const bank = await deps.practiceExercisesRepository.countGateBankSlots({
-      userLookupId: lookup.id,
-      pool,
-      types: gateTypes,
-    })
-    if (bank.inflight > 0) {
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating', originOf(lookup)))
-    } else if (bank.failedTypes >= gateTypes.length) {
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'failed', originOf(lookup)))
-    } else {
-      void ensureExerciseBank({ lookup, pool, deps })
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating', originOf(lookup)))
-    }
+        rehabCorrectDays: rehabCorrectDaysFor(lookup),
+        origin: originOf(lookup),
+        deps,
+      })
+    )
   }
 
   const bonusByLookupId = new Map(

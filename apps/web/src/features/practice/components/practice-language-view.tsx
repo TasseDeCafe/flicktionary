@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { plural } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { BookOpen, Brain, ChevronLeft, CircleCheck, SlidersHorizontal } from 'lucide-react'
+import { BookOpen, Brain, ChevronLeft, CircleAlert, CircleCheck, Flame, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -18,7 +18,7 @@ import { SessionPlanCard } from './session-plan-card'
 // and two truth-telling surfaces replacing the old counter tiles:
 //   - the session-plan card: what pressing Practice will actually serve, in
 //     the same four buckets as the in-session chips (server-computed from the
-//     same plan the compose executes — the numbers can't disagree);
+//     same plan composition materializes — the numbers can't disagree);
 //   - the funnel: the deck's stage pipeline, each row deep-linking into the
 //     Vocabulary tab pre-filtered to that stage.
 export const PracticeLanguageView = () => {
@@ -30,7 +30,12 @@ export const PracticeLanguageView = () => {
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
-  const { data: preview, isLoading: previewLoading } = usePreviewPracticeQueue(entry ? targetLanguage : null)
+  const {
+    data: preview,
+    isLoading: previewLoading,
+    isError: previewError,
+    refetch: refetchPreview,
+  } = usePreviewPracticeQueue(entry ? targetLanguage : null)
 
   // Servable work = what the next session actually contains (the preview runs
   // the compose's own plan). The old client-side budget math lived here; it
@@ -39,6 +44,14 @@ export const PracticeLanguageView = () => {
     ? preview.counts.new + preview.counts.warmup + preview.counts.learning + preview.counts.review
     : 0
   const hasWork = previewTotal > 0
+  const introductionBudgetSpent = preview?.dailyBudget.remaining === 0 && preview.dailyLimitReached
+  const sessionHeading = previewError
+    ? t`Your next session`
+    : hasWork || previewLoading
+      ? t`Your next session`
+      : introductionBudgetSpent
+        ? t`Daily introduction limit reached`
+        : t`All caught up`
   const productionTotal = entry?.productionTotal ?? 0
 
   const handleBack = () => void navigate({ to: '/practice' })
@@ -127,19 +140,26 @@ export const PracticeLanguageView = () => {
             <>
               <section className='bg-card rounded-xl border p-4'>
                 <div className='flex items-start gap-3'>
-                  {hasWork || previewLoading ? (
+                  {previewError ? (
+                    <CircleAlert className='mt-1 h-5 w-5 text-amber-600 dark:text-amber-400' />
+                  ) : hasWork || previewLoading ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600 dark:text-yellow-400' />
+                  ) : introductionBudgetSpent ? (
+                    <Flame className='mt-1 h-5 w-5 text-amber-600 dark:text-amber-400' />
                   ) : (
                     <CircleCheck className='mt-1 h-5 w-5 text-emerald-600' />
                   )}
                   <div className='min-w-0 flex-1'>
-                    <h3 className='font-semibold'>
-                      {hasWork || previewLoading ? t`Your next session` : t`All caught up`}
-                    </h3>
+                    <h3 className='font-semibold'>{sessionHeading}</h3>
                   </div>
                 </div>
                 <div className='mt-3'>
-                  <SessionPlanCard preview={preview} isLoading={previewLoading} />
+                  <SessionPlanCard
+                    preview={preview}
+                    isLoading={previewLoading}
+                    isError={previewError}
+                    onRetry={() => void refetchPreview()}
+                  />
                 </div>
                 {renderReadingAffordance('recognition')}
                 {renderReadingAffordance('production')}

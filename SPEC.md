@@ -110,7 +110,8 @@ record), and each studied skill × form of a term is an independently-scheduled 
   tappable annotations; anything not explicitly rated auto-rates `good` on advance.
   Sessionless; lives under Custom practice.
 - **Warm-up + leech rehab** — one parked-term mechanic with two entry triggers: brand-new
-  terms onboard exercise-first (auto-parked by the composed queue under the daily-new
+  terms onboard exercise-first (planned by the composed queue and atomically parked only
+  when their gate is reached, under the daily-new
   cap), and terms you keep failing are parked for rehab. Both graduate back into FSRS
   after correct gate answers on 3 distinct days, served from a durable,
   adversarially-verified exercise bank (`practice_exercise`).
@@ -394,7 +395,7 @@ For a show already in the Sessions list, the `Add episode` button on its show de
 
 1. Session-vocabulary list — review the kept terms, Remove (unkeep) any you don't want. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
 2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`; **Remove from session** unkeeps.
-3. Sticky-footer `Quiz your terms` button launches the session recap — a client-side quiz over all the session's kept terms with no SRS effects. SRS onboarding happens separately: the composed Practice queue's auto-warm-up parks new terms (daily-new-capped) and serves gate exercises; after graduation they enter the flashcard queue. General flashcard practice over the language-wide pool stays on the Practice tab — kept chunks feed into it via the user-lookups upsert that fires on the auto-keep transition.
+3. Sticky-footer `Quiz your terms` button launches the session recap — a client-side quiz over all the session's kept terms with no SRS effects. SRS onboarding happens separately: the composed Practice queue plans daily-new-capped gate exercises and atomically introduces each term only when its gate is reached; after graduation they enter the flashcard queue. General flashcard practice over the language-wide pool stays on the Practice tab — kept chunks feed into it via the user-lookups upsert that fires on the auto-keep transition.
 
 **Export vocabulary**
 

@@ -10,7 +10,8 @@ Code map:
 - Scheduler: `apps/backend/src/service/practice/fsrs.ts` (`ts-fsrs` wrapper)
 - Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`); undo: `undo-rating.ts`
 - Queue: `list-review-terms.ts` + `listReviewTerms` in `user-lookups-repository.ts`
-- Composed queue: `compose-practice-queue.ts` (+ `warmup-parking.ts` for the shared parking passes)
+- Composed queue: `plan-practice-queue.ts`, `compose-practice-queue.ts`,
+  `claim-practice-introduction.ts`
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
 - Leeches: `leech-config.ts`, `rehab.ts`, `exercise-bank.ts`
 - Reading mode: `generate-reading-text.ts`, `advance-reading-text.ts`
@@ -44,9 +45,9 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
 | | passive (recognition) | active (production) |
 |---|---|---|
 | Facet skill | `meaning_recognition`, `pronunciation` | `meaning_production` |
-| Daily caps | new + review budgets | **none** (hard ceilings only) |
-| Stamps `introduced_at` on introduction | yes | no |
-| Counts toward review budget | yes | no |
+| Daily caps | shared new + review budgets | shared new + optional review budget |
+| Stamps `introduced_at` on citation introduction | yes | yes |
+| Counts toward review budget | yes | yes (when configured) |
 | 24h interval floor | yes | no |
 | Card layout | headword front | prompt front (`PRODUCTION_CARD_FACE_CONFIG`) |
 
@@ -231,9 +232,9 @@ surfaces it as a language-level "New introductions per day" input, plus a Recogn
 {Review} and a Production group {Review only}, where an empty Production-review input means
 uncapped (NULL).
 
-**Production-first is a per-compose rule, not a daily reservation**: within one
-compose/warm-up parking pass production parks before recognition, but across a day whichever
-path introduces first (reading, a direct rating, a compose) consumes budget in event order —
+**Production-first is a per-session rule, not a daily reservation**: within one
+composed/warm-up session production is planned and served before recognition, but across a day whichever
+path introduces first (reading, a direct rating, or a displayed onboarding gate) consumes budget in event order —
 deliberately, since a global priority would need cross-surface coordination for little gain.
 
 Daily budgets:
@@ -323,50 +324,51 @@ Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms wov
 currently-open reading text (`excludeUserLookupIds`).
 
 **Over-cap learning**: the ONLY past-the-cap path is the composed queue's **Learn
-extra** (§4b) — an explicit batch that PARKS extra recognition terms into warm-up with
-`bypassCap` on the warm-up park guard (introductions still stamp `introduced_at`, so they
-count toward today). Neither the rating path nor reading mode has a cap bypass.
+extra** (§4b) — an explicit batch whose display-time claims pass `bypassCap` to the
+warm-up park guard (introductions still stamp `introduced_at`, so they count toward
+today). Neither the rating path nor reading mode has a cap bypass.
 
 ## 4b. The composed queue (composePracticeQueue)
 
 The primary **Practice** button serves ONE heterogeneous queue — gate exercises for
 parked terms (warm-up + rehab) interleaved with due flashcards — built by
-`composePracticeQueue` (`compose-practice-queue.ts`). Render type is **derived from term
-state**, never chosen per item: parked → gate exercise; due/graduated → flashcard;
-never-reviewed opt-in facet → flashcard. The filter spec
+`composePracticeQueue` (`compose-practice-queue.ts`). Planned citation introductions and
+parked terms render as gate exercises; due/graduated terms and never-reviewed opt-in
+facets render as flashcards. The filter spec
 (`pools / scope / render / autoWarmup / includeOptInNew / learnExtraCount`, contract
 `PracticeQueueFilterSchema`) only selects which populations participate; the Custom
 practice presets are just named filter specs.
 
-**Plan/execute split.** All selection and budget arithmetic lives in `planPracticeQueue`
-(`plan-practice-queue.ts`): the daily-budget numbers, the coupled park budget, the
+**Plan/compose/claim split.** All selection and budget arithmetic lives in `planPracticeQueue`
+(`plan-practice-queue.ts`): the daily-budget numbers, the introduction budget, the
 sequential production-first introduction allocation, the cross-pool gate head-slice, the
 exact due-row fetch, the learn-extra slice, and the predicted `dailyLimitReached` /
-`canLearnExtra` flags. `composePracticeQueue` EXECUTES that plan (parking mutations,
-exercise fetch); the read-only `previewPracticeQueue` endpoint (GET
+`canLearnExtra` flags. `composePracticeQueue` materializes it (exercise fetch and optional
+bank warming) without changing SRS state; the read-only `previewPracticeQueue` endpoint (GET
 `/practice/queue/preview`, input `{targetLanguage}` only — always the default filter)
 returns the plan's counts for the landing's session-plan card. One function computes
 both, so the plan card and the session chips cannot disagree. Each served queue item
-carries **`isNewIntroduction`** (exercise items): true iff THIS compose parked the term —
-the client's "New" chip bucket, vs "Warm-up" for backlog gates.
-`dailyLimitReached` = planner-predicted (budget exhausted while capped-pool candidates
-remain — covers the pass-never-ran case) OR the transactional `cap_reached` outcome
-(covers races the prediction can't see); **`canLearnExtra`** (recognition intro
-candidates remain beyond the planned introductions) gates the Learn-extra CTA, which
+carries **`isNewIntroduction`** (exercise items): true for a planned onboarding gate —
+the client's "New" chip bucket, vs "Warm-up" for already-parked backlog gates.
+`dailyLimitReached` is forward-looking: the plan would exhaust the budget while candidates
+remain. A display-time claim can additionally hit the cap after a concurrent race;
+**`canLearnExtra`** (recognition intro candidates remain beyond the planned introductions)
+gates the Learn-extra CTA, which
 additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 
-- **Parking pass (auto-warm-up).** With `autoWarmup` on (the default Practice), the
-  compose first parks eligible never-reviewed citation terms into warm-up — discovery is
-  by (user, language) via `listEligibleNewCitationFacets` (tier-ordered like the flashcard
-  new bucket, decayed terms excluded — see §4), the park
-  writes reuse the session warm-up's mechanism (`runParkingPass` in
-  `warmup-parking.ts`, skill-aware, one pass per pool). **Production parks first**, then
-  recognition — both under the COMBINED daily budget (either pass's `cap_reached` →
-  `dailyLimitReached`). The per-compose budget is
+- **Planned introductions + display-time claim.** With `autoWarmup` on (the default
+  Practice), composition includes eligible never-reviewed citation terms as onboarding
+  gates — discovery is by (user, language) via `listEligibleNewCitationFacets`
+  (tier-ordered like the flashcard
+  new bucket, decayed terms excluded — see §4). **Production is allocated first**, then
+  recognition, under the COMBINED daily budget. The per-compose budget is
   `min(MAX_WARMUP_INTRO_PER_SESSION, remaining daily budget)` — deliberately NOT coupled
   to the gate backlog (a full warm-up pipeline must not silently starve introductions);
-  newly-parked gates always serve ON TOP of the backlog slice, so a compose still never
-  parks a term this session doesn't also serve. There are therefore **no new
+  planned gates serve ON TOP of the backlog slice. Immediately before a planned gate is
+  displayed, `claimPracticeIntroduction` calls the atomic
+  `initializeAndParkCitationFacetIfUnderDailyCap` guard; only then are `introduced_at`
+  and `leech_parked_at` stamped. Closing before reaching it therefore consumes no budget.
+  A cap race removes the item and shows the limit notice. There are **no new
   citation flashcards** — new terms enter via ~3 gate-days, then graduate (soft
   re-entry).
 - **Serve pass**, production-first (`prod flashcards → prod gates → recog flashcards →
@@ -380,7 +382,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   (which also bounds `ensureExerciseBank` fan-out per call). **Both parked origins serve
   together**: an onboarding gate is committed due work exactly like a rehab gate, so a
   daily Practice habit graduates warm-up terms as a side effect (no stranded lane).
-- **Scopes.** `due_only` skips parking and opt-in-new (no introductions of any kind) but
+- **Scopes.** `due_only` skips planned introductions and opt-in-new but
   serves gates of both origins; `new_only` skips due flashcards and restricts gates to
   onboarding-parked terms.
 - **Opt-in-new pass** (`includeOptInNew`, the Learn-new preset): never-reviewed
@@ -388,16 +390,16 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   has no facet identity), so this is their ONLY introduction path, reserved for the
   explicit Learn-new entry like the old learn_new-scope rule.
 - **Learn extra** (`learnExtraCount`, 1–20): an explicit batch past the daily-new cap —
-  `initializeAndParkCitationFacetIfUnderDailyCap` takes `bypassCap` (skips only the count
-  predicate; `introduced_at` still stamps, so extras count toward today). Offered as a
-  one-tap on the composed completion screen when the cap was hit; carried as mutation
+  those planned items carry `bypassDailyCap`, applied by the same display-time claim
+  (skips only the count predicate; `introduced_at` still stamps, so extras count toward
+  today). Offered as a one-tap on the composed completion screen when the cap was hit; carried as mutation
   input, never a URL param, so refresh/back can't replay the bypass.
-- **Hint pre-warm.** The compose mutation also fire-and-forgets hint-exercise generation
+- **Hint pre-warm.** The initial compose request also fire-and-forgets hint-exercise generation
   for served flashcard terms whose bank has no hint-type slot (see §7 "Flashcard hints"),
   so the Hint button is usually live by the time its card comes up.
-- **Refresh** (`refreshPracticeQueue`) is serve-only — the handler forces
-  `autoWarmup: false`, drops `learnExtraCount`, and never warms hint banks — safe to
-  poll; the client uses it only to swap `generating` exercise placeholders to
+- **Refresh** (`refreshPracticeQueue`) recomposes the same filter read-only and never
+  warms hint banks — safe to poll; retaining `learnExtraCount` keeps an explicit batch
+  stable. The client uses it only to swap `generating` exercise placeholders to
   `ready`/`failed` in place (keyed `(pool, userLookupId)`), never to append.
 
 The old standalone flashcard queue (`mode=flashcards` on `/practice/review`, the
@@ -406,7 +408,7 @@ mode keeps `/practice/review` to itself. The post-session Strengthen CTA remains
 dedicated surface. The session-scoped warm-up (`/practice/warmup/$lang`) still exists
 but has no UI entry point — the session-vocabulary footer now launches the zero-SRS
 session recap quiz instead (client-side, no FSRS writes; see docs/REVIEW-SPEC.md), leaving the
-composed queue's auto-warm-up as the sole warm-up on-ramp.
+composed queue's display-time claims as the sole warm-up on-ramp.
 
 ## 5. Rating flow (applyTermRating)
 
@@ -620,8 +622,8 @@ sets from the same column. Everything below "park" is shared.
 ### Warm-up (exercise-first onboarding)
 
 - **Entry** (`warmup.ts` + the composed queue): the composed **Practice** button
-  auto-parks eligible new terms language-wide on every compose (§4b) — the sole UI
-  on-ramp. The session-scoped `/practice/warmup/$targetLanguage` route +
+  plans eligible new terms language-wide and claims each at display time (§4b) — the sole
+  UI on-ramp. The session-scoped `/practice/warmup/$targetLanguage` route +
   `startWarmupSession` (parks one session's terms explicitly) remain functional but
   unreferenced: the session-vocabulary footer now opens the zero-SRS session recap
   instead (see docs/REVIEW-SPEC.md). Abandoned warm-ups need no dedicated resume surface, since
@@ -631,11 +633,11 @@ sets from the same column. Everything below "park" is shared.
   **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps `introduced_at` AND
   `leech_parked_at` in one tx, leaves `srs_state` NULL — so a crash can't leave a term
   introduced-but-unparked; returns `'scaffolded' | 'cap_reached' | 'not_eligible'`, the
-  first cap hit stopping that pass, `not_eligible` skipped; `bypassCap` is the composer's
-  learn-extra path). Both pools consume the COMBINED daily budget; either pass's cap hit
-  flags `dailyLimitReached`, and neither pass inherits the other's stop (the shared guard
-  refuses over-budget entries per candidate anyway). The served queue is **mixed**
-  (recognition ++ production); each `StrengthenExerciseEntry` carries its `pool` so the
+  first cap hit stopping that pass, `not_eligible` skipped). Both pools consume the
+  COMBINED daily budget; either pass's cap hit flags `dailyLimitReached`, and neither pass
+  inherits the other's stop (the shared guard refuses over-budget entries per candidate
+  anyway). The served queue is **production-first mixed**; each
+  `StrengthenExerciseEntry` carries its `pool` so the
   client merges placeholders by `(pool, userLookupId)` (a both-skills term has one entry per
   pool with the same id) and its `origin` (`onboarding`/`leech`, derived from `srs_state`)
   so mixed-origin queues pick the right copy; `submitExerciseAnswer` routes to the right
@@ -736,7 +738,7 @@ sets from the same column. Everything below "park" is shared.
   has no facet identity — same restriction as parking). Serving is bank-first and
   read-only: banked exercises from warm-up/rehab serve for free; a miss kicks a background
   top-up of just the hint type (skipped if that type failed terminally or is in flight).
-  The compose mutation pre-warms gaps: `warmHintExerciseBanksForFlashcards` checks the
+  The initial compose request pre-warms gaps: `warmHintExerciseBanksForFlashcards` checks the
   served flashcards' hint slots in one query (`countSlotsByTermForType`; stale inflight
   counts as absent) and generates only for terms with **no hint-type slot at all**, capped
   at `MAX_HINT_WARMS_PER_COMPOSE` per compose — the serve-only refresh never warms.
@@ -801,8 +803,8 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 ## 8. Frontend session model (composed-practice-view.tsx)
 
 - The queue is a **one-shot client-side slice of union items**
-  (`{type:'flashcard'} | {type:'exercise'}`): seeded from the compose mutation's
-  response (the route keys the view on the serialized filter). The serve-only refresh
+  (`{type:'flashcard'} | {type:'exercise'}`): seeded from the compose response (the
+  route keys the view on the serialized filter). The read-only refresh
   poll (~4s while a `generating` exercise placeholder is at/ahead of the index) only
   upgrades placeholders in place (`mergeComposedPlaceholders`, keyed
   `(pool, userLookupId)`) — it never appends, so a term graduating mid-session becomes
@@ -811,13 +813,13 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   like the Vocabulary tab's saved-search): unmounting mid-session — the Edit-term
   focus-view detour, a back gesture — saves the full session (queue, position, rating
   records, exercise outcomes, Strengthen set, cap flags), and the next mount of the
-  composed route resumes it instead of re-composing, so a detour can't run a fresh
-  auto-warm-up parking pass and refill an almost-finished session with new
+  composed route resumes it instead of re-composing, so a detour keeps the same planned
+  batch instead of refilling an almost-finished session with new
   introductions. Resume requires the same language + filter and the same local calendar
   day (due-ness and daily budgets shift overnight); the snapshot is consumed on read.
   **Deliberate exits never resume**: the X/Back buttons and reaching the completion
-  screen skip the save, so re-entering Practice from the language screen composes fresh
-  (and can introduce new warm-up terms, by design). The chunk soft-delete mutations
+  screen skip the save, so re-entering Practice from the language screen composes fresh.
+  Unreached planned terms remain unintroduced. The chunk soft-delete mutations
   splice a deleted term's not-yet-reached items out of the stashed queue, so a "delete
   this card" detour resumes without it. A hard page reload still drops the session (the
   stash is in-memory only).
@@ -892,7 +894,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   flashcards, exercises, hint mode, and peeked items alike: peek chevrons framing colored
   remaining-count chips (derived from the remaining local queue, `getRemainingCounts` in
   `review-counts.ts`). Chips bucket by **learning stage, not render type**, four buckets:
-  `new` (gates whose term THIS compose introduced — `isNewIntroduction` — plus
+  `new` (planned onboarding gates — `isNewIntroduction` — plus
   never-reviewed opt-in flashcards), `warmup` (returning backlog gates from earlier
   composes; the pill hides at 0 — reading mode and gate-free sessions never have any),
   `learning` (learning/relearning flashcards + `Again`-redrills + rehab gates), `review`.
@@ -925,12 +927,13 @@ status summary and stat cards (Follow-ups / New today / Unseen / Total):
 - **The session-plan card** (`session-plan-card.tsx`, inside the "Your next session"
   section next to the primary **Practice** button): what pressing Practice will actually
   serve, rendered with the SAME four-pill component as the in-session chips
-  (New = introductions this compose makes / Warm-up = backlog gates / Learning /
+  (New = introductions this compose plans / Warm-up = backlog gates / Learning /
   Review) and fed by `previewPracticeQueue` (§4b) — server-computed from the plan the
-  compose executes, so the card and the session open with identical numbers. Below the
-  pills, a budget line ("N of M new introductions used today", or the limit notice when
-  `dailyLimitReached`). `hasWork` (and the "All caught up" flip) is `Σ preview counts >
-  0` — the old client-side budget math is gone from the view.
+  composition materializes, so the card and the session open with identical numbers.
+  Below the pills, a budget line shows introductions already consumed today; the forward-looking
+  `dailyLimitReached` flag is not presented as already spent. A zero remaining budget with
+  candidates gets a limit heading instead of "All caught up." Preview failures render an
+  explicit retry state rather than an empty/skeleton state.
 - **The funnel** (`practice-funnel.tsx`): the deck's stage pipeline — a slim proportion
   bar over the five ACTIVE stages (Up next / Warming up / Learning / Review /
   Strengthen; Unseen is a row but never a bar segment — it usually dwarfs the rest and
