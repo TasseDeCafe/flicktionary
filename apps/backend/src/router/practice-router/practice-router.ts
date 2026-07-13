@@ -47,12 +47,13 @@ import { claimPracticeIntroduction } from '../../service/practice/claim-practice
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/rehab'
-import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
 import { generateReadingText, prepareNextReadingText } from '../../service/practice/generate-reading-text'
 import { advanceReadingText, type AdvanceReadingTextDependencies } from '../../service/practice/advance-reading-text'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 export type PracticeRouterDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
@@ -246,6 +247,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const implementer = implement(practiceContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const exerciseBankDeps: ExerciseBankDependencies = {
+    anthropicPasses: deps.anthropicPasses,
     practiceExercisesRepository: deps.practiceExercisesRepository,
     userLookupsRepository: deps.userLookupsRepository,
     usersRepository: deps.usersRepository,
@@ -271,6 +273,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const withTransaction: WithTransaction = (fn) => beginTx(fn) as ReturnType<typeof fn>
 
   const readingDeps: AdvanceReadingTextDependencies = {
+    anthropicPasses: deps.anthropicPasses,
     practiceTextsRepository: deps.practiceTextsRepository,
     userLookupsRepository: deps.userLookupsRepository,
     studyFacetsRepository: deps.studyFacetsRepository,
@@ -660,7 +663,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
             targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
           })
           if (!lookup || !languagePrefs.nativeLanguage) throw new Error('grading context unavailable')
-          const grade = await gradeUseInSentencePass({
+          const grade = await deps.anthropicPasses.gradeUseInSentencePass({
             headword: lookup.headword,
             sense: lookup.sense ?? '',
             userSentence: input.response.text,

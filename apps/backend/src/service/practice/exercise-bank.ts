@@ -17,17 +17,17 @@ import {
   type StudyFacetsRepositoryInterface,
 } from '../../transport/database/study-facets/study-facets-repository'
 import {
-  generateExercisePass,
   type ExerciseTermInput,
   type GeneratableExerciseType,
   type GeneratedExercise,
 } from '../../transport/third-party/anthropic/passes/generate-exercise-pass'
-import { verifyExercisePass } from '../../transport/third-party/anthropic/passes/verify-exercise-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { MAX_GEN_ATTEMPTS, MAX_HINT_WARMS_PER_COMPOSE } from './leech-config'
 import { gateTypeForTier, rehabCorrectDaysFor } from './rehab'
 
 export type ExerciseBankDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
@@ -128,7 +128,7 @@ const runExerciseGenerationForSlot = async (params: {
     for (let attempt = 1; attempt <= MAX_GEN_ATTEMPTS; attempt++) {
       let generated: GeneratedExercise
       try {
-        generated = await generateExercisePass({
+        generated = await deps.anthropicPasses.generateExercisePass({
           type: slot.exercise_type as GeneratableExerciseType,
           previousRejections: verifierFeedback,
           ...passArgs,
@@ -137,7 +137,7 @@ const runExerciseGenerationForSlot = async (params: {
         rejections.push(`attempt ${attempt} generate: ${e instanceof Error ? e.message : String(e)}`)
         continue
       }
-      const verdict = await verifyExercisePass({ exercise: generated, ...passArgs })
+      const verdict = await deps.anthropicPasses.verifyExercisePass({ exercise: generated, ...passArgs })
       if (verdict.pass) {
         await deps.practiceExercisesRepository.markReady({
           id: slot.id,

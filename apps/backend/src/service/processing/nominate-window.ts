@@ -1,9 +1,5 @@
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
-import {
-  nominateCandidatesPass,
-  NominatedSpan,
-} from '../../transport/third-party/anthropic/passes/nominate-candidates-pass'
+import { NominatedSpan } from '../../transport/third-party/anthropic/passes/nominate-candidates-pass'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import type { ProcessingDependencies } from './processing-dependencies'
@@ -47,6 +43,7 @@ export const nominateWindow = async (
 ): Promise<void> => {
   const { sessionId, userId, startIndex, endIndex } = params
   const {
+    anthropicPasses,
     contentSourcesRepository,
     textSegmentsRepository,
     studySessionsRepository,
@@ -95,7 +92,7 @@ export const nominateWindow = async (
       session.text_track_id,
       CONTEXT_BLOB_SAMPLE_SIZE
     )
-    contextBlob = await generateContextBlob({
+    contextBlob = await anthropicPasses.generateContextBlob({
       contentTitle: contentSource.title,
       contentLanguage: session.target_language,
       contentType: contentSource.type,
@@ -113,7 +110,7 @@ export const nominateWindow = async (
   })
   const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
-  const spans = await nominateCandidatesPass({
+  const spans = await anthropicPasses.nominateCandidatesPass({
     nativeLanguage: languageModeNativeLanguage,
     targetLanguage: session.target_language,
     cefrLevel: session.cefr_level,

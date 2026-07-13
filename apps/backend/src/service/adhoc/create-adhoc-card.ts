@@ -11,10 +11,10 @@ import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/w
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import {
-  basicDataPass,
   bindChunksToSingleHighlight,
   HighlightInput,
 } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
@@ -28,6 +28,7 @@ import { getOrCreateAdhocSession } from './get-or-create-adhoc-session'
 import { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export type CreateAdhocCardDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
@@ -144,7 +145,7 @@ export const createAdhocCard = async (params: {
 
   let chunks
   try {
-    chunks = await basicDataPass({
+    chunks = await deps.anthropicPasses.basicDataPass({
       nativeLanguage: languagePrefs.nativeLanguage,
       targetLanguage,
       cefrLevel,
@@ -242,6 +243,7 @@ export const createAdhocCard = async (params: {
         encounteredSentence: segment.text,
       },
       {
+        anthropicPasses: deps.anthropicPasses,
         userLookupsRepository: deps.userLookupsRepository,
         usersRepository: deps.usersRepository,
         userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,

@@ -11,6 +11,7 @@ import type {
   TelegramPendingImportRecord,
   TelegramPendingImportsRepositoryInterface,
 } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 const NONCE = '00000000-0000-0000-0000-00000000abcd'
@@ -71,7 +72,9 @@ const buildDeps = (
         segments: [{}],
       }),
     } as unknown as StudySessionsRepositoryInterface,
-    detectLanguage: vi.fn().mockResolvedValue(detectedLanguage),
+    anthropicPasses: MockAnthropicPasses({
+      languageDetectionPass: vi.fn().mockResolvedValue(detectedLanguage),
+    }),
     importCooldownMs: 0,
   }
 }

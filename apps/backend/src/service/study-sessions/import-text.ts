@@ -2,7 +2,7 @@ import { createHash } from 'crypto'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
-import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { parsePastedText } from '../../utils/text-paste-parser'
 
@@ -46,8 +46,7 @@ export type ImportTextDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
-  // Injectable so unit tests can stub the Anthropic call.
-  detectLanguage?: typeof languageDetectionPass
+  anthropicPasses: AnthropicPassesInterface
 }
 
 export const resolveIngestPrefs = async (
@@ -57,8 +56,7 @@ export const resolveIngestPrefs = async (
   segments: ReadonlyArray<{ text: string }>,
   deps: ImportTextDependencies
 ): Promise<IngestPrefs> => {
-  const detectLanguage = deps.detectLanguage ?? languageDetectionPass
-  const detectedLanguage = await detectLanguage(buildDetectionSample(segments))
+  const detectedLanguage = await deps.anthropicPasses.languageDetectionPass(buildDetectionSample(segments))
   if (!detectedLanguage) return { ok: false, reason: 'unsupported' }
 
   const [nativeLanguage, prefs] = await Promise.all([

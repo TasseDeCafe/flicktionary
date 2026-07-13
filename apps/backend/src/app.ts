@@ -98,8 +98,13 @@ import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth
 import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
+import { AnthropicPasses, type AnthropicPassesInterface } from './transport/third-party/anthropic/anthropic-passes'
 
 export type AppDependencies = {
+  // Every LLM call goes through this seam; integration tests inject
+  // MockAnthropicPasses with canned pass outputs to run LLM-adjacent flows
+  // without network.
+  anthropicPasses?: AnthropicPassesInterface
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
   revenuecatSubscriptionsRepository?: RevenuecatSubscriptionsRepositoryInterface
   usersRepository?: UsersRepositoryInterface
@@ -114,6 +119,7 @@ export type AppDependencies = {
 }
 
 export const buildApp = ({
+  anthropicPasses = AnthropicPasses(),
   stripeSubscriptionsRepository = StripeSubscriptionsRepository(),
   revenuecatSubscriptionsRepository = RevenuecatSubscriptionsRepository(),
   usersRepository = UsersRepository(),
@@ -205,6 +211,7 @@ export const buildApp = ({
   // Shared by the webhook (prod transport), the pairing router, and the dev
   // polling worker (constructed in server.ts with these same repo factories).
   const telegramBotDependencies: TelegramBotDependencies = {
+    anthropicPasses,
     telegramApi,
     usersRepository,
     telegramPairNoncesRepository: TelegramPairNoncesRepository(),
@@ -320,6 +327,7 @@ export const buildApp = ({
   }
 
   const exploreDependencies = {
+    anthropicPasses,
     cardsRepository,
     studySessionsRepository,
     textSegmentsRepository,
@@ -331,6 +339,7 @@ export const buildApp = ({
   }
 
   const createAdhocCardDependencies = {
+    anthropicPasses,
     textSegmentsRepository,
     studySessionsRepository,
     highlightsRepository,
@@ -344,6 +353,7 @@ export const buildApp = ({
   }
 
   const chatDependencies = {
+    anthropicPasses,
     cardsRepository,
     cardChatMessagesRepository,
     studySessionsRepository,
@@ -383,7 +393,8 @@ export const buildApp = ({
       usersRepository,
       userTargetLanguagePrefsRepository,
       processingJobsRepository,
-      highlightsRepository
+      highlightsRepository,
+      anthropicPasses
     )
   )
   app.use(
@@ -397,7 +408,8 @@ export const buildApp = ({
       wiktionaryEntriesRepository,
       processingJobsRepository,
       ghostCandidatesRepository,
-      noteOnlyHighlightDependencies
+      noteOnlyHighlightDependencies,
+      anthropicPasses
     )
   )
   app.use(
@@ -418,13 +430,14 @@ export const buildApp = ({
   app.use(
     API_V1,
     ChunksRouter(userLookupsRepository, {
+      anthropicPasses,
       usersRepository,
       userTargetLanguagePrefsRepository,
       practiceExercisesRepository,
     })
   )
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
-  app.use(API_V1, LanguagesRouter())
+  app.use(API_V1, LanguagesRouter(anthropicPasses))
   app.use(API_V1, DevToolsRouter())
   app.use(
     API_V1,
@@ -433,7 +446,10 @@ export const buildApp = ({
   if (FEATURES.TELEGRAM) {
     app.use(API_V1, TelegramPairRouter(telegramBotDependencies))
   }
-  app.use(API_V1, GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository))
+  app.use(
+    API_V1,
+    GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository, anthropicPasses)
+  )
   app.use(
     API_V1,
     LessonImportRouter({
@@ -452,6 +468,7 @@ export const buildApp = ({
   app.use(
     API_V1,
     PracticeRouter({
+      anthropicPasses,
       practiceTextsRepository,
       practiceExercisesRepository,
       practiceRatingEventsRepository,

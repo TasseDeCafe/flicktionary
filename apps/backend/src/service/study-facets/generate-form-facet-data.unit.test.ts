@@ -1,17 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateFormFacetData, GenerateFormFacetDataDeps } from './generate-form-facet-data'
-import { generateFormData } from '../../transport/third-party/anthropic/passes/generate-form-data'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../user-prefs/language-mode'
 
-vi.mock('../../transport/third-party/anthropic/passes/generate-form-data', () => ({
-  generateFormData: vi.fn(),
-}))
 vi.mock('../user-prefs/language-mode', () => ({
   getLanguageMode: vi.fn(),
 }))
 vi.mock('../../transport/third-party/sentry/error-monitoring', () => ({
   logCustomErrorMessageAndError: vi.fn(),
 }))
+
+// Injected through deps.anthropicPasses; tests script it per case with
+// vi.mocked(generateFormData).mockResolvedValue(...).
+const generateFormData = vi.fn()
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const chunkId = '00000000-0000-0000-0000-000000000002'
@@ -59,6 +60,7 @@ const createDeps = (overrides?: { targetLanguage?: string; englishIpaDialect?: '
   const setFacetPayload = vi.fn().mockResolvedValue(undefined)
   const getEnglishIpaDialect = vi.fn().mockResolvedValue(overrides?.englishIpaDialect ?? 'ga')
   const deps = {
+    anthropicPasses: MockAnthropicPasses({ generateFormData: generateFormData as never }),
     userLookupsRepository: { getChunkRowForUser, listFacetsForChunk, setFacetPayload },
     usersRepository: { getEnglishIpaDialect },
     userTargetLanguagePrefsRepository: {},

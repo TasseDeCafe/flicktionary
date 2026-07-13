@@ -15,6 +15,7 @@ import { UsersRepository } from './transport/database/users/users-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { EnrichmentWorker } from './service/long-running/enrichment-worker/enrichment-worker'
 import { buildProcessingDependencies } from './service/processing/processing-dependencies'
+import { AnthropicPasses } from './transport/third-party/anthropic/anthropic-passes'
 import { TelegramApi } from './transport/third-party/telegram/telegram-api'
 import { TelegramPollingWorker } from './service/long-running/telegram-polling-worker/telegram-polling-worker'
 import { TelegramPairNoncesRepository } from './transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
@@ -45,6 +46,7 @@ const startServer = async () => {
     // Dev transport only: production receives updates via the webhook, and
     // Telegram rejects getUpdates polling while a webhook is registered.
     const telegramPollingWorker = TelegramPollingWorker({
+      anthropicPasses: AnthropicPasses(),
       telegramApi,
       usersRepository,
       telegramPairNoncesRepository: TelegramPairNoncesRepository(),

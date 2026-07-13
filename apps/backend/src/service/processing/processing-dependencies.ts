@@ -40,8 +40,10 @@ import type { ProcessingJobsRepositoryInterface } from '../../transport/database
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import type { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
+import { AnthropicPasses, type AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 export type ProcessingDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   contentSourcesRepository: ContentSourcesRepositoryInterface
   textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
@@ -69,6 +71,7 @@ export type ProcessingDependencies = {
 // (built in server.ts) holding its own bundle is equivalent to app.ts's. Used by
 // the enrichment worker, which lives outside the request-scoped router wiring.
 export const buildProcessingDependencies = (): ProcessingDependencies => ({
+  anthropicPasses: AnthropicPasses(),
   contentSourcesRepository: ContentSourcesRepository(),
   textTracksRepository: TextTracksRepository(),
   textSegmentsRepository: TextSegmentsRepository(),

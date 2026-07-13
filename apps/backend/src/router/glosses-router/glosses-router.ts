@@ -7,8 +7,7 @@ import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middlewa
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
-import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
@@ -19,7 +18,8 @@ import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 export const GlossesRouter = (
   usersRepository: UsersRepositoryInterface,
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
-  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
+  anthropicPasses: AnthropicPassesInterface
 ): Router => {
   const implementer = implement(glossesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -30,7 +30,7 @@ export const GlossesRouter = (
       // client doesn't supply it (it hasn't learned the subtitle language yet),
       // detect it from the context line — never fall back to the user's primary
       // study language, which is wrong for a video in a different language.
-      const targetLanguage = input.targetLanguage ?? (await languageDetectionPass(input.contextLine))
+      const targetLanguage = input.targetLanguage ?? (await anthropicPasses.languageDetectionPass(input.contextLine))
       if (!targetLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Could not detect the language of this text.' }] } })
       }
@@ -43,7 +43,7 @@ export const GlossesRouter = (
       if (!languagePrefs.nativeLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
       }
-      const gloss = await fastGlossPass({
+      const gloss = await anthropicPasses.fastGlossPass({
         targetLanguage,
         nativeLanguage: languagePrefs.nativeLanguage,
         hideTranslationFields: languagePrefs.hideTranslationFields,

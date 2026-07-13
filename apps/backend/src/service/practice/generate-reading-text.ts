@@ -12,10 +12,8 @@ import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import {
-  generatePracticeText,
-  type PracticeChunkInput,
-} from '../../transport/third-party/anthropic/passes/generate-practice-text'
+import { type PracticeChunkInput } from '../../transport/third-party/anthropic/passes/generate-practice-text'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { listReviewTerms } from './list-review-terms'
 import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
@@ -32,6 +30,7 @@ const isCitationMeaningCandidate = (row: DbUserLookupWithFacet): boolean =>
   row.target_form === CITATION_FORM && (row.skill === 'meaning_recognition' || row.skill === 'meaning_production')
 
 export type GenerateReadingTextDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
@@ -97,7 +96,7 @@ const runGenerationForSlot = async (params: {
   }
 
   try {
-    const result = await generatePracticeText({
+    const result = await params.deps.anthropicPasses.generatePracticeText({
       nativeLanguage: params.nativeLanguage,
       targetLanguage: params.targetLanguage,
       cefrLevel: 'B1',

@@ -8,8 +8,8 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
-import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { sanitizeGrammarIpa } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
@@ -22,6 +22,7 @@ import {
 } from '../user-prefs/language-output-guards'
 
 export type ExploreCardDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   cardsRepository: CardsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
@@ -64,6 +65,7 @@ export const exploreCardIfMissing = async (
     // Mint-and-persist the context blob if absent (note-only sessions never ran
     // an enrich job). null only when the content source is gone — then skip.
     const contextBlob = await ensureSessionContextBlob(session, userId, {
+      anthropicPasses: deps.anthropicPasses,
       contentSourcesRepository: deps.contentSourcesRepository,
       textSegmentsRepository: deps.textSegmentsRepository,
       studySessionsRepository: deps.studySessionsRepository,
@@ -92,7 +94,7 @@ export const exploreCardIfMissing = async (
       ? await deps.usersRepository.getEnglishIpaDialect(userId)
       : undefined
 
-    const enrichment = await enrichmentPass({
+    const enrichment = await deps.anthropicPasses.enrichmentPass({
       nativeLanguage: languageModeNativeLanguage,
       targetLanguage: session.target_language,
       cefrLevel: session.cefr_level,

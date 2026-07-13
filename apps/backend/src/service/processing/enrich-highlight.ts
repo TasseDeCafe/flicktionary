@@ -4,7 +4,6 @@ import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/commo
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { ensureSessionContextBlob } from './ensure-session-context-blob'
 import {
-  basicDataPass,
   bindChunksToSingleHighlight,
   HighlightInput,
 } from '../../transport/third-party/anthropic/passes/basic-data-pass'
@@ -37,6 +36,7 @@ export const enrichHighlight = async (
 ): Promise<EnrichHighlightOutcome> => {
   const { sessionId, highlightId, userId } = params
   const {
+    anthropicPasses,
     contentSourcesRepository,
     textSegmentsRepository,
     studySessionsRepository,
@@ -67,6 +67,7 @@ export const enrichHighlight = async (
   // Context blob: generate-and-persist on the first job for a session, read the
   // cached value on later jobs (shared with chat + on-demand exploration).
   const contextBlob = await ensureSessionContextBlob(session, userId, {
+    anthropicPasses,
     contentSourcesRepository,
     textSegmentsRepository,
     studySessionsRepository,
@@ -107,7 +108,7 @@ export const enrichHighlight = async (
     ? await usersRepository.getEnglishIpaDialect(userId)
     : undefined
 
-  const chunks = await basicDataPass({
+  const chunks = await anthropicPasses.basicDataPass({
     nativeLanguage: languageModeNativeLanguage,
     targetLanguage: session.target_language,
     cefrLevel: session.cefr_level,
@@ -199,7 +200,7 @@ export const enrichHighlight = async (
             formFacetTargets,
             encounteredSentence: window.find((s) => s.id === stillExists.start_segment_id)?.text ?? null,
           },
-          { userLookupsRepository, usersRepository, userTargetLanguagePrefsRepository }
+          { anthropicPasses, userLookupsRepository, usersRepository, userTargetLanguagePrefsRepository }
         )
       }
     } else if (!parsedIntent.success) {

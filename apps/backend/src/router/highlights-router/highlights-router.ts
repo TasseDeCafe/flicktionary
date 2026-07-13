@@ -21,11 +21,8 @@ import {
   CreateNoteOnlyHighlightDependencies,
 } from '../../service/highlights/create-note-only-highlight'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import {
-  fastGlossPass,
-  FastGloss,
-  parseFastGlossText,
-} from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import { FastGloss, parseFastGlossText } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
@@ -78,7 +75,8 @@ export const HighlightsRouter = (
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
   processingJobsRepository: ProcessingJobsRepositoryInterface,
   ghostCandidatesRepository: GhostCandidatesRepositoryInterface,
-  noteOnlyDependencies: CreateNoteOnlyHighlightDependencies
+  noteOnlyDependencies: CreateNoteOnlyHighlightDependencies,
+  anthropicPasses: AnthropicPassesInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -399,7 +397,7 @@ export const HighlightsRouter = (
         targetLanguagePrefsRepository,
       })
       const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
-      const gloss = await fastGlossPass({
+      const gloss = await anthropicPasses.fastGlossPass({
         targetLanguage: session.target_language,
         nativeLanguage: languageModeNativeLanguage,
         hideTranslationFields: languagePrefs.hideTranslationFields,
