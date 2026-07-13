@@ -7,6 +7,7 @@ import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer'
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots'
 import { isFirefoxBuild } from '@/services/build-flags'
 import { getDevToolsState, onDevToolsStateChange } from '@/services/flicktionary/dev-tools-storage'
+import { getExtensionEnabledState, onExtensionEnabledChange } from '@/services/flicktionary/extension-enabled-storage'
 import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 import { installTopFrameActivationResponder, shouldActivateInThisFrame } from '@/services/frame-activation'
 
@@ -55,6 +56,7 @@ export default defineContentScript({
 
     const bind = async () => {
       const bindings: Binding[] = []
+      let extensionEnabled = (await getExtensionEnabledState()).enabled
       const page = await currentPageDelegate()
       let hasPageScript = page?.config.pageScript !== undefined
       let frameInfoListener: FrameInfoListener | undefined
@@ -88,7 +90,7 @@ export default defineContentScript({
           const bindingExists = bindings.filter((b) => b.video.isSameNode(videoElement)).length > 0
 
           if (!bindingExists && hasValidVideoSource(videoElement, page) && !page?.shouldIgnore(videoElement)) {
-            const b = new Binding(videoElement, hasPageScript, frameInfoBroadcaster?.frameId)
+            const b = new Binding(videoElement, hasPageScript, frameInfoBroadcaster?.frameId, extensionEnabled)
             b.bind()
             bindings.push(b)
           }
@@ -132,6 +134,20 @@ export default defineContentScript({
 
       const videoSelectController = new VideoSelectController(bindings)
       videoSelectController.bind()
+      videoSelectController.extensionEnabled = extensionEnabled
+
+      // Global on/off switch: fan changes out to every binding in this frame.
+      // Subscribed in EVERY frame that ran bind() (unlike the parent-only
+      // dev-tools subscription below) so embedded players react too.
+      const unsubscribeExtensionEnabled = onExtensionEnabledChange((state) => {
+        extensionEnabled = state.enabled
+
+        for (const b of bindings) {
+          b.setExtensionEnabled(state.enabled)
+        }
+
+        videoSelectController.extensionEnabled = state.enabled
+      })
 
       if (isParentDocument) {
         // Test trigger for the Radix notification surface (the real trigger is
@@ -243,6 +259,7 @@ export default defineContentScript({
         videoSelectController.unbind()
         frameInfoListener?.unbind()
         frameInfoBroadcaster?.unbind()
+        unsubscribeExtensionEnabled()
         browser.runtime.onMessage.removeListener(messageListener)
       })
     }

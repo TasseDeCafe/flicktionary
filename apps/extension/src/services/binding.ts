@@ -132,9 +132,15 @@ export default class Binding {
 
   private readonly frameId?: string
 
-  constructor(video: HTMLMediaElement, hasPageScript: boolean, frameId?: string) {
+  // The global on/off switch (popup master switch / overlay re-enable pill).
+  // Lives outside settings/profiles in extension-enabled-storage; the content
+  // script reads it at bind time and fans changes out via setExtensionEnabled.
+  private _extensionEnabled: boolean
+
+  constructor(video: HTMLMediaElement, hasPageScript: boolean, frameId?: string, extensionEnabled: boolean = true) {
     this.video = video
     this.hasPageScript = hasPageScript
+    this._extensionEnabled = extensionEnabled
     this.settings = new SettingsProvider(new ExtensionSettingsStorage())
     this.subtitleController = new SubtitleController(video, this.settings)
     this.videoDataSyncController = new VideoDataSyncController(this, this.settings)
@@ -155,6 +161,10 @@ export default class Binding {
 
   get synced() {
     return this._synced
+  }
+
+  get extensionEnabled() {
+    return this._extensionEnabled
   }
 
   get speedChangeStep() {
@@ -306,6 +316,33 @@ export default class Binding {
     return this.subtitleController.subtitleFileNames?.[track] ?? ''
   }
 
+  // Flips the global on/off switch for this binding. OFF tears down every
+  // user-facing surface (subtitles cleared, native captions un-suppressed via
+  // nativeCaptionsController.deactivate, dialog dismissed, key/drag bindings
+  // released) while keeping the invisible plumbing (heartbeat, message
+  // listener, synced-data listener) alive so re-enabling is instant and the
+  // native-caption decline channel keeps working. ON re-runs the normal
+  // bind pipeline so subtitles reload exactly like a fresh page load.
+  setExtensionEnabled(enabled: boolean) {
+    if (this._extensionEnabled === enabled) {
+      return
+    }
+
+    this._extensionEnabled = enabled
+
+    if (enabled) {
+      this._refreshSettings().then(() => {
+        this.videoDataSyncController.requestSubtitles()
+      })
+    } else {
+      this._resetSubtitles()
+      this.videoDataSyncController.dismissDialog()
+      this.notificationController.hide()
+      this.playMode = PlayMode.normal
+      this._refreshSettings()
+    }
+  }
+
   private get _shouldAutoResumeOnSubtitlesMouseOut() {
     return this.pauseOnHoverMode === PauseOnHoverMode.inAndOut && this.pausedDueToHover && this.video.paused
   }
@@ -341,11 +378,17 @@ export default class Binding {
   _bind() {
     this._notifyReady()
     this._subscribe()
+    // requestSubtitles must run even while the extension is off: the
+    // synced-data response is what lets _setSyncedData decline the page
+    // script's provisional native-caption hide (see video-data-sync-controller).
     this._refreshSettings().then(() => {
       this.videoDataSyncController.requestSubtitles()
     })
     this.subtitleController.bind()
-    this.dragController.bind(this)
+
+    if (this._extensionEnabled) {
+      this.dragController.bind(this)
+    }
   }
 
   _notifyReady() {
@@ -636,6 +679,24 @@ export default class Binding {
 
   async _refreshSettings() {
     const currentSettings = await this.settings.getAll()
+
+    // While the extension is off, nothing user-facing may (re)bind — including
+    // via the settings-updated broadcast a profile switch triggers. The only
+    // surface kept alive is the controls overlay in disabled mode (regardless
+    // of streamingEnableOverlay), so the re-enable pill can show on pause.
+    if (!this._extensionEnabled) {
+      this.keyBindings.unbind()
+      this.dragController.unbind()
+      this.videoOverlayController.offsetAnchor =
+        currentSettings.subtitleAlignment === 'bottom' ? OffsetAnchor.top : OffsetAnchor.bottom
+      this.videoOverlayController.disabledMode = true
+      this.videoOverlayController.bind()
+      this.videoOverlayController.updateModel()
+      setupLingui(currentSettings.language)
+      return
+    }
+
+    this.videoOverlayController.disabledMode = false
     this._seekDuration = currentSettings.seekDuration
     this._speedChangeStep = currentSettings.speedChangeStep
     this.condensedPlaybackMinimumSkipIntervalMs = currentSettings.streamingCondensedPlaybackMinimumSkipIntervalMs
@@ -825,6 +886,10 @@ export default class Binding {
   // setting through the background handler (which broadcasts settings-updated
   // to every video element).
   toggleSubtitles() {
+    if (!this._extensionEnabled) {
+      return
+    }
+
     if (this.nativeCaptionsController.controllingDisplay) {
       this.nativeCaptionsController.toggleNativeCaptions()
       return
@@ -842,6 +907,10 @@ export default class Binding {
   }
 
   showVideoDataDialog(openedFromMiningCommand: boolean, fromAsbplayerId?: string) {
+    if (!this._extensionEnabled) {
+      return
+    }
+
     this.videoDataSyncController.show({
       reason: openedFromMiningCommand ? VideoDataUiOpenReason.miningCommand : VideoDataUiOpenReason.userRequested,
       fromAsbplayerId,
@@ -925,6 +994,10 @@ export default class Binding {
   // confirm, file open/drop, generate) as opposed to the silent auto-sync —
   // governs whether a native caption control is forced ON or adopted as-is.
   async loadSubtitles(files: File[], flatten: boolean, userRequested = true, syncWithAsbplayerId?: string) {
+    if (!this._extensionEnabled) {
+      return
+    }
+
     const {
       streamingSubtitleListPreference,
       subtitleRegexFilter,
@@ -1000,6 +1073,10 @@ export default class Binding {
   }
 
   private _updateSubtitles(subtitles: IndexedSubtitleModel[], subtitleFileNames: string[], userRequested = false) {
+    if (!this._extensionEnabled) {
+      return
+    }
+
     this.subtitleController.subtitles = subtitles
     this.subtitleController.subtitleFileNames = subtitleFileNames
 

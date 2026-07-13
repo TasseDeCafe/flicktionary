@@ -45,6 +45,7 @@ export default class VideoSelectController {
   private _store?: VideoSelectStore
   private _shadowHandle?: ShadowHostHandle
   private _shadowOpen = false
+  private _extensionEnabled = true
 
   private messageListener?: (
     request: ExtensionToVideoCommand<Message>,
@@ -54,6 +55,20 @@ export default class VideoSelectController {
 
   constructor(bindings: Binding[]) {
     this._bindings = bindings
+  }
+
+  // Global on/off switch: while off, video-select triggers are inert and an
+  // open picker is cancelled.
+  set extensionEnabled(enabled: boolean) {
+    if (this._extensionEnabled === enabled) {
+      return
+    }
+
+    this._extensionEnabled = enabled
+
+    if (!enabled && !this._isHidden()) {
+      void this._handleUiCommand({ command: 'cancel' } as VideoSelectModeCancelMessage)
+    }
   }
 
   bind() {
@@ -108,6 +123,10 @@ export default class VideoSelectController {
     targetSrc?: string,
     subtitleFiles?: SubtitleFile[]
   ) {
+    if (!this._extensionEnabled) {
+      return
+    }
+
     if (targetSrc !== undefined) {
       var binding = this._bindings.find((b) => b.video.src === targetSrc)
 
