@@ -794,6 +794,12 @@ internally around seeks, and reacting to the raw `pause` event made the
 controls flash on every subtitle navigation — or stick on screen mid-playback
 when the async model push landed after the play-event hide.
 
+While the global switch is off (see "Global on/off switch"), the controller
+stays bound in **disabled mode** — regardless of `streamingEnableOverlay`,
+since the pill is the only on-video way back — and the bar renders as a single
+dimmed logo pill (`VideoOverlayDisabled`, same shell and pause/grace behavior)
+whose click writes the global flag back on.
+
 ### Native caption control (YouTube CC button)
 
 On YouTube, once subtitles load, the player's own CC button (and YouTube's
@@ -833,7 +839,7 @@ Mechanics — a self-negotiating document-CustomEvent protocol between
 - `asbplayer-native-captions-decline` (content → page): the auto-sync decision
   resolved to "load nothing" for the current video — release the provisional
   hide. Sent from every no-load exit of `_setSyncedData` (no matching track,
-  sync failure, auto-sync off, no data), but only by the binding whose video
+  sync failure, auto-sync off, no data, global switch off), but only by the binding whose video
   sits under `#movie_player` (a Shorts/preview binding declining would flash
   the captions the main pipeline is about to replace). Ignored while bound.
 
@@ -953,15 +959,59 @@ failures surface through the sync error path.
 - **Video select** — when a page has several `<video>` elements, a thumbnail
   picker (visible-tab capture, cropped per video) chooses which one to bind.
 
+### Global on/off switch
+
+A sticky, profile-independent kill switch for everything the extension does on
+video pages — for users who want it out of the way without uninstalling. The
+master switch sits at the top of both popup variants (`ExtensionEnabledRow`);
+the on-video re-enable affordance is the controls overlay's disabled pill (see
+"Controls overlay").
+
+- **Storage:** `flicktionary.extensionEnabled.v1` in `chrome.storage.local`
+  (`extension-enabled-storage.ts`, same out-of-band pattern as auth/devTools —
+  deliberately NOT a setting, so profile switching and settings import/export
+  can never re-enable the extension). Default on. Changes propagate everywhere
+  via `browser.storage.onChanged` subscriptions — no message round-trips: the
+  content script fans the flag out to every `Binding`
+  (`Binding.setExtensionEnabled`) and the `VideoSelectController`; the
+  background regrays the toolbar icon (`applyActionIcon`, gray `icon*-gray.png`
+  variants, re-applied at background startup since `setIcon` doesn't persist
+  across service-worker restarts).
+- **Off gates** (soft gate — the Binding and its invisible plumbing stay
+  alive): subtitle overlay cleared (`_resetSubtitles`), native captions
+  un-suppressed (`nativeCaptionsController.deactivate()` → CC button handed
+  back), track dialog dismissed (`dismissDialog`, without unbinding its
+  synced-data listener), notifications hidden, play mode reset to normal, key
+  bindings + drag-drop unbound, and early returns in `loadSubtitles` /
+  `_updateSubtitles` / `showVideoDataDialog` / `toggleSubtitles` /
+  `VideoSelectController._trigger`. The disabled branch of `_refreshSettings`
+  keeps all of this true against later `settings-updated` broadcasts (e.g. a
+  profile switch) and binds the overlay in disabled-pill mode regardless of
+  `streamingEnableOverlay`. New bindings (SPA navs, late videos) read the flag
+  at construction and boot directly into disabled mode.
+- **No new subtitle loading while off, but `requestSubtitles` still runs:**
+  the gate lives in `_setSyncedData` as a no-load exit so
+  `_declineNativeCaptions()` fires per video — releasing the page script's
+  provisional native-caption hide in under a second instead of its 10 s safety
+  timeout (see "Native caption control").
+- **Stays live while off:** the popup, article import (own content script),
+  pairing, context menus (video-facing entries no-op via the per-binding
+  gates), heartbeat/tab-registry plumbing.
+- **Re-enable** (popup switch or overlay pill): the normal bind pipeline
+  re-runs (`_refreshSettings` + `requestSubtitles`), so subtitles auto-reload
+  and native-caption suppression re-activates adopting the current CC state.
+
 ### Popup
 
 Two variants, switched by the active tab's URL (`popup-ui.tsx`):
 
 - **On a supported video page:** OPEN APP + USER GUIDE header (→ Flicktionary
-  web app / its public `/user-guide` page), pairing section, the full embedded
-  settings form, and the settings-profile switcher.
-- **On any other page:** the same header, pairing section, **"Import this
-  article"**, and slim Misc (theme/language) + About tabs.
+  web app / its public `/user-guide` page), the global on/off master switch,
+  pairing section, the full embedded settings form, and the settings-profile
+  switcher.
+- **On any other page:** the same header, the same master switch, pairing
+  section, **"Import this article"**, and slim Misc (theme/language) + About
+  tabs.
 
 Both variants also show a **"Finish setup"** section
 (`FlicktionaryFinishOnboardingSection`) when paired with `isOnboarded === false`
@@ -1104,7 +1154,7 @@ extension typecheck sees them.
 
 | Store | Contents |
 |---|---|
-| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, cached target language, pairing nonces |
+| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, `flicktionary.extensionEnabled.v1` global on/off switch, cached target language, pairing nonces |
 | IndexedDB `asbplayer-transcript-cache` | generated Whisper SRTs per video id |
 | In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache, saved-highlights store (per overlay mount) |
 
@@ -1153,7 +1203,14 @@ the saved-highlights loader evicts an entry whose session no longer lists
     (keyed on `!isOnboarded`). Force a prefs-load failure on the pairing tab
     (offline) → error/retry + manual "Return to the extension" fallback instead
     of hanging; confirm the finished handshake closes only the paired tab.
-11. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
+11. Global switch: toggle off in the popup on a YouTube video with extension
+    subs → overlay vanishes, native captions + CC button work natively again,
+    toolbar icon grays; reload while off → native captions render with only a
+    sub-second provisional flash (no 10 s gap); pause → single logo pill at
+    the bar's position → click → subs reload and the full bar returns;
+    profile switching while off does not re-enable; both states survive a
+    browser restart.
+12. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
     Firefox-only failure modes (Xray wrappers, promise-only `sendMessage`) are
     invisible to CI. For this feature: matchMedia in popup/options AND inside
     shadow-DOM overlays, `.dark` toggling on shadow roots, orpc sync calls,
