@@ -76,11 +76,6 @@ const deleteExpired = async (): Promise<number> => {
   return result.count ?? 0
 }
 
-// Test-only helper (integration tests reset state between cases).
-export const __deleteAllTelegramPairNonces = async (): Promise<void> => {
-  await sql`DELETE FROM public.telegram_pair_nonces`
-}
-
 export interface TelegramPairNoncesRepositoryInterface {
   getOrCreateForChat: (chatId: string, telegramUserId: string | null, ttlSeconds: number) => Promise<string>
   claimAndPair: (nonce: string, userId: string) => Promise<ClaimAndPairResult>

@@ -54,7 +54,6 @@
     "prettier-plugin-tailwindcss": "catalog:",
     "react-email": "catalog:",
     "turbo": "catalog:",
-    "typescript": "catalog:",
-    "vite-tsconfig-paths": "catalog:"
+    "typescript": "catalog:"
   }
 }

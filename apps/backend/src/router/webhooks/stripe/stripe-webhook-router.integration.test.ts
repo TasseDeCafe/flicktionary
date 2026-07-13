@@ -1,21 +1,10 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import request from 'supertest'
-import { __removeAllAuthUsersFromSupabase, buildTestApp } from '../../../test/test-utils'
-import { __deleteAllHandledStripeEvents } from '../../../transport/database/webhook-events/handled-stripe-events-repository'
+import { buildTestApp } from '../../../test/test-utils'
 import { __simulateStripeEvent } from '../../../test/stripe/stripe-test-utils'
 import { __createStripeChargeRefundedEvent } from '../../../test/stripe/test-stripe-events'
 
 describe('webhooks-router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
   describe('simple failures', () => {
     it('should return 400 for invalid signature', async () => {
       const testApp = buildTestApp()

@@ -1,14 +1,9 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { getConfig } from '../../../config/environment-config'
-import {
-  __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
-  buildTestApp,
-} from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken, __generateUniqueId, buildTestApp } from '../../../test/test-utils'
 import { MockRevenuecatApi, RevenuecatApi } from '../../../transport/third-party/revenuecat/revenuecat-api'
 import { __getRevenuecatSubscriptionsByUserId } from '../../../transport/database/revenuecat-subscriptions/revenuecat-subscriptions-repository'
-import { __deleteAllHandledRevenuecatEvents } from '../../../transport/database/webhook-events/handled-revenuecat-events-repository'
 
 const createMockRevenuecatApiWithCallTracking = (userId: string): RevenuecatApi => ({
   ...MockRevenuecatApi,
@@ -21,7 +16,10 @@ const createMockRevenuecatApiWithCallTracking = (userId: string): RevenuecatApi 
   },
 })
 
-const createTestEvent = (userId: string, eventId = 'test_event_id') => ({
+// Handled-event ids live in a shared idempotency table that is never wiped, so
+// every event needs a globally unique id — a reused id would be skipped as a
+// duplicate.
+const createTestEvent = (userId: string, eventId = __generateUniqueId('evt')) => ({
   event: {
     id: eventId,
     type: 'SUBSCRIPTION_STATUS_UPDATED',
@@ -30,16 +28,6 @@ const createTestEvent = (userId: string, eventId = 'test_event_id') => ({
 })
 
 describe('revenuecat-webhooks-router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledRevenuecatEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledRevenuecatEvents()
-  })
-
   describe('Authentication', () => {
     it('should return 401 when auth header is missing', async () => {
       const testApp = buildTestApp()
@@ -146,7 +134,7 @@ describe('revenuecat-webhooks-router', () => {
         },
       }
       const testApp = buildTestApp({ revenuecatApi })
-      const event = createTestEvent(userId, 'duplicate_event_id')
+      const event = createTestEvent(userId)
 
       const response1 = await request(testApp)
         .post('/api/v1/payment/revenuecat-webhook')
@@ -181,7 +169,7 @@ describe('revenuecat-webhooks-router', () => {
         },
       }
       const testApp = buildTestApp({ revenuecatApi })
-      const event = createTestEvent(userId, 'parallel_event_id')
+      const event = createTestEvent(userId)
 
       const [response1, response2] = await Promise.all([
         request(testApp)

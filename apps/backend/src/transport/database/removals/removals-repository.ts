@@ -27,7 +27,3 @@ export const __selectAllRemovals = async (): Promise<__DbRemoval[]> => {
     ORDER BY created_at DESC
   `) as __DbRemoval[]
 }
-
-export const __deleteRemovals = async () => {
-  await sql`DELETE FROM public.removals`
-}

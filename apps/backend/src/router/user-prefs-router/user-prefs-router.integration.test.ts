@@ -1,9 +1,8 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
@@ -17,14 +16,6 @@ describe('user-prefs-router', async () => {
     expect(createResponse.status).toBe(200)
     return token
   }
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   test('when user is unauthenticated', async () => {
     const response = await request(testApp).get('/api/v1/user-prefs').set({ Authorization: 'Bearer wrong-token' })

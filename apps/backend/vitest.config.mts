@@ -1,5 +1,4 @@
 import { defineConfig } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig(() => {
   const testPatterns = {
@@ -21,7 +20,9 @@ export default defineConfig(() => {
   const include = getTestPatterns(process.env.VITEST_ENV)
 
   return {
-    plugins: [tsconfigPaths()],
+    resolve: {
+      tsconfigPaths: true,
+    },
     test: {
       include,
       // Binds supertest's throwaway servers to 127.0.0.1 so ephemeral-port
@@ -29,13 +30,12 @@ export default defineConfig(() => {
       // Harmless for unit tests, so it's loaded unconditionally.
       setupFiles: ['./src/test/bind-loopback.setup.ts'],
       pool: 'threads',
-      maxWorkers: 1,
-      // this flag is explained here: https://vitest.dev/config/#fileparallelism
-      // this is an attempt to solve the problem with flaky tests in this ticket
-      // https://www.notion.so/grammarians/Fix-flaky-tests-151168e7b01a802aa0a1c773ac29f21e?pvs=4
-      fileParallelism: false,
+      // Test files run in parallel against the shared supabase-test stack:
+      // every test creates its own unique user, so files can't interfere. The
+      // worker cap keeps the combined postgres.js pools (one per worker)
+      // within the local Postgres connection limit.
+      maxWorkers: 4,
       testTimeout: 10000,
-      retry: 2,
     },
   }
 })

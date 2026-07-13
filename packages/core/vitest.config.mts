@@ -1,5 +1,4 @@
 import { defineConfig } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig(() => {
   const testPatterns = {
@@ -22,7 +21,9 @@ export default defineConfig(() => {
   const include = getTestPatterns(process.env.VITEST_ENV)
 
   return {
-    plugins: [tsconfigPaths()],
+    resolve: {
+      tsconfigPaths: true,
+    },
     test: {
       include,
       exclude: ['dist/**'],

@@ -1,42 +1,24 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
+  __generateUniqueTelegramChatId,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
 import { MockTelegramApi } from '../../transport/third-party/telegram/telegram-api'
-import {
-  __deleteAllTelegramPairNonces,
-  TelegramPairNoncesRepository,
-} from '../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
-import { __deleteAllTelegramPendingImports } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { TelegramPairNoncesRepository } from '../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 
-let nextChatId = 800_000
-const freshChatId = () => String(nextChatId++)
-
-let emailCounter = 0
-const freshEmail = () => `telegram-pair-${emailCounter++}@test.com`
+// Chat ids key the shared pair-nonces table, which is never wiped — a reused
+// id would resolve to another test's (or a previous run's) nonce.
+const freshChatId = () => String(__generateUniqueTelegramChatId())
 
 const claimRequest = (testApp: ReturnType<typeof buildTestApp>, token: string, nonce: string) =>
   request(testApp).post('/api/v1/telegram-pair/claim').set(buildAuthorizationHeaders(token)).send({ nonce })
 
 describe('telegram-pair-router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllTelegramPairNonces()
-    await __deleteAllTelegramPendingImports()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllTelegramPairNonces()
-    await __deleteAllTelegramPendingImports()
-  })
-
   it('rejects unauthenticated claims', async () => {
     const testApp = buildTestApp()
     const response = await request(testApp)
@@ -48,7 +30,7 @@ describe('telegram-pair-router', () => {
   it('pairs the chat, confirms in Telegram, and rejects a second claim of the same nonce', async () => {
     const telegramApi = MockTelegramApi()
     const testApp = buildTestApp({ telegramApi })
-    const { id: userId, token } = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const { id: userId, token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
 
     const chatId = freshChatId()
@@ -67,7 +49,7 @@ describe('telegram-pair-router', () => {
 
   it('rejects an expired nonce', async () => {
     const testApp = buildTestApp({ telegramApi: MockTelegramApi() })
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
 
     const nonce = await TelegramPairNoncesRepository().getOrCreateForChat(freshChatId(), null, -10)
@@ -79,12 +61,12 @@ describe('telegram-pair-router', () => {
     const testApp = buildTestApp({ telegramApi: MockTelegramApi() })
     const chatId = freshChatId()
 
-    const userA = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const userA = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token: userA.token, referral: null })
     const nonceA = await TelegramPairNoncesRepository().getOrCreateForChat(chatId, null, 3600)
     expect((await claimRequest(testApp, userA.token, nonceA)).status).toBe(200)
 
-    const userB = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const userB = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token: userB.token, referral: null })
     const nonceB = await TelegramPairNoncesRepository().getOrCreateForChat(chatId, null, 3600)
     expect((await claimRequest(testApp, userB.token, nonceB)).status).toBe(200)
@@ -97,7 +79,7 @@ describe('telegram-pair-router', () => {
     const testApp = buildTestApp({ telegramApi: MockTelegramApi() })
     // Auth user exists but the public.users row was never created — the state
     // a fresh signup is in until UserSetupGate's createOrUpdateUser lands.
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
 
     const nonce = await TelegramPairNoncesRepository().getOrCreateForChat(freshChatId(), null, 3600)
     const firstAttempt = await claimRequest(testApp, token, nonce)
@@ -111,7 +93,7 @@ describe('telegram-pair-router', () => {
 
   it('completePending reports accepted=false when no chat is linked', async () => {
     const testApp = buildTestApp({ telegramApi: MockTelegramApi() })
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
 
     const response = await request(testApp)
@@ -124,7 +106,7 @@ describe('telegram-pair-router', () => {
 
   it('completePending reports accepted=true for a paired user', async () => {
     const testApp = buildTestApp({ telegramApi: MockTelegramApi() })
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(freshEmail())
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
     const nonce = await TelegramPairNoncesRepository().getOrCreateForChat(freshChatId(), null, 3600)
     expect((await claimRequest(testApp, token, nonce)).status).toBe(200)

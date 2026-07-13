@@ -3,14 +3,6 @@ import { Tables } from '../database.auth.types'
 
 type AuthUser = Tables<{ schema: 'auth' }, 'users'>
 
-export const __getAllAuthUsers = async (): Promise<AuthUser[]> => {
-  return await sql<AuthUser[]>`
-    SELECT id, email
-    FROM auth.users
-    ORDER BY email
-  `
-}
-
 export interface AuthUsersRepository {
   removeUserFromAuthUsers: (userId: string) => Promise<boolean>
   findUserById: (id: string) => Promise<AuthUser | null>

@@ -32,7 +32,3 @@ export const handleEventIdempotently = async (
     throw error
   }
 }
-
-export const __deleteAllHandledStripeEvents = async () => {
-  await sql`DELETE FROM handled_stripe_events`
-}

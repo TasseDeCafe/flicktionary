@@ -82,7 +82,6 @@
     "jsdom": "catalog:",
     "prettier": "catalog:",
     "vite": "catalog:",
-    "vite-tsconfig-paths": "catalog:",
     "vitest": "catalog:",
     "wxt": "catalog:"
   }

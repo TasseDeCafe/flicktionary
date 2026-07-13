@@ -50,11 +50,6 @@ const deleteExpired = async (): Promise<number> => {
   return result.count ?? 0
 }
 
-// Test-only helper (integration tests reset state between cases).
-export const __deleteAllTelegramPendingImports = async (): Promise<void> => {
-  await sql`DELETE FROM public.telegram_pending_imports`
-}
-
 export interface TelegramPendingImportsRepositoryInterface {
   upsertForChat: (params: {
     chatId: string
