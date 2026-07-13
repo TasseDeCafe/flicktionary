@@ -13,6 +13,10 @@ import { extractLessonJob } from '../../lesson-import/extract-lesson-job'
 export interface EnrichmentWorkerInterface {
   initialize: () => void
   stop: () => void
+  // One synchronous poll cycle (claim → dispatch → mark), without the
+  // interval. Integration tests drive the worker through this instead of
+  // waiting out real-time polling.
+  tickOnce: () => Promise<void>
 }
 
 // Poll cadence and lease/retry tuning. STALE_AFTER reclaims a lease held by a
@@ -180,6 +184,7 @@ export const EnrichmentWorker = (
         intervalId = null
       }
     },
+    tickOnce: tick,
   }
 }
 
@@ -192,6 +197,9 @@ export const MockEnrichmentWorker = (): EnrichmentWorkerInterface => {
       // No-op: we never poll the DB in mock/test runs (avoids flaky races).
     },
     stop: (): void => {
+      // No-op.
+    },
+    tickOnce: async (): Promise<void> => {
       // No-op.
     },
   }
