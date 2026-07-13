@@ -1886,6 +1886,10 @@ msgid "Flicktionary doesn't support {languageName} subtitles yet — saving is "
 msgstr "Flicktionary doesn't support {languageName} subtitles yet — saving is "
 "disabled for this video."
 
+#: apps/extension/src/ui/components/extension-enabled-row.tsx
+msgid "Flicktionary enabled"
+msgstr "Flicktionary enabled"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Flicktionary has two parts that work together: a <0>browser "
 "extension</0> and this <1>web app</1>."
@@ -2861,6 +2865,12 @@ msgstr "On any non-video page, open the extension popup and choose <0>Import "
 "this article</0>. Flicktionary extracts the article text and creates a "
 "reading session in the web app. To import only part of a page, select "
 "the text first."
+
+#: apps/extension/src/ui/components/extension-enabled-row.tsx
+msgid "On-video features are paused and native subtitles work normally. Article "
+"import still works."
+msgstr "On-video features are paused and native subtitles work normally. "
+"Article import still works."
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Only production practice — flashcards and exercises."
@@ -4630,6 +4640,10 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 #: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "Try again"
 msgstr "Try again"
+
+#: apps/extension/common/components/VideoOverlayDisabled.tsx
+msgid "Turn Flicktionary on"
+msgstr "Turn Flicktionary on"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Turn your teacher's notes into cards"
