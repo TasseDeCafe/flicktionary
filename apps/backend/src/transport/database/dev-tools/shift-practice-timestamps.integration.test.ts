@@ -1,8 +1,8 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { sql } from '../postgres-client'
 import { shiftPracticeTimestamps } from './shift-practice-timestamps'
 import { UserLookupsRepository } from '../user-lookups/user-lookups-repository'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
 // Dev time-travel against a real DB: shifting the data backward must be
 // exactly equivalent to the server clock advancing — timestamptz columns move
@@ -10,13 +10,6 @@ import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupa
 // userId scope leaves other users' rows untouched.
 describe('shiftPracticeTimestamps', () => {
   const userLookupsRepository = UserLookupsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   const createParkedFacet = async (userId: string, headword: string) => {
     const lookup = await userLookupsRepository.findOrCreate({ userId, targetLanguage: 'es', headword, sense: 'x' })
@@ -60,25 +53,23 @@ describe('shiftPracticeTimestamps', () => {
     expect(facetsResult?.rowsShifted).toBe(1)
   })
 
-  test('a userId scope leaves other users untouched; no scope shifts everyone', async () => {
+  // The unscoped (shift-everyone) variant is deliberately not exercised: it
+  // would rewrite every user's practice timestamps and corrupt the SRS
+  // assertions of tests running in parallel against the same database.
+  test('a userId scope shifts that user and leaves other users untouched', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
-    const { id: otherUserId } = await __createUserInSupabaseAndGetHisIdAndToken('other-time-shift@email.com')
+    const { id: otherUserId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const facetId = await createParkedFacet(userId, 'correr')
     const otherFacetId = await createParkedFacet(otherUserId, 'andar')
+    const before = await readFacetTimes(facetId)
     const otherBefore = await readFacetTimes(otherFacetId)
 
     await shiftPracticeTimestamps(sql, { days: 1, userId })
 
-    const otherAfterScoped = await readFacetTimes(otherFacetId)
-    expect(otherAfterScoped.srs_due.getTime()).toBe(otherBefore.srs_due.getTime())
-
-    const scopedBefore = await readFacetTimes(facetId)
-    await shiftPracticeTimestamps(sql, { days: 1 })
-
     const dayMs = 24 * 60 * 60 * 1000
-    const afterGlobal = await readFacetTimes(facetId)
-    const otherAfterGlobal = await readFacetTimes(otherFacetId)
-    expect(scopedBefore.srs_due.getTime() - afterGlobal.srs_due.getTime()).toBe(dayMs)
-    expect(otherBefore.srs_due.getTime() - otherAfterGlobal.srs_due.getTime()).toBe(dayMs)
+    const after = await readFacetTimes(facetId)
+    const otherAfterScoped = await readFacetTimes(otherFacetId)
+    expect(before.srs_due.getTime() - after.srs_due.getTime()).toBe(dayMs)
+    expect(otherAfterScoped.srs_due.getTime()).toBe(otherBefore.srs_due.getTime())
   })
 })

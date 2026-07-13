@@ -1,38 +1,28 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import request from 'supertest'
 import {
   __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding,
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
+  __generateUniqueEmail,
+  __generateUniqueId,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
-import { __getAllAuthUsers } from '../../transport/database/auth-users/auth-users-repository'
-import {
-  __DbRemoval,
-  __deleteRemovals,
-  __selectAllRemovals,
-} from '../../transport/database/removals/removals-repository'
-import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
+import { buildAuthUsersRepository } from '../../transport/database/auth-users/auth-users-repository'
+import { __DbRemoval, __selectAllRemovals } from '../../transport/database/removals/removals-repository'
 import { MockStripeApi } from '../../transport/third-party/stripe/stripe-api'
 import { __simulateStripeEvent } from '../../test/stripe/stripe-test-utils'
 import { __createStripeSubscriptionDeletedEvent } from '../../test/stripe/test-stripe-events'
 
 describe('removals-router', () => {
   const testApp = buildTestApp()
+  const authUsersRepository = buildAuthUsersRepository()
 
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-    await __deleteRemovals()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-    await __deleteRemovals()
-  })
+  // The removals table is shared across tests, so scope reads to this test's
+  // (unique) email instead of asserting on the whole table.
+  const selectRemovalsForEmail = async (email: string): Promise<__DbRemoval[]> =>
+    (await __selectAllRemovals()).filter((removal) => removal.email === email)
 
   test('when user is unauthenticated', async () => {
     const removalResponse = await request(testApp)
@@ -57,36 +47,35 @@ describe('removals-router', () => {
   describe('removing an account', () => {
     test('happy path', async () => {
       const testApp = buildTestApp()
-      const { token } = await __createUserInSupabaseAndGetHisIdAndToken('some@email.com')
+      const { token, id: userId, email } = await __createUserInSupabaseAndGetHisIdAndToken()
       await __createOrGetUserWithOurApi({ testApp, token, referral: null })
       const removalResponse = await request(testApp)
         .post('/api/v1/removals')
         .send({ type: 'account' })
         .set(buildAuthorizationHeaders(token))
-      const authUsers = await __getAllAuthUsers()
-      const removals: __DbRemoval[] = await __selectAllRemovals()
+      const removals = await selectRemovalsForEmail(email)
       expect(removalResponse.status).toBe(200)
-      expect(authUsers).toHaveLength(0)
+      expect(await authUsersRepository.findUserById(userId)).toBeNull()
       expect(removals).toHaveLength(1)
       expect(removals[0].was_successful).toBe(true)
-      expect(removals[0].email).toBe('some@email.com')
     })
 
     test('happy path', async () => {
-      const { testApp, token } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
-        email: 'some@email.com',
-      })
+      const email = __generateUniqueEmail()
+      const {
+        testApp,
+        token,
+        id: userId,
+      } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({ email })
       const removalResponse = await request(testApp)
         .post('/api/v1/removals')
         .send({ type: 'account' })
         .set(buildAuthorizationHeaders(token))
-      const authUsers = await __getAllAuthUsers()
-      const removals: __DbRemoval[] = await __selectAllRemovals()
+      const removals = await selectRemovalsForEmail(email)
       expect(removalResponse.status).toBe(200)
-      expect(authUsers).toHaveLength(0)
+      expect(await authUsersRepository.findUserById(userId)).toBeNull()
       expect(removals).toHaveLength(1)
       expect(removals[0].was_successful).toBe(true)
-      expect(removals[0].email).toBe('some@email.com')
     })
 
     test('should cancel active subscription when account is removed', async () => {
@@ -101,7 +90,6 @@ describe('removals-router', () => {
         appDependencies: {
           stripeApi,
         },
-        email: 'some@email.com',
       })
 
       const response = await request(testApp)
@@ -121,7 +109,7 @@ describe('removals-router', () => {
           cancelSubscriptionWasCalled = true
         },
       }
-      const stripeCustomerId = 'some_stripe_customer_id'
+      const stripeCustomerId = __generateUniqueId('cus')
       const {
         testApp,
         token,
@@ -132,7 +120,6 @@ describe('removals-router', () => {
         appDependencies: {
           stripeApi,
         },
-        email: 'some@email.com',
       })
 
       const response = await request(testApp)
@@ -154,11 +141,16 @@ describe('removals-router', () => {
           throw new Error('Stripe cancel subscription failed')
         },
       }
-      const { testApp, token } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
+      const email = __generateUniqueEmail()
+      const {
+        testApp,
+        token,
+        id: userId,
+      } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
         appDependencies: {
           stripeApi,
         },
-        email: 'some@email.com',
+        email,
       })
 
       const response = await request(testApp)
@@ -166,12 +158,11 @@ describe('removals-router', () => {
         .send({ type: 'account' })
         .set(buildAuthorizationHeaders(token))
 
-      const authUsers = await __getAllAuthUsers()
-      const removals: __DbRemoval[] = await __selectAllRemovals()
+      const removals = await selectRemovalsForEmail(email)
 
       expect(response.status).toBe(500)
       expect(response.body.data.errors[0].code).toBe('2040')
-      expect(authUsers).toHaveLength(1) // User should still exist
+      expect(await authUsersRepository.findUserById(userId)).not.toBeNull() // User should still exist
       expect(removals[0].was_successful).toBe(false)
     })
   })

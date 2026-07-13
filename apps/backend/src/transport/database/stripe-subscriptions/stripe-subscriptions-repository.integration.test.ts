@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { __createUserInSupabaseAndGetHisIdAndToken, __generateUniqueId } from '../../../test/test-utils'
 import {
   DbStripeSubscription,
   StripeSubscriptionsRepository,
@@ -8,14 +8,13 @@ import {
 
 describe('Subscription Repository Integration Tests', () => {
   let repository: StripeSubscriptionsRepositoryInterface
+  // stripe_subscription_id is the upsert conflict target (globally unique),
+  // so every test works with its own fresh id.
+  let stripeSubscriptionId: string
 
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
+  beforeEach(() => {
     repository = StripeSubscriptionsRepository()
-  })
-
-  afterEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
+    stripeSubscriptionId = __generateUniqueId('sub')
   })
 
   describe('insertSubscription', () => {
@@ -24,7 +23,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -37,12 +36,11 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const insertedSubscription =
-        await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
+      const insertedSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(insertedSubscription).not.toBeNull()
       const subscription = insertedSubscription as DbStripeSubscription
       expect(subscription.user_id).toBe(testUserId)
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('active')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1630000000 * 1000)
@@ -65,7 +63,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.upsertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -78,12 +76,11 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const upsertedSubscription =
-        await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
+      const upsertedSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(upsertedSubscription).not.toBeNull()
       const subscription = upsertedSubscription as DbStripeSubscription
       expect(subscription.user_id).toBe(testUserId)
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('active')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1630000000 * 1000)
@@ -104,7 +101,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -119,7 +116,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.upsertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'past_due',
         1640000000,
         true,
@@ -132,11 +129,11 @@ describe('Subscription Repository Integration Tests', () => {
         2
       )
 
-      const updatedSubscription = await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
+      const updatedSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(updatedSubscription).not.toBeNull()
       const subscription = updatedSubscription as DbStripeSubscription
       expect(subscription.user_id).toBe(testUserId)
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('past_due')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1640000000 * 1000)
@@ -162,7 +159,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -175,7 +172,7 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const updatedAt = await repository.getSubscriptionUpdatedAt('test-stripe-subscription-id')
+      const updatedAt = await repository.getSubscriptionUpdatedAt(stripeSubscriptionId)
 
       expect(updatedAt).not.toBeNull()
       expect(typeof updatedAt).toBe('number')
@@ -195,7 +192,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -208,10 +205,9 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      await repository.cancelSubscription('test-stripe-subscription-id')
+      await repository.cancelSubscription(stripeSubscriptionId)
 
-      const canceledSubscription =
-        await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
+      const canceledSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(canceledSubscription).not.toBeNull()
       const result = canceledSubscription as DbStripeSubscription
       expect(result.status).toBe('canceled')
@@ -228,7 +224,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -247,7 +243,7 @@ describe('Subscription Repository Integration Tests', () => {
       const testSubscription = subscriptions.find((sub) => sub.user_id === testUserId)
       expect(testSubscription).toBeDefined()
       const subscription = testSubscription as DbStripeSubscription
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('active')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1630000000 * 1000)
@@ -270,7 +266,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -288,7 +284,7 @@ describe('Subscription Repository Integration Tests', () => {
       expect(subscriptions.length).toBe(1)
       const subscription = subscriptions[0] as DbStripeSubscription
       expect(subscription.user_id).toBe(testUserId)
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('active')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1630000000 * 1000)
@@ -311,7 +307,7 @@ describe('Subscription Repository Integration Tests', () => {
 
       await repository.insertSubscription(
         testUserId,
-        'test-stripe-subscription-id',
+        stripeSubscriptionId,
         'active',
         1630000000,
         false,
@@ -324,12 +320,12 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const foundSubscription = await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
+      const foundSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
 
       expect(foundSubscription).not.toBeNull()
       const subscription = foundSubscription as DbStripeSubscription
       expect(subscription.user_id).toBe(testUserId)
-      expect(subscription.stripe_subscription_id).toBe('test-stripe-subscription-id')
+      expect(subscription.stripe_subscription_id).toBe(stripeSubscriptionId)
       expect(subscription.status).toBe('active')
       expect(subscription.current_period_end).not.toBeNull()
       expect(new Date(subscription.current_period_end!).getTime()).toBe(1630000000 * 1000)

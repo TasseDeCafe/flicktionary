@@ -1,14 +1,10 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ProcessingJobsRepository } from './processing-jobs-repository'
 import { StudySessionsRepository } from '../study-sessions/study-sessions-repository'
 import { TextSegmentsRepository } from '../text-segments/text-segments-repository'
 import { HighlightsRepository } from '../highlights/highlights-repository'
 import { sql } from '../postgres-client'
-import {
-  __createUserInSupabaseAndGetHisIdAndToken,
-  __generateUniqueId,
-  __removeAllAuthUsersFromSupabase,
-} from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken, __generateUniqueId } from '../../../test/test-utils'
 
 // These tests guard the enrich-enqueue ON CONFLICT predicate against drift from the
 // uq_processing_jobs_live_enrich partial unique index. The predicate and the index
@@ -22,14 +18,6 @@ describe('processing-jobs-repository enqueue integration tests', () => {
   const studySessionsRepository = StudySessionsRepository()
   const textSegmentsRepository = TextSegmentsRepository()
   const highlightsRepository = HighlightsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   // Build the FK chain enqueue needs: user -> adhoc session (+ content source +
   // track) -> segment -> highlight. Deleting the auth user cascades all of it away.

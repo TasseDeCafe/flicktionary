@@ -1,27 +1,15 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
   __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
 import request from 'supertest'
-import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
 import { MockStripeApi, StripeApi } from '../../transport/third-party/stripe/stripe-api'
 import { getConfig } from '../../config/environment-config'
 
 describe('portal-session-router', async () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
   test('should return 404 when user is not found', async () => {
     const testApp = buildTestApp()
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken()

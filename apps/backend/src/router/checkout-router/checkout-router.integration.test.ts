@@ -1,27 +1,16 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   __createCheckoutSessionWithOurApi,
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
   __createUserRightAfterSignup,
-  __removeAllAuthUsersFromSupabase,
+  __generateUniqueId,
   buildTestApp,
 } from '../../test/test-utils'
 import { MockStripeApi, StripeApi } from '../../transport/third-party/stripe/stripe-api'
-import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 
 describe('Checkout Router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
   it('should handle errors when creating a checkout session', async () => {
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     const stripeApi = {
@@ -52,7 +41,9 @@ describe('Checkout Router', () => {
   it('should create a checkout session successfully and create a customer only once', async () => {
     // Track stripe customer creation calls
     let createCustomerCallCount = 0
-    const mockStripeCustomerId = 'test_customer_123'
+    // users.stripe_customer_id is looked up globally, so it must not collide
+    // with rows from other tests or previous runs.
+    const mockStripeCustomerId = __generateUniqueId('cus')
 
     const partialStripeMock: Partial<StripeApi> = {
       createCustomerWithMetadata: async () => {

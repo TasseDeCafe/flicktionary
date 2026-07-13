@@ -8,13 +8,17 @@ export const mockGetSubscriptions = async (customerId: string): Promise<ListSubs
   const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days in the future
   const timestamp = now.getTime()
   const futureTimestamp = futureDate.getTime()
+  // Derived from the customer: revenuecat_subscription_id is a globally unique
+  // upsert target in our DB, so a fixed id would make syncs for different
+  // (test) users fight over one row.
+  const subscriptionId = `sub_mock_${customerId}`
 
   return {
     object: 'list',
     items: [
       {
         object: 'subscription',
-        id: 'sub_mock_123',
+        id: subscriptionId,
         customer_id: customerId,
         original_customer_id: customerId,
         product_id: 'prod_mock_123',
@@ -67,8 +71,8 @@ export const mockGetSubscriptions = async (customerId: string): Promise<ListSubs
               },
             },
           ],
-          next_page: `/v2/projects/${getConfig().revenuecatProjectId}/subscriptions/sub_mock_123/entitlements?starting_after=ent_mock_123`,
-          url: `/v2/projects/${getConfig().revenuecatProjectId}/subscriptions/sub_mock_123/entitlements`,
+          next_page: `/v2/projects/${getConfig().revenuecatProjectId}/subscriptions/${subscriptionId}/entitlements?starting_after=ent_mock_123`,
+          url: `/v2/projects/${getConfig().revenuecatProjectId}/subscriptions/${subscriptionId}/entitlements`,
         },
         environment: 'production',
         store: 'app_store',
@@ -78,7 +82,7 @@ export const mockGetSubscriptions = async (customerId: string): Promise<ListSubs
         management_url: 'https://apps.apple.com/account/subscriptions',
       },
     ],
-    next_page: `/v2/projects/${getConfig().revenuecatProjectId}/customers/${customerId}/subscriptions?starting_after=sub_mock_123`,
+    next_page: `/v2/projects/${getConfig().revenuecatProjectId}/customers/${customerId}/subscriptions?starting_after=${subscriptionId}`,
     url: `/v2/projects/${getConfig().revenuecatProjectId}/customers/${customerId}/subscriptions`,
   }
 }

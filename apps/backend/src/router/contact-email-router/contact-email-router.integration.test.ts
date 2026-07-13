@@ -1,8 +1,7 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import request from 'supertest'
 import {
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
@@ -10,14 +9,6 @@ import {
 describe('contact-email-router', async () => {
   const testApp = buildTestApp()
   const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   test('should send contact email successfully', async () => {
     const validData = {

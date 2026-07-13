@@ -1,26 +1,15 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
+  __generateUniqueEmail,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
 import request from 'supertest'
-import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
 import { GetSubscriptionInfoResponse } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 
 describe('billing-router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
   describe('Get Subscription Details', async () => {
     it('should return 401 for invalid token', async () => {
       const testApp = buildTestApp()
@@ -65,8 +54,10 @@ describe('billing-router', () => {
     })
 
     it('user with free access should get isSpecialUserWithFullAccess set to true', async () => {
+      const email = __generateUniqueEmail()
       const { token, testApp } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
-        email: 'user.with.free.access@email.com',
+        email,
+        appDependencies: { usersWithFreeAccess: [email] },
       })
 
       const response = await request(testApp)

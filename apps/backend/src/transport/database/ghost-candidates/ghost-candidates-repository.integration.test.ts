@@ -1,13 +1,9 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { GhostCandidatesRepository } from './ghost-candidates-repository'
 import { StudySessionsRepository } from '../study-sessions/study-sessions-repository'
 import { TextSegmentsRepository } from '../text-segments/text-segments-repository'
 import { sql } from '../postgres-client'
-import {
-  __createUserInSupabaseAndGetHisIdAndToken,
-  __generateUniqueId,
-  __removeAllAuthUsersFromSupabase,
-} from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken, __generateUniqueId } from '../../../test/test-utils'
 
 // Pre-save ghost adoption (highlights.create with adoptedGhostId): one
 // transaction must insert the highlight (with the study intent), dismiss the
@@ -18,14 +14,6 @@ describe('ghost-candidates-repository insertHighlightAdoptingGhost integration t
   const ghostCandidatesRepository = GhostCandidatesRepository()
   const studySessionsRepository = StudySessionsRepository()
   const textSegmentsRepository = TextSegmentsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   const createFixture = async (userId: string) => {
     const { session, track } = await studySessionsRepository.getOrCreateAdhocStudySession({

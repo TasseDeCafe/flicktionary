@@ -1,7 +1,7 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { UserLookupsRepository, type ChunkRow, type ChunksCursor, type VocabStage } from './user-lookups-repository'
 import { sql } from '../postgres-client'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
 // The vocabulary Stage filter against a real DB: the six vocabStageClauseSql
 // buckets must PARTITION a language's kept terms (the practice landing's
@@ -10,13 +10,6 @@ import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupa
 // newTermOrderSql order across ties and NULL zipf values.
 describe('listChunksForLanguage: stage filters', () => {
   const userLookupsRepository = UserLookupsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString()
 

@@ -1,14 +1,12 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import request from 'supertest'
 import { buildApp } from '../app'
 import { getConfig } from '../config/environment-config'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
   buildAuthorizationHeaders,
 } from '../test/test-utils'
-import { __deleteAllHandledStripeEvents } from '../transport/database/webhook-events/handled-stripe-events-repository'
 import { MockStripeApi } from '../transport/third-party/stripe/stripe-api'
 
 // Subscription gating is bypassed when the app is in free-for-all mode, so
@@ -16,19 +14,8 @@ import { MockStripeApi } from '../transport/third-party/stripe/stripe-api'
 const isAppFreeForEveryone = getConfig().featureFlags.shouldAppBeFreeForEveryone()
 
 describe('subscription-middleware', async () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
   test('users with free access can use the app without a credit card', async () => {
-    const email = 'user.with.free.access@email.com'
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(email)
+    const { token, email } = await __createUserInSupabaseAndGetHisIdAndToken()
 
     const testApp = buildApp({
       usersWithFreeAccess: [email],
@@ -51,8 +38,7 @@ describe('subscription-middleware', async () => {
   })
 
   test.skipIf(isAppFreeForEveryone)("unsubscribed users can't use the app", async () => {
-    const email = 'unsubscribed.user@email.com'
-    const { token } = await __createUserInSupabaseAndGetHisIdAndToken(email)
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
 
     const testApp = buildApp({
       usersWithFreeAccess: [],

@@ -1,18 +1,15 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { getConfig } from '../../../config/environment-config'
-import { __removeAllAuthUsersFromSupabase, buildTestApp } from '../../../test/test-utils'
+import { __generateUniqueTelegramChatId, buildTestApp } from '../../../test/test-utils'
 import { MockTelegramApi, MockTelegramApiInterface } from '../../../transport/third-party/telegram/telegram-api'
-import { __deleteAllTelegramPairNonces } from '../../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
-import {
-  __deleteAllTelegramPendingImports,
-  TelegramPendingImportsRepository,
-} from '../../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import { TelegramPendingImportsRepository } from '../../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 
 const SECRET_HEADER = 'x-telegram-bot-api-secret-token'
 
-let nextChatId = 900_000
-const freshChatId = () => nextChatId++
+// Chat ids key the shared pending-imports/pair-nonces tables, which are never
+// wiped — a reused id would pop another test's (or a previous run's) rows.
+const freshChatId = () => __generateUniqueTelegramChatId()
 
 const textUpdate = (chatId: number, text: string) => ({
   update_id: 1,
@@ -35,18 +32,6 @@ const waitForSentMessages = async (telegramApi: MockTelegramApiInterface, count:
 }
 
 describe('telegram-webhook-router', () => {
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllTelegramPairNonces()
-    await __deleteAllTelegramPendingImports()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllTelegramPairNonces()
-    await __deleteAllTelegramPendingImports()
-  })
-
   it('returns 401 when the secret token header is missing', async () => {
     const testApp = buildTestApp()
     const response = await request(testApp).post('/api/v1/telegram/webhook').send(textUpdate(freshChatId(), 'Привет'))

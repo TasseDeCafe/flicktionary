@@ -1,25 +1,13 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
-  __removeAllAuthUsersFromSupabase,
   buildTestApp,
 } from '../../test/test-utils'
-import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
 
 describe('users-router', async () => {
   const testApp = buildTestApp()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-    await __deleteAllHandledStripeEvents()
-  })
 
   test('when user is unauthenticated', async () => {
     const createResponse = await request(testApp).put('/api/v1/users/me').set({ Authorization: `Bearer wrong-token` })

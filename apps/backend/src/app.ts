@@ -123,7 +123,7 @@ export const buildApp = ({
     UsersRepository()
   ),
   enrichmentWorker = MockEnrichmentWorker(),
-  usersWithFreeAccess = ['user.with.free.access@email.com'],
+  usersWithFreeAccess = [],
   resendApi = MockResendApi,
   stripeApi = MockStripeApi,
   revenuecatApi = MockRevenuecatApi,

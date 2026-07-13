@@ -1,9 +1,9 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { UserLookupsRepository } from './user-lookups-repository'
 import { StudyFacetsRepository } from '../study-facets/study-facets-repository'
 import { PracticeRatingEventsRepository } from '../practice-rating-events/practice-rating-events-repository'
 import { sql } from '../postgres-client'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
 // Phase-2 facet plumbing against a real DB: the per-facet review budget
 // (COUNT DISTINCT (lookup, skill, target_form)), facet-keyed undo lookup, the
@@ -14,13 +14,6 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
   const userLookupsRepository = UserLookupsRepository()
   const studyFacetsRepository = StudyFacetsRepository()
   const ratingEventsRepository = PracticeRatingEventsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   const createKeptTerm = async (userId: string, headword: string) => {
     const lookup = await userLookupsRepository.findOrCreate({ userId, targetLanguage: 'es', headword, sense: 'x' })

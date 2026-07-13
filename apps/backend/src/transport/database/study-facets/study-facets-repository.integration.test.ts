@@ -1,8 +1,8 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { StudyFacetsRepository, ensureDefaultCitationFacetIfUnconfigured } from './study-facets-repository'
 import { UserLookupsRepository } from '../user-lookups/user-lookups-repository'
 import { sql } from '../postgres-client'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
 // These tests exercise the study_facets SQL writers against a real DB: the
 // facet identity (user_lookup_id, skill, target_form), the idempotent
@@ -11,14 +11,6 @@ import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupa
 describe('study-facets-repository integration tests', () => {
   const repo = StudyFacetsRepository()
   const userLookupsRepository = UserLookupsRepository()
-
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   // A kept term (count>0) with no facets yet. Deleting the auth user cascades
   // the lookup and its facets away.

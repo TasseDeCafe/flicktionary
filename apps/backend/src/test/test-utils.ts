@@ -28,21 +28,6 @@ export const buildTestApp = (overrides: Partial<AppDependencies> = {}): Express 
 // you can regenerate this key with supabase gen signing-key
 const SIGNING_KEY_PATH = path.join(__dirname, '../../supabase/supabase-test/supabase/signing_key.json')
 
-const id1 = '0330e333-8d3a-4cfd-92c5-f8baf67eb8b5'
-const name1 = 'John'
-const fullName1 = 'Doe'
-const email1 = 'john@gmail.com'
-const avatarUrl1 = 'https://www.example.com/john-doe.png'
-const supabaseClaims1: SupabaseClaims = {
-  sub: id1,
-  user_metadata: {
-    name: name1,
-    full_name: fullName1,
-    email: email1,
-    avatar_url: avatarUrl1,
-  },
-}
-
 const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Promise<string> => {
   const supabaseClaims: SupabaseClaims = {
     sub: id,
@@ -56,25 +41,10 @@ const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Prom
   return await signSupabaseToken(supabaseClaims, SIGNING_KEY_PATH)
 }
 
-export const __removeAllAuthUsersFromSupabase = async () => {
-  const {
-    data: { users },
-    error,
-  } = await getSupabase().auth.admin.listUsers()
-  if (error) {
-    console.error(error)
-    return
-  } else {
-    for (const user of users) {
-      await getSupabase().auth.signOut()
-      await getSupabase().auth.admin.deleteUser(user.id)
-    }
-  }
-}
-
 export type IdAndToken = {
   id: string
   token: string
+  email: string
 }
 
 interface StripeCallCounts {
@@ -90,8 +60,11 @@ export type InitialState = {
   stripeCallsCounters: StripeCallCounts
 }
 
+// Every test gets its own user (and email) by default: tests never share rows,
+// so no global truncation is needed between tests and test files can run in
+// parallel against the same database.
 export const __createUserInSupabaseAndGetHisIdAndToken = async (email?: string): Promise<IdAndToken> => {
-  const userEmail: string = email || supabaseClaims1.user_metadata.email
+  const userEmail: string = email || __generateUniqueEmail()
   const { data, error } = await getSupabase().auth.admin.createUser({
     email: userEmail,
     password: 'password',
@@ -105,11 +78,19 @@ export const __createUserInSupabaseAndGetHisIdAndToken = async (email?: string):
   return {
     id,
     token: supabaseToken,
+    email: userEmail,
   }
 }
 
 export const __generateUniqueId = (prefix: string): string =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+
+export const __generateUniqueEmail = (): string => `${__generateUniqueId('user')}@example.com`
+
+// Telegram chat ids are int64s; a random 13-digit id can't collide with other
+// tests, parallel files, or rows left behind by previous runs.
+export const __generateUniqueTelegramChatId = (): number =>
+  1_000_000_000_000 + Math.floor(Math.random() * 8_000_000_000_000)
 
 export const buildAuthorizationHeaders = (token: string) => ({
   Authorization: `Bearer ${token}`,
@@ -173,8 +154,7 @@ export const __createCheckoutSessionWithOurApi = async (
 export const __createUserRightAfterSignup = async ({
   appDependencies = {},
 }: { appDependencies?: AppDependencies } = {}): Promise<InitialState> => {
-  const email: string = 'some@email.com'
-  const { token, id: userId } = await __createUserInSupabaseAndGetHisIdAndToken(email)
+  const { token, id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
 
   const testApp = buildApp(appDependencies)
 
@@ -198,9 +178,12 @@ export const __createUserRightAfterSignup = async ({
 
 export const __createDefaultInitialStateAfterIntroducingCreditCardAndOnboardingWithoutVoiceId = async ({
   appDependencies = {},
-  email = 'some@email.com',
-  stripeCustomerId = 'cus_Rv3go1W4a0TUav_some@email.com',
-  stripeSubscriptionId = 'sub_someSubscriptionId',
+  email = __generateUniqueEmail(),
+  // Both ids land in globally-unique DB columns (users.stripe_customer_id and
+  // stripe_subscriptions.stripe_subscription_id), so fixed defaults would make
+  // concurrent tests and repeated runs collide.
+  stripeCustomerId = __generateUniqueId('cus'),
+  stripeSubscriptionId = __generateUniqueId('sub'),
   referral = null,
 }: {
   appDependencies?: AppDependencies

@@ -1,6 +1,6 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { UsersRepository } from './users-repository'
-import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
+import { __createUserInSupabaseAndGetHisIdAndToken, __generateUniqueId } from '../../../test/test-utils'
 import { sql } from '../postgres-client'
 
 describe('users-repository integration tests', () => {
@@ -18,17 +18,10 @@ describe('users-repository integration tests', () => {
     utmTerm: null,
     utmContent: null,
   }
-  beforeEach(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
-
-  afterAll(async () => {
-    await __removeAllAuthUsersFromSupabase()
-  })
 
   test('should update stripe customer id', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
-    const stripeCustomerId = 'test-stripe-customer-id'
+    const stripeCustomerId = __generateUniqueId('cus')
 
     await insertUser(userId, null, emptyUtmParams)
     const result = await updateStripeCustomerId(userId, stripeCustomerId)
@@ -41,7 +34,7 @@ describe('users-repository integration tests', () => {
 
   test('should set stripe customer id to null', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
-    const stripeCustomerId = 'test-stripe-customer-id'
+    const stripeCustomerId = __generateUniqueId('cus')
 
     await insertUser(userId, null, emptyUtmParams)
     await updateStripeCustomerId(userId, stripeCustomerId)
@@ -55,7 +48,7 @@ describe('users-repository integration tests', () => {
 
   test('should find user by stripe customer id', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
-    const stripeCustomerId = 'test-stripe-customer-id'
+    const stripeCustomerId = __generateUniqueId('cus')
 
     await insertUser(userId, null, emptyUtmParams)
     await updateStripeCustomerId(userId, stripeCustomerId)
@@ -115,37 +108,35 @@ describe('users-repository integration tests', () => {
   })
 
   test('should return false when updating stripe customer id for non-existent user', async () => {
-    const result = await updateStripeCustomerId('00000000-0000-4000-a000-000000000099', 'test-stripe-customer-id')
+    const result = await updateStripeCustomerId('00000000-0000-4000-a000-000000000099', __generateUniqueId('cus'))
     expect(result).toBe(false)
   })
 
   describe('retrieveAllUsersCreatedLessThanNDaysAgo', () => {
+    // The query scans the whole users table, so assert membership of this
+    // test's users rather than exact counts (other tests' users are also in
+    // the result).
     test('should return users based on their creation date', async () => {
-      const { id: userId1 } = await __createUserInSupabaseAndGetHisIdAndToken('test1@example.com')
-      const { id: userId2 } = await __createUserInSupabaseAndGetHisIdAndToken('test2@example.com')
+      const { id: userId1 } = await __createUserInSupabaseAndGetHisIdAndToken()
+      const { id: userId2 } = await __createUserInSupabaseAndGetHisIdAndToken()
 
       await insertUser(userId1, null, emptyUtmParams)
       await insertUser(userId2, null, emptyUtmParams)
 
       // Set creation dates to 29 hours ago
       await sql`
-        UPDATE public.users 
+        UPDATE public.users
         SET created_at = NOW() - INTERVAL '29 hours'
         WHERE id IN (${userId1}, ${userId2})
       `
 
       const usersWithinTwoDays = await retrieveAllUsersCreatedLessThanNDaysAgo(2)
-      expect(usersWithinTwoDays).toHaveLength(2)
       expect(usersWithinTwoDays).toContain(userId1)
       expect(usersWithinTwoDays).toContain(userId2)
 
       const usersWithinOneDay = await retrieveAllUsersCreatedLessThanNDaysAgo(1)
-      expect(usersWithinOneDay).toHaveLength(0)
-    })
-
-    test('should return empty array when no users exist', async () => {
-      const recentUsers = await retrieveAllUsersCreatedLessThanNDaysAgo(1)
-      expect(recentUsers).toHaveLength(0)
+      expect(usersWithinOneDay).not.toContain(userId1)
+      expect(usersWithinOneDay).not.toContain(userId2)
     })
   })
 })
