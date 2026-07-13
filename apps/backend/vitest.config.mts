@@ -24,6 +24,10 @@ export default defineConfig(() => {
     plugins: [tsconfigPaths()],
     test: {
       include,
+      // Binds supertest's throwaway servers to 127.0.0.1 so ephemeral-port
+      // collisions with other local apps can't hijack requests — see the file.
+      // Harmless for unit tests, so it's loaded unconditionally.
+      setupFiles: ['./src/test/bind-loopback.setup.ts'],
       pool: 'threads',
       maxWorkers: 1,
       // this flag is explained here: https://vitest.dev/config/#fileparallelism
