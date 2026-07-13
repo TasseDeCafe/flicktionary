@@ -87,9 +87,10 @@ describe('RevenueCat Subscriptions Repository Integration Tests', () => {
       expect(subscription.gives_access).toBe(false)
       expect(subscription.auto_renewal_status).toBe('will_not_renew')
       expect(subscription.total_revenue_in_usd).toBe('39.98')
-      expect(new Date(subscription.updated_at).getTime()).toBeGreaterThanOrEqual(
-        new Date(subscription.created_at).getTime()
-      )
+      // updated_at comes from the caller (Node clock) while created_at is a DB
+      // default (Postgres clock) — comparing across the two clocks is flaky by
+      // a few ms, so assert the upsert round-trips the value it was given.
+      expect(new Date(subscription.updated_at).getTime()).toBe(new Date(updatedSubscription.updated_at).getTime())
     })
 
     it('should handle null values correctly', async () => {
