@@ -1,5 +1,5 @@
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import type {
@@ -10,6 +10,7 @@ import type {
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
 
 export type EnsureSessionContextBlobDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   contentSourcesRepository: ContentSourcesRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -44,7 +45,7 @@ export const ensureSessionContextBlob = async (
     session.text_track_id,
     CONTEXT_BLOB_SAMPLE_SIZE
   )
-  const contextBlob = await generateContextBlob({
+  const contextBlob = await deps.anthropicPasses.generateContextBlob({
     contentTitle: contentSource.title,
     contentLanguage: session.target_language,
     contentType: contentSource.type,

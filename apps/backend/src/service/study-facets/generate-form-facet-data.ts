@@ -4,11 +4,13 @@ import { UserLookupsRepositoryInterface } from '../../transport/database/user-lo
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { FacetSkill } from '../../transport/database/study-facets/study-facets-repository'
-import { generateFormData } from '../../transport/third-party/anthropic/passes/generate-form-data'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { getLanguageMode } from '../user-prefs/language-mode'
 
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+
 export type GenerateFormFacetDataDeps = {
+  anthropicPasses: AnthropicPassesInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -100,7 +102,7 @@ export const generateFormFacetData = async (
       ? await deps.usersRepository.getEnglishIpaDialect(params.userId)
       : undefined
 
-    const result = await generateFormData({
+    const result = await deps.anthropicPasses.generateFormData({
       nativeLanguage: languageMode.nativeLanguage ?? term.targetLanguage,
       targetLanguage: term.targetLanguage,
       headword: term.headword,

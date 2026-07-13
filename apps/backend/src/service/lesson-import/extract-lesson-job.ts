@@ -1,10 +1,7 @@
 import { beginTx } from '../../transport/database/postgres-client'
 import type { InsertBatchRowInput } from '../../transport/database/import-batches/import-batches-repository'
 import type { HeadwordMatch } from '../../transport/database/user-lookups/user-lookups-repository'
-import {
-  extractLessonPass,
-  type ExtractedLessonRow,
-} from '../../transport/third-party/anthropic/passes/extract-lesson-pass'
+import type { ExtractedLessonRow } from '../../transport/third-party/anthropic/passes/extract-lesson-pass'
 import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropic-client'
 import type { ProcessingDependencies } from '../processing/processing-dependencies'
 import { splitLessonSections } from './split-lesson-sections'
@@ -61,7 +58,7 @@ export const extractLessonJob = async (
   const extractedRows: Array<{ row: ExtractedLessonRow; lessonDate: string | null }> = []
   let formatProfile: string | null = null
   for (const section of sections) {
-    const lesson = await extractLessonPass({
+    const lesson = await deps.anthropicPasses.extractLessonPass({
       targetLanguage: batch.target_language,
       sectionMarkdown: section,
       teacherProfile: profile?.profile_text ?? null,

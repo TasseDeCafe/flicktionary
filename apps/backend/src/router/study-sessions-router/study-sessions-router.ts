@@ -17,6 +17,7 @@ import { logWithSentry } from '../../transport/third-party/sentry/error-monitori
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -75,7 +76,8 @@ export const StudySessionsRouter = (
   usersRepository: UsersRepositoryInterface,
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   processingJobsRepository: ProcessingJobsRepositoryInterface,
-  highlightsRepository: HighlightsRepositoryInterface
+  highlightsRepository: HighlightsRepositoryInterface,
+  anthropicPasses: AnthropicPassesInterface
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -83,6 +85,7 @@ export const StudySessionsRouter = (
   // (service/study-sessions/import-text.ts) — the Telegram bot runs the same
   // flow outside oRPC. The handlers here only map failures to typed errors.
   const importTextDeps = {
+    anthropicPasses,
     studySessionsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository: targetLanguagePrefsRepository,

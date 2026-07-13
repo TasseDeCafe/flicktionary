@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
+import { MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/log-cache-usage'
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
@@ -21,6 +22,7 @@ import { sanitizeExplorationExtrasForLanguageMode } from '../user-prefs/language
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 
 export type RunCardChatDependencies = {
+  anthropicPasses: AnthropicPassesInterface
   cardsRepository: CardsRepositoryInterface
   cardChatMessagesRepository: CardChatMessagesRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -279,6 +281,7 @@ export const runCardChat = async (
   // absent. Mint-and-persist it lazily here (before buildPromptContext, which
   // returns null without it) so seeded + manual chat self-bootstrap.
   await ensureSessionContextBlob(session, input.userId, {
+    anthropicPasses: deps.anthropicPasses,
     contentSourcesRepository: deps.contentSourcesRepository,
     textSegmentsRepository: deps.textSegmentsRepository,
     studySessionsRepository: deps.studySessionsRepository,
@@ -361,7 +364,7 @@ export const runCardChat = async (
     { role: 'user', content: input.content },
   ]
 
-  const response = await getAnthropicClient().messages.create({
+  const response = await deps.anthropicPasses.createChatCompletion({
     model: MODEL_OPUS,
     max_tokens: 1500,
     system: promptContext.systemBlocks,

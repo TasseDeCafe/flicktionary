@@ -4,14 +4,14 @@ import { languagesContract } from '@flicktionary/api-client/orpc-contracts/langu
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
-export const LanguagesRouter = (): Router => {
+export const LanguagesRouter = (anthropicPasses: AnthropicPassesInterface): Router => {
   const implementer = implement(languagesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     detect: implementer.detect.handler(async ({ input }) => {
-      const code = await languageDetectionPass(input.text)
+      const code = await anthropicPasses.languageDetectionPass(input.text)
       return { data: { code } }
     }),
   })

@@ -21,6 +21,7 @@ import { generateFormFacetData } from '../../service/study-facets/generate-form-
 import { reconcilePronunciationFacet } from '../../service/study-facets/reconcile-pronunciation-facet'
 import { toIsoString } from '../router-utils'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 // Project a facet-joined ChunkRow down to the bare ChunkSchema shape (the
 // setFacetEnabled response). ChunkRow already carries the DERIVED
@@ -102,8 +103,9 @@ const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boo
 export const ChunksRouter = (
   userLookupsRepository: UserLookupsRepositoryInterface,
   deps: {
-    // Form-facet generate-and-confirm needs the user's language mode (native
-    // language + translations-off) to fill a pending_data form facet's payload.
+    // Form-facet generate-and-confirm fills a pending_data form facet's payload
+    // via the generateFormData pass, steered by the user's language mode.
+    anthropicPasses: AnthropicPassesInterface
     usersRepository: UsersRepositoryInterface
     userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
     // Content edits clear the term's terminally-failed exercise slots so the
@@ -275,6 +277,7 @@ export const ChunksRouter = (
       const outcome = await generateFormFacetData(
         { chunkId: input.chunkId, userId, skill: input.skill, targetForm },
         {
+          anthropicPasses: deps.anthropicPasses,
           userLookupsRepository,
           usersRepository: deps.usersRepository,
           userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,

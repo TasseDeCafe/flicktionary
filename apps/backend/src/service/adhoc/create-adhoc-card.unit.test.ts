@@ -1,13 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
-import { basicDataPass } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { createAdhocCard, CreateAdhocCardDependencies } from './create-adhoc-card'
 
-vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../transport/third-party/anthropic/passes/basic-data-pass')>()),
-  basicDataPass: vi.fn().mockResolvedValue([]),
-}))
 vi.mock('../processing/materialize-basic-data-chunks', () => ({
   materializeBasicDataChunks: vi.fn(),
 }))
@@ -35,6 +31,10 @@ vi.mock('../../transport/third-party/sentry/error-monitoring', () => ({
   logCustomErrorMessageAndError: vi.fn(),
 }))
 
+// Injected through deps.anthropicPasses; tests script it per case with
+// vi.mocked(basicDataPass).mockResolvedValue(...).
+const basicDataPass = vi.fn()
+
 const userId = '00000000-0000-0000-0000-000000000001'
 const lookupId = '00000000-0000-0000-0000-000000000002'
 const highlightId = '00000000-0000-0000-0000-000000000003'
@@ -51,6 +51,7 @@ const createDeps = () => {
   const applyKeepTransition = vi.fn().mockResolvedValue(undefined)
   const insertHighlight = vi.fn().mockResolvedValue({ id: highlightId })
   const deps = {
+    anthropicPasses: MockAnthropicPasses({ basicDataPass: basicDataPass as never }),
     textSegmentsRepository: {
       appendSegmentAtomic: vi.fn().mockResolvedValue({ id: 'segment-1', index: 0, text: 'palabras — unas frases' }),
     },

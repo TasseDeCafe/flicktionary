@@ -4,6 +4,7 @@ import { importTextForUser, ImportTextDependencies, suggestTitleFromText } from 
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -31,7 +32,9 @@ const buildDeps = (
     userTargetLanguagePrefsRepository: {
       findForLanguage: vi.fn().mockResolvedValue(cefrLevel ? { cefr_level: cefrLevel } : null),
     } as unknown as UserTargetLanguagePrefsRepositoryInterface,
-    detectLanguage: vi.fn().mockResolvedValue(detectedLanguage),
+    anthropicPasses: MockAnthropicPasses({
+      languageDetectionPass: vi.fn().mockResolvedValue(detectedLanguage),
+    }),
   }
 }
 
@@ -40,7 +43,7 @@ describe('importTextForUser', () => {
     const deps = buildDeps()
     const result = await importTextForUser({ userId: USER_ID, text: '  \n\n  ', title: 'T', sourceUrl: null }, deps)
     expect(result).toEqual({ ok: false, reason: 'empty' })
-    expect(deps.detectLanguage).not.toHaveBeenCalled()
+    expect(deps.anthropicPasses.languageDetectionPass).not.toHaveBeenCalled()
   })
 
   test('returns unsupported when language detection finds no supported language', async () => {

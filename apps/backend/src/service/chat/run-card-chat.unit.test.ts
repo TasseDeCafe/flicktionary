@@ -1,13 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getAnthropicClient } from '../../transport/third-party/anthropic/anthropic-client'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { runCardChat, type RunCardChatDependencies } from './run-card-chat'
 
-vi.mock('../../transport/third-party/anthropic/anthropic-client', () => ({
-  getAnthropicClient: vi.fn(),
-  MODEL_OPUS: 'opus-test',
-}))
 vi.mock('../user-prefs/language-mode', () => ({
   getLanguageMode: vi.fn(),
 }))
@@ -87,6 +83,9 @@ const createDeps = () => {
     content: m.content,
   }))
   const deps = {
+    anthropicPasses: MockAnthropicPasses({
+      createChatCompletion: vi.fn().mockResolvedValue(translationToolResponse) as never,
+    }),
     cardsRepository: {
       findByIdForUser: vi.fn().mockResolvedValue(card),
       updateFields: vi.fn().mockResolvedValue(undefined),
@@ -117,9 +116,6 @@ describe('runCardChat — translation patches', () => {
     vi.mocked(buildPromptContext).mockResolvedValue({ systemBlocks: [] } as unknown as Awaited<
       ReturnType<typeof buildPromptContext>
     >)
-    vi.mocked(getAnthropicClient).mockReturnValue({
-      messages: { create: vi.fn().mockResolvedValue(translationToolResponse) },
-    } as unknown as ReturnType<typeof getAnthropicClient>)
   })
 
   it('translations off: an explicitly requested translation is persisted without clear flags', async () => {

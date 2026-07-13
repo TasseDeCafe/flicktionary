@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { basicDataPass } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
@@ -7,10 +7,6 @@ import { autoKeepNeedsDataIfEligible } from '../cards/set-card-status'
 import { enrichHighlight } from './enrich-highlight'
 import type { ProcessingDependencies } from './processing-dependencies'
 
-vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../transport/third-party/anthropic/passes/basic-data-pass')>()),
-  basicDataPass: vi.fn(),
-}))
 vi.mock('./wiktionary-grounding-runner', () => ({
   runWiktionaryGrounding: vi.fn().mockResolvedValue(undefined),
 }))
@@ -28,6 +24,10 @@ vi.mock('../user-prefs/language-mode', () => ({
     allowL1Notes: true,
   }),
 }))
+
+// Injected through deps.anthropicPasses; tests script it per case with
+// vi.mocked(basicDataPass).mockResolvedValue(...).
+const basicDataPass = vi.fn()
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const sessionId = '00000000-0000-0000-0000-000000000002'
@@ -84,6 +84,7 @@ const createDeps = () => {
   const insertCard = vi.fn().mockResolvedValue({ id: 'card-2' })
   const record = vi.fn().mockResolvedValue(undefined)
   const deps = {
+    anthropicPasses: MockAnthropicPasses({ basicDataPass: basicDataPass as never }),
     studySessionsRepository: {
       findByIdForUser: vi.fn().mockResolvedValue(session),
       updateContextBlob: vi.fn().mockResolvedValue(true),

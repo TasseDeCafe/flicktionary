@@ -7,7 +7,7 @@ import { TelegramPairNoncesRepositoryInterface } from '../../transport/database/
 import { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
-import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { TelegramApiInterface } from '../../transport/third-party/telegram/telegram-api'
 import {
@@ -25,8 +25,7 @@ export type TelegramBotDependencies = {
   telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
-  // Injectable so unit tests can stub the Anthropic language detection.
-  detectLanguage?: typeof languageDetectionPass
+  anthropicPasses: AnthropicPassesInterface
   // Injectable so unit tests can disable the per-chat throttle.
   importCooldownMs?: number
 }
@@ -98,7 +97,7 @@ export const runImportAttempt = async (
       studySessionsRepository: deps.studySessionsRepository,
       usersRepository: deps.usersRepository,
       userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
-      detectLanguage: deps.detectLanguage,
+      anthropicPasses: deps.anthropicPasses,
     }
   )
 
