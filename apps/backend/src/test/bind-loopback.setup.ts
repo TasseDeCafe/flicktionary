@@ -8,7 +8,7 @@ import net from 'node:net'
 // empty 404s, `socket hang up`, or HTTP parse errors, cured by a retry.
 // Rewriting the bind to 127.0.0.1 makes the kernel assign only ports actually
 // free on IPv4 loopback, so the interception is structurally impossible.
-// Details: docs/proposals/backend-testing-strategy.md ("The serial flake").
+// Details: old-docs/backend-testing-strategy.md ("The serial flake").
 // Known supertest failure class:
 // https://stackoverflow.com/questions/63343123/nodesupertest-flakes-with-client-network-socket-disconnected-before-secure-tls/63343124#63343124
 // https://gavv.net/articles/ephemeral-port-reuse/

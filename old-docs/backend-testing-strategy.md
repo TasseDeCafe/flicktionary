@@ -1,6 +1,6 @@
 # Backend testing strategy
 
-> **Status: mostly implemented.** Assessment of the backend test suite (patterns, coverage, flakiness) and a plan for where to invest. Plan items 1 (Anthropic seam), 2 (golden-path oRPC tests), 4 (enrichment-worker driver test), and 5 (de-flake + re-parallelize) are done; item 3 (mock-file cleanup) stays opportunistic as files are touched.
+> **Status: historical** (archived 2026-07-14). Plan shipped: items 1 (Anthropic seam), 2 (golden-path oRPC tests), 4 (enrichment-worker driver test), and 5 (de-flake + re-parallelize) are done; item 3 (mock-file cleanup) stays opportunistic as files are touched. The durable conventions now live in the **Backend testing** section of `AGENTS.md`. Kept for the flakiness root-cause analysis (ephemeral-port hijack, cross-clock timestamps) and the reasoning behind the mocking/DI choices.
 
 ## Current state
 
