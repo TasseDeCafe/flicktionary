@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Ship the work from this conversation as a pull request — create a branch, make one or more conventional commits, sync the behavior specs, push with gh, and open a PR with a detailed description. Stops before merge. Run this when the user is satisfied with the work and wants it turned into a PR.
+description: Ships the work from this conversation as a pull request — creates a branch, makes one or more conventional commits, syncs the behavior specs, pushes with gh, and opens a PR with a detailed description. Stops before merge. Run this when the user is satisfied with the work and wants it turned into a PR.
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git branch:*), Bash(git checkout:*), Bash(git switch:*), Bash(git push:*), Bash(pnpm translate:sync:*), Bash(pnpm translate:check:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Read, Edit
 ---
@@ -13,11 +13,11 @@ You are turning the work that just shipped in this conversation into a GitHub pu
 
 2. **Branch.** If the current branch is `main`, create a feature branch before committing — never commit straight to `main`. Name it `<type>/<short-kebab-desc>` matching the primary change (e.g. `feat/right-click-toggle`, `fix/gloss-cache-auth`, `docs/doc-map`). If already on a feature branch, stay on it.
 
-3. **Sync the behavior specs.** Before committing, follow the `update-docs` skill to update `SPEC.md` / `apps/extension/EXTENSION-SPEC.md` / `docs/SRS.md` for any behavior or structure the diff changed (in place — not changelogs). Skip specs whose area the diff doesn't touch; if nothing is spec-worthy, note that. This step is the green light to edit those specs. Do **not** touch reference/artifact docs or anything in `old-docs/` / `docs/proposals/`.
+3. **Sync the behavior specs.** Before committing, follow the `update-docs` skill to update the behavior specs (it owns the list of which spec covers what) for any behavior or structure the diff changed — in place, not changelogs. Skip specs whose area the diff doesn't touch; if nothing is spec-worthy, note that. This step is the green light to edit those specs. Do **not** touch reference/artifact docs or anything in `old-docs/` / `docs/proposals/`.
 
 4. **Translate i18n catalogs.** If the diff added or changed any user-facing `t`` strings, run `pnpm translate:sync` (extract → AI-translate missing entries → re-extract to normalize the catalog format). Stage the resulting `packages/i18n/locales` changes and include them in the commit (or a dedicated `chore(i18n): update translations` commit). This is required: the pre-push hook is now a guard that **fails the push** if any string is untranslated or the catalogs are stale — it no longer translates for you. If the diff touched no user-facing copy, skip this step.
 
-5. **Commit.** Follow the `commit` skill's conventions exactly — `<type>(<scopes>): <description>`, single-line subject, comma-separated scopes in order `web,backend,native,root,packages`, imperative lowercase description, **no body, no `Co-Authored-By` trailer**. Prefer **several focused commits** over one giant commit when the work splits into logical units (e.g. one commit for the feature, one for the spec/doc update, one for a refactor). Stage files by name (never `git add -A`); refuse to stage anything that looks like a secret. Don't use `--no-verify` — if the pre-push/pre-commit hooks fail, fix the cause and recommit.
+5. **Commit.** Follow the `commit` skill's conventions exactly — `<type>(<scopes>): <description>`, single-line subject, **no body, no `Co-Authored-By` trailer**; that skill owns the scope order, staging rules, and secrets guard. Prefer **several focused commits** over one giant commit when the work splits into logical units (e.g. one commit for the feature, one for the spec/doc update, one for a refactor). Don't use `--no-verify` — if the pre-push/pre-commit hooks fail, fix the cause and recommit.
 
 6. **Push.** `git push -u origin <branch>`. If the pre-push catalog guard fails, you skipped step 4 — run `pnpm translate:sync`, commit `packages/i18n/locales`, and push again.
 
@@ -35,4 +35,4 @@ You are turning the work that just shipped in this conversation into a GitHub pu
 
 - If the diff spans multiple unrelated concerns, say so and suggest splitting into more than one PR rather than bundling — don't silently cram everything into one.
 - If `gh` isn't authenticated or there's no remote, stop and tell the user rather than guessing.
-- Contract edits: if the diff touched an oRPC contract, rebuild `@flicktionary/api-client` before relying on a clean typecheck (see AGENTS.md).
+- Contract edits: if the diff touched an oRPC contract, rebuild `@flicktionary/api-client` (`pnpm --filter @flicktionary/api-client build`) before relying on a clean typecheck — TS project refs read stale `.d.ts` otherwise (see the `web-query-hooks` skill).

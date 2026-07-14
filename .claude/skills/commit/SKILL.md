@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Commit the changes from this session using the project's conventional-commit style. Run this when the user is satisfied with the work and wants it committed.
+description: Commits the changes from this session using the project's conventional-commit style. Run this when the user is satisfied with the work and wants it committed.
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*)
 ---

@@ -1,6 +1,6 @@
 ---
 name: manage-locale
-description: Add a new UI locale or enable/disable an existing one across the monorepo (Lingui catalogs, web app, native app, shared i18n config). Run this when the user asks to add, remove, enable, or disable a language in the UI.
+description: Adds a new UI locale or enables/disables an existing one across the monorepo (Lingui catalogs, web app, native app, shared i18n config). Run this when the user asks to add, remove, enable, or disable a language in the UI.
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash(pnpm:*), Bash(grep:*)
 ---
@@ -38,7 +38,7 @@ For a brand-new locale (e.g. German `de`):
 
 1. In `packages/i18n/src/i18n-config.ts`: add `export const GERMAN_LOCALE = 'de'` and append it to `i18nConfig.locales`.
 2. In `lingui.config.mjs`: add `'de'` to the `locales` array.
-3. From the repo root, run `pnpm lingui extract` (or whatever script the project uses — check `package.json`) to generate `packages/i18n/locales/de/messages.po`. Then run `pnpm translate` to populate it via Claude, or commit the empty file and translate later.
+3. From the repo root, run `pnpm lingui extract --clean` to generate `packages/i18n/locales/de/messages.po`. Then run `pnpm translate` to populate it via Claude, or commit the empty file and translate later.
 4. In `apps/web/src/lib/i18n/i18n.ts`: add the static import, the `catalogs` entry, and a branch in `getBrowserLocale`.
 5. In `apps/native/src/lib/i18n/i18n.ts`: same — static import + `catalogs` entry. (No detection happens here; that's in the locale store.)
 6. In `apps/native/src/stores/locale-store.ts`: add the import and the detection branch in `getDeviceLocale`.
