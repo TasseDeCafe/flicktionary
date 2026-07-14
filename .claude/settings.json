@@ -1,5 +1,19 @@
 {
   "enabledPlugins": {
     "upgrading-expo@expo-plugins": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-db-files.mjs\"",
+            "statusMessage": "Checking migration/generated-file guard"
+          }
+        ]
+      }
+    ]
   }
 }
