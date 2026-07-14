@@ -223,6 +223,27 @@ const setUiLanguage = async (userId: string, uiLanguage: string | null): Promise
   return result.count === 1
 }
 
+const getAccountFlags = async (userId: string): Promise<string[]> => {
+  const result = (await sql`
+    SELECT account_flags FROM public.users WHERE id = ${userId}
+  `) as { account_flags: string[] }[]
+  return result[0]?.account_flags ?? []
+}
+
+// Idempotent: re-adding a present flag leaves the array untouched but still
+// matches the row, so count === 1 distinguishes "user exists" from "no user".
+const addAccountFlag = async (userId: string, flag: string): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users
+    SET account_flags = CASE
+      WHEN ${flag} = ANY(account_flags) THEN account_flags
+      ELSE array_append(account_flags, ${flag})
+    END
+    WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
 export interface UsersRepositoryInterface {
   insertUser: (
     id: string,
@@ -260,6 +281,8 @@ export interface UsersRepositoryInterface {
   setUiTheme: (userId: string, uiTheme: 'light' | 'dark' | 'system' | null) => Promise<boolean>
   getUiLanguage: (userId: string) => Promise<string | null>
   setUiLanguage: (userId: string, uiLanguage: string | null) => Promise<boolean>
+  getAccountFlags: (userId: string) => Promise<string[]>
+  addAccountFlag: (userId: string, flag: string) => Promise<boolean>
 }
 
 export const UsersRepository = (): UsersRepositoryInterface => {
@@ -289,5 +312,7 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setUiTheme,
     getUiLanguage,
     setUiLanguage,
+    getAccountFlags,
+    addAccountFlag,
   }
 }

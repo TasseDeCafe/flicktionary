@@ -436,7 +436,17 @@ export const buildApp = ({
       practiceExercisesRepository,
     })
   )
-  app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
+  app.use(
+    API_V1,
+    UserPrefsRouter(
+      usersRepository,
+      userTargetLanguagePrefsRepository,
+      studySessionsRepository,
+      userLookupsRepository,
+      practiceRatingEventsRepository,
+      practiceExercisesRepository
+    )
+  )
   app.use(API_V1, LanguagesRouter(anthropicPasses))
   app.use(API_V1, DevToolsRouter())
   app.use(

@@ -15,6 +15,17 @@ const TargetLanguagePrefSchema = z.object({
   practiceMaxReviewTermsProduction: z.number().int().nullable(),
 })
 
+// Write-once account facts: checklist/hint dismissals and "has ever installed
+// the extension". Adding a flag is a one-line enum extension — the backend
+// stores them in a text[] column with no DB-level value constraint.
+export const AccountFlagSchema = z.enum([
+  'getting_started_dismissed',
+  'getting_started_completed',
+  'practice_explainer_dismissed',
+  'extension_installed',
+])
+export type AccountFlag = z.infer<typeof AccountFlagSchema>
+
 const UserPrefsSchema = z.object({
   nativeLanguage: z.string().nullable(),
   isOnboarded: z.boolean(),
@@ -25,6 +36,7 @@ const UserPrefsSchema = z.object({
   uiTheme: z.enum(['light', 'dark', 'system']).nullable(),
   uiLanguage: z.string().nullable(),
   targetLanguagePrefs: z.array(TargetLanguagePrefSchema),
+  accountFlags: z.array(AccountFlagSchema),
 })
 
 export const PRACTICE_MAX_NEW_TERMS_LIMIT = 100
@@ -110,4 +122,26 @@ export const userPrefsContract = {
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ uiLanguage: z.string().min(1).nullable() }))
     .output(z.object({ data: UserPrefsSchema })),
+
+  // Idempotent: adding a flag the user already has is a 200 no-op.
+  addAccountFlag: oc
+    .route({ method: 'PUT', path: '/user-prefs/account-flags', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ flag: AccountFlagSchema }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  // Feeds the home getting-started checklist; queried only while the
+  // checklist is visible (not dismissed/completed).
+  gettingStartedStatus: oc
+    .route({ method: 'GET', path: '/user-prefs/getting-started-status', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .output(
+      z.object({
+        data: z.object({
+          hasSession: z.boolean(),
+          hasSavedWords: z.boolean(),
+          hasPracticed: z.boolean(),
+        }),
+      })
+    ),
 } as const

@@ -436,6 +436,10 @@ users
   tap_to_translate_enabled boolean default false
   llm_highlights_enabled   boolean default true
   telegram_chat_id         bigint? unique  -- Telegram-bot pairing; one chat per account
+  account_flags            text[] default '{}'  -- write-once account facts (checklist
+                                    -- dismissed/completed, hint dismissals,
+                                    -- extension_installed); allowed values live in the
+                                    -- contract's AccountFlagSchema, not a DB constraint
 
 user_target_language_pref
   user_id                   uuid

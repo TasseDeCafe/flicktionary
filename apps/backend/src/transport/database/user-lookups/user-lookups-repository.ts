@@ -568,6 +568,20 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 // insertion time (so content has a home before keep). Those rows are NOT
 // part of the user's vocabulary until they keep at least one card for the
 // chunk — hence the count > 0 gate everywhere on the Practice path.
+// "Has kept at least one term" for the getting-started checklist. count > 0
+// is the keep gate — rows exist eagerly with count = 0 before any keep (see
+// the comment above listDueSummary).
+const hasKeptLookup = async (userId: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT EXISTS(
+      SELECT 1
+      FROM public.user_lookups
+      WHERE user_id = ${userId} AND count > 0 AND deleted_at IS NULL
+    ) AS "exists"
+  `) as { exists: boolean }[]
+  return result[0]?.exists ?? false
+}
+
 const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // Recognition numbers read the citation meaning_recognition facet; the
   // production mirror reads the citation meaning_production facet. Both are 1:1
@@ -2100,6 +2114,7 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<RenameKeyResult>
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
+  hasKeptLookup: (userId: string) => Promise<boolean>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
   listReviewTerms: (params: {
     userId: string
@@ -2209,6 +2224,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     renameKey,
     applyKeepTransition,
     applyUnkeepTransition,
+    hasKeptLookup,
     listDueSummary,
     listReviewTerms,
     findByKey,

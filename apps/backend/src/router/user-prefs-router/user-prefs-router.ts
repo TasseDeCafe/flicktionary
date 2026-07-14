@@ -3,9 +3,17 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import { userPrefsContract } from '@flicktionary/api-client/orpc-contracts/user-prefs-contract'
+import {
+  userPrefsContract,
+  AccountFlagSchema,
+  type AccountFlag,
+} from '@flicktionary/api-client/orpc-contracts/user-prefs-contract'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
+import { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
 
 type UserPrefsResponse = {
   nativeLanguage: string | null
@@ -24,7 +32,14 @@ type UserPrefsResponse = {
     practiceMaxReviewTerms: number
     practiceMaxReviewTermsProduction: number | null
   }[]
+  accountFlags: AccountFlag[]
 }
+
+// The column has no DB-level value constraint, so filter to contract-known
+// flags — an unknown value (e.g. after a rollback to an older server) must
+// not fail output validation.
+const toKnownAccountFlags = (flags: string[]): AccountFlag[] =>
+  flags.filter((flag): flag is AccountFlag => AccountFlagSchema.options.includes(flag as AccountFlag))
 
 const buildPrefs = async (
   userId: string,
@@ -41,6 +56,7 @@ const buildPrefs = async (
     uiTheme,
     uiLanguage,
     targetPrefs,
+    accountFlags,
   ] = await Promise.all([
     usersRepository.getNativeLanguage(userId),
     usersRepository.getIsOnboarded(userId),
@@ -51,6 +67,7 @@ const buildPrefs = async (
     usersRepository.getUiTheme(userId),
     usersRepository.getUiLanguage(userId),
     prefsRepository.listForUser(userId),
+    usersRepository.getAccountFlags(userId),
   ])
   return {
     nativeLanguage,
@@ -61,6 +78,7 @@ const buildPrefs = async (
     englishIpaDialect,
     uiTheme,
     uiLanguage,
+    accountFlags: toKnownAccountFlags(accountFlags),
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
@@ -74,7 +92,11 @@ const buildPrefs = async (
 
 export const UserPrefsRouter = (
   usersRepository: UsersRepositoryInterface,
-  prefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  prefsRepository: UserTargetLanguagePrefsRepositoryInterface,
+  studySessionsRepository: StudySessionsRepositoryInterface,
+  userLookupsRepository: UserLookupsRepositoryInterface,
+  practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface,
+  practiceExercisesRepository: PracticeExercisesRepositoryInterface
 ): Router => {
   const implementer = implement(userPrefsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -206,6 +228,35 @@ export const UserPrefsRouter = (
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
       return { data: prefs }
+    }),
+
+    addAccountFlag: implementer.addAccountFlag.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.addAccountFlag(userId, input.flag)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to add account flag' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    gettingStartedStatus: implementer.gettingStartedStatus.handler(async ({ context }) => {
+      const userId = context.res.locals.userId
+      const [hasSession, hasSavedWords, hasLiveRatingEvent, hasUsedExercise] = await Promise.all([
+        studySessionsRepository.hasVisibleSession(userId),
+        userLookupsRepository.hasKeptLookup(userId),
+        practiceRatingEventsRepository.hasLiveEvent(userId),
+        practiceExercisesRepository.hasUsedExercise(userId),
+      ])
+      return {
+        data: {
+          hasSession,
+          hasSavedWords,
+          hasPracticed: hasLiveRatingEvent || hasUsedExercise,
+        },
+      }
     }),
   })
 

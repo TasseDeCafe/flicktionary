@@ -1772,6 +1772,10 @@ msgstr "Échec de l'enregistrement du terme"
 msgid "Failed to save the word"
 msgstr "Échec de l'enregistrement du mot"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to save your preference"
+msgstr "Échec de l'enregistrement de votre préférence"
+
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to send chat message"
 msgstr "Échec de l'envoi du message de discussion"

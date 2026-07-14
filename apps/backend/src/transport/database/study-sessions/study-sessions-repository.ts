@@ -634,6 +634,21 @@ const getDeletePreview = async (sessionId: string, userId: string): Promise<Dele
   }
 }
 
+// "Has at least one session the Sessions list would show" — same visibility
+// predicate as listByUserIdWithSource (soft-deleted and synthetic adhoc
+// sessions don't count). Feeds the getting-started checklist.
+const hasVisibleSession = async (userId: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT EXISTS(
+      SELECT 1
+      FROM public.study_sessions s
+      LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+      WHERE s.user_id = ${userId} AND s.deleted_at IS NULL AND cs.type != 'adhoc'
+    ) AS "exists"
+  `) as { exists: boolean }[]
+  return result[0]?.exists ?? false
+}
+
 export interface StudySessionsRepositoryInterface {
   insertStudySession: (params: {
     userId: string
@@ -719,6 +734,7 @@ export interface StudySessionsRepositoryInterface {
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
   listByUserId: (userId: string) => Promise<DbStudySession[]>
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
+  hasVisibleSession: (userId: string) => Promise<boolean>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
   updateReadingProgress: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
   appendProcessingWarning: (sessionId: string, userId: string, warning: string) => Promise<boolean>
@@ -739,6 +755,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     hasTextTrackForUser,
     listByUserId,
     listByUserIdWithSource,
+    hasVisibleSession,
     updateContextBlob,
     updateReadingProgress,
     appendProcessingWarning,

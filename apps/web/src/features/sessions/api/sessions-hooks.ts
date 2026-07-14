@@ -566,6 +566,18 @@ export const useSetUiLanguage = () => {
   )
 }
 
+export const useAddAccountFlag = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.userPrefs.addAccountFlag.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        errorMessage: t`Failed to save your preference`,
+      },
+    })
+  )
+}
+
 export const useSetPracticeLimitsForLanguage = () => {
   const { t } = useLingui()
   return useMutation(

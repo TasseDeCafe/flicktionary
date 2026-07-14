@@ -210,6 +210,20 @@ const countReviewBudgetConsumedTodayByLanguage = async (params: {
   return new Map(rows.map((row) => [row.target_language, row.consumed]))
 }
 
+// "Has ever rated in a live practice session" for the getting-started
+// checklist — lesson-import backfill events carry import_batch_id and don't
+// count as practicing.
+const hasLiveEvent = async (userId: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT EXISTS(
+      SELECT 1
+      FROM public.practice_rating_events
+      WHERE user_id = ${userId} AND import_batch_id IS NULL
+    ) AS "exists"
+  `) as { exists: boolean }[]
+  return result[0]?.exists ?? false
+}
+
 export interface PracticeRatingEventsRepositoryInterface {
   insert: (params: InsertRatingEventInput, executor?: postgres.Sql) => Promise<string>
   findLatestLiveEventForUndo: (
@@ -226,6 +240,7 @@ export interface PracticeRatingEventsRepositoryInterface {
     userId: string
     pool: PracticePool
   }) => Promise<Map<string, number>>
+  hasLiveEvent: (userId: string) => Promise<boolean>
 }
 
 export const PracticeRatingEventsRepository = (): PracticeRatingEventsRepositoryInterface => {
@@ -235,5 +250,6 @@ export const PracticeRatingEventsRepository = (): PracticeRatingEventsRepository
     markReverted,
     countReviewBudgetConsumedToday,
     countReviewBudgetConsumedTodayByLanguage,
+    hasLiveEvent,
   }
 }
