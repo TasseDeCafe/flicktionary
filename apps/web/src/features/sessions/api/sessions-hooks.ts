@@ -566,6 +566,20 @@ export const useSetUiLanguage = () => {
   )
 }
 
+// Feeds the home getting-started checklist. `enabled: false` once the
+// checklist is dismissed/completed — the signals stop mattering forever, so
+// the endpoint must not be polled for established users.
+export const useGettingStartedStatus = (enabled: boolean) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.userPrefs.gettingStartedStatus.queryOptions({
+      enabled,
+      select: (response) => response.data,
+      meta: { errorMessage: t`Failed to load your progress` },
+    })
+  )
+}
+
 export const useAddAccountFlag = () => {
   const { t } = useLingui()
   return useMutation(

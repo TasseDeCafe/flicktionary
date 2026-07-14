@@ -2,8 +2,13 @@ import { Trans } from '@lingui/react/macro'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@flicktionary/ui/components/button'
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className='mt-10 text-xl font-semibold'>{children}</h2>
+// Stable anchor ids — the in-app checklist/explainer cards deep-link to them
+// (e.g. /user-guide#practice). scroll-mt keeps the heading clear of the page
+// padding when scrolled to.
+const SectionTitle = ({ id, children }: { id?: string; children: React.ReactNode }) => (
+  <h2 id={id} className='mt-10 scroll-mt-6 text-xl font-semibold'>
+    {children}
+  </h2>
 )
 
 const StepList = ({ children }: { children: React.ReactNode }) => (
@@ -29,7 +34,7 @@ export const UserGuideView = () => {
           </Link>
         </Button>
 
-        <SectionTitle>
+        <SectionTitle id='what-is-flicktionary'>
           <Trans>What is Flicktionary?</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -53,7 +58,7 @@ export const UserGuideView = () => {
           </p>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='extension'>
           <Trans>Getting started</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -78,14 +83,15 @@ export const UserGuideView = () => {
           </p>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='watching-videos'>
           <Trans>Watching videos</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
           <p>
             <Trans>
-              Open a video on a supported platform. The first time, a dialog asks which subtitle track to load; after
-              that, your last-used language loads automatically. You can also load your own subtitle file by
+              Open a video on a supported platform. On YouTube, subtitles load automatically in the video's own
+              language; on other platforms, a dialog asks which subtitle track to load the first time, and your
+              last-used language loads automatically after that. You can also load your own subtitle file by
               drag-and-dropping it onto the video.
             </Trans>
           </p>
@@ -98,7 +104,7 @@ export const UserGuideView = () => {
           </p>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='saving-words'>
           <Trans>Looking up and saving words</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -116,14 +122,14 @@ export const UserGuideView = () => {
             </li>
             <li>
               <Trans>
-                <b>Right-click</b> the selection and choose <b>Save</b>. The word or phrase is stored in your account
-                together with the sentence it appeared in.
+                <b>Right-click</b> the selection to save it — the word or phrase is stored in your account together with
+                the sentence it appeared in. Right-click a saved selection to remove it again.
               </Trans>
             </li>
           </ul>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='importing-articles'>
           <Trans>Importing articles</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -136,7 +142,7 @@ export const UserGuideView = () => {
           </p>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='practice'>
           <Trans>Reviewing and practicing</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -159,7 +165,7 @@ export const UserGuideView = () => {
           </ul>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='settings'>
           <Trans>Settings and keyboard shortcuts</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>
@@ -178,7 +184,7 @@ export const UserGuideView = () => {
           </p>
         </div>
 
-        <SectionTitle>
+        <SectionTitle id='troubleshooting'>
           <Trans>Troubleshooting</Trans>
         </SectionTitle>
         <div className='mt-3 space-y-3 text-sm leading-6'>

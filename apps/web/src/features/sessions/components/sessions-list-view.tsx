@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
+import { useNavigate } from '@tanstack/react-router'
+import { Clapperboard, FileText, Puzzle } from 'lucide-react'
+import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
 import { useListStudySessions } from '../api/sessions-hooks'
 import { deriveTvShows } from '../utils/derive-tv-shows'
 import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
+import { GettingStartedChecklist } from './getting-started-checklist'
 
 type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
@@ -47,6 +51,8 @@ export const SessionsListView = () => {
     <div className='mx-auto max-w-4xl px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
 
+      <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
+
       {isLoading && <FilterChipsSkeleton />}
 
       {/* Horizontally scrollable on narrow viewports: the chips never wrap or shrink,
@@ -83,9 +89,7 @@ export const SessionsListView = () => {
 
       <div className='mt-4 flex flex-col gap-2'>
         {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
-        {!isLoading && (data?.length ?? 0) === 0 && (
-          <p className='text-muted-foreground text-sm'>{t`No sessions yet. Start one to begin.`}</p>
-        )}
+        {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
         {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
           <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
         )}
@@ -110,6 +114,43 @@ export const SessionsListView = () => {
           if (!next) setRemoveTarget(null)
         }}
       />
+    </div>
+  )
+}
+
+// First-run replacement for the bare "no sessions" line: says what a session
+// is and mirrors the primary "+ New" actions so the empty screen is itself an
+// entry point. The extension row deep-links into the guide since watching on
+// YouTube/streaming starts outside the app.
+const SessionsEmptyState = () => {
+  const { t } = useLingui()
+  const navigate = useNavigate()
+  return (
+    <div className='bg-card rounded-xl border p-4'>
+      <h2 className='font-semibold'>{t`Start your first session`}</h2>
+      <p className='text-muted-foreground mt-1 text-sm'>
+        {t`A session is anything you study from: a movie or show with subtitles, a YouTube video, an article, or a pasted text. Terms you save while watching or reading become your vocabulary.`}
+      </p>
+      <div className='mt-3 flex flex-col gap-1'>
+        <OverlayActionRow
+          icon={Clapperboard}
+          label={t`Start a movie or TV session`}
+          description={t`Find a movie or show and load its subtitles`}
+          onClick={() => void navigate({ to: '/sessions/new' })}
+        />
+        <OverlayActionRow
+          icon={FileText}
+          label={t`Practice with a text`}
+          description={t`Paste an article, comment, or post`}
+          onClick={() => void navigate({ to: '/sessions/new-text' })}
+        />
+        <OverlayActionRow
+          icon={Puzzle}
+          label={t`Watch with the browser extension`}
+          description={t`YouTube and streaming sites, with instant subtitle lookups`}
+          onClick={() => void navigate({ to: '/user-guide', hash: 'extension' })}
+        />
+      </div>
     </div>
   )
 }

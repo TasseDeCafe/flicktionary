@@ -952,6 +952,16 @@ summary appends `· N active`; when any terms are warming up it appends `· N wa
 when any terms are leech-parked it appends `· N parked` (both pools' leeches — warm-up
 terms are counted separately under "warming up").
 
+Above the language list, first-time users see a one-time **"How practice works"
+explainer card** (spaced repetition, session composition + daily limits, warm-up,
+reading mode — four short points, plus a deep link to `/user-guide#practice`). "Got it"
+or the X records the `practice_explainer_dismissed` account flag
+(`users.account_flags`, synced across devices), after which the card never returns and
+the static one-line intro paragraph takes its place; neither renders until prefs have
+resolved, so returning users see no flash. The zero-vocabulary **empty state**
+describes the real pipeline — save a term in a session → background enrichment →
+auto-kept into Vocabulary/Practice — and links back to `/sessions`.
+
 `/practice/language/$targetLanguage` is the per-language landing — the system makes the
 strategic decision, not the user. Two truth-telling surfaces replaced the old one-line
 status summary and stat cards (Follow-ups / New today / Unseen / Total):
