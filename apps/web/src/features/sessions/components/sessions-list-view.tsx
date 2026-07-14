@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Clapperboard, FileText, Puzzle } from 'lucide-react'
 import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
 import { useListStudySessions } from '../api/sessions-hooks'
@@ -151,6 +151,9 @@ const SessionsEmptyState = () => {
           onClick={() => void navigate({ to: '/user-guide', hash: 'extension' })}
         />
       </div>
+      <Link to='/user-guide' hash='sessions' className='mt-3 inline-block text-sm font-medium underline'>
+        {t`Read more in the guide`}
+      </Link>
     </div>
   )
 }

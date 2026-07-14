@@ -83,6 +83,7 @@ export const UserGuideView = () => {
           </p>
         </div>
 
+        <span id='sessions' className='block scroll-mt-6' aria-hidden />
         <SectionTitle id='watching-videos'>
           <Trans>Watching videos</Trans>
         </SectionTitle>

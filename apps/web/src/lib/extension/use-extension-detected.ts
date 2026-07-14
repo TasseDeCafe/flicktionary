@@ -4,7 +4,7 @@ export type ExtensionDetection = 'checking' | 'detected' | 'not-detected'
 
 // The extension's marker content script stamps this attribute on <html> at
 // document_start on the web app's origin (flicktionary-marker.content.ts).
-const readMarker = (): string | null => document.documentElement.getAttribute('data-flicktionary-extension')
+const readMarker = (): string | null => document.documentElement?.getAttribute('data-flicktionary-extension') ?? null
 
 const DETECTION_POLL_INTERVAL_MS = 250
 const DETECTION_TIMEOUT_MS = 3000

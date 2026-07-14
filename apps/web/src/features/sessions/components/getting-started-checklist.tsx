@@ -3,6 +3,7 @@ import { Link, type LinkProps } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronRight, Circle, CircleCheck, X } from 'lucide-react'
 import { useAddAccountFlag, useGetUserPrefs, useGettingStartedStatus } from '../api/sessions-hooks'
+import { shouldHideGettingStartedChecklist } from './getting-started-checklist-state'
 
 // The first tenant of the home header slot: a first-run checklist that
 // self-retires (records getting_started_completed) once every item is done,
@@ -47,8 +48,9 @@ export const GettingStartedChecklist = ({ hasSessionsInList }: { hasSessionsInLi
   const doneCount = items.filter((item) => item.done).length
   const allDone = status !== undefined && doneCount === items.length
 
-  // Self-retire exactly once; the ref resets on failure so a transient error
-  // doesn't brick retirement until remount (the endpoint is idempotent).
+  // Self-retire exactly once. The mutation retries transient failures and the
+  // endpoint is idempotent; resetting after the final failure allows a future
+  // all-done transition/remount to try again.
   const completionFired = useRef(false)
   const { mutate: recordFlag } = addFlag
   useEffect(() => {
@@ -68,7 +70,19 @@ export const GettingStartedChecklist = ({ hasSessionsInList }: { hasSessionsInLi
 
   // isPending/isSuccess hide the card the moment a dismissal (or the
   // completion record) fires, without waiting for the prefs refetch.
-  if (retired || flags === undefined || status === undefined || addFlag.isPending || addFlag.isSuccess) {
+  // Hide an already-complete checklist before the completion effect runs. A
+  // useEffect fires after commit, so relying on isPending alone would briefly
+  // paint a 4/4 card for established users.
+  if (
+    shouldHideGettingStartedChecklist({
+      retired,
+      flagsResolved: flags !== undefined,
+      statusResolved: status !== undefined,
+      allDone,
+      mutationPending: addFlag.isPending,
+      mutationSucceeded: addFlag.isSuccess,
+    })
+  ) {
     return null
   }
 

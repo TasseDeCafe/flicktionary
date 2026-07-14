@@ -6,6 +6,8 @@
 // irrelevant. Detection needs no response channel, hence an attribute rather
 // than the pairing script's postMessage handshake.
 
+import { installExtensionMarker } from '@/services/flicktionary/extension-marker'
+
 export default defineContentScript({
   matches: [
     'https://app.flicktionary.app/*',
@@ -19,8 +21,6 @@ export default defineContentScript({
   runAt: 'document_start',
 
   main() {
-    // documentElement can be briefly absent at document_start; the web-side
-    // hook polls for a few seconds, so skipping silently is safe.
-    document.documentElement?.setAttribute('data-flicktionary-extension', browser.runtime.getManifest().version)
+    installExtensionMarker(document, browser.runtime.getManifest().version)
   },
 })
