@@ -679,13 +679,16 @@ sets from the same column. Everything below "park" is shared.
   consumed type for non-rehab consumes, full ladder for rehab gate answers, skipped on
   graduation), and the composed queue's hint pre-warm.
 - **Accuracy-first generation** (cost explicitly not a constraint): Opus GENERATE →
-  independent-context adversarial VERIFY (Sonnet by default; the `EXERCISE_VERIFY_MODEL`
-  env var flips it back to Opus in one line), up to `MAX_GEN_ATTEMPTS = 3` full cycles
-  before the slot fails. The verifier substitutes each distractor into the blank and fails
-  the exercise if any substitution is grammatically valid AND semantically defensible;
-  distractors must match the answer's POS and inflection/agreement (so grammar alone can't
-  eliminate them) while being semantically wrong in that sentence; production-cloze blanks
-  must be inflection-unambiguous from the sentence's cues. Retries are informed, not
+  independent-context adversarial VERIFY (Opus by default; the `EXERCISE_VERIFY_MODEL`
+  env var flips it for A/B trials — a Sonnet 5 stint tripled the terminal-failure rate),
+  up to `MAX_GEN_ATTEMPTS = 3` full cycles before the slot fails. The verifier substitutes
+  each distractor into the blank and fails the exercise if any substitution is
+  grammatically valid AND semantically acceptable on a plain, natural reading (defenses
+  needing irony, invented back-story, or unusual context don't count — an over-eager
+  verifier terminally fails the whole term); distractors must match the answer's POS and
+  inflection/agreement (so grammar alone can't eliminate them) while being semantically
+  wrong in that sentence; production-cloze blanks must be inflection-unambiguous from the
+  sentence's cues. Retries are informed, not
   blind: each cycle feeds the verifier's prior rejection reasons into the next generation
   prompt. Verifier verdicts are parsed leniently (a string `"true"` counts as pass) and a
   fail with zero reasons — a state the verify prompt forbids — is re-verified once before
