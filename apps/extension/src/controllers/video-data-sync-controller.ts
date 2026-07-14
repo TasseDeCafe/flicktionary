@@ -472,6 +472,15 @@ export default class VideoDataSyncController {
   private async _setSyncedData(data: VideoData) {
     this._syncedData = data
 
+    // Global switch off: treat every synced-data response as "load nothing".
+    // requestSubtitles keeps running while off precisely so this exit fires
+    // per video — the decline releases the page script's provisional
+    // native-caption hide, keeping the site's own captions fully native.
+    if (!this._context.extensionEnabled) {
+      this._declineNativeCaptions()
+      return
+    }
+
     if (this._syncedData?.subtitles !== undefined && (await this._canAutoSync())) {
       if (!this._autoSyncAttempted) {
         this._autoSyncAttempted = true
@@ -752,6 +761,15 @@ export default class VideoDataSyncController {
   // Whether the dialog is currently hidden.
   private _isHidden(): boolean {
     return !this._shadowOpen
+  }
+
+  // Closes an open track dialog (used when the global switch flips off)
+  // WITHOUT unbind(): unbind would remove the synced-data listener that the
+  // native-caption decline channel rides on while the extension is off.
+  dismissDialog() {
+    if (!this._isHidden()) {
+      this._hideAndResume()
+    }
   }
 
   private async _client(): Promise<VideoDataClient> {

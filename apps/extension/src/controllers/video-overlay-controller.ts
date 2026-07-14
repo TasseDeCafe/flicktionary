@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { VideoOverlayModel } from '@asbplayer-fork/common'
 import Binding from '../services/binding'
 import { OffsetAnchor } from '../services/element-overlay'
+import { setExtensionEnabled } from '../services/flicktionary/extension-enabled-storage'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
 import { createStore } from 'zustand/vanilla'
 import { mountVideoOverlayHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
@@ -36,6 +37,7 @@ export class VideoOverlayController {
   private _forceHiding: boolean = false
   private _showing: boolean = false
   private _bound = false
+  private _disabledMode = false
   private _showOnPauseTimeout?: ReturnType<typeof setTimeout>
 
   private _store?: VideoOverlayStore
@@ -60,6 +62,20 @@ export class VideoOverlayController {
       if (this._showing) {
         this._doShow()
       }
+    }
+  }
+
+  // Global switch off: the bar renders as the single re-enable pill instead of
+  // the full controls (same host, same pause/grace show logic).
+  set disabledMode(value: boolean) {
+    if (this._disabledMode === value) {
+      return
+    }
+
+    this._disabledMode = value
+
+    if (this._bound) {
+      void this._pushModel()
     }
   }
 
@@ -111,6 +127,7 @@ export class VideoOverlayController {
       model: undefined,
       visible: false,
       tooltipsEnabled: true,
+      disabled: this._disabledMode,
     }))
     this._mountShadow()
 
@@ -138,6 +155,10 @@ export class VideoOverlayController {
         this._context.playMode = playMode
       },
       onToggleSubtitles: () => this._context.toggleSubtitles(),
+      // Direct storage writes: the storage.onChanged subscription fans the
+      // change out to every binding in every tab, including this one.
+      onEnableExtension: () => void setExtensionEnabled(true),
+      onDisableExtension: () => void setExtensionEnabled(false),
     }
   }
 
@@ -183,6 +204,7 @@ export class VideoOverlayController {
       model,
       tooltipsEnabled: this._tooltipsEnabled(),
       visible: this._showing,
+      disabled: this._disabledMode,
     })
   }
 

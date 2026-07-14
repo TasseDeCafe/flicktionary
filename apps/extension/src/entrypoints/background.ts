@@ -24,6 +24,7 @@ import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler'
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission'
 import AckMessageHandler from '@/handlers/video/ack-message-handler'
 import { isFirefoxBuild } from '@/services/build-flags'
+import { getExtensionEnabledState, onExtensionEnabledChange } from '@/services/flicktionary/extension-enabled-storage'
 import { enqueueUpdateAlert } from '@/services/update-alert'
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler'
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
@@ -284,6 +285,25 @@ export default defineBackground(() => {
   })
 
   const action = browser.action || browser.browserAction
+
+  // Gray toolbar icon while the global switch is off — the breadcrumb back to
+  // the popup's master switch. Applied at startup (setIcon does not persist
+  // across service-worker restarts) and on every change.
+  const applyActionIcon = async () => {
+    const { enabled } = await getExtensionEnabledState()
+    const suffix = enabled ? '' : '-gray'
+    action.setIcon({
+      path: {
+        16: `/icon/icon16${suffix}.png`,
+        32: `/icon/icon32${suffix}.png`,
+        48: `/icon/icon48${suffix}.png`,
+        128: `/icon/icon128${suffix}.png`,
+      },
+    })
+  }
+
+  void applyActionIcon()
+  onExtensionEnabledChange(() => void applyActionIcon())
 
   if (isFirefoxBuild) {
     let hasHostPermission = true

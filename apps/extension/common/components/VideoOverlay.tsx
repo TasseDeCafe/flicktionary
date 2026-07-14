@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, SlidersHorizontalIcon, CaptionsIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, PowerIcon, SlidersHorizontalIcon, CaptionsIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -62,6 +62,7 @@ interface Props {
   onPlayModeSelected: (playMode: PlayMode) => void
   onSeek: (timestamp: number) => void
   onToggleSubtitles: () => void
+  onDisableExtension: () => void
 }
 
 const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverlay(
@@ -78,6 +79,7 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
     onPlayModeSelected,
     onSeek,
     onToggleSubtitles,
+    onDisableExtension,
   }: Props,
   ref
 ) {
@@ -420,6 +422,15 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
           </OverlayTooltip>
         </>
       )}
+      {/* Global off switch — the bar collapses to the re-enable pill (see
+          VideoOverlayDisabled), so on/off share this same location. */}
+      <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Turn Flicktionary off`}>
+        <span>
+          <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onDisableExtension}>
+            <PowerIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+          </button>
+        </span>
+      </OverlayTooltip>
     </div>
   )
 })

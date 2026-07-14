@@ -1,5 +1,6 @@
 import type { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import VideoOverlay from '@asbplayer-fork/common/components/VideoOverlay'
+import VideoOverlayDisabled from '@asbplayer-fork/common/components/VideoOverlayDisabled'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
@@ -14,6 +15,9 @@ export interface VideoOverlayState {
   model: VideoOverlayModel | undefined
   visible: boolean
   tooltipsEnabled: boolean
+  // Global extension switch off: render the minimal re-enable pill instead of
+  // the full controls bar.
+  disabled: boolean
 }
 
 export type VideoOverlayStore = StoreApi<VideoOverlayState>
@@ -27,6 +31,8 @@ export interface VideoOverlayCommands {
   onPlaybackRate: (playbackRate: number) => void
   onPlayModeSelected: (playMode: PlayMode) => void
   onToggleSubtitles: () => void
+  onEnableExtension: () => void
+  onDisableExtension: () => void
 }
 
 export interface ShadowVideoOverlayAppProps {
@@ -51,7 +57,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 }
 
 export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands }: ShadowVideoOverlayAppProps) {
-  const { model, visible, tooltipsEnabled } = useStore(store)
+  const { model, visible, tooltipsEnabled, disabled } = useStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
     saveLastControlType,
     fetchLastControlType,
@@ -63,7 +69,18 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
       themeType={model?.themeType ?? 'system'}
       language={model?.language ?? 'system'}
     >
-      {visible && lastControlType !== undefined && model !== undefined && (
+      {/* Disabled pill: not gated on model/lastControlType — the model is
+          disposed while the extension is off, and the pill needs neither. */}
+      {visible && disabled && (
+        <div style={{ pointerEvents: 'auto' }}>
+          <VideoOverlayDisabled
+            anchor={anchor}
+            tooltipsEnabled={tooltipsEnabled}
+            onEnable={commands.onEnableExtension}
+          />
+        </div>
+      )}
+      {visible && !disabled && lastControlType !== undefined && model !== undefined && (
         // The host + appRoot are click-through (pointer-events:none) so the empty
         // area around the bar doesn't steal clicks from the player. Re-enable
         // pointer events on the bar itself, else clicks pass through to the video
@@ -81,6 +98,7 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
             onPlaybackRate={commands.onPlaybackRate}
             onPlayModeSelected={commands.onPlayModeSelected}
             onToggleSubtitles={commands.onToggleSubtitles}
+            onDisableExtension={commands.onDisableExtension}
           />
         </div>
       )}

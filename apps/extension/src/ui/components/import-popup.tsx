@@ -11,6 +11,7 @@ import { FlicktionaryPairSection } from './flicktionary-pair-section'
 import { FlicktionaryFinishOnboardingSection } from './flicktionary-finish-onboarding-section'
 import { FlicktionaryImportSection } from './flicktionary-import-section'
 import { PopupHeader } from './popup-header'
+import { ExtensionEnabledRow } from './extension-enabled-row'
 
 interface Props {
   settings: AsbplayerSettings
@@ -45,6 +46,7 @@ const ImportPopup = ({ settings, onSettingsChanged, onOpenApp, onOpenUserGuide }
   return (
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
+      <ExtensionEnabledRow />
       <FlicktionaryPairSection />
       <FlicktionaryFinishOnboardingSection />
       <FlicktionaryImportSection />

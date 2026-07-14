@@ -10,6 +10,7 @@ import { AdminSettingsTab } from './admin-settings-tab'
 import { FlicktionaryPairSection } from './flicktionary-pair-section'
 import { FlicktionaryFinishOnboardingSection } from './flicktionary-finish-onboarding-section'
 import { PopupHeader } from './popup-header'
+import { ExtensionEnabledRow } from './extension-enabled-row'
 import type { PopupCommands } from '../popup'
 
 interface Props {
@@ -48,6 +49,7 @@ const Popup = ({
   return (
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
+      <ExtensionEnabledRow />
       <FlicktionaryPairSection />
       <FlicktionaryFinishOnboardingSection />
       <div className='h-[390px]'>
