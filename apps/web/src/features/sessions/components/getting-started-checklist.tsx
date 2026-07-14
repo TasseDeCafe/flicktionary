@@ -23,7 +23,7 @@ export const GettingStartedChecklist = ({ hasSessionsInList }: { hasSessionsInLi
       key: 'extension',
       label: t`Install the browser extension`,
       done: flags?.includes('extension_installed') ?? false,
-      linkProps: { to: '/user-guide', hash: 'extension' } satisfies Pick<LinkProps, 'to' | 'hash'>,
+      linkProps: { to: '/extension-welcome' } satisfies Pick<LinkProps, 'to' | 'hash'>,
     },
     {
       key: 'session',
