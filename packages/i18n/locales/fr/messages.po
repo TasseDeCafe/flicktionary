@@ -350,6 +350,14 @@ msgstr "Ajouter la sélection à Flicktionary"
 msgid "Add this term to production practice."
 msgstr "Ajouter ce terme à la pratique en production."
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Add to Chrome"
+msgstr "Ajouter à Chrome"
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Add to Firefox"
+msgstr "Ajouter à Firefox"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Add translation"
 msgstr "Ajouter une traduction"
@@ -781,10 +789,6 @@ msgstr "Chat — préparation de la réponse"
 msgid "Check"
 msgstr "Vérifier"
 
-#: apps/extension/src/ui/components/ftue-ui.tsx
-msgid "Check out the <0>user guide</0> to get started."
-msgstr "Consultez le <0>guide utilisateur</0> pour commencer."
-
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Check your email"
 msgstr "Vérifiez votre e-mail"
@@ -836,6 +840,15 @@ msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
 "navigateur pour activer l’enregistrement audio de cet onglet."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Click the <0/> <1>pin</1> next to Flicktionary."
+msgstr "Cliquez sur l'<0/> <1>épingle</1> à côté de Flicktionary."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Click the <0>puzzle icon</0> at the top right of your browser toolbar."
+msgstr "Cliquez sur l'<0>icône puzzle</0> en haut à droite de la barre d'outils "
+"de votre navigateur."
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Click the link in the email to continue."
@@ -2046,6 +2059,10 @@ msgstr "Génitif"
 msgid "Get started"
 msgstr "Commencer"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Get the Flicktionary extension"
+msgstr "Obtenez l'extension Flicktionary"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Getting started"
 msgstr "Pour commencer"
@@ -2200,6 +2217,16 @@ msgstr "Accueil"
 msgid "Host regex"
 msgstr "Host regex"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Hover a subtitle word for an instant definition; the video pauses while "
+"you look."
+msgstr "Survolez un mot des sous-titres pour obtenir une définition instantanée "
+"; la vidéo se met en pause pendant que vous consultez."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "How it works"
+msgstr "Comment ça fonctionne"
+
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "How your free trial works"
 msgstr "Comment fonctionne votre essai gratuit"
@@ -2316,6 +2343,15 @@ msgid "Install the Flicktionary extension and pin it to your browser toolbar "
 "for easy access."
 msgstr "Installez l'extension Flicktionary et épinglez-la à la barre d'outils "
 "de votre navigateur pour un accès facile."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Interactive subtitles on YouTube, Netflix, and other streaming sites: "
+"hover any word for an instant definition, save the terms you want to "
+"learn, and import articles from any page."
+msgstr "Sous-titres interactifs sur YouTube, Netflix et autres sites de "
+"streaming : survolez n'importe quel mot pour une définition "
+"instantanée, enregistrez les termes que vous souhaitez apprendre et "
+"importez des articles depuis n'importe quelle page."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Interface language"
@@ -2730,6 +2766,13 @@ msgstr "Aucun onglet actif."
 msgid "No episodes found."
 msgstr "Aucun épisode trouvé."
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "No extension needed for the rest of the app — <0>open Flicktionary</0> "
+"to import texts and practice your vocabulary."
+msgstr "Aucune extension nécessaire pour le reste de l'application — <0>ouvrez "
+"Flicktionary</0> pour importer des textes et pratiquer votre "
+"vocabulaire."
+
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "No highlights yet."
 msgstr "Aucune sélection pour le moment."
@@ -2918,6 +2961,12 @@ msgid "On-video features are paused and native subtitles work normally. Article 
 msgstr "Les fonctionnalités vidéo sont en pause et les sous-titres natifs "
 "fonctionnent normalement. L'import d'articles fonctionne toujours."
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "One quick thing before you start: pin Flicktionary so it's always one "
+"click away."
+msgstr "Une petite chose avant de commencer : épinglez Flicktionary pour qu'il "
+"soit toujours à portée de clic."
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Only production practice — flashcards and exercises."
 msgstr "Seulement pratique de production — cartes et exercices."
@@ -2945,6 +2994,7 @@ msgstr "Ouvrir le chat"
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Open Flicktionary"
 msgstr "Ouvrir Flicktionary"
@@ -2971,6 +3021,13 @@ msgid "Open the Flicktionary extension popup to set your level for this "
 "language, then import again."
 msgstr "Ouvrez la popup de l'extension Flicktionary pour définir votre niveau "
 "dans cette langue, puis importez à nouveau."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Open the Flicktionary popup and choose <0>Sign in with Flicktionary</0> "
+"to connect your account — that's what lets you save terms."
+msgstr "Ouvrez la popup Flicktionary et choisissez <0>Se connecter avec "
+"Flicktionary</0> pour connecter votre compte — c'est ce qui vous permet "
+"de sauvegarder des termes."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 #: apps/web/src/features/practice/components/term-actions-overlay.tsx
@@ -3248,6 +3305,10 @@ msgstr "Pluriel uniquement"
 msgid "Practice"
 msgstr "Pratique"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Practice in the app"
+msgstr "Pratiquez dans l'application"
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Practice limits"
 msgstr "Limites de pratique"
@@ -3423,6 +3484,10 @@ msgid "Read short generated texts that weave in your kept vocabulary. Tap a "
 msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire "
 "enregistré. Appuyez sur un terme pour l'évaluer ; les termes non "
 "appuyés sont considérés comme reconnus lorsque vous avancez."
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Read the full guide"
+msgstr "Lire le guide complet"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Reading file…"
@@ -3670,6 +3735,12 @@ msgstr "Révisez à travers un court texte généré."
 msgid "Reviewing and practicing"
 msgstr "Révision et pratique"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Right-click a word or phrase to save it with the sentence it appeared "
+"in."
+msgstr "Faites un clic droit sur un mot ou une phrase pour l'enregistrer avec "
+"la phrase dans laquelle il apparaît."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "RP"
 msgstr "RP"
@@ -3694,6 +3765,10 @@ msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source "
 msgid "Save note"
 msgstr "Enregistrer la note"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Save the terms you meet"
+msgstr "Enregistrez les termes que vous rencontrez"
+
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
@@ -3712,6 +3787,12 @@ msgstr "Enregistré — cliquez pour supprimer le surlignage"
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 msgid "Saved but not queued yet"
 msgstr "Enregistré mais pas encore en file d'attente"
+
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Saved terms become cards scheduled with spaced repetition in the web "
+"app."
+msgstr "Les termes enregistrés deviennent des cartes programmées avec "
+"répétition espacée dans l'application web."
 
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Saved to this card's chat — delete the highlight to change it."
@@ -4419,6 +4500,10 @@ msgstr "Merci pour votre retour !"
 msgid "The answer was:"
 msgstr "La réponse était :"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "The extension is installed 🎉"
+msgstr "L'extension est installée 🎉"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "The extension overlays interactive subtitles on streaming video "
 "(YouTube, Netflix, and many other platforms). Hover any word for an "
@@ -4988,6 +5073,10 @@ msgstr "Attention"
 msgid "Warnings"
 msgstr "Avertissements"
 
+#: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
+msgid "Watch and look up"
+msgstr "Regarder et consulter"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Watching videos"
 msgstr "Regarder des vidéos"
@@ -5047,10 +5136,6 @@ msgstr "Nom faible (déclinaison en n)"
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
-
-#: apps/extension/src/ui/components/ftue-ui.tsx
-msgid "Welcome to Flicktionary."
-msgstr "Bienvenue sur Flicktionary."
 
 #: packages/ui/src/components/preset-tags.tsx
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
