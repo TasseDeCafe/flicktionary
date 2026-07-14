@@ -1,6 +1,6 @@
 ---
 name: dev-worktree
-description: Create a git worktree that's fully set up to run the local dev servers (deps + Doppler auth), or switch the running dev server from one worktree to another. Use this when the user wants an isolated checkout/branch for a feature (e.g. to open in a separate editor window) without disturbing the primary checkout, or asks how to run `pnpm dev:tunnel` from a worktree. NOT for plain branch switching in place.
+description: Creates a git worktree that's fully set up to run the local dev servers (deps + Doppler auth), or switches the running dev server from one worktree to another. Use this when the user wants an isolated checkout/branch for a feature (e.g. to open in a separate editor window) without disturbing the primary checkout, or asks how to run `pnpm dev:tunnel` from a worktree. NOT for plain branch switching in place.
 disable-model-invocation: true
 allowed-tools: Read, Bash(git:*), Bash(pnpm:*), Bash(doppler:*), Bash(ls:*)
 ---

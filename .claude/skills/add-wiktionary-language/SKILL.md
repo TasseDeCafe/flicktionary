@@ -1,6 +1,6 @@
 ---
 name: add-wiktionary-language
-description: Add (or remove) a target language to the Kaikki/Wiktionary grounding pipeline — the loader, the grounding service, the shared grammar config, and any language-specific extractors. Run this when the user asks to ground a new study language against Wiktionary, NOT for UI locales (see `manage-locale` for that).
+description: Adds (or removes) a target language to the Kaikki/Wiktionary grounding pipeline — the loader, the grounding service, the shared grammar config, and any language-specific extractors. Run this when the user asks to ground a new study language against Wiktionary, NOT for UI locales (see `manage-locale` for that).
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Bash(pnpm:*), Bash(doppler:*), Bash(grep:*), Bash(gzip:*), Bash(psql:*)
 ---

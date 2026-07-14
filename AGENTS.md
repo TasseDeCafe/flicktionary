@@ -67,12 +67,7 @@ TS across all the apps: web, backend, native. It's important for you to follow t
 - use const for functions, don't use the "function" keyword
 - use ESM when possible.
 
-Here are the prettier rules for code formatting:
-
-- Trailing Commas: Use trailing commas wherever they are valid in ES5 (e.g., in objects, arrays).
-- Quotes: Use single quotes for all strings.
-- JSX Quotes: Use single quotes for JSX attributes.
-- Semicolons: Do not use semicolons at the end of statements.
+Formatting follows the repo prettier config: single quotes (JSX attributes too), no semicolons, ES5 trailing commas.
 
 For our react code style:
 
@@ -84,12 +79,8 @@ For our react code style:
 
 # General guidelines for your answers:
 
-- If you think that a critical file or some context is missing, try to find it yourself, or ask for it to the user.
-- Try not to apply "band-aid" solutions: try to fix the root cause of the problem.
-- Do not hesitate to refactor the code if it fixes the root cause or simplify the code without changing the functionality.
 - Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is a greenfield project.
-- If you find any vestigial, dead, legacy code that can be safely removed while executing a task, you can mention it in your message at the end of the task. It doesn't need to be related to the task.
-- If you find any code that can be refactored with a big impact, mention it in your message at the end of a task. It can be renaming for clarity, a simplification, improving reusability, etc. It doesn't need to be related to the task.
+- If you spot vestigial/dead code that could be removed, or a high-impact refactor opportunity (renaming for clarity, simplification, reusability), mention it in your message at the end of the task — it doesn't need to be related to the task.
 
 ## Localization pattern (Lingui)
 
@@ -98,18 +89,13 @@ For our react code style:
 - Outside React (e.g., config files, query meta, utility modules), import `{ t }` from `@lingui/macro` and, when needed, the shared `i18n` instance for lookups. Keep text in template literals so translators see the full sentence.
 - When interpolating values, assign them to descriptive variables and reference them inside the template literal (`const savedCount = ...; t`You saved ${savedCount} phrases``). Avoid string concatenation or unnamed `${expression}` chains.
 - Do not set custom ids when calling `t`. The English source string remains the id so extraction keeps working without manual bookkeeping.
-- Do NOT translate new strings manually. Catalogs are filled by an AI translation script with less context than you have, and that's accepted — just add the English copy in `t`` template literals and leave the catalogs alone. Translation runs at **PR time**, not on every push: the `create-pr` flow runs `pnpm translate:sync` (extract → AI-translate the missing entries → re-extract to normalize the catalog format) and commits `packages/i18n/locales` alongside the code. To do it by hand, run `pnpm translate:sync` yourself. The pre-push hook no longer translates — it's a fast deterministic **guard**: it runs `pnpm lingui extract --clean`, then fails the push if that changed the catalogs (stale) or if any string is still untranslated (`pnpm translate:check`), telling you to run `pnpm translate:sync`. This keeps "you can't push untranslated strings" without the slow AI call, the auto-commit, or the "push again" dance the old hook forced.
+- Do NOT translate new strings manually — catalogs are filled by an AI translation script, and that's accepted; just add the English copy in `t`` template literals and leave the catalogs alone. Translation runs at **PR time**: the `create-pr` skill runs `pnpm translate:sync` and commits `packages/i18n/locales` alongside the code (run it yourself for a manual PR). The pre-push hook is a fast **guard**, not a translator — it fails the push if the catalogs are stale or any string is untranslated, telling you to run `pnpm translate:sync`.
 
 ## oRPC + TanStack Query
 
-The web/native apps consume the contract through `@orpc/tanstack-query`'s `createTanstackQueryUtils(...)` (exposed as `orpcQuery`). Two helpers look interchangeable but aren't:
+Query hooks over oRPC (declarative invalidation via `meta.invalidates`, the `.key()` vs `.queryKey()` distinction, optimistic updates, error/success meta flags) follow the **`web-query-hooks` skill** — use it whenever creating or modifying a useQuery/useMutation hook in the web app.
 
-- `orpcQuery.path.method.key(...)` — returns a **partial / prefix** key. Use it for `invalidateQueries` and `cancelQueries`, where prefix matching is the point. `.key()` (no arg) matches every variation; `.key({ input })` narrows the prefix but still uses prefix semantics.
-- `orpcQuery.path.method.queryKey({ input })` — returns the **exact full** key including input. Required by `setQueryData` / `getQueryData`, which look up an entry by exact match. Passing a `.key(...)` result here silently no-ops (writes go nowhere; reads return undefined), and the symptom is "the cache won't update / the UI keeps showing stale data after a successful mutation."
-
-Rule of thumb: if you're invalidating, use `.key(...)`. If you're reading or writing the cache directly, use `.queryKey({ input })`. See `apps/web/src/features/review/api/card-cache.ts` for the canonical setQueryData pattern.
-
-Backend oRPC handlers should return DTOs that already match the contract exactly. In particular, normalize `TIMESTAMP WITH TIME ZONE` / `timestamptz` values from Postgres.js to ISO strings in router mappers with `toIsoString` from `apps/backend/src/router/router-utils.ts` instead of relying on JSON serialization to coerce `Date` objects after output validation.
+Backend oRPC handlers should return DTOs that already match the contract exactly. In particular, normalize `timestamptz` values from Postgres.js to ISO strings in router mappers with `toIsoString` from `apps/backend/src/router/router-utils.ts` instead of relying on JSON serialization to coerce `Date` objects after output validation.
 
 # Web UI patterns
 
@@ -119,25 +105,8 @@ The web app follows opinionated UI idioms (hover/press states, `WizardShell`, st
 
 - Check typing with TS: pnpm check:types (executed from the root directory)
 - Check linting with ESLint: pnpm lint (executed from the root directory)
-- Find dead code (unused files / exports / dependencies): pnpm knip (from the root). Scope to one workspace with `pnpm knip --workspace apps/web`. Config lives in `knip.json`.
-- Time-travel practice data (test multi-day SRS flows like the 3-day warm-up/rehab graduation without waiting): `pnpm db:advance-day [--days N] [--email <email>]` from the root shifts every practice timestamp in the dev-tunnel DB backward — equivalent to the server day advancing, because all day logic compares stored values against Postgres `NOW()`/`CURRENT_DATE`. The same shift, scoped to your own account and usable in any environment, is the "Practice time travel" card in the web app's admin settings (test users only). Core logic: `apps/backend/src/transport/database/dev-tools/shift-practice-timestamps.ts`.
-
-# Finding and removing dead code (knip)
-
-`pnpm knip` reports unused files, exports, and dependencies across the workspaces. It is a static analyzer, so treat its output as candidates, not facts.
-
-Rules:
-
-- **`apps/native` is excluded** (`ignoreWorkspaces` in `knip.json`) because it isn't wired up yet. Until native is set up correctly, run knip **scoped to a single ready workspace** — `pnpm knip --workspace apps/backend` or `pnpm knip --workspace apps/web` — rather than the unscoped `pnpm knip`. The unscoped run reports `Unused catalog entries` noise (catalog deps consumed only by the ignored native app) that is not actionable.
-- **Always ask the user for permission before deleting anything knip flags.** Never remove "dead" code unattended.
-- Verify each candidate first: `grep` the symbol/file repo-wide, and check whether an export flagged as unused is still used _within its own file_ (then only drop the `export` keyword, don't delete the symbol).
-- Known false positives — do NOT remove:
-  - shadcn/ui re-exports under `apps/web/src/components/ui/**` (e.g. `DialogClose`, `buttonVariants`) are kept as a deliberate API surface.
-  - generated files like `routeTree.gen.ts` (TanStack Router).
-  - dependencies consumed indirectly: `prettier`/`prettier-plugin-tailwindcss` (via `eslint-plugin-prettier` in `eslint.config.cjs`), and anything invoked only from config files or root orchestration.
-  - **transitive runtime deps of bundled workspace packages.** The backend prod build (`scripts/build--prod.sh`, TS project references) compiles `@flicktionary/api-client` and `@flicktionary/core` into `apps/backend/dist/packages/**`. Those bundled files keep their own `import`s, so every _runtime_ dep of api-client/core must ALSO be a direct `apps/backend` dependency (e.g. `@orpc/contract`, `zod`) — even though nothing in `apps/backend/src` imports them. Removing one passes typecheck/build/tests locally (resolved via hoisted workspace `node_modules`) but throws `ERR_MODULE_NOT_FOUND` at runtime on Railway, where only `apps/backend`'s own deps are installed. Before removing any backend dep, cross-check `packages/api-client/src` and `packages/core/src` imports. The `deploy-smoke` CI job (`.github/workflows/backend-ci.yaml`) boots the compiled artifact from a fresh clone and catches this class post-merge — a tripwire, not a license to skip the cross-check.
-- The "Unused dependencies" category is the least reliable — prefer surgical, verified removals over bulk deletes, and re-run `pnpm install` afterward to sync the lockfile.
-- When knip is wrong about an entry point or generated file, teach it via `knip.json` rather than deleting working code.
+- Find dead code (unused files / exports / dependencies): `pnpm knip` — treat its output as candidates, not facts. Follow the **`remove-dead-code` skill** (known false positives, the bundled-dependency trap), and never delete anything it flags without asking the user.
+- Time-travel practice data (test multi-day SRS flows without waiting): `pnpm db:advance-day [--days N] [--email <email>]` shifts every practice timestamp in the dev-tunnel DB backward (all day logic compares against Postgres `NOW()`/`CURRENT_DATE`, so this equals the server day advancing). Same shift, scoped per-account and usable in any environment: the "Practice time travel" card in the web app's admin settings (test users only).
 
 # Comments
 
@@ -170,75 +139,22 @@ Rules:
   describe current behavior (or delete it) as part of your change — don't leave
   it just because you didn't write it.
 
-# Local Supabase Instance
+# Local database & migrations
 
-When the user refers to their "local DB" (resetting it, querying it, updating rows while testing dev), they mean the **dev-tunnel** instance, not `supabase-dev`. `supabase-dev` is the remote dev environment; `supabase-dev-tunnel` is the locally-running Supabase that the user actually develops against.
+When the user refers to their "local DB", they mean the **dev-tunnel** instance (`postgresql://postgres:postgres@127.0.0.1:34322/postgres` — port `34322`, not the default), started with `pnpm db:dev:tunnel` and reset with `pnpm db:reset`. `supabase-dev` is the remote dev environment. Always prefix Supabase CLI commands with `doppler run --`.
 
-- DB connection: `postgresql://postgres:postgres@127.0.0.1:34322/postgres` (port `34322`, not the default `54322`)
-- Start it with: `pnpm db:dev:tunnel` (runs `doppler run -- supabase start` in `apps/backend/supabase/supabase-dev-tunnel/supabase`)
-- Reset it with: `doppler run -- supabase db reset --local` from `apps/backend/supabase/supabase-dev-tunnel/`
-- The connection string is exposed as `SUPABASE_CONNECTION_STRING` (Doppler `backend` project, `dev_personal` config) — any standalone script that touches the local DB should read it from there and be run via `doppler run --`. Do not hardcode `54322`.
+Hard rules (the full workflow — creating migrations, regenerating types, Doppler details — lives in the **`db-migrations` skill**; use it for any schema change):
 
-# Database Migrations
-
-The canonical migrations directory is `apps/backend/supabase/migrations/`. The four Supabase environment folders each have a `supabase/migrations` symlink pointing to it:
-
-- `apps/backend/supabase/supabase-dev-tunnel/supabase/migrations` → `../../migrations` (local dev — the one you reset and iterate against)
-- `apps/backend/supabase/supabase-dev/supabase/migrations` → `../../migrations` (remote dev)
-- `apps/backend/supabase/supabase-test/supabase/migrations` → `../../migrations` (test)
-- `apps/backend/supabase/supabase-prod/supabase/migrations` → `../../migrations` (production)
-
-This means there's exactly one copy of each migration file on disk; the four envs cannot drift. The app is deployed, so migrations are append-only: do not edit an existing migration to change the database schema unless the user explicitly asks for a history rewrite before that migration has been applied anywhere. Every schema/data migration change should be a new migration. Historical docs or resume notes may mention editing a consolidated or initial migration in place; those notes are stale and must not be followed. The workflow is:
-
-1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct and the file lands in the symlinked directory (which resolves to the canonical location):
-
-   ```bash
-   supabase migration new <name>
-   ```
-
-2. Edit only the newly created migration file, then verify it applies cleanly with `doppler run -- supabase db reset --local`.
-
-The root `pnpm db:reset` script is a wrapper for the dev-tunnel reset. The backend package does **not** expose a plain `db:reset` script; from package scope use `pnpm --filter @flicktionary/backend db:dev:tunnel:reset`.
-
-That's it — no copying, no sync step. Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly; `supabase migration new` is the source of truth for ordering. Never replace any of the four `supabase/migrations` symlinks with a real directory.
-
-**Always prefix Supabase CLI commands with `doppler run --`** (e.g. `doppler run -- supabase db reset --local`, `doppler run -- supabase start`, `doppler run -- supabase stop`). Doppler injects the secrets the local stack needs (auth providers, etc.) — without it, the CLI runs against an unconfigured environment and either errors out or silently boots with wrong values.
-
-# Database Types
-
-When the database schema changes (new tables, columns, enums, etc.), regenerate the TypeScript types to keep them in sync.
-
-**Never hand-edit `database.public.types.ts` or `database.auth.types.ts`.** They are generated artifacts. The generator emits tables/columns/enums in strict alphabetical order; editing by hand (e.g. pasting a new table block) drops entries in the wrong place and risks silently mistyping columns, nullability, or the `Date`-vs-`string` quirk. Always regenerate with the script.
-
-With the local (dev-tunnel) Supabase running (`pnpm db:dev:tunnel`), run one command from package scope:
-
-```bash
-pnpm --filter @flicktionary/backend db:dev:tunnel:gen-types
-```
-
-This regenerates both schema files (public + auth) straight into `src/transport/database/`, formats them with prettier, and runs `check:types`. Then review the diff and commit. The only legitimate diff is genuine schema changes — if you see a large quote-style/semicolon diff, the formatting step was skipped (don't run the raw `supabase gen types` by hand; use the script, which handles `doppler run --`, output paths, and formatting for you).
-
-See `apps/backend/src/transport/database/README.md` for usage examples.
+- Migrations are **append-only**: never edit an existing migration; create a new one with `supabase migration new` from `apps/backend/supabase/supabase-dev-tunnel/` (never hand-write the timestamp prefix or create the file with `touch`/`Write`).
+- The four env folders' `supabase/migrations` are symlinks to the canonical `apps/backend/supabase/migrations/` — never replace a symlink with a real directory.
+- Never hand-edit the generated `database.public.types.ts` / `database.auth.types.ts`; regenerate with `pnpm --filter @flicktionary/backend db:dev:tunnel:gen-types`.
 
 # Backend testing
 
-Two kinds of backend tests, split by filename and picked up by pattern in `apps/backend/vitest.config.mts`:
+Ship tests with backend changes by default — don't wait to be asked:
 
-- `*.unit.test.ts` — pure logic. The dominant style extracts pure functions and feeds them hand-built row objects; LLM prompt/parser code is unit-tested against static strings. No mocking framework for vendor APIs.
-- `*.integration.test.ts` — run against the local `supabase-test` stack (ports 64xxx): repository SQL tests, and router tests driving `buildApp` over HTTP with supertest.
-
-**When to add which** (do this by default when shipping backend changes, don't wait to be asked):
-
-- Pure logic (schedulers, parsers, mappers) → unit test, as usual.
+- Pure logic (schedulers, parsers, mappers) → `*.unit.test.ts`.
 - New or changed repository SQL → an integration test for that repository ships with the change.
-- New or changed oRPC surface → extend (or add) that router's golden-path integration test: supertest through `buildApp`, golden path + a 401 + one domain failure. Not exhaustive scenarios — those stay in unit tests. Canonical pattern: `apps/backend/src/router/glosses-router/glosses-router.integration.test.ts`. Routers still untested over HTTP get a test when their surface next changes, not as a sweep.
+- New or changed oRPC surface → extend (or add) that router's golden-path integration test (golden path + a 401 + one domain failure).
 
-**Conventions** — the suite runs test files in parallel against one shared, **never-reset** database, so:
-
-- Every test creates its own unique users/rows via the helpers in `src/test/test-utils.ts` (unique emails by default). Never hardcode an email, never wipe tables or auth users globally, and anything you assert on must be keyed by a per-test unique value (no whole-table counts).
-- LLM calls are injected: pass `MockAnthropicPasses({ ...scripted pass outputs })` through `buildApp` / `ProcessingDependencies`. Never `vi.mock` a vendor client module.
-- Seed through the API where a synchronous flow exists (e.g. `/cards/adhoc` is how practice tests get a kept term); use repos directly only for prefs-style setup.
-
-**Running**: `pnpm --filter @flicktionary/backend test:integration:run [file...]` starts the stack and runs the tests (arguments are forwarded to vitest, so single-file runs go through the same script). A vitest globalSetup applies pending migrations to the supabase-test stack before every non-unit run — including the pre-push hook's `vitest run` and direct single-file invocations — so a freshly created migration cannot leave the test schema behind. The stack itself must be running for integration tests (`pnpm --filter @flicktionary/backend db:test` if it isn't).
-
-**CI**: `.github/workflows/backend-ci.yaml` runs on pushes to `main` only, as a non-blocking tripwire for what pre-push structurally can't test — the server-side merge commit and clean-machine effects. Two jobs: the full backend suite against a fresh supabase-test stack, and a deploy smoke test that builds with Railway's exact build command and boots the compiled server from the fresh clone (catches the transitive-dep `ERR_MODULE_NOT_FOUND` class — see the knip section). Pre-push remains the primary gate; a red CI run on `main` means the merge result differs from what was tested locally.
+Conventions (shared never-reset test DB, per-test unique fixtures, injected LLM mocks, run commands) live in the **`backend-testing` skill** — use it whenever writing or running backend tests.

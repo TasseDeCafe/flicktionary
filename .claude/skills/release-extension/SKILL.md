@@ -1,6 +1,6 @@
 ---
 name: release-extension
-description: Cut a browser-extension release given a target version. Drives the two-phase flow — bump apps/extension/package.json + open a PR when the version isn't on main yet, then (once merged) tag main and push so the release workflow publishes to the Chrome Web Store and Firefox Add-ons (AMO). Run when the user says "release the extension X.Y.Z" / "cut extension vX.Y.Z" / "publish the extension".
+description: Cuts a browser-extension release given a target version. Drives the two-phase flow — bumps apps/extension/package.json + opens a PR when the version isn't on main yet, then (once merged) tags main and pushes so the release workflow publishes to the Chrome Web Store and Firefox Add-ons (AMO). Run when the user says "release the extension X.Y.Z" / "cut extension vX.Y.Z" / "publish the extension".
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git fetch:*), Bash(git checkout:*), Bash(git switch:*), Bash(git branch:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git tag:*), Bash(git rev-parse:*), Bash(git show:*), Bash(git ls-remote:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(gh run list:*), Bash(gh run watch:*), Bash(gh run view:*), Bash(node:*), Read, Edit
 ---

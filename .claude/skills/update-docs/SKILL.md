@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: Update the behavior specs (SPEC.md, docs/READER-SPEC.md, docs/REVIEW-SPEC.md, docs/SRS.md, docs/DATA-MODEL.md, EXTENSION-SPEC.md) to reflect the work that just shipped in this conversation. Run this when the user is satisfied with the changes, or as the doc step of the create-pr skill.
+description: Updates the behavior specs (SPEC.md, docs/READER-SPEC.md, docs/REVIEW-SPEC.md, docs/SRS.md, docs/DATA-MODEL.md, EXTENSION-SPEC.md) to reflect the work that just shipped in this conversation. Run this when the user is satisfied with the changes, or as the doc step of the create-pr skill.
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Read, Edit
 ---
