@@ -4701,6 +4701,10 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
 msgid "Try again"
 msgstr "Réessayer"
 
+#: apps/extension/common/components/VideoOverlay.tsx
+msgid "Turn Flicktionary off"
+msgstr "Désactiver Flicktionary"
+
 #: apps/extension/common/components/VideoOverlayDisabled.tsx
 msgid "Turn Flicktionary on"
 msgstr "Activer Flicktionary"

@@ -784,7 +784,8 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
 control bar over the video on pause: load/toggle subtitles (the toggle hides
 when a native caption control is in charge — see "Native caption control"
 below), playback-mode switches, offset/playback-rate/subtitle-navigation
-scroller. Desktop feature —
+scroller, and a power button that flips the global switch off (see "Global
+on/off switch"). Desktop feature —
 despite its upstream "mobile overlay" ancestry. It shows whether or not
 subtitles are synced (`emptySubtitleTrack` model state) — it hosts the Load
 Subtitles button, the only path back into the track dialog, so gating it on
@@ -964,8 +965,9 @@ failures surface through the sync error path.
 A sticky, profile-independent kill switch for everything the extension does on
 video pages — for users who want it out of the way without uninstalling. The
 master switch sits at the top of both popup variants (`ExtensionEnabledRow`);
-the on-video re-enable affordance is the controls overlay's disabled pill (see
-"Controls overlay").
+on-video, the controls overlay's power button turns it off and its disabled
+pill turns it back on, so both directions live in the same bar (see "Controls
+overlay").
 
 - **Storage:** `flicktionary.extensionEnabled.v1` in `chrome.storage.local`
   (`extension-enabled-storage.ts`, same out-of-band pattern as auth/devTools —

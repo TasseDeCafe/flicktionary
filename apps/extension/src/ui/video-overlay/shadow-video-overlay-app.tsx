@@ -32,6 +32,7 @@ export interface VideoOverlayCommands {
   onPlayModeSelected: (playMode: PlayMode) => void
   onToggleSubtitles: () => void
   onEnableExtension: () => void
+  onDisableExtension: () => void
 }
 
 export interface ShadowVideoOverlayAppProps {
@@ -97,6 +98,7 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
             onPlaybackRate={commands.onPlaybackRate}
             onPlayModeSelected={commands.onPlayModeSelected}
             onToggleSubtitles={commands.onToggleSubtitles}
+            onDisableExtension={commands.onDisableExtension}
           />
         </div>
       )}

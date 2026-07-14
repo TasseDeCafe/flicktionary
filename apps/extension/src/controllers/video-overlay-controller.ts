@@ -155,9 +155,10 @@ export class VideoOverlayController {
         this._context.playMode = playMode
       },
       onToggleSubtitles: () => this._context.toggleSubtitles(),
-      // Direct storage write: the storage.onChanged subscription fans the
+      // Direct storage writes: the storage.onChanged subscription fans the
       // change out to every binding in every tab, including this one.
       onEnableExtension: () => void setExtensionEnabled(true),
+      onDisableExtension: () => void setExtensionEnabled(false),
     }
   }
 

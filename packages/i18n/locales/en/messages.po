@@ -4641,6 +4641,10 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 msgid "Try again"
 msgstr "Try again"
 
+#: apps/extension/common/components/VideoOverlay.tsx
+msgid "Turn Flicktionary off"
+msgstr "Turn Flicktionary off"
+
 #: apps/extension/common/components/VideoOverlayDisabled.tsx
 msgid "Turn Flicktionary on"
 msgstr "Turn Flicktionary on"
