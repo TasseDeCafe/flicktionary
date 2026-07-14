@@ -13,6 +13,7 @@ import { router } from './router'
 import { SessionInitializer } from '@/features/auth/components/session-initializer'
 import { UserSetupGate } from '@/features/auth/components/user-setup-gate'
 import { UserUiPrefsSync } from '@/features/settings/components/user-ui-prefs-sync'
+import { ExtensionInstallFactSync } from '@/features/settings/components/extension-install-fact-sync'
 
 validateConfig(getConfig())
 
@@ -32,6 +33,7 @@ export const App = () => {
       <I18nProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
           <UserUiPrefsSync />
+          <ExtensionInstallFactSync />
           <SessionInitializer>
             <UserSetupGate>
               <RouterProvider router={router} />

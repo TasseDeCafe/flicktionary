@@ -25,6 +25,7 @@ import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requestin
 import AckMessageHandler from '@/handlers/video/ack-message-handler'
 import { isFirefoxBuild } from '@/services/build-flags'
 import { getExtensionEnabledState, onExtensionEnabledChange } from '@/services/flicktionary/extension-enabled-storage'
+import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { enqueueUpdateAlert } from '@/services/update-alert'
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler'
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
@@ -64,8 +65,15 @@ export default defineBackground(() => {
 
     // No install-time language write: the 'system' default resolves the
     // browser locale at runtime, which keeps following it if it changes.
-    browser.tabs.create({ url: browser.runtime.getURL('/ftue-ui.html'), active: true })
+    //
+    // The welcome page lives in the web app (public route, works signed-out):
+    // it detects this install via the marker content script and walks the
+    // user through pinning + pairing without a bundled extension page.
+    browser.tabs.create({ url: `${getFlicktionaryConfig().webUrl}/extension-welcome`, active: true })
   }
+
+  // The same page's marker-absent state doubles as the reinstall pitch.
+  browser.runtime.setUninstallURL(`${getFlicktionaryConfig().webUrl}/extension-welcome`)
 
   const updateListener = async (details: Browser.runtime.InstalledDetails) => {
     if (details.reason !== browser.runtime.OnInstalledReason.UPDATE) {

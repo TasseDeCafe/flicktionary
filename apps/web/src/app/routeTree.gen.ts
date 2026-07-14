@@ -13,6 +13,7 @@ import { Route as UserGuideRouteImport } from './routes/user-guide'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as FromLandingRouteImport } from './routes/from-landing'
+import { Route as ExtensionWelcomeRouteImport } from './routes/extension-welcome'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
@@ -72,6 +73,11 @@ const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
 const FromLandingRoute = FromLandingRouteImport.update({
   id: '/from-landing',
   path: '/from-landing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtensionWelcomeRoute = ExtensionWelcomeRouteImport.update({
+  id: '/extension-welcome',
+  path: '/extension-welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -307,6 +313,7 @@ const AuthenticatedAppSessionsSessionIdReviewCardIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/extension-welcome': typeof ExtensionWelcomeRoute
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/extension-welcome': typeof ExtensionWelcomeRoute
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -397,6 +405,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/extension-welcome': typeof ExtensionWelcomeRoute
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/extension-welcome'
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/extension-welcome'
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/extension-welcome'
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
@@ -580,6 +592,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ExtensionWelcomeRoute: typeof ExtensionWelcomeRoute
   FromLandingRoute: typeof FromLandingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
@@ -619,6 +632,13 @@ declare module '@tanstack/react-router' {
       path: '/from-landing'
       fullPath: '/from-landing'
       preLoaderRoute: typeof FromLandingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extension-welcome': {
+      id: '/extension-welcome'
+      path: '/extension-welcome'
+      fullPath: '/extension-welcome'
+      preLoaderRoute: typeof ExtensionWelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1010,6 +1030,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ExtensionWelcomeRoute: ExtensionWelcomeRoute,
   FromLandingRoute: FromLandingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,

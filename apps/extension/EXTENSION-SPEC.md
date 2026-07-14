@@ -213,12 +213,18 @@ cleanup.
     HBO Max, Stremio, CIJapanese. Each answers `asbplayer-get-synced-data` with
     the platform's subtitle track list. Adding a platform = one page script +
     one `pages.json` row (donor-harvestable).
-  - `popup-ui`, `options`, `ftue-ui` — extension pages (popup, settings, welcome).
+  - `popup-ui`, `options` — extension pages (popup, settings).
   - `flicktionary-pair.content.ts` — URL-restricted to the web app's
     `/extension-pair` route; forwards the pairing payload to the background.
     Runs at `document_start` — the pair page posts its one-shot message within
     a few hundred ms of booting, so a listener registered at `document_idle`
     loses the race and pairing silently times out.
+  - `flicktionary-marker.content.ts` — presence beacon on the whole web-app
+    origin: stamps `data-flicktionary-extension="<version>"` on `<html>` at
+    `document_start` so the web app can passively detect the install (the
+    `/extension-welcome` page branches on it; the app records the
+    account-level `extension_installed` fact from it). Informational only —
+    no message channel, page-spoofable by design.
   - `flicktionary-import.content.ts` — injected on demand for article import.
 
 ## Feature spec
@@ -1117,10 +1123,15 @@ space/`j`/`k`) don't fire either.
 
 ### FTUE
 
-First install opens the welcome page (`ftue-ui.html`): a static greeting that
-links to the web app's public `/user-guide` page. The upstream interactive
-tutorial (bundled video + SRT, `asbplayer-tutorial-page.ts`, scroll-triggered
-walkthrough bubbles) was removed 2026-06 — the user guide replaced it. The
+First install opens the web app's public `/extension-welcome` page in a new
+tab (`onInstalled` INSTALL branch → `${webUrl}/extension-welcome`), and the
+background sets the same URL as the runtime uninstall URL. There is no bundled
+welcome page: the web page detects this browser's install via the marker
+content script and walks the user through pinning and pairing (its
+marker-absent state is the install pitch, doubling as the post-uninstall
+page). The upstream interactive tutorial (bundled video + SRT,
+`asbplayer-tutorial-page.ts`, scroll-triggered walkthrough bubbles) was
+removed 2026-06 — the web app's user guide replaced it. The
 `ftueHasSeenSubtitleTrackSelector` first-run hint in the track-selector dialog
 is unrelated and stays.
 
