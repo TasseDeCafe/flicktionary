@@ -128,6 +128,10 @@ msgstr "{parkedTotal} parked"
 msgid "{productionCount} in production"
 msgstr "{productionCount} in production"
 
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+msgid "{progressCount} of {totalCount} done"
+msgstr "{progressCount} of {totalCount} done"
+
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
@@ -169,12 +173,12 @@ msgstr "<0>Practice</0> — exercises built from your saved words to review and 
 "strengthen what you learned."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
-msgid "<0>Right-click</0> the selection and choose <1>Save</1>. The word or "
-"phrase is stored in your account together with the sentence it appeared "
-"in."
-msgstr "<0>Right-click</0> the selection and choose <1>Save</1>. The word or "
-"phrase is stored in your account together with the sentence it appeared "
-"in."
+msgid "<0>Right-click</0> the selection to save it — the word or phrase is "
+"stored in your account together with the sentence it appeared in. "
+"Right-click a saved selection to remove it again."
+msgstr "<0>Right-click</0> the selection to save it — the word or phrase is "
+"stored in your account together with the sentence it appeared in. "
+"Right-click a saved selection to remove it again."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Saved words don't show up</0> — they appear here in the web app, not "
@@ -229,6 +233,20 @@ msgstr "A newer version of the app is required to continue. Please update to "
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "A sentence using this term in its natural setting."
 msgstr "A sentence using this term in its natural setting."
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "A session is anything you study from: a movie or show with subtitles, a "
+"YouTube video, an article, or a pasted text. Terms you save while "
+"watching or reading become your vocabulary."
+msgstr "A session is anything you study from: a movie or show with subtitles, a "
+"YouTube video, an article, or a pasted text. Terms you save while "
+"watching or reading become your vocabulary."
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "A session mixes the reviews due today with a few new terms. Daily limits "
+"keep it short; you can change them in Settings."
+msgstr "A session mixes the reviews due today with a few new terms. Daily "
+"limits keep it short; you can change them in Settings."
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "A short label for this session"
@@ -694,6 +712,12 @@ msgstr "Bonus"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Bottom"
 msgstr "Bottom"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Brand-new and struggling terms warm up with quick exercises before they "
+"become flashcards."
+msgstr "Brand-new and struggling terms warm up with quick exercises before they "
+"become flashcards."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "British"
@@ -1226,6 +1250,14 @@ msgstr "Detecting language…"
 msgid "Disabled"
 msgstr "Disabled"
 
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+msgid "Dismiss the getting-started checklist"
+msgstr "Dismiss the getting-started checklist"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Dismiss the practice explainer"
+msgstr "Dismiss the practice explainer"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Display form"
 msgstr "Display form"
@@ -1237,6 +1269,10 @@ msgstr "Display form (e.g. stress-marked)"
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx
 msgid "Display subtitles"
 msgstr "Display subtitles"
+
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+msgid "Do your first practice"
+msgstr "Do your first practice"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
@@ -1683,6 +1719,10 @@ msgstr "Failed to load the import"
 msgid "Failed to load vocabulary"
 msgstr "Failed to load vocabulary"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to load your progress"
+msgstr "Failed to load your progress"
+
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to mark chat read"
 msgstr "Failed to mark chat read"
@@ -1866,6 +1906,7 @@ msgid "Feminine"
 msgstr "Feminine"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Find a movie or show and load its subtitles"
 msgstr "Find a movie or show and load its subtitles"
 
@@ -2033,6 +2074,7 @@ msgstr "Get started"
 msgid "Get the Flicktionary extension"
 msgstr "Get the Flicktionary extension"
 
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Getting started"
 msgstr "Getting started"
@@ -2053,9 +2095,17 @@ msgstr "Go back to the source view to add or retry highlights."
 msgid "Go to Sessions"
 msgstr "Go to Sessions"
 
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Go to your sessions"
+msgstr "Go to your sessions"
+
 #: packages/ui/src/components/rate-buttons.tsx
 msgid "Good"
 msgstr "Good"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Got it"
+msgstr "Got it"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/review/components/grammar-chips.tsx
@@ -2195,6 +2245,10 @@ msgstr "Hover a subtitle word for an instant definition; the video pauses while 
 msgid "How it works"
 msgstr "How it works"
 
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "How practice works"
+msgstr "How practice works"
+
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "How your free trial works"
 msgstr "How your free trial works"
@@ -2301,6 +2355,10 @@ msgstr "Initializing payments..."
 #: apps/native/src/features/auth/components/session-initializer.tsx
 msgid "Initializing..."
 msgstr "Initializing..."
+
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+msgid "Install the browser extension"
+msgstr "Install the browser extension"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Install the Flicktionary extension and pin it to your browser toolbar "
@@ -2766,10 +2824,6 @@ msgstr "No seasons found."
 msgid "No sessions in this filter."
 msgstr "No sessions in this filter."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
-msgid "No sessions yet. Start one to begin."
-msgstr "No sessions yet. Start one to begin."
-
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "No skills selected"
 msgstr "No skills selected"
@@ -2927,14 +2981,16 @@ msgid "Only production practice — flashcards and exercises."
 msgstr "Only production practice — flashcards and exercises."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
-msgid "Open a video on a supported platform. The first time, a dialog asks "
-"which subtitle track to load; after that, your last-used language loads "
-"automatically. You can also load your own subtitle file by "
-"drag-and-dropping it onto the video."
-msgstr "Open a video on a supported platform. The first time, a dialog asks "
-"which subtitle track to load; after that, your last-used language loads "
-"automatically. You can also load your own subtitle file by "
-"drag-and-dropping it onto the video."
+msgid "Open a video on a supported platform. On YouTube, subtitles load "
+"automatically in the video's own language; on other platforms, a dialog "
+"asks which subtitle track to load the first time, and your last-used "
+"language loads automatically after that. You can also load your own "
+"subtitle file by drag-and-dropping it onto the video."
+msgstr "Open a video on a supported platform. On YouTube, subtitles load "
+"automatically in the video's own language; on other platforms, a dialog "
+"asks which subtitle track to load the first time, and your last-used "
+"language loads automatically after that. You can also load your own "
+"subtitle file by drag-and-dropping it onto the video."
 
 #: apps/extension/src/ui/components/popup-header.tsx
 msgid "Open App"
@@ -3076,6 +3132,7 @@ msgid "Paste a text"
 msgstr "Paste a text"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Paste an article, comment, or post"
 msgstr "Paste an article, comment, or post"
 
@@ -3264,6 +3321,7 @@ msgstr "Practice limits"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
@@ -3321,7 +3379,6 @@ msgstr "Previous text"
 msgid "Primary"
 msgstr "Primary"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Process a session and keep some cards. They'll show up here "
 "automatically."
@@ -3424,6 +3481,10 @@ msgstr "Rate"
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Read"
 msgstr "Read"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Read more in the guide"
+msgstr "Read more in the guide"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Read short generated texts that weave in your kept vocabulary. Tap a "
@@ -3703,6 +3764,14 @@ msgstr "Save"
 msgid "Save a term"
 msgstr "Save a term"
 
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Save a term while watching or reading in a session. Flicktionary "
+"enriches it in the background and adds it to your Vocabulary and "
+"Practice automatically."
+msgstr "Save a term while watching or reading in a session. Flicktionary "
+"enriches it in the background and adds it to your Vocabulary and "
+"Practice automatically."
+
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
@@ -3719,6 +3788,10 @@ msgstr "Save the terms you meet"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
+
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+msgid "Save your first terms"
+msgstr "Save your first terms"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
@@ -4133,6 +4206,7 @@ msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
 
@@ -4143,6 +4217,11 @@ msgstr "Start session"
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Start something new"
 msgstr "Start something new"
+
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Start your first session"
+msgstr "Start your first session"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Starting session…"
@@ -4409,6 +4488,12 @@ msgstr "Terms that aren't in your vocabulary yet"
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Terms with a review waiting right now."
 msgstr "Terms with a review waiting right now."
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Terms you save become cards scheduled with spaced repetition — each "
+"review comes up right before you'd forget it."
+msgstr "Terms you save become cards scheduled with spaced repetition — each "
+"review comes up right before you'd forget it."
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms you're still working on: recently introduced, recently missed, or "
@@ -5007,6 +5092,10 @@ msgstr "Warnings"
 msgid "Watch and look up"
 msgstr "Watch and look up"
 
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Watch with the browser extension"
+msgstr "Watch with the browser extension"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Watching videos"
 msgstr "Watching videos"
@@ -5154,6 +5243,12 @@ msgstr "You are a special user with free access. You have no active "
 msgid "You are now subscribed to Premium!"
 msgstr "You are now subscribed to Premium!"
 
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "You can also practice by reading: short generated texts weave in your "
+"vocabulary, and you rate terms by tapping them."
+msgstr "You can also practice by reading: short generated texts weave in your "
+"vocabulary, and you rate terms by tapping them."
+
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "You can study it as a regular flashcard instead — or open the menu above "
 "to edit the term if something looks off (exercises get another try after "
@@ -5255,3 +5350,7 @@ msgstr "your@email.com"
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "YouTube"
 msgstr "YouTube"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "YouTube and streaming sites, with instant subtitle lookups"
+msgstr "YouTube and streaming sites, with instant subtitle lookups"
