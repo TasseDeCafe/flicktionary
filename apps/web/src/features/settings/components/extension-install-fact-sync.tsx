@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
+import { getUserId, useAuthStore } from '@/stores/auth-store'
 import { useExtensionDetected } from '@/lib/extension/use-extension-detected'
+import { shouldRecordExtensionInstall } from '../utils/extension-install-sync'
 
 /**
  * Records the account-level "has ever installed the extension" fact the first
@@ -14,23 +15,28 @@ import { useExtensionDetected } from '@/lib/extension/use-extension-detected'
  * nothing is ever written.
  */
 export const ExtensionInstallFactSync = () => {
-  const isSignedIn = useAuthStore(getIsSignedIn)
+  const userId = useAuthStore(getUserId)
   const detection = useExtensionDetected()
 
   // Deliberately not useGetUserPrefs(): that hook takes no options and
   // logged-out users must not fire an unauthed getPrefs.
   const { data: prefs } = useQuery(
     orpcQuery.userPrefs.getPrefs.queryOptions({
-      enabled: isSignedIn,
+      enabled: userId !== '',
       select: (response) => response.data,
     })
   )
 
   // Deliberately not useAddAccountFlag(): this is a background sync — a
-  // failure toast out of nowhere would be noise. Silent; retried on the next
-  // mount (the server is idempotent).
+  // failure toast out of nowhere would be noise. The idempotent write retries
+  // silently here instead.
   const { mutate: recordInstall } = useMutation(
     orpcQuery.userPrefs.addAccountFlag.mutationOptions({
+      // The write is idempotent. Retrying here covers the common first-sign-in
+      // race where the public user row is still being created, plus transient
+      // network failures, without surfacing a background error toast.
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 2000),
       meta: {
         invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         showErrorToast: false,
@@ -38,20 +44,37 @@ export const ExtensionInstallFactSync = () => {
     })
   )
 
-  const fired = useRef(false)
+  // Scope the once guard to an account. The provider stays mounted across
+  // sign-out/sign-in, so a process-lifetime boolean would prevent a second
+  // account in this browser from recording its own fact.
+  const attemptedUserId = useRef<string | null>(null)
   useEffect(() => {
-    if (detection !== 'detected' || prefs === undefined || fired.current) return
-    if (prefs.accountFlags.includes('extension_installed')) return
-    fired.current = true
+    if (userId === '') {
+      attemptedUserId.current = null
+      return
+    }
+    if (
+      !shouldRecordExtensionInstall({
+        detection,
+        userId,
+        accountFlags: prefs?.accountFlags,
+        attemptedUserId: attemptedUserId.current,
+      })
+    ) {
+      return
+    }
+    attemptedUserId.current = userId
     recordInstall(
       { flag: 'extension_installed' },
       {
         onError: () => {
-          fired.current = false
+          // Built-in retries are exhausted. A later prefs change or auth
+          // transition may safely attempt the idempotent write again.
+          attemptedUserId.current = null
         },
       }
     )
-  }, [detection, prefs, recordInstall])
+  }, [detection, prefs, recordInstall, userId])
 
   return null
 }

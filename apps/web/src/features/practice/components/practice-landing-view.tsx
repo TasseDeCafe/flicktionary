@@ -152,11 +152,14 @@ export const PracticeLandingView = () => {
               <p className='text-muted-foreground mt-2 text-sm'>
                 {t`Save a term while watching or reading in a session. Flicktionary enriches it in the background and adds it to your Vocabulary and Practice automatically.`}
               </p>
-              <p className='mt-3 text-sm'>
+              <div className='mt-3 flex flex-wrap gap-4 text-sm'>
                 <Link to='/sessions' className='font-medium text-yellow-900 underline dark:text-yellow-300'>
                   {t`Go to your sessions`}
                 </Link>
-              </p>
+                <Link to='/user-guide' hash='practice' className='font-medium underline'>
+                  {t`Read more in the guide`}
+                </Link>
+              </div>
             </div>
           )}
 

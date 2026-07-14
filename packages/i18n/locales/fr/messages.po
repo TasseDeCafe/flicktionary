@@ -3539,6 +3539,7 @@ msgid "Read"
 msgstr "Lire"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Read more in the guide"
 msgstr "En savoir plus dans le guide"
 

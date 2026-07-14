@@ -584,6 +584,10 @@ export const useAddAccountFlag = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.userPrefs.addAccountFlag.mutationOptions({
+      // Flags are append-only and the endpoint is idempotent, so retrying is
+      // safe and prevents a transient failure from stranding one-time UI.
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 2000),
       meta: {
         invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to save your preference`,
