@@ -1,19 +1,70 @@
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronRight } from 'lucide-react'
+import { Brain, ChevronRight, X } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useDueSummary } from '../api/practice-hooks'
-import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { useAddAccountFlag, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { getDailyNewAvailable } from './review-counts'
+
+// One-time "How practice works" explainer; dismissing it records the
+// practice_explainer_dismissed account flag so it never returns on any device.
+const HowPracticeWorksCard = ({ onDismiss }: { onDismiss: () => void }) => {
+  const { t } = useLingui()
+  const points = [
+    t`Terms you save become cards scheduled with spaced repetition — each review comes up right before you'd forget it.`,
+    t`A session mixes the reviews due today with a few new terms. Daily limits keep it short; you can change them in Settings.`,
+    t`Brand-new and struggling terms warm up with quick exercises before they become flashcards.`,
+    t`You can also practice by reading: short generated texts weave in your vocabulary, and you rate terms by tapping them.`,
+  ]
+  return (
+    <section className='bg-card rounded-xl border p-4'>
+      <div className='flex items-start justify-between gap-2'>
+        <h2 className='text-sm font-semibold'>{t`How practice works`}</h2>
+        <button
+          type='button'
+          aria-label={t`Dismiss the practice explainer`}
+          onClick={onDismiss}
+          className='text-muted-foreground hover:text-foreground active:text-foreground -mt-1 -mr-1 rounded-md p-1 transition-colors'
+        >
+          <X className='h-4 w-4' />
+        </button>
+      </div>
+      <ol className='text-muted-foreground mt-2 list-decimal space-y-1.5 pl-5 text-sm'>
+        {points.map((point, index) => (
+          <li key={index}>{point}</li>
+        ))}
+      </ol>
+      <div className='mt-3 flex items-center gap-4'>
+        <Button size='sm' variant='secondary' onClick={onDismiss}>
+          {t`Got it`}
+        </Button>
+        <Link to='/user-guide' hash='practice' className='text-sm font-medium underline'>
+          {t`Read more in the guide`}
+        </Link>
+      </div>
+    </section>
+  )
+}
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data: summary, isLoading } = useDueSummary()
   const { data: prefs } = useGetUserPrefs()
+  const addFlag = useAddAccountFlag()
+
+  // Render neither the explainer nor the intro line until prefs resolve —
+  // returning users must not see the one-time card flash.
+  const explainerResolved = prefs !== undefined
+  const showExplainer =
+    explainerResolved &&
+    !prefs.accountFlags.includes('practice_explainer_dismissed') &&
+    !addFlag.isPending &&
+    !addFlag.isSuccess
 
   const handlePickLanguage = (targetLanguage: string) => {
     void navigate({
@@ -62,9 +113,18 @@ export const PracticeLandingView = () => {
             <h1 className='text-2xl font-bold'>{t`Practice`}</h1>
           </header>
 
-          <p className='text-muted-foreground text-sm'>
-            {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
-          </p>
+          {/* The one-time explainer supersedes the static intro line; the
+              intro returns once the explainer is dismissed so the page never
+              shows both. */}
+          {showExplainer ? (
+            <HowPracticeWorksCard onDismiss={() => addFlag.mutate({ flag: 'practice_explainer_dismissed' })} />
+          ) : (
+            explainerResolved && (
+              <p className='text-muted-foreground text-sm'>
+                {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
+              </p>
+            )
+          )}
 
           {isLoading && (
             <section className='flex flex-col gap-2'>
@@ -90,7 +150,12 @@ export const PracticeLandingView = () => {
             <div className='rounded-xl border bg-yellow-50 p-6 dark:bg-yellow-400/10'>
               <h2 className='font-semibold'>{t`No vocabulary to practice yet`}</h2>
               <p className='text-muted-foreground mt-2 text-sm'>
-                {t`Process a session and keep some cards. They'll show up here automatically.`}
+                {t`Save a term while watching or reading in a session. Flicktionary enriches it in the background and adds it to your Vocabulary and Practice automatically.`}
+              </p>
+              <p className='mt-3 text-sm'>
+                <Link to='/sessions' className='font-medium text-yellow-900 underline dark:text-yellow-300'>
+                  {t`Go to your sessions`}
+                </Link>
               </p>
             </div>
           )}
