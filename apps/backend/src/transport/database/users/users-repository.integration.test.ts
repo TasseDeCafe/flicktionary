@@ -10,6 +10,8 @@ describe('users-repository integration tests', () => {
     insertUser,
     updateStripeCustomerId,
     retrieveAllUsersCreatedLessThanNDaysAgo,
+    getAccountFlags,
+    addAccountFlag,
   } = UsersRepository()
   const emptyUtmParams = {
     utmSource: null,
@@ -110,6 +112,28 @@ describe('users-repository integration tests', () => {
   test('should return false when updating stripe customer id for non-existent user', async () => {
     const result = await updateStripeCustomerId('00000000-0000-4000-a000-000000000099', __generateUniqueId('cus'))
     expect(result).toBe(false)
+  })
+
+  describe('account flags', () => {
+    test('default to an empty array and append idempotently in insertion order', async () => {
+      const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+      await insertUser(userId, null, emptyUtmParams)
+
+      expect(await getAccountFlags(userId)).toEqual([])
+
+      expect(await addAccountFlag(userId, 'getting_started_dismissed')).toBe(true)
+      expect(await addAccountFlag(userId, 'extension_installed')).toBe(true)
+      // Re-adding a present flag succeeds without duplicating it.
+      expect(await addAccountFlag(userId, 'getting_started_dismissed')).toBe(true)
+
+      expect(await getAccountFlags(userId)).toEqual(['getting_started_dismissed', 'extension_installed'])
+    })
+
+    test('report a missing user as empty flags / failed add', async () => {
+      const missingUserId = '00000000-0000-4000-a000-000000000098'
+      expect(await getAccountFlags(missingUserId)).toEqual([])
+      expect(await addAccountFlag(missingUserId, 'extension_installed')).toBe(false)
+    })
   })
 
   describe('retrieveAllUsersCreatedLessThanNDaysAgo', () => {

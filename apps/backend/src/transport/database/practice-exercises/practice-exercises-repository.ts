@@ -275,6 +275,20 @@ const countSlotsByTermForType = async (params: {
   `) as Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>
 }
 
+// "Has ever answered an exercise" for the getting-started checklist —
+// exercise-first warm-up gates stamp used_at while the facet's srs_reps can
+// still be 0, so this catches first practices that rating events miss.
+const hasUsedExercise = async (userId: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT EXISTS(
+      SELECT 1
+      FROM public.practice_exercises
+      WHERE user_id = ${userId} AND used_at IS NOT NULL
+    ) AS "exists"
+  `) as { exists: boolean }[]
+  return result[0]?.exists ?? false
+}
+
 export interface PracticeExercisesRepositoryInterface {
   reserveSlots: (params: {
     userId: string
@@ -318,6 +332,7 @@ export interface PracticeExercisesRepositoryInterface {
     type: ExerciseType
     userLookupIds: string[]
   }) => Promise<Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>>
+  hasUsedExercise: (userId: string) => Promise<boolean>
 }
 
 export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterface => {
@@ -334,5 +349,6 @@ export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterf
     countGateBankSlots,
     deleteFailedForLookup,
     countSlotsByTermForType,
+    hasUsedExercise,
   }
 }

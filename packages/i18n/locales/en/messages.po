@@ -1743,6 +1743,10 @@ msgstr "Failed to save term"
 msgid "Failed to save the word"
 msgstr "Failed to save the word"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to save your preference"
+msgstr "Failed to save your preference"
+
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to send chat message"
 msgstr "Failed to send chat message"

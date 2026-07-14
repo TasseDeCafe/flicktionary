@@ -1480,6 +1480,7 @@ export type Database = {
       }
       users: {
         Row: {
+          account_flags: string[]
           created_at: string
           english_ipa_dialect: string
           id: string
@@ -1500,6 +1501,7 @@ export type Database = {
           utm_term: string | null
         }
         Insert: {
+          account_flags?: string[]
           created_at?: string
           english_ipa_dialect?: string
           id: string
@@ -1520,6 +1522,7 @@ export type Database = {
           utm_term?: string | null
         }
         Update: {
+          account_flags?: string[]
           created_at?: string
           english_ipa_dialect?: string
           id?: string
