@@ -26,7 +26,7 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 - `DISABLED.md` — log of parked/disabled template machinery; check it before deleting "unused" code.
 - READMEs (`apps/web/README.md`, `apps/backend/README.md`, `apps/backend/src/transport/database/README.md`, and other scoped `**/README.md`) — local how-tos for one area. Update only if you change the thing they document.
 
-**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`, `chat-generate-form-facets.md`) and post-MVP backlog/idea lists (e.g. `web-future-ideas-and-open-questions.md`). Useful context; **never** treat as current behavior.
+**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `prompt-caching-optimization.md`, `chat-generate-form-facets.md`) and post-MVP backlog/idea lists (e.g. `web-future-ideas-and-open-questions.md`). Useful context; **never** treat as current behavior.
 
 **Scratch** — `docs/brand/` holds brand-asset generation prompts (`LOGO-PROMPTS.md`, `IMAGE-PROMPTS.md`). Not specs; ignore when reasoning about app behavior.
 
@@ -135,7 +135,7 @@ Rules:
   - shadcn/ui re-exports under `apps/web/src/components/ui/**` (e.g. `DialogClose`, `buttonVariants`) are kept as a deliberate API surface.
   - generated files like `routeTree.gen.ts` (TanStack Router).
   - dependencies consumed indirectly: `prettier`/`prettier-plugin-tailwindcss` (via `eslint-plugin-prettier` in `eslint.config.cjs`), and anything invoked only from config files or root orchestration.
-  - **transitive runtime deps of bundled workspace packages.** The backend prod build (`scripts/build--prod.sh`, TS project references) compiles `@flicktionary/api-client` and `@flicktionary/core` into `apps/backend/dist/packages/**`. Those bundled files keep their own `import`s, so every _runtime_ dep of api-client/core must ALSO be a direct `apps/backend` dependency (e.g. `@orpc/contract`, `zod`) — even though nothing in `apps/backend/src` imports them. Removing one passes typecheck/build/tests locally (resolved via hoisted workspace `node_modules`) but throws `ERR_MODULE_NOT_FOUND` at runtime on Railway, where only `apps/backend`'s own deps are installed. Before removing any backend dep, cross-check `packages/api-client/src` and `packages/core/src` imports.
+  - **transitive runtime deps of bundled workspace packages.** The backend prod build (`scripts/build--prod.sh`, TS project references) compiles `@flicktionary/api-client` and `@flicktionary/core` into `apps/backend/dist/packages/**`. Those bundled files keep their own `import`s, so every _runtime_ dep of api-client/core must ALSO be a direct `apps/backend` dependency (e.g. `@orpc/contract`, `zod`) — even though nothing in `apps/backend/src` imports them. Removing one passes typecheck/build/tests locally (resolved via hoisted workspace `node_modules`) but throws `ERR_MODULE_NOT_FOUND` at runtime on Railway, where only `apps/backend`'s own deps are installed. Before removing any backend dep, cross-check `packages/api-client/src` and `packages/core/src` imports. The `deploy-smoke` CI job (`.github/workflows/backend-ci.yaml`) boots the compiled artifact from a fresh clone and catches this class post-merge — a tripwire, not a license to skip the cross-check.
 - The "Unused dependencies" category is the least reliable — prefer surgical, verified removals over bulk deletes, and re-run `pnpm install` afterward to sync the lockfile.
 - When knip is wrong about an entry point or generated file, teach it via `knip.json` rather than deleting working code.
 
@@ -219,3 +219,26 @@ pnpm --filter @flicktionary/backend db:dev:tunnel:gen-types
 This regenerates both schema files (public + auth) straight into `src/transport/database/`, formats them with prettier, and runs `check:types`. Then review the diff and commit. The only legitimate diff is genuine schema changes — if you see a large quote-style/semicolon diff, the formatting step was skipped (don't run the raw `supabase gen types` by hand; use the script, which handles `doppler run --`, output paths, and formatting for you).
 
 See `apps/backend/src/transport/database/README.md` for usage examples.
+
+# Backend testing
+
+Two kinds of backend tests, split by filename and picked up by pattern in `apps/backend/vitest.config.mts`:
+
+- `*.unit.test.ts` — pure logic. The dominant style extracts pure functions and feeds them hand-built row objects; LLM prompt/parser code is unit-tested against static strings. No mocking framework for vendor APIs.
+- `*.integration.test.ts` — run against the local `supabase-test` stack (ports 64xxx): repository SQL tests, and router tests driving `buildApp` over HTTP with supertest.
+
+**When to add which** (do this by default when shipping backend changes, don't wait to be asked):
+
+- Pure logic (schedulers, parsers, mappers) → unit test, as usual.
+- New or changed repository SQL → an integration test for that repository ships with the change.
+- New or changed oRPC surface → extend (or add) that router's golden-path integration test: supertest through `buildApp`, golden path + a 401 + one domain failure. Not exhaustive scenarios — those stay in unit tests. Canonical pattern: `apps/backend/src/router/glosses-router/glosses-router.integration.test.ts`. Routers still untested over HTTP get a test when their surface next changes, not as a sweep.
+
+**Conventions** — the suite runs test files in parallel against one shared, **never-reset** database, so:
+
+- Every test creates its own unique users/rows via the helpers in `src/test/test-utils.ts` (unique emails by default). Never hardcode an email, never wipe tables or auth users globally, and anything you assert on must be keyed by a per-test unique value (no whole-table counts).
+- LLM calls are injected: pass `MockAnthropicPasses({ ...scripted pass outputs })` through `buildApp` / `ProcessingDependencies`. Never `vi.mock` a vendor client module.
+- Seed through the API where a synchronous flow exists (e.g. `/cards/adhoc` is how practice tests get a kept term); use repos directly only for prefs-style setup.
+
+**Running**: `pnpm --filter @flicktionary/backend test:integration:run [file...]` starts the stack and runs the tests (arguments are forwarded to vitest, so single-file runs go through the same script). A vitest globalSetup applies pending migrations to the supabase-test stack before every non-unit run — including the pre-push hook's `vitest run` and direct single-file invocations — so a freshly created migration cannot leave the test schema behind. The stack itself must be running for integration tests (`pnpm --filter @flicktionary/backend db:test` if it isn't).
+
+**CI**: `.github/workflows/backend-ci.yaml` runs on pushes to `main` only, as a non-blocking tripwire for what pre-push structurally can't test — the server-side merge commit and clean-machine effects. Two jobs: the full backend suite against a fresh supabase-test stack, and a deploy smoke test that builds with Railway's exact build command and boots the compiled server from the fresh clone (catches the transitive-dep `ERR_MODULE_NOT_FOUND` class — see the knip section). Pre-push remains the primary gate; a red CI run on `main` means the merge result differs from what was tested locally.

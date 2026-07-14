@@ -1,0 +1,119 @@
+# Post-merge tripwire, not a gate: runs on main only, no branch protection
+# depends on it. Catches the two failure classes pre-push structurally can't:
+# the server-side merge commit (never tested by any local hook) and
+# clean-machine effects (fresh clone + frozen lockfile, no hoisted workspace
+# node_modules, no gitignored local artifacts).
+name: backend-ci
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Backend tests (unit + integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          # Pinned to the locally-used CLI version; bump alongside local updates.
+          version: 2.98.2
+
+      # The integration tests only need Postgres, GoTrue (auth/JWKS), Kong
+      # (the admin API route test-utils uses to create users), PostgREST, and
+      # Mailpit (GoTrue's SMTP target for the email-verification flow). The
+      # exclude list was validated by running the full suite against it.
+      - name: Start supabase-test stack
+        working-directory: apps/backend/supabase/supabase-test/supabase
+        run: supabase start -x studio,imgproxy,realtime,storage-api,edge-runtime,logflare,vector,supavisor,postgres-meta
+
+      - name: Typecheck
+        run: pnpm check:types --filter=@flicktionary/backend
+
+      - name: Lint
+        run: pnpm lint:check --filter=@flicktionary/backend
+
+      # Runs both unit and integration tests; the vitest globalSetup applies
+      # any pending migrations to the freshly started stack.
+      - name: Test
+        run: pnpm test:run --filter=@flicktionary/backend
+
+  deploy-smoke:
+    name: Deploy smoke test (isolated boot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # Mirrors railway.toml's buildCommand exactly: Railway installs the
+      # workspace at the repo root with a frozen lockfile and boots the
+      # compiled artifact from inside it. A fresh CI clone therefore
+      # reproduces Railway's module-resolution layout — which a warm dev
+      # checkout does not (see old-docs/backend-deploy-smoke-test-plan.md:
+      # the ERR_MODULE_NOT_FOUND class passed every local check).
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm turbo run build --filter=@flicktionary/backend
+
+      # Boot the compiled server and require a healthy response. The
+      # third-party keys are dummies: their clients are constructed at module
+      # import time and only require non-empty strings; the
+      # development-without-third-parties config mocks them all behind
+      # buildApp({}) so nothing is ever called. DOPPLER_PROJECT short-circuits
+      # the Doppler hydration in index.js. An import-time failure (the class
+      # this job exists for) kills the process immediately and fails the loop.
+      - name: Boot smoke test
+        env:
+          NODE_ENV: development-without-third-parties
+          DOPPLER_PROJECT: ci-smoke
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          STRIPE_MONTHLY_PRICE_IN_EUR_ID: price_dummy
+          STRIPE_YEARLY_PRICE_IN_EUR_ID: price_dummy
+          RESEND_API_KEY: re_dummy
+          ANTHROPIC_API_KEY: sk-ant-dummy
+          POSTHOG_API_KEY: phc_dummy
+          TELEGRAM_BOT_TOKEN: dummy
+          TELEGRAM_WEBHOOK_SECRET: dummy
+        run: |
+          node apps/backend/dist/apps/backend/src/index.js > smoke-boot.log 2>&1 &
+          SERVER_PID=$!
+          # development-without-third-parties listens on a hardcoded 4003.
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4003/api/v1/health-check; then
+              echo
+              echo "Server healthy after ${i}s"
+              kill "$SERVER_PID"
+              exit 0
+            fi
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              echo "Server process died during boot:"
+              cat smoke-boot.log
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "Server never became healthy within 30s:"
+          cat smoke-boot.log
+          kill "$SERVER_PID"
+          exit 1

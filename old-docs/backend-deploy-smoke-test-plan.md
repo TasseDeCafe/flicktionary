@@ -1,7 +1,13 @@
 # Plan: catch production-only runtime dep failures in pre-push
 
-> **Status: proposal — not implemented.** An open design for a future safeguard;
-> nothing here ships today. Implement only when explicitly picked up.
+> **Status: historical** (archived 2026-07-14). Implemented as the `deploy-smoke`
+> job in `.github/workflows/backend-ci.yaml` — in CI rather than pre-push (the
+> "Cost" escape hatch below), and without `pnpm deploy`: `railway.toml` shows
+> Railway installs the workspace at the repo root, so a fresh CI clone with
+> `pnpm install --frozen-lockfile` reproduces its module-resolution layout
+> exactly. The negative case was verified: removing `@orpc/contract` from
+> `apps/backend/package.json` makes the boot fail with the original
+> `ERR_MODULE_NOT_FOUND`. Kept for the root-cause analysis of the failure class.
 
 ## The bug this is meant to catch
 
