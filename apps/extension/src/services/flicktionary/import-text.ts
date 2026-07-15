@@ -13,8 +13,7 @@ export type ArticleExtractionErrorCode = 'no-readable-article' | 'extract-failed
 
 // Result the import content script returns for an extraction request.
 export type ArticleExtractionResult =
-  | { ok: true; title: string; text: string }
-  | { ok: false; errorCode: ArticleExtractionErrorCode }
+  { ok: true; title: string; text: string } | { ok: false; errorCode: ArticleExtractionErrorCode }
 
 export type ImportOutcome =
   | { ok: true; sessionId: string }

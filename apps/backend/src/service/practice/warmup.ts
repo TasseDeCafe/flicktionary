@@ -115,8 +115,7 @@ export const startWarmupSession = async (params: {
 }
 
 export type RefreshWarmupResult =
-  | { ok: true; exercises: StrengthenExerciseEntry[] }
-  | { ok: false; reason: 'not_found' | 'language_mismatch' }
+  { ok: true; exercises: StrengthenExerciseEntry[] } | { ok: false; reason: 'not_found' | 'language_mismatch' }
 
 // Serve-only re-fetch of a warm-up session's exercises — NO parking, NO
 // introductions (so it is safe to poll while placeholders generate). Re-serves

@@ -40,10 +40,8 @@
   "devDependencies": {
     "@lingui/cli": "catalog:",
     "@lingui/format-po": "catalog:",
-    "@react-email/components": "catalog:",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "@typescript-eslint/parser": "catalog:",
-    "concurrently": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-prettier": "catalog:",

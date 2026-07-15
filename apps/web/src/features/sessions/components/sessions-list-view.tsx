@@ -59,7 +59,7 @@ export const SessionsListView = () => {
           and the row bleeds to the screen edges (-mx-4 px-4) so it scrolls cleanly past
           the page padding. Scrollbar hidden for a native feel. */}
       {(data?.length ?? 0) > 0 && (
-        <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+        <div className='-mx-4 mt-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'>
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
             {t`All`}
           </FilterChip>
@@ -162,7 +162,7 @@ const SessionsEmptyState = () => {
 // than identical pills, in the same scrollable row as the real chips.
 const FILTER_CHIP_SKELETON_WIDTHS = ['w-10', 'w-16', 'w-10', 'w-14', 'w-16', 'w-18', 'w-20', 'w-16']
 const FilterChipsSkeleton = () => (
-  <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+  <div className='-mx-4 mt-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'>
     {FILTER_CHIP_SKELETON_WIDTHS.map((width, i) => (
       <Skeleton key={i} className={`h-7 shrink-0 rounded-full ${width}`} />
     ))}

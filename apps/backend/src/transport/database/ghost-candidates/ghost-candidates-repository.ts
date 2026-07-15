@@ -64,9 +64,7 @@ const dismissGhost = async (ghostId: string, sessionId: string, executor: postgr
 }
 
 export type SwitchGhostResult =
-  | { kind: 'switched'; highlight: DbHighlight }
-  | { kind: 'ghost_not_found' }
-  | { kind: 'provisional_not_found' }
+  { kind: 'switched'; highlight: DbHighlight } | { kind: 'ghost_not_found' } | { kind: 'provisional_not_found' }
 
 // Atomic span swap (the heart of Phase 2's adoption model). In one transaction:
 //   1. validate the ghost is live and the provisional highlight both belong to

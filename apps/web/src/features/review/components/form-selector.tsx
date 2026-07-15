@@ -344,7 +344,7 @@ const SkillsCard = ({
         <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
           <span className='text-sm font-medium'>{t`Skills`}</span>
           {enabledLabels.length > 0 ? (
-            <div className='-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+            <div className='-mx-0.5 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-0.5 [&::-webkit-scrollbar]:hidden'>
               {enabledLabels.map((skill) => (
                 <span
                   key={skill}

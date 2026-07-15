@@ -13,8 +13,7 @@ export type ImportPastedTextInput = {
 }
 
 export type ImportPastedTextOutput =
-  | { ok: true; track: DbTextTrack; segmentCount: number; deduped: boolean }
-  | { ok: false; reason: 'parse_empty' }
+  { ok: true; track: DbTextTrack; segmentCount: number; deduped: boolean } | { ok: false; reason: 'parse_empty' }
 
 const normalizeForHash = (segments: { text: string }[]): string => segments.map((s) => `|${s.text}`).join('\n')
 

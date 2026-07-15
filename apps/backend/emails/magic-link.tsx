@@ -11,7 +11,7 @@ import {
   Tailwind,
   Text,
   pixelBasedPreset,
-} from '@react-email/components'
+} from 'react-email'
 import * as React from 'react'
 
 interface MagicLinkEmailProps {
@@ -60,7 +60,7 @@ export const MagicLinkEmail = ({
               This link is valid for 1 hour. If you didn't request this email, please ignore this message.
             </Text>
 
-            <Text className='mt-3 break-all px-10 text-center text-xs leading-tight text-gray-500'>
+            <Text className='mt-3 px-10 text-center text-xs leading-tight break-all text-gray-500'>
               Or copy and paste this URL into your browser:{' '}
               <Link href={magicLink} className='text-brand underline'>
                 {magicLink}

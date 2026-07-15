@@ -99,9 +99,7 @@ export const StudySessionsRouter = (
   // this just shares the code/message shaping between the ingest flows.
   const ingestPrefsErrorData = (
     prefs:
-      | { reason: 'unsupported' }
-      | { reason: 'needs-onboarding' }
-      | { reason: 'missing-cefr'; targetLanguage: string }
+      { reason: 'unsupported' } | { reason: 'needs-onboarding' } | { reason: 'missing-cefr'; targetLanguage: string }
   ) => {
     if (prefs.reason === 'unsupported') {
       return {

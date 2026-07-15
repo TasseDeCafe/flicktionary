@@ -126,8 +126,7 @@ const androidInnerTubeTracks = async (videoId: string) => {
 // early in a cold load arming can fail; callers retry (script startup + the
 // 500 ms interval, which also re-arms on SPA navigations).
 let innerTubePrefetch:
-  | { videoId: string; promise: Promise<Awaited<ReturnType<typeof androidInnerTubeTracks>>> }
-  | undefined
+  { videoId: string; promise: Promise<Awaited<ReturnType<typeof androidInnerTubeTracks>>> } | undefined
 
 const armInnerTubePrefetch = () => {
   const videoId = inferVideoId()

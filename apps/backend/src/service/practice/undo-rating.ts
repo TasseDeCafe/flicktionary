@@ -18,8 +18,7 @@ export type UndoRatingDependencies = {
 }
 
 export type UndoRatingResult =
-  | { ok: true; undone: boolean }
-  | { ok: false; reason: 'lookup_not_found' | 'illegal_pool_skill' }
+  { ok: true; undone: boolean } | { ok: false; reason: 'lookup_not_found' | 'illegal_pool_skill' }
 
 // Revert one rating: restore the pool's SRS family from the event's prev_srs_*
 // snapshot and tombstone the event (reverted_at). The review budget refunds
