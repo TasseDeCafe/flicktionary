@@ -30,7 +30,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           # Pinned to the locally-used CLI version; bump alongside local updates.
-          version: 2.98.2
+          version: 2.109.1
 
       # The integration tests only need Postgres, GoTrue (auth/JWKS), Kong
       # (the admin API route test-utils uses to create users), PostgREST, and
