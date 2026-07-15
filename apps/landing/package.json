@@ -14,9 +14,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
-    "@tailwindcss/postcss": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "astro": "catalog:",
-    "postcss": "catalog:",
     "sharp": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
