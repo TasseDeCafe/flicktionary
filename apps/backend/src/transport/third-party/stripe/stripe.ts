@@ -3,5 +3,5 @@ import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '../../../config/environment-config'
 
 export const stripe = FEATURES.STRIPE
-  ? new Stripe(getConfig().stripeSecretKey, { apiVersion: '2026-03-25.dahlia' })
+  ? new Stripe(getConfig().stripeSecretKey, { apiVersion: '2026-06-24.dahlia' })
   : (null as unknown as Stripe)

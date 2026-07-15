@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@flicktionary/typescript-config": "workspace:*",
-    "@react-email/preview-server": "catalog:",
+    "@react-email/ui": "catalog:",
     "@types/cors": "catalog:",
     "@types/express": "catalog:",
     "@types/jsonwebtoken": "catalog:",
@@ -99,6 +99,7 @@
     "openapi-typescript": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",
+    "react-email": "catalog:",
     "supertest": "catalog:",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
