@@ -625,13 +625,11 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           }
         },
       },
-      ...RATE_VALUES.map(
-        (value, index): HotkeyBinding => ({
-          key: String(index + 1),
-          enabled: showingBack && !currentHintOutcome,
-          onPress: () => handleRate(value),
-        })
-      ),
+      ...RATE_VALUES.map((value, index): HotkeyBinding => ({
+        key: String(index + 1),
+        enabled: showingBack && !currentHintOutcome,
+        onPress: () => handleRate(value),
+      })),
       // Anki muscle memory: Space (or Enter) on the revealed back = Good.
       { key: 'space', enabled: showingBack && !currentHintOutcome, onPress: () => handleRate('good') },
       { key: 'enter', enabled: showingBack && !currentHintOutcome, onPress: () => handleRate('good') },
@@ -658,15 +656,13 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         onPress: () => setPeekBack((p) => p + 1),
       },
       { key: 'arrowright', enabled: isPeeking, onPress: () => setPeekBack((p) => Math.max(0, p - 1)) },
-      ...RATE_VALUES.map(
-        (value, index): HotkeyBinding => ({
-          key: String(index + 1),
-          enabled: peekRerateEnabled,
-          onPress: () => {
-            if (current) handleRerate(current, value)
-          },
-        })
-      ),
+      ...RATE_VALUES.map((value, index): HotkeyBinding => ({
+        key: String(index + 1),
+        enabled: peekRerateEnabled,
+        onPress: () => {
+          if (current) handleRerate(current, value)
+        },
+      })),
       { key: 'enter', enabled: isPeeking, onPress: () => setPeekBack(0) },
       { key: 'space', enabled: isPeeking, onPress: () => setPeekBack(0) },
       {

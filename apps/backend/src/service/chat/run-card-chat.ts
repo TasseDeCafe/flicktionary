@@ -355,12 +355,10 @@ export const runCardChat = async (
 
   const messages: Anthropic.MessageParam[] = [
     { role: 'user', content: seedWithSummary },
-    ...recent.map(
-      (m): Anthropic.MessageParam => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content,
-      })
-    ),
+    ...recent.map((m): Anthropic.MessageParam => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content,
+    })),
     { role: 'user', content: input.content },
   ]
 

@@ -307,8 +307,7 @@ export const SessionGlossSheet = ({
     // The dedup lookup reads synchronously from the cache, so we can settle the
     // preview-vs-saved mode (and thus `highlightId`) before any await.
     const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
-      | { data: CachedHighlight[] }
-      | undefined
+      { data: CachedHighlight[] } | undefined
     const cachedMatch = findCachedHighlight(cached?.data, selection)
     const match = cachedMatch?.id === locallyRemovedHighlightId ? null : cachedMatch
     setHighlightId(match ? match.id : null)

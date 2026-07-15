@@ -56,8 +56,7 @@ export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, showL1Not
   const regionalism = asString(extras.regionalism)
   const register = asString(extras.register)
   const registerAlternatives = extras.register_alternatives as
-    | { more_formal?: string | null; less_formal?: string | null }
-    | undefined
+    { more_formal?: string | null; less_formal?: string | null } | undefined
   const collocationsNode = renderInlineList(extras.collocations)
   const etymology = asString(extras.etymology)
   const l1Notes = showL1Notes ? asString(extras.l1_notes) : null

@@ -27,10 +27,7 @@ export const fetchExtensionConfig = async (noCache = false): Promise<ExtensionCo
   if (!noCache) {
     const result = await storage.get(['config'])
     const cachedConfig = (result ? result.config : undefined) as
-      | (ExtensionConfig & { ttl?: number })
-      | '-'
-      | null
-      | undefined
+      (ExtensionConfig & { ttl?: number }) | '-' | null | undefined
 
     if (cachedConfig === '-') {
       return undefined

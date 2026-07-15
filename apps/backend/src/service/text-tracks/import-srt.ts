@@ -21,8 +21,7 @@ export type ImportSrtInput = {
 // the system is fine, the file isn't). Infra failures throw and propagate to
 // the boundary.
 export type ImportSrtOutput =
-  | { ok: true; track: DbTextTrack; segmentCount: number; deduped: boolean }
-  | { ok: false; reason: 'parse_empty' }
+  { ok: true; track: DbTextTrack; segmentCount: number; deduped: boolean } | { ok: false; reason: 'parse_empty' }
 
 const normalizeForHash = (segments: { text: string; startMs: number; endMs: number }[]): string =>
   segments.map((s) => `${s.startMs}-${s.endMs}|${s.text}`).join('\n')

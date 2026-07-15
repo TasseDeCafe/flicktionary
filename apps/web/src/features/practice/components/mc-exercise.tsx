@@ -113,13 +113,11 @@ export const McExercise = ({
   const live = !result && !isPending
   useHotkeys(
     [
-      ...payload.options.map(
-        (_, index): HotkeyBinding => ({
-          key: String(index + 1),
-          enabled: live,
-          onPress: () => handleSelect(index),
-        })
-      ),
+      ...payload.options.map((_, index): HotkeyBinding => ({
+        key: String(index + 1),
+        enabled: live,
+        onPress: () => handleSelect(index),
+      })),
       { key: 'h', enabled: live && hintAvailable && !hintRevealed, onPress: () => setHintRevealed(true) },
       { key: 's', enabled: live, onPress: onNext },
       { key: 'escape', enabled: live, onPress: onNext },

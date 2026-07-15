@@ -1609,11 +1609,7 @@ export type Database = {
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind:
-        | 'enrich_highlight'
-        | 'discover_session'
-        | 'nominate_window'
-        | 'seed_card_chat'
-        | 'extract_lesson'
+        'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat' | 'extract_lesson'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
@@ -1623,33 +1619,12 @@ export type Database = {
         | 'requires_price_increase_consent'
         | 'has_already_renewed'
       revenuecat_store:
-        | 'amazon'
-        | 'app_store'
-        | 'mac_app_store'
-        | 'play_store'
-        | 'promotional'
-        | 'stripe'
-        | 'rc_billing'
-        | 'test_store'
+        'amazon' | 'app_store' | 'mac_app_store' | 'play_store' | 'promotional' | 'stripe' | 'rc_billing' | 'test_store'
       revenuecat_subscription_status:
-        | 'trialing'
-        | 'active'
-        | 'expired'
-        | 'in_grace_period'
-        | 'in_billing_retry'
-        | 'paused'
-        | 'unknown'
-        | 'incomplete'
+        'trialing' | 'active' | 'expired' | 'in_grace_period' | 'in_billing_retry' | 'paused' | 'unknown' | 'incomplete'
       srs_state: 'new' | 'learning' | 'review' | 'relearning'
       stripe_subscription_status:
-        | 'active'
-        | 'trialing'
-        | 'past_due'
-        | 'canceled'
-        | 'unpaid'
-        | 'incomplete_expired'
-        | 'incomplete'
-        | 'paused'
+        'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete_expired' | 'incomplete' | 'paused'
       subscription_interval: 'month' | 'year'
       text_track_source: 'opensubtitles' | 'upload' | 'paste' | 'url'
     }
@@ -1786,14 +1761,13 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof (DefaultSchema['Tables'] & DefaultSchema['Views']) | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1813,11 +1787,11 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1836,11 +1810,11 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1859,11 +1833,11 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1874,13 +1848,12 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

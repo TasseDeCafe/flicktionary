@@ -58,13 +58,11 @@ export const RecapMcExercise = ({
 
   useHotkeys(
     [
-      ...item.options.map(
-        (_, index): HotkeyBinding => ({
-          key: String(index + 1),
-          enabled: !answered,
-          onPress: () => handleSelect(index),
-        })
-      ),
+      ...item.options.map((_, index): HotkeyBinding => ({
+        key: String(index + 1),
+        enabled: !answered,
+        onPress: () => handleSelect(index),
+      })),
       { key: 's', enabled: !answered, onPress: onSkip },
       { key: 'escape', enabled: !answered, onPress: onSkip },
       { key: 'enter', enabled: answered, onPress: onNext },

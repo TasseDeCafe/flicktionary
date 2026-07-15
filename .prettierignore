@@ -3,3 +3,9 @@ playground
 dist
 copied-dist
 routeTree.gen.ts
+# Markdown is excluded: the specs/docs are read as plain text by agents, and
+# prettier's markdown parser (3.9+) makes rendering-faithful but text-changing
+# rewrites — wrapped prose lines starting with "+ " become "- ", spaces around
+# code spans get re-juggled, and embedded ```ts blocks get reformatted (which
+# mangles pseudo-code like extract<Code><Pos>(entry)).
+*.md

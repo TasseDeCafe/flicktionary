@@ -1,13 +1,5 @@
 import { spawn } from 'node:child_process'
-import {
-  createReadStream,
-  createWriteStream,
-  existsSync,
-  mkdirSync,
-  renameSync,
-  statSync,
-  unlinkSync,
-} from 'node:fs'
+import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, statSync, unlinkSync } from 'node:fs'
 import { createGunzip } from 'node:zlib'
 import { dirname, join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
@@ -110,12 +102,7 @@ const stripStress = (s: string): string => {
 
 // kaikki packs internal metadata into the same `forms[]` array as real surface
 // forms. Skip those — they're not lookup-able strings.
-const NON_FORM_TAGS = new Set([
-  'romanization',
-  'class',
-  'inflection-template',
-  'table-tags',
-])
+const NON_FORM_TAGS = new Set(['romanization', 'class', 'inflection-template', 'table-tags'])
 
 const isRealForm = (tags: unknown): boolean => {
   if (!Array.isArray(tags)) return true
@@ -216,11 +203,7 @@ const generateCsvs = async (gzPath: string): Promise<CsvOutputs> => {
   return { entriesCsv, formsCsv, entryCount, formCount, parseErrors, skippedNoWordOrPos, skippedWrongLang }
 }
 
-const loadCsvs = async (
-  connectionString: string,
-  entriesCsv: string,
-  formsCsv: string
-): Promise<void> => {
+const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: string): Promise<void> => {
   const sql = postgres(connectionString, { max: 1 })
   try {
     // Supabase's pooled `postgres` role has a short default statement_timeout
@@ -301,9 +284,7 @@ const loadCsvs = async (
 
 const main = async (): Promise<void> => {
   const envValue = process.env.SUPABASE_CONNECTION_STRING ?? ''
-  const connectionString = envValue.startsWith('postgresql://')
-    ? envValue
-    : DEFAULT_LOCAL_DEV_CONNECTION
+  const connectionString = envValue.startsWith('postgresql://') ? envValue : DEFAULT_LOCAL_DEV_CONNECTION
   console.log(`Connecting to ${connectionString.replace(/:[^:@]+@/, ':****@')}`)
 
   ensureCacheDir()
@@ -316,8 +297,7 @@ const main = async (): Promise<void> => {
     `✓ Generated ${out.entryCount.toLocaleString()} entries, ${out.formCount.toLocaleString()} forms in ${((Date.now() - tCsv) / 1000).toFixed(1)}s`
   )
   if (out.parseErrors > 0) console.warn(`  ⚠ ${out.parseErrors} JSONL lines failed to parse`)
-  if (out.skippedNoWordOrPos > 0)
-    console.warn(`  ⚠ ${out.skippedNoWordOrPos} entries skipped (missing word/pos)`)
+  if (out.skippedNoWordOrPos > 0) console.warn(`  ⚠ ${out.skippedNoWordOrPos} entries skipped (missing word/pos)`)
   console.log(`  Skipped ${out.skippedWrongLang.toLocaleString()} entries from non-loaded languages`)
 
   console.log('\nLoading into DB...')
@@ -368,9 +348,7 @@ const snapshotWiktionary = async (_connectionString: string): Promise<void> => {
     )
     proc.stdout.pipe(out)
     proc.on('error', reject)
-    proc.on('close', (code) =>
-      code === 0 ? resolve() : reject(new Error(`pg_dump exited with code ${code}`))
-    )
+    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`pg_dump exited with code ${code}`))))
   })
 
   if (existsSync(SNAPSHOT_PATH)) unlinkSync(SNAPSHOT_PATH)
