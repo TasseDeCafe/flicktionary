@@ -1,7 +1,7 @@
 {
   "name": "@flicktionary/native",
   "main": "expo-router/entry",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "test": "jest",
     "dev:tunnel": "APP_VARIANT=development doppler run --project native --config dev_personal -- expo start",

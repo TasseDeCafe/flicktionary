@@ -61,7 +61,7 @@ const config = {
     name: getAppName(),
     owner: 'fluencist',
     slug: 'flicktionary',
-    version: '0.0.3',
+    version: '0.0.4',
     orientation: 'portrait',
     icon: './src/assets/images/icon.png',
     scheme: 'flicktionary',
