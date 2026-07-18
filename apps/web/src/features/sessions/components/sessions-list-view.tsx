@@ -10,6 +10,7 @@ import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { GettingStartedChecklist } from './getting-started-checklist'
+import { CoverageCard } from '@/features/coverage/components/coverage-card'
 
 type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
@@ -60,6 +61,8 @@ export const SessionsListView = () => {
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
 
       <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
+
+      <CoverageCard />
 
       {isLoading && <FilterChipsSkeleton />}
 

@@ -10,7 +10,12 @@ import {
   OverlayDescription,
   OverlayFooter,
 } from '@/components/ui/responsive-overlay'
-import { useMarkKnownPreview, useMarkRemainingKnown, type SessionDifficulty } from '../api/sessions-hooks'
+import {
+  useMarkKnownPreview,
+  useMarkRemainingKnown,
+  useUnmarkKnownBySession,
+  type SessionDifficulty,
+} from '../api/sessions-hooks'
 import { useDifficultyLabelText } from '../hooks/use-difficulty-label-text'
 
 type Props = {
@@ -48,11 +53,17 @@ export const SessionDifficultySheet = ({
   const { data: wholePreview } = useMarkKnownPreview(sessionId, open)
   const { data: spanPreview } = useMarkKnownPreview(sessionId, open && hasPartialRead, furthestReadSegmentIndex)
   const { mutate: markRemainingKnown, isPending: isMarking } = useMarkRemainingKnown(sessionId)
+  const { mutate: unmarkBySession, isPending: isUnmarking } = useUnmarkKnownBySession(sessionId)
 
   const available = difficulty?.status === 'available' ? difficulty : undefined
   const wholeCount = wholePreview?.status === 'ready' ? wholePreview.markableLemmaCount : 0
   const spanCount = hasPartialRead && spanPreview?.status === 'ready' ? spanPreview.markableLemmaCount : 0
   const frequentUnknownCount = available?.frequentUnknownCount ?? 0
+  // Reported for EVERY preview status (a span sweep can create marks while
+  // the whole-text profile is pending/failed), so the correction surface
+  // never vanishes behind an unready preview.
+  const sessionMarkedCount = wholePreview?.sessionMarkedCount ?? 0
+  const isBusy = isMarking || isUnmarking
 
   const handleMarkKnown = (toSegmentIndex: number | null) => {
     markRemainingKnown(
@@ -60,7 +71,31 @@ export const SessionDifficultySheet = ({
       {
         onSuccess: (response) => {
           const markedCount = response.data.markedCount
-          toast.success(plural(markedCount, { one: '# word marked as known', other: '# words marked as known' }))
+          const sweepBatchId = response.data.sweepBatchId
+          toast.success(plural(markedCount, { one: '# word marked as known', other: '# words marked as known' }), {
+            // Sweep-exact: the batch id scopes the delete to exactly this
+            // press, so undoing sweep 2 never takes sweep 1's marks with it.
+            ...(sweepBatchId
+              ? {
+                  action: {
+                    label: t`Undo`,
+                    onClick: () => unmarkBySession({ sessionId, sweepBatchId }),
+                  },
+                }
+              : {}),
+          })
+        },
+      }
+    )
+  }
+
+  const handleUnmarkSession = () => {
+    unmarkBySession(
+      { sessionId },
+      {
+        onSuccess: (response) => {
+          const removedCount = response.data.removedCount
+          toast.success(plural(removedCount, { one: '# known mark removed', other: '# known marks removed' }))
         },
       }
     )
@@ -116,7 +151,7 @@ export const SessionDifficultySheet = ({
             <button
               type='button'
               className='text-muted-foreground hover:text-foreground w-fit text-sm underline underline-offset-2 disabled:opacity-50'
-              disabled={isMarking}
+              disabled={isBusy}
               onClick={() => handleMarkKnown(null)}
             >
               {plural(wholeCount, {
@@ -125,10 +160,27 @@ export const SessionDifficultySheet = ({
               })}
             </button>
           )}
+          {/* Session-wide correction for past sweeps (the toast Undo only
+              covers the press it followed). Demoted like the whole-text
+              action — it destroys claims, so it never competes with the
+              primary CTA. */}
+          {sessionMarkedCount > 0 && (
+            <button
+              type='button'
+              className='text-muted-foreground hover:text-foreground w-fit text-sm underline underline-offset-2 disabled:opacity-50'
+              disabled={isBusy}
+              onClick={handleUnmarkSession}
+            >
+              {plural(sessionMarkedCount, {
+                one: 'Un-mark the # word marked known from this session',
+                other: 'Un-mark the # words marked known from this session',
+              })}
+            </button>
+          )}
         </div>
 
         <OverlayFooter>
-          <Button variant='outline' size='xl' onClick={() => onOpenChange(false)} disabled={isMarking}>
+          <Button variant='outline' size='xl' onClick={() => onOpenChange(false)} disabled={isBusy}>
             {t`Close`}
           </Button>
           {/* While partially read, the primary slot belongs to the span sweep
@@ -139,7 +191,7 @@ export const SessionDifficultySheet = ({
               action above. */}
           {hasPartialRead
             ? spanCount > 0 && (
-                <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isMarking}>
+                <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isBusy}>
                   {isMarking
                     ? t`Marking…`
                     : plural(spanCount, {
@@ -149,7 +201,7 @@ export const SessionDifficultySheet = ({
                 </Button>
               )
             : wholeCount > 0 && (
-                <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isMarking}>
+                <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isBusy}>
                   {isMarking
                     ? t`Marking…`
                     : plural(wholeCount, {

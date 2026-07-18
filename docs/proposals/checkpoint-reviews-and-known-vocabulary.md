@@ -1,25 +1,28 @@
 # Checkpoint reviews, known vocabulary, and personalized difficulty
 
-> **Status: proposal — rollout phases 1 and 2 implemented.** Design for making
-> authentic content (sessions) feed the SRS and the coverage picture: explicit
-> checkpoint-based recognition reviews while reading/watching, known-vocabulary
-> marking (including never-practiced backlog terms), and a personalized
-> text-difficulty stat. Companion to
-> `docs/proposals/vocab-coverage-visualization.md` — shares its lemma/frequency
+> **Status: proposal — all three rollout phases implemented; one open
+> question remains.** Design for making authentic content (sessions) feed the
+> SRS and the coverage picture: explicit checkpoint-based recognition reviews
+> while reading/watching, known-vocabulary marking (including never-practiced
+> backlog terms), a personalized text-difficulty stat, and the whole-language
+> coverage grid. Companion to the (now archived)
+> `old-docs/vocab-coverage-visualization.md` — shares its lemma/frequency
 > assets and resolves several of its open questions (deltas recorded below).
-> Designed 2026-07-16/17. Phase 1 (checkpoint reviews + the backlog
-> known-assertion action) and phase 2 (`lemma_ranks` build + the difficulty
-> stat) are implemented — behavior specs in `docs/SRS.md` /
-> `docs/READER-SPEC.md` / `docs/DATA-MODEL.md` are the source of truth.
-> Phase 2 deltas vs this design: a minimal `known_lemmas` slice was pulled
-> forward from phase 3 (per-session mark-the-rest-known sweep + gloss-sheet
-> un-mark chip — without it P=0 for every unsaved word and the headline read
-> absurdly low); the track profile stores token-level candidate GROUPS with a
-> query-time max(P) ambiguity rule so coverage conserves mass; the difficulty
-> surfaces are session cards + the session header (the source-wizard surface
-> was skipped); surface-exact form-facet crediting stays deferred (open
-> question below). Phase 3 (the grid, claimed/verified split, bulk un-mark by
-> source) remains an unimplemented proposal.
+> Designed 2026-07-16/17. Phases 1 (checkpoint reviews + backlog
+> known-assertions), 2 (`lemma_ranks` build + difficulty stat + a
+> pulled-forward `known_lemmas` slice), and 3 (coverage grid + headline,
+> claimed/verified split, sweep-exact + session-wide bulk un-mark, daily
+> coverage snapshots) are ALL implemented — the behavior specs (`SPEC.md`
+> "Vocabulary coverage (dashboard)", `docs/SRS.md` §6b/6c,
+> `docs/READER-SPEC.md`, `docs/DATA-MODEL.md`) are the source of truth.
+> Phase 3 deltas vs this design: verification is defined by evidence type
+> (live good/easy on a meaning skill, explicit-or-checkpoint, structurally
+> excluding the assertion lane) rather than `was_introduction`; sweep undo
+> gained per-press `sweep_batch_id` provenance (progressive sweeps share one
+> `source_id`, so delete-by-source alone couldn't be a toast Undo); the
+> dashboard is ONE card with language chips, not per-language stacks; MWEs
+> count as distinct folded expressions. This doc stays a proposal only for
+> the single open question below (surface-exact form-facet crediting).
 
 ## Problem / motivation
 
@@ -490,7 +493,7 @@ TRUNCATE + reload per language:
     — the evidence is the explicit press, not playback position; web reader
     first is sequencing, not principle.
 
-## Deltas to `vocab-coverage-visualization.md`
+## Deltas to `old-docs/vocab-coverage-visualization.md`
 
 - `form_to_lemma` runtime table → replaced by the folded index over
   `wiktionary_forms` (decision 6); `lemma_ranks` unchanged (offline build
@@ -523,8 +526,9 @@ TRUNCATE + reload per language:
 ## Open questions
 
 - Does surface-exact form-facet crediting ship in v1 or later? (Still open
-  after phase 2 — deliberately deferred until phase 1's checkpoint matching
-  has real-world signal, since it widens the SRS write surface.)
+  after phase 3 — deliberately deferred until phase 1's checkpoint matching
+  has real-world signal, since it widens the SRS write surface. The only
+  remaining open item in this design.)
 - ~~Where the difficulty stat surfaces~~ — resolved in phase 2: session cards
   (incl. TV episode rows) + the session header with a detail sheet; the
   source-wizard surface was skipped (wizard-less YouTube/streaming sessions

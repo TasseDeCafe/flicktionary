@@ -30,6 +30,23 @@ body {
   font-family: 'Noto Sans', sans-serif;
 }
 
+/* Coverage-grid dot colors (features/coverage). One teal ramp where lightness
+   encodes knowledge strength — studied strongest, marked-known lighter,
+   unknown a recessive near-surface cell; the ordering mirrors (brightest =
+   strongest) in dark mode. CVD-validated pairs — change all three together,
+   not one in isolation. Read by the canvas renderers via getComputedStyle,
+   so they live as custom properties rather than Tailwind classes. */
+:root {
+  --coverage-dot-studied: #0f766e;
+  --coverage-dot-known: #2dd4bf;
+  --coverage-dot-unknown: #e2e8f0;
+}
+.dark {
+  --coverage-dot-studied: #2dd4bf;
+  --coverage-dot-known: #0f766e;
+  --coverage-dot-unknown: #1e293b;
+}
+
 @layer base {
   body {
     @apply bg-background text-foreground;

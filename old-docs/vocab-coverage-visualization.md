@@ -1,19 +1,17 @@
 # Vocabulary coverage visualization ("how much of the language do I know?")
 
-> **Status: proposal — data layer implemented, grid not.** A design for a
-> dashboard progression visualization: every lemma of the target language as a
-> dot, colored by knowledge state, with a token-coverage headline stat and a
-> per-text "mark all other words as known" action. Includes the results of the
-> ru/de feasibility spikes (2026-07-12) that validated the data pipeline.
-> Implemented via the checkpoint-reviews rollout phase 2: the `lemma_ranks`
-> build (a DB-side build over the loaded kaikki tables through
-> `checkpoint_fold` — superseding this doc's dump-CSV approach — plus a
-> `lemma_rank_builds` manifest; no separate `form_to_lemma` table, per the
-> checkpoint proposal's deltas), the `known_lemmas` table, and the per-session
-> mark-the-rest-known sweep + gloss-sheet un-mark chip. See
-> `docs/DATA-MODEL.md` / `docs/READER-SPEC.md` for as-built behavior. The
-> grid itself, the claimed/verified split, and bulk un-mark by source remain
-> unimplemented.
+> **Status: historical** (archived 2026-07-19). Fully shipped: the data layer
+> via the checkpoint-reviews rollout phase 2 (`lemma_ranks` build,
+> `known_lemmas`, mark-the-rest sweep + gloss un-mark chip — PRs #274–#280)
+> and the grid + coverage headline + claimed/verified split + bulk un-mark by
+> source via phase 3 (PR #281 backend, plus the web PR). Superseded by the
+> as-built specs: `SPEC.md` "Vocabulary coverage (dashboard)",
+> `docs/DATA-MODEL.md`, `docs/READER-SPEC.md`, `docs/SRS.md` §6c. Kept for
+> the spike results (2026-07-12) and design rationale. Deltas vs this design
+> are recorded in the companion
+> `docs/proposals/checkpoint-reviews-and-known-vocabulary.md` — notably: no
+> `form_to_lemma` table, one card with language chips (not a per-language
+> stack), and MWEs counted as distinct folded expressions.
 
 ## Problem / motivation
 
