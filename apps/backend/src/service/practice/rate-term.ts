@@ -86,6 +86,12 @@ export const applyTermRating = async (params: {
   // Lesson-import provenance for the event row; set only on the implicit
   // 'again' lapses a confirmed import applies (excluded from review budgets).
   importBatchId?: string
+  // Checkpoint-review provenance: the session whose span was collected and the
+  // checkpoint press batch-applying this credit (the batch-undo handle).
+  // importBatchId stays unset on checkpoint credits, so they consume the
+  // daily review budget — completed review work replaces flashcard load.
+  studySessionId?: string
+  checkpointId?: string
   deps: RateTermDependencies
 }): Promise<ApplyTermRatingResult> => {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
@@ -177,6 +183,8 @@ export const applyTermRating = async (params: {
         causedParking: parked,
         practiceTextId: params.practiceTextId ?? null,
         importBatchId: params.importBatchId ?? null,
+        studySessionId: params.studySessionId ?? null,
+        checkpointId: params.checkpointId ?? null,
         headword: lookup.headword,
         sense: lookup.sense ?? '',
         prevSrsState: prev.state,

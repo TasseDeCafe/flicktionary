@@ -111,6 +111,18 @@ const listByIndexRange = async (
   `) as DbTextSegment[]
 }
 
+// The track's real maximum segment index, or null for an empty track. The
+// checkpoint collector clamps client-supplied indexes to this so a crafted
+// large index can't burn the monotonic reviewed-until pointer past the end.
+const getMaxIndexForTrack = async (textTrackId: string): Promise<number | null> => {
+  const rows = (await sql`
+    SELECT MAX(index)::int AS max_index
+    FROM public.text_segments
+    WHERE text_track_id = ${textTrackId}
+  `) as Array<{ max_index: number | null }>
+  return rows[0]?.max_index ?? null
+}
+
 const listAroundIndex = async (textTrackId: string, centerIndex: number, radius: number): Promise<DbTextSegment[]> => {
   return (await sql`
     SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
@@ -162,6 +174,7 @@ export interface TextSegmentsRepositoryInterface {
   searchInTrack: (textTrackId: string, language: string, query: string) => Promise<DbTextSegment[]>
   findById: (id: string) => Promise<DbTextSegment | null>
   listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
+  getMaxIndexForTrack: (textTrackId: string) => Promise<number | null>
   listAroundIndex: (textTrackId: string, centerIndex: number, radius: number) => Promise<DbTextSegment[]>
   appendSegmentAtomic: (
     params: {
@@ -182,6 +195,7 @@ export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {
     searchInTrack,
     findById,
     listByIndexRange,
+    getMaxIndexForTrack,
     listAroundIndex,
     appendSegmentAtomic,
   }

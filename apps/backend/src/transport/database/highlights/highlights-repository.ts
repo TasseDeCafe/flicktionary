@@ -74,6 +74,26 @@ const findById = async (id: string): Promise<DbHighlight | null> => {
   return result[0] ?? null
 }
 
+export type HighlightSelectionSpan = {
+  selection_text: string
+  segment_index: number
+}
+
+// Every highlight's selection text with its starting segment's track-relative
+// index — the checkpoint collector's suppression input (a term the user
+// highlighted was looked up, so its implicit credit is suppressed; the WHOLE
+// session's spans additionally exclude just-saved terms from the backlog
+// claim list). Selections spanning segments are anchored to their start
+// segment: suppression tokenizes the full selection text regardless.
+const listSelectionSpansBySession = async (studySessionId: string): Promise<HighlightSelectionSpan[]> => {
+  return (await sql`
+    SELECT h.selection_text, s.index AS segment_index
+    FROM public.highlights h
+    JOIN public.text_segments s ON s.id = h.start_segment_id
+    WHERE h.study_session_id = ${studySessionId}
+  `) as HighlightSelectionSpan[]
+}
+
 const updateFastGloss = async (id: string, fastGloss: string): Promise<void> => {
   await sql`
     UPDATE public.highlights SET fast_gloss = ${fastGloss} WHERE id = ${id}
@@ -164,6 +184,7 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
 export interface HighlightsRepositoryInterface {
   insertHighlight: (params: HighlightInsertParams, executor?: postgres.Sql) => Promise<DbHighlight>
   listBySessionId: (studySessionId: string) => Promise<DbHighlightWithChunk[]>
+  listSelectionSpansBySession: (studySessionId: string) => Promise<HighlightSelectionSpan[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>
   updateNoteAndTags: (
@@ -180,6 +201,7 @@ export const HighlightsRepository = (): HighlightsRepositoryInterface => {
   return {
     insertHighlight,
     listBySessionId,
+    listSelectionSpansBySession,
     findById,
     updateFastGloss,
     updateNoteAndTags,

@@ -68,6 +68,11 @@ study_session
   furthest_read_segment_index int? -- resume-reading position: deepest segment index the
                                    -- reader has reached (track-relative, monotonic).
                                    -- NULL until they scroll a normal session view.
+  reviewed_until_segment_index int? -- checkpoint-review pointer: deepest segment index
+                                   -- the user explicitly collected reviews up to
+                                   -- (docs/SRS.md §6b). Monotonic; NULL until the first
+                                   -- press; checkpoint undo is the only exact
+                                   -- (non-monotonic) restore.
   created_at          timestamptz
   deleted_at          timestamptz? -- soft-delete; "Remove" hides the session from
                                    -- the list. Cards / segments / content_source
@@ -259,6 +264,12 @@ user_lookup                          -- cross-source dedup + canonical user voca
   encounter_count     int default 1 -- bumped by the same boundaries, 1-hour collapse
                                     -- window (retries can't inflate it). >= 2 = tier-1
                                     -- "revealed demand" in the new-term queue.
+                                    -- NEVER bumped by checkpoint passes.
+  content_encounter_count int default 0 -- checkpoint-review aggregate: how many collected
+                                    -- spans this term appeared in (recordContentEncounter;
+                                    -- also refreshes last_encountered_at). No
+                                    -- per-occurrence log; not reverted on checkpoint undo.
+  last_content_encounter_at timestamptz?
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)
@@ -335,6 +346,14 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
                                     -- applies. Budget queries add
                                     -- import_batch_id IS NULL, so an import never
                                     -- eats the day's review allowance
+  study_session_id    uuid? -> study_session.id (ON DELETE SET NULL)
+                                    -- checkpoint-review provenance: the session whose
+                                    -- span was collected (docs/SRS.md §6b).
+                                    -- import_batch_id stays NULL on checkpoint credits,
+                                    -- so they DO consume the daily review budget.
+  checkpoint_id       uuid? -> study_session_checkpoints.id (ON DELETE SET NULL)
+                                    -- the press that batch-applied this event; the
+                                    -- batch-undo handle (partial index WHERE NOT NULL)
   headword            text
   sense               text
   prev_srs_state      srs_state?    -- pre-rating snapshot of the rated facet
@@ -348,6 +367,23 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
   reverted_at         timestamptz?  -- undo tombstone: reverted events stay
                                     -- (append-only) but leave every budget count
   rated_at            timestamptz
+
+study_session_checkpoints            -- one row per checkpoint press ("I've followed up
+                                     -- to here", docs/SRS.md §6b). The batch-undo
+                                     -- handle (rating events reference it via
+                                     -- checkpoint_id) and the server-authoritative
+                                     -- backlog claim set for the known-assertion sheet.
+  id                  uuid pk
+  user_id             uuid
+  study_session_id    uuid -> study_session.id (ON DELETE CASCADE)
+  from_segment_index  int?          -- the reviewed-until pointer BEFORE this press;
+                                    -- NULL = pointer was NULL (undo restores NULL)
+  to_segment_index    int           -- clamped to the track's real max index
+  credited_count      int
+  backlog_candidate_ids uuid[]      -- user_lookup ids offered as backlog known-assertion
+                                    -- candidates; assert-known verifies membership here
+  created_at          timestamptz
+  reverted_at         timestamptz?  -- checkpoint undo tombstone
 
 teacher_profiles                     -- lesson-import: stored per-teacher format
                                      -- descriptions (user-editable prose injected

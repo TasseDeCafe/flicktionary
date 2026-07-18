@@ -563,6 +563,83 @@ On **advance**:
   demotion, dormant term) keeps its history but must not be advanced, or introduced, by
   the implicit pass.
 
+## 6b. Checkpoint reviews (real sessions)
+
+Reading mode's implicit-goods contract extended to real sessions (movies, texts,
+YouTube): an explicit checkpoint press — the reader-footer "I've followed up to
+here" button, or the extension overlay's checkpoint button — credits an implicit
+`good` to every saved term appearing in the newly-read span whose recognition
+facet is review-state and due. **Nothing is ever credited automatically**;
+skimming or rewatching changes nothing. Service:
+`apps/backend/src/service/checkpoint/`; endpoints live on the study-sessions
+contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
+
+- **Pointer.** `study_sessions.reviewed_until_segment_index` — monotonic, NULL
+  until the first press, parallel to `furthest_read_segment_index` (which stays
+  a pure scroll tracker). Each press credits only the span
+  `(reviewed_until, toSegmentIndex]`; the server clamps `toSegmentIndex` to the
+  track's real max index. Undo is the only non-monotonic write (exact restore,
+  including NULL for a first checkpoint).
+- **Language gate.** Hard-gated to `KAIKKI_LANGUAGES` (loaded wiktionary
+  dumps — ru/en/de today). No degraded fallback: collect returns
+  UNPROCESSABLE_ENTITY (`UNSUPPORTED_LANGUAGE`), preview reports
+  `supported: false`, and the UI hides the affordances.
+- **Matching.** Span segments tokenize server-side with the same
+  `Intl.Segmenter` wrapper the reader uses; both sides of every comparison fold
+  through `checkpoint_fold` / `foldCheckpointToken` (byte-pinned twins — see
+  `docs/DATA-MODEL.md`). Tokens resolve to real-lemma headwords through three
+  arms (inflected-form join, direct headword hit, stub redirects); the user's
+  vocab folds via `foldUserHeadwordCandidates` (en strips leading `to `, de
+  `sich `) and intersects with the span's lemma set. Ambiguous forms credit
+  every saved candidate. When the user holds 2+ saved senses of one matched
+  headword, a Haiku pass (`checkpointSensePass`) picks the sense used — before
+  lane partitioning, so a rejected sense can neither credit nor surface as
+  backlog; a pass failure drops those headwords (conservative).
+- **Lanes** (strength of evidence must match strength of the write):
+  - review-state (`new`/`review`), due, enabled, `ready`, unparked → implicit
+    `good` (`was_explicit = false`), the same predicate as the review-budget
+    count;
+  - review-state not due, learning/relearning, disabled, `pending_data`, or
+    missing recognition facet → nothing (encounter aggregates only);
+  - leech-parked → excluded entirely (weak contextual evidence never overrides
+    the rehab loop);
+  - never-introduced (`srs_state IS NULL`, incl. onboarding-parked) → offered
+    as backlog known-assertion candidates
+    (`study_session_checkpoints.backlog_candidate_ids`), excluding terms
+    highlighted anywhere in the session or glossed in the span.
+- **Suppression, never punishment.** A term glossed (preview glosses included —
+  client-tracked `previewedSpans`, since the gloss endpoint is stateless) or
+  highlighted inside the span has its credit suppressed — never converted to an
+  inferred `hard`/`again`. "Looking is free" must not become "looking is
+  punished".
+- **Budget.** Checkpoint credits leave `import_batch_id` NULL, so they count
+  toward the daily review budget — completed review work replaces that day's
+  flashcard load. The budget can never *block* a checkpoint (only the served
+  queue is budget-gated). Provenance: `practice_rating_events.study_session_id`
+  + `checkpoint_id`.
+- **Encounters.** Every matched term (all lanes) gets
+  `recordContentEncounter`: bumps `last_encountered_at` (the 90-day new-term
+  decay never shelves a term the user just read) plus
+  `content_encounter_count` / `last_content_encounter_at`, but NEVER
+  `encounter_count` (tier-1 revealed demand stays reserved for deliberate
+  re-saves). Not reverted on undo (accepted noise).
+- **Concurrency.** Matching and the sense pass run outside the write
+  transaction; the transaction re-locks the session pointer (`FOR UPDATE` —
+  mismatch ⇒ 409 CONFLICT, client refetches and retries), reloads the
+  creditable facets and re-validates the full predicate on fresh rows (a
+  rating that landed during the LLM call skips that facet), then credits,
+  advances the pointer, and records encounters atomically.
+- **Undo.** One checkpoint = one batch: only the session's latest LIVE
+  checkpoint may be undone (stale ⇒ `{undone:false}` no-op, never an error).
+  Per event the latest-live-event-per-facet invariant is re-checked; facets
+  rated again since are skipped (partial undo, counts reported). The pointer
+  restores exactly (incl. NULL); budgets refund via the `reverted_at` filters.
+- **Preview.** `getCheckpointPreview` (GET) powers the footer badge: counts the
+  would-be credits/backlog for a span without writing. It cannot see the
+  client's previewed-gloss spans and skips the sense pass (multi-sense counted
+  optimistically) — a documented slight overcount; the collect toast shows the
+  real number.
+
 ## 7. Parking + scaffolded exercises: leech rehab AND warm-up
 
 "Park a term and serve it scaffolded gate exercises until it graduates back into FSRS" is

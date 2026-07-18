@@ -431,6 +431,100 @@ const recordEncounter = async (userLookupIds: string[], executor: postgres.Sql =
   `
 }
 
+// Aggregate evidence of a term passing in real content (a collected
+// checkpoint span). Bumps last_encountered_at (so the 90-day new-term decay
+// never shelves a term the user just read) and the content-encounter
+// aggregates, but NEVER encounter_count — tier-1 "revealed demand" stays
+// reserved for deliberate re-saves (recordEncounter above). No collapse
+// window: the reviewed-until pointer is monotonic, so the same span can't be
+// re-collected. Not reverted on checkpoint undo (accepted noise).
+const recordContentEncounter = async (userLookupIds: string[], executor: postgres.Sql = sql): Promise<void> => {
+  if (userLookupIds.length === 0) return
+  await executor`
+    UPDATE public.user_lookups
+    SET last_encountered_at = NOW(),
+        content_encounter_count = content_encounter_count + 1,
+        last_content_encounter_at = NOW()
+    WHERE id = ANY(${userLookupIds}::uuid[])
+  `
+}
+
+// The recognition-citation facet state the checkpoint matcher partitions on.
+// null facet = the term has no (meaning_recognition, '') row at all (e.g. a
+// production-only study intent) — encounter-only.
+export type CheckpointVocabFacet = {
+  srs_state: SrsState | null
+  srs_due: string | null
+  leech_parked_at: string | null
+  disabled_at: string | null
+  data_status: 'ready' | 'pending_data'
+}
+
+export type CheckpointVocabRow = {
+  lookup: DbUserLookup
+  facet: CheckpointVocabFacet | null
+}
+
+// The user's full live vocabulary for one language, LEFT JOINed with the
+// citation recognition facet — the checkpoint collector's matching input. The
+// vocab side is the small side of the match (spans join wiktionary in SQL;
+// headwords fold in TS), so this intentionally returns every kept term.
+const listCheckpointVocab = async (params: {
+  userId: string
+  targetLanguage: string
+}): Promise<CheckpointVocabRow[]> => {
+  const rows = (await sql`
+    SELECT ul.*,
+      (f.user_lookup_id IS NOT NULL) AS facet_exists,
+      f.srs_state AS facet_srs_state,
+      f.srs_due AS facet_srs_due,
+      f.leech_parked_at AS facet_leech_parked_at,
+      f.disabled_at AS facet_disabled_at,
+      f.data_status AS facet_data_status
+    FROM public.user_lookups ul
+    LEFT JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id
+      AND f.skill = 'meaning_recognition'
+      AND f.target_form = ${CITATION_FORM}
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+  `) as Array<
+    DbUserLookup & {
+      facet_exists: boolean
+      facet_srs_state: SrsState | null
+      facet_srs_due: string | null
+      facet_leech_parked_at: string | null
+      facet_disabled_at: string | null
+      facet_data_status: 'ready' | 'pending_data' | null
+    }
+  >
+  return rows.map((row) => {
+    const {
+      facet_exists,
+      facet_srs_state,
+      facet_srs_due,
+      facet_leech_parked_at,
+      facet_disabled_at,
+      facet_data_status,
+      ...lookup
+    } = row
+    return {
+      lookup,
+      facet: facet_exists
+        ? {
+            srs_state: facet_srs_state,
+            srs_due: facet_srs_due,
+            leech_parked_at: facet_leech_parked_at,
+            disabled_at: facet_disabled_at,
+            data_status: facet_data_status ?? 'ready',
+          }
+        : null,
+    }
+  })
+}
+
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
 // pass an explicit empty string or the corresponding clear flag.
@@ -2087,6 +2181,8 @@ export interface UserLookupsRepositoryInterface {
     executor?: postgres.Sql
   ) => Promise<DbUserLookup>
   recordEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
+  recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
+  listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
   listByHeadwords: (params: {
     userId: string
     targetLanguage: string
@@ -2218,6 +2314,8 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findPotentialExistingSensesByHeadwords,
     findOrCreate,
     recordEncounter,
+    recordContentEncounter,
+    listCheckpointVocab,
     listByHeadwords,
     updateContent,
     applyGroundingPatch,

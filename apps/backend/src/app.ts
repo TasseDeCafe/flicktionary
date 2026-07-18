@@ -71,6 +71,8 @@ import { PracticeExercisesRepository } from './transport/database/practice-exerc
 import { PracticeRatingEventsRepository } from './transport/database/practice-rating-events/practice-rating-events-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
+import { WiktionaryMatchRepository } from './transport/database/wiktionary-entries/wiktionary-match-repository'
+import { StudySessionCheckpointsRepository } from './transport/database/study-sessions/study-session-checkpoints-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { GhostCandidatesRepository } from './transport/database/ghost-candidates/ghost-candidates-repository'
 import { NominatedWindowsRepository } from './transport/database/nominated-windows/nominated-windows-repository'
@@ -386,6 +388,20 @@ export const buildApp = ({
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
+  const checkpointDependencies = {
+    studySessionsRepository,
+    studySessionCheckpointsRepository: StudySessionCheckpointsRepository(),
+    textSegmentsRepository,
+    highlightsRepository,
+    userLookupsRepository,
+    studyFacetsRepository,
+    practiceRatingEventsRepository,
+    userTargetLanguagePrefsRepository,
+    wiktionaryMatchRepository: WiktionaryMatchRepository(),
+    anthropicPasses,
+    withTransaction,
+  }
+
   app.use(
     API_V1,
     StudySessionsRouter(
@@ -394,7 +410,8 @@ export const buildApp = ({
       userTargetLanguagePrefsRepository,
       processingJobsRepository,
       highlightsRepository,
-      anthropicPasses
+      anthropicPasses,
+      checkpointDependencies
     )
   )
   app.use(

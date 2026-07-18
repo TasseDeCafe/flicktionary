@@ -73,6 +73,24 @@ const getFacet = async (params: FacetAddress, executor: postgres.Sql = sql): Pro
   return result[0] ?? null
 }
 
+// Batch variant of getFacet for one (skill, targetForm) across many terms —
+// the checkpoint collector's in-transaction reload (it re-validates the
+// creditable predicate on fresh rows right before rating, so a rating that
+// landed between match and commit is caught).
+const listFacetsByLookupIds = async (
+  params: { userLookupIds: string[]; skill: FacetSkill; targetForm: string },
+  executor: postgres.Sql = sql
+): Promise<DbStudyFacet[]> => {
+  if (params.userLookupIds.length === 0) return []
+  return (await executor`
+    SELECT *
+    FROM public.study_facets
+    WHERE user_lookup_id = ANY(${params.userLookupIds}::uuid[])
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+  `) as DbStudyFacet[]
+}
+
 // Idempotently create the citation recognition facet for a kept term. The
 // denormalized user_id / target_language are pulled from the term row so the
 // caller only needs the lookup id. ON CONFLICT DO NOTHING makes a re-keep or a
@@ -567,6 +585,10 @@ const unparkAndSoftReentryFacet = async (
 
 export interface StudyFacetsRepositoryInterface {
   getFacet: (params: FacetAddress, executor?: postgres.Sql) => Promise<DbStudyFacet | null>
+  listFacetsByLookupIds: (
+    params: { userLookupIds: string[]; skill: FacetSkill; targetForm: string },
+    executor?: postgres.Sql
+  ) => Promise<DbStudyFacet[]>
   ensureCitationFacet: (userLookupId: string, executor?: postgres.Sql) => Promise<void>
   ensureFacet: (
     params: FacetAddress & {
@@ -649,6 +671,7 @@ export { ensureCitationFacet, ensureDefaultCitationFacetIfUnconfigured, ensureFa
 
 export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   getFacet,
+  listFacetsByLookupIds,
   ensureCitationFacet,
   ensureFacet,
   initializeCitationFacetIfUnderDailyCap,

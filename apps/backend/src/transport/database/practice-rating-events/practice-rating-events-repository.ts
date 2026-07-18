@@ -29,6 +29,12 @@ export type InsertRatingEventInput = {
   // confirmed import applies. Marked events are excluded from the daily
   // review budget (a big import must not eat the day's allowance).
   importBatchId?: string | null
+  // Checkpoint-review provenance: the session the span was read in, and the
+  // checkpoint press that batch-applied this event (the batch-undo handle).
+  // import_batch_id stays NULL on checkpoint credits, so they count toward
+  // the daily review budget.
+  studySessionId?: string | null
+  checkpointId?: string | null
   // Audit snapshots that survive renames.
   headword: string
   sense: string
@@ -65,6 +71,8 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       caused_parking,
       practice_text_id,
       import_batch_id,
+      study_session_id,
+      checkpoint_id,
       headword,
       sense,
       prev_srs_state,
@@ -89,6 +97,8 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.causedParking},
       ${params.practiceTextId},
       ${params.importBatchId ?? null},
+      ${params.studySessionId ?? null},
+      ${params.checkpointId ?? null},
       ${params.headword},
       ${params.sense},
       ${params.prevSrsState},
@@ -130,6 +140,26 @@ const findLatestLiveEventForUndo = async (
     FOR UPDATE
   `) as DbPracticeRatingEvent[]
   return rows[0] ?? null
+}
+
+// All live (non-reverted) events one checkpoint press applied, in one lane:
+// wasExplicit=false → the implicit credits (checkpoint undo), true → the
+// known-assertion events (assertion undo). The two lanes share checkpoint_id
+// but revert independently. Ordered oldest-first for deterministic batch
+// processing.
+const listLiveEventsForCheckpoint = async (
+  params: { checkpointId: string; userId: string; wasExplicit: boolean },
+  executor: postgres.Sql = sql
+): Promise<DbPracticeRatingEvent[]> => {
+  return (await executor`
+    SELECT *
+    FROM public.practice_rating_events
+    WHERE checkpoint_id = ${params.checkpointId}
+      AND user_id = ${params.userId}
+      AND was_explicit = ${params.wasExplicit}
+      AND reverted_at IS NULL
+    ORDER BY rated_at ASC, id ASC
+  `) as DbPracticeRatingEvent[]
 }
 
 // Tombstone an event after its snapshot has been restored. The
@@ -230,6 +260,10 @@ export interface PracticeRatingEventsRepositoryInterface {
     params: { userId: string; userLookupId: string; skill: FacetSkill; targetForm: string },
     executor?: postgres.Sql
   ) => Promise<DbPracticeRatingEvent | null>
+  listLiveEventsForCheckpoint: (
+    params: { checkpointId: string; userId: string; wasExplicit: boolean },
+    executor?: postgres.Sql
+  ) => Promise<DbPracticeRatingEvent[]>
   markReverted: (params: { eventId: string; userId: string }, executor?: postgres.Sql) => Promise<void>
   countReviewBudgetConsumedToday: (params: {
     userId: string
@@ -247,6 +281,7 @@ export const PracticeRatingEventsRepository = (): PracticeRatingEventsRepository
   return {
     insert,
     findLatestLiveEventForUndo,
+    listLiveEventsForCheckpoint,
     markReverted,
     countReviewBudgetConsumedToday,
     countReviewBudgetConsumedTodayByLanguage,
