@@ -535,6 +535,44 @@ query-side tokens fold through the byte-pinned TS twin
 integration test). A "real lemma" for matching purposes has
 `data ? 'head_templates'` and is neither a form-of nor an alt-of stub.
 
+### Lemma frequency ranks
+
+The per-language frequency-ranked lemma list backing the personalized
+difficulty stat (and, later, the coverage grid). Built offline by
+`apps/backend/scripts/build-lemma-ranks.ts` from a pinned wordfreq export
+(`scripts/export-wordfreq.py`) resolved against the loaded kaikki tables
+through `checkpoint_fold` (byte-for-byte fold parity with the runtime
+matcher). Backend reads only; RLS enabled with no policies.
+
+```
+lemma_ranks
+  target_language     text         -- pk (target_language, lemma)
+  lemma               text         -- checkpoint_fold-folded — the canonical
+                                   -- lemma key shared with the matcher
+  rank                int          -- 1 = most frequent; indexed
+                                   -- (target_language, rank)
+  freq_mass           double precision  -- summed corpus-frequency mass
+
+lemma_rank_builds                  -- build manifest, one row per language,
+  target_language     text  pk     -- upserted in the same tx as each build.
+  version             int          -- increments per publish; swaps are
+                                   -- explicit events
+  built_at            timestamptz
+  wordfreq_version    text
+  row_count           int
+  mass_matched_pct    double precision  -- acceptance metric (build fails
+                                        -- loud below 95%)
+```
+
+A language is "supported" for difficulty only when it is in
+`KAIKKI_LANGUAGES` **and** has a `lemma_rank_builds` row — KAIKKI membership
+alone would claim support against an empty ranks table between deploy and the
+one-off prod build. Ambiguous surface forms split their mass across candidate
+lemmas weighted by each candidate's own corpus frequency (never evenly);
+`pos = 'character'` entries and multi-word lemmas are excluded; German
+capitalized lemmas competing with their lowercase twin for the same form are
+discounted ×0.02 (wordfreq is caseless).
+
 ## Card output template
 
 Cards have two tiers of data:
