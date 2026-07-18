@@ -492,6 +492,33 @@ export type Database = {
           },
         ]
       }
+      known_lemmas: {
+        Row: {
+          lemma: string
+          marked_at: string
+          source: string
+          source_id: string | null
+          target_language: string
+          user_id: string
+        }
+        Insert: {
+          lemma: string
+          marked_at?: string
+          source: string
+          source_id?: string | null
+          target_language: string
+          user_id: string
+        }
+        Update: {
+          lemma?: string
+          marked_at?: string
+          source?: string
+          source_id?: string | null
+          target_language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lemma_rank_builds: {
         Row: {
           built_at: string

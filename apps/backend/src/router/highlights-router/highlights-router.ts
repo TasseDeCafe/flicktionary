@@ -25,6 +25,9 @@ import { FastGloss, parseFastGlossText } from '../../transport/third-party/anthr
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
+import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import type { KnownLemmasRepositoryInterface } from '../../transport/database/known-lemmas/known-lemmas-repository'
+import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
@@ -76,7 +79,9 @@ export const HighlightsRouter = (
   processingJobsRepository: ProcessingJobsRepositoryInterface,
   ghostCandidatesRepository: GhostCandidatesRepositoryInterface,
   noteOnlyDependencies: CreateNoteOnlyHighlightDependencies,
-  anthropicPasses: AnthropicPassesInterface
+  anthropicPasses: AnthropicPassesInterface,
+  wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface,
+  knownLemmasRepository: KnownLemmasRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -351,6 +356,10 @@ export const HighlightsRouter = (
       // convention as glosses.fastGloss); only English needs the pref read.
       const dialect =
         session.target_language === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : ('ga' as const)
+      const knownLemmaCandidates = await getKnownLemmaCandidates(
+        { userId, targetLanguage: session.target_language, selectionText: highlight.selection_text },
+        { wiktionaryMatchRepository, knownLemmasRepository }
+      )
       if (highlight.fast_gloss) {
         const cachedGloss = parseFastGloss(highlight.fast_gloss)
         const ipaResult = await lookupFastGlossIpa({
@@ -366,6 +375,7 @@ export const HighlightsRouter = (
             ipa,
             ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null,
             ipaLemma: ipaResult?.lemma ?? null,
+            knownLemmaCandidates,
           },
         }
       }
@@ -418,6 +428,7 @@ export const HighlightsRouter = (
           ipa,
           ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
+          knownLemmaCandidates,
         },
       }
     }),

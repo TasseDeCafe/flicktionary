@@ -72,6 +72,8 @@ import { PracticeRatingEventsRepository } from './transport/database/practice-ra
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { WiktionaryMatchRepository } from './transport/database/wiktionary-entries/wiktionary-match-repository'
+import { KnownLemmasRepository } from './transport/database/known-lemmas/known-lemmas-repository'
+import { TextTrackLemmaProfilesRepository } from './transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { StudySessionCheckpointsRepository } from './transport/database/study-sessions/study-session-checkpoints-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { GhostCandidatesRepository } from './transport/database/ghost-candidates/ghost-candidates-repository'
@@ -391,6 +393,8 @@ export const buildApp = ({
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
+  const wiktionaryMatchRepository = WiktionaryMatchRepository()
+  const knownLemmasRepository = KnownLemmasRepository()
   const checkpointDependencies = {
     studySessionsRepository,
     studySessionCheckpointsRepository: StudySessionCheckpointsRepository(),
@@ -400,9 +404,17 @@ export const buildApp = ({
     studyFacetsRepository,
     practiceRatingEventsRepository,
     userTargetLanguagePrefsRepository,
-    wiktionaryMatchRepository: WiktionaryMatchRepository(),
+    wiktionaryMatchRepository,
     anthropicPasses,
     withTransaction,
+  }
+  const markKnownDependencies = {
+    studySessionsRepository,
+    textTracksRepository,
+    textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepository(),
+    userLookupsRepository,
+    knownLemmasRepository,
+    processingJobsRepository,
   }
 
   app.use(
@@ -415,7 +427,8 @@ export const buildApp = ({
       textTracksRepository,
       highlightsRepository,
       anthropicPasses,
-      checkpointDependencies
+      checkpointDependencies,
+      markKnownDependencies
     )
   )
   app.use(
@@ -430,7 +443,9 @@ export const buildApp = ({
       processingJobsRepository,
       ghostCandidatesRepository,
       noteOnlyHighlightDependencies,
-      anthropicPasses
+      anthropicPasses,
+      wiktionaryMatchRepository,
+      knownLemmasRepository
     )
   )
   app.use(
@@ -479,7 +494,14 @@ export const buildApp = ({
   }
   app.use(
     API_V1,
-    GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository, anthropicPasses)
+    GlossesRouter(
+      usersRepository,
+      userTargetLanguagePrefsRepository,
+      wiktionaryEntriesRepository,
+      anthropicPasses,
+      wiktionaryMatchRepository,
+      knownLemmasRepository
+    )
   )
   app.use(
     API_V1,

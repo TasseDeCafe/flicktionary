@@ -19,6 +19,11 @@ import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
+import {
+  computeMarkableLemmas,
+  markRemainingKnown,
+  type MarkRemainingKnownDependencies,
+} from '../../service/known-lemmas/mark-remaining-known'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import {
   collectCheckpoint,
@@ -89,7 +94,8 @@ export const StudySessionsRouter = (
   textTracksRepository: TextTracksRepositoryInterface,
   highlightsRepository: HighlightsRepositoryInterface,
   anthropicPasses: AnthropicPassesInterface,
-  checkpointDependencies: CheckpointDependencies
+  checkpointDependencies: CheckpointDependencies,
+  markKnownDependencies: MarkRemainingKnownDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -385,6 +391,56 @@ export const StudySessionsRouter = (
         })
       }
       return { data: { accepted: true as const } }
+    }),
+
+    getMarkKnownPreview: implementer.getMarkKnownPreview.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const computation = await computeMarkableLemmas({ sessionId: input.sessionId, userId }, markKnownDependencies)
+      if (!computation.ok) {
+        if (computation.reason === 'not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+        }
+        return {
+          data: {
+            status: computation.reason === 'profile_pending' ? ('pending' as const) : ('unsupported' as const),
+            markableLemmaCount: 0,
+          },
+        }
+      }
+      return { data: { status: 'ready' as const, markableLemmaCount: computation.markableLemmas.length } }
+    }),
+
+    markRemainingKnown: implementer.markRemainingKnown.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await markRemainingKnown({ sessionId: input.sessionId, userId }, markKnownDependencies)
+      if (!result.ok) {
+        if (result.reason === 'not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+        }
+        if (result.reason === 'profile_pending') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: {
+              errors: [
+                { code: 'PROFILE_PENDING', message: 'This session is still being analyzed — try again shortly.' },
+              ],
+            },
+          })
+        }
+        throw errors.UNPROCESSABLE_ENTITY({
+          data: { errors: [{ code: 'UNSUPPORTED', message: 'This session cannot be marked as known.' }] },
+        })
+      }
+      return { data: { markedCount: result.markedCount } }
+    }),
+
+    unmarkKnownLemma: implementer.unmarkKnownLemma.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const removedCount = await markKnownDependencies.knownLemmasRepository.deleteByLemmas({
+        userId,
+        targetLanguage: input.targetLanguage,
+        lemmas: input.lemmas,
+      })
+      return { data: { removedCount } }
     }),
 
     getStatus: implementer.getStatus.handler(async ({ input, context, errors }) => {

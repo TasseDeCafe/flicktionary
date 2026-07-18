@@ -46,6 +46,10 @@ export const glossesContract = {
           // to the surface form itself; clients label it so the inflected form
           // is not implied to be pronounced this way.
           ipaLemma: z.string().nullable(),
+          // Candidate lemmas of the selection the user has marked known
+          // (folded strings). Empty → no "Marked as known" chip. Un-marking
+          // sends these back verbatim to studySessions.unmarkKnownLemma.
+          knownLemmaCandidates: z.array(z.string()),
         }),
       })
     ),

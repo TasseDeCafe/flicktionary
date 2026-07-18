@@ -49,6 +49,7 @@ describe('glosses-router', () => {
       ipa: null,
       ipaDisplay: null,
       ipaLemma: null,
+      knownLemmaCandidates: [],
     })
     // The gloss language is the language of the text, resolved by detection —
     // never the user's primary study language.
