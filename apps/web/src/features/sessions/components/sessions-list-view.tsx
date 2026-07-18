@@ -4,7 +4,7 @@ import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Clapperboard, FileText, Puzzle } from 'lucide-react'
 import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
-import { useListStudySessions } from '../api/sessions-hooks'
+import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
 import { deriveTvShows } from '../utils/derive-tv-shows'
 import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
@@ -46,6 +46,14 @@ export const SessionsListView = () => {
     merged.sort((a, b) => b.sortKey.localeCompare(a.sortKey))
     return merged
   }, [filtered, filter])
+
+  // One batched difficulty read for the visible loose cards. TV episodes get
+  // theirs on the show detail screen; the show-group card shows no aggregate.
+  const looseSessionIds = useMemo(
+    () => items.filter((item) => item.kind === 'session').map((item) => item.session.id),
+    [items]
+  )
+  const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(looseSessionIds)
 
   return (
     <div className='mx-auto max-w-4xl px-4 py-6'>
@@ -100,6 +108,8 @@ export const SessionsListView = () => {
             <SessionCard
               key={item.key}
               session={item.session}
+              difficulty={difficulties[item.session.id]}
+              difficultyLoading={isDifficultiesLoading}
               onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
             />
           )

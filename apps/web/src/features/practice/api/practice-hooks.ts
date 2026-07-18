@@ -15,6 +15,17 @@ export const practiceSummaryKeys = () => [
   orpcQuery.practice.previewPracticeQueue.key(),
 ]
 
+// The session-difficulty stat reads FSRS retrievability + vocabulary
+// membership + known marks, so EVERY mutation that changes what the user
+// knows (ratings and their undos, facet lifecycle, vocabulary add/remove,
+// known-mark writes) must spread this — a hand-maintained per-writer list
+// would drift. The mark-known preview rides along: it derives from the same
+// state (profile minus studied minus known).
+export const difficultyInvalidates = () => [
+  orpcQuery.studySessions.getDifficulties.key(),
+  orpcQuery.studySessions.getMarkKnownPreview.key(),
+]
+
 export const useDueSummary = () => {
   const { t } = useLingui()
   return useQuery(
@@ -51,7 +62,7 @@ export const useRateTerm = () => {
   return useMutation(
     orpcQuery.practice.rateTerm.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to record rating`,
       },
     })
@@ -67,7 +78,7 @@ export const useUndoRating = () => {
   return useMutation(
     orpcQuery.practice.undoRating.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to undo rating`,
       },
     })
@@ -94,7 +105,7 @@ export const useStartWarmupSession = () => {
   return useMutation(
     orpcQuery.practice.startWarmupSession.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to start warm-up`,
       },
     })
@@ -128,7 +139,7 @@ export const useClaimPracticeIntroduction = () => {
   return useMutation(
     orpcQuery.practice.claimPracticeIntroduction.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to start this exercise`,
       },
     })
@@ -154,7 +165,7 @@ export const useSubmitExerciseAnswer = () => {
   return useMutation(
     orpcQuery.practice.submitExerciseAnswer.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys(), orpcQuery.practice.getHintExercise.key()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates(), orpcQuery.practice.getHintExercise.key()],
         errorMessage: t`Failed to submit answer`,
       },
     })
@@ -169,7 +180,7 @@ export const useStudyParkedTermAsFlashcard = () => {
   return useMutation(
     orpcQuery.practice.studyParkedTermAsFlashcard.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to move the term to flashcards`,
       },
     })
@@ -224,7 +235,7 @@ export const useAdvanceReadingText = () => {
   return useMutation(
     orpcQuery.practice.advanceReadingText.mutationOptions({
       meta: {
-        invalidates: [...practiceSummaryKeys()],
+        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to advance`,
       },
     })
@@ -254,7 +265,7 @@ export const useDeleteChunkFromPractice = () => {
       // the deleted term's cards/exercises.
       onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()],
+        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to delete term`,
       },
     })
@@ -268,7 +279,7 @@ export const useRestoreChunkFromPractice = () => {
   return useMutation(
     orpcQuery.chunks.restoreChunk.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()],
+        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to restore term`,
       },
     })

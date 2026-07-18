@@ -316,6 +316,36 @@ stat is always a live query — never pre-aggregated or snapshotted.
   re-enqueues), `available`. Builds never run synchronously inside the
   request.
 
+### Web surfaces
+
+- **Session cards** (Sessions list) show the compact stat on the meta line
+  ("~93% comfortable", label colored by band); a small skeleton while
+  `pending`, nothing for `unsupported`/`failed`. TV **episode rows** on the
+  show detail screen carry the same stat (they don't render through
+  SessionCard); the show-group card itself has no aggregate. The list makes
+  one batched `getDifficulties` call for the visible loose cards (chunked at
+  the 100-id cap) and polls gently while any profile is still building.
+- **Session header**: the stat sits next to the `LANG · CEFR` subtitle; tapping
+  it opens the **difficulty detail sheet** — headline percent + label, the
+  breakdown (unknown words with the frequent split, "in your vocabulary, not
+  started", "marked as known"), the honest vocabulary-only scoping line, and
+  the **"Mark the remaining N words as known" sweep CTA** (deliberate tap
+  inside a sheet, consistent with phase 1's claims-lane posture; the exact
+  count comes from `getMarkKnownPreview` and sits on the button itself). The
+  sweep success toasts the marked count; coverage refreshes via invalidation.
+- **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
+  user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
+  both the reader gloss sheet and the practice lookup sheet show a "Marked as
+  known ×" chip; tapping it un-marks ALL candidates the token represents (no
+  success toast — the chip disappearing is the feedback).
+- **Freshness**: every SRS-writing mutation (ratings + undos, checkpoint
+  collect/undo/assertions, facet enable/disable/delete, vocabulary
+  delete/restore, card remove, highlight delete, adhoc/lesson imports,
+  mark-known/un-mark) composes the shared `difficultyInvalidates()` key list
+  (exported next to `practiceSummaryKeys()`); background highlight enrichment
+  has no client mutation to hook, so the session-vocabulary view refetches
+  difficulty when its enrichment polling transitions to idle.
+
 ## Tap-to-translate (fast path)
 
 Separate, fast LLM call. Not the methodology prompt — just a gloss.

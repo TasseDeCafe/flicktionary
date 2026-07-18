@@ -1,9 +1,10 @@
+import { useMemo } from 'react'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
 import type { Highlight, StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
+import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
 // Temp ids for optimistically-inserted highlight rows (the create response
 // swaps in the real row). Anything keyed on a highlight id (delete, fastGloss,
@@ -362,6 +363,8 @@ export const useUpdateReadingProgress = () => {
 // keeps showing stale counts after a collect/undo.
 const checkpointInvalidates = (sessionId: string) => [
   ...practiceSummaryKeys(),
+  // Credits/assertions move FSRS state, so the difficulty stat shifts too.
+  ...difficultyInvalidates(),
   orpcQuery.studySessions.get.key({ input: { sessionId } }),
   orpcQuery.studySessions.getCheckpointPreview.key(),
 ]
@@ -425,6 +428,104 @@ export const useUndoKnownAssertions = (sessionId: string) => {
       meta: {
         invalidates: checkpointInvalidates(sessionId),
         errorMessage: t`Failed to undo`,
+      },
+    })
+  )
+}
+
+// --- Personalized difficulty (docs/READER-SPEC.md) ---------------------------
+
+export type SessionDifficulty = {
+  status: 'available' | 'pending' | 'failed' | 'unsupported'
+  expectedCoveragePercent: number | null
+  label: 'comfortable' | 'challenging' | 'frustrating' | null
+  unknownLemmaCount: number | null
+  frequentUnknownCount: number | null
+  savedNotStartedCount: number | null
+  knownLemmaCount: number | null
+}
+
+// The contract caps one call at 100 unique ids; longer visible lists chunk
+// into parallel calls whose results merge below.
+const DIFFICULTY_BATCH_LIMIT = 100
+
+const DIFFICULTY_PENDING_POLL_MS = 4000
+
+// Batched difficulty stats for the visible session list (one call per ≤100
+// ids). Polls gently while any session's profile build is still pending, then
+// stops; passive meta data — never toast for it.
+export const useSessionDifficulties = (sessionIds: readonly string[]) => {
+  const uniqueIds = useMemo(() => [...new Set(sessionIds)].sort(), [sessionIds])
+  const chunks = useMemo(() => {
+    const result: string[][] = []
+    for (let i = 0; i < uniqueIds.length; i += DIFFICULTY_BATCH_LIMIT) {
+      result.push(uniqueIds.slice(i, i + DIFFICULTY_BATCH_LIMIT))
+    }
+    return result
+  }, [uniqueIds])
+
+  const results = useQueries({
+    queries: chunks.map((ids) =>
+      orpcQuery.studySessions.getDifficulties.queryOptions({
+        input: { sessionIds: ids },
+        select: (response) => response.data.difficulties,
+        // refetchInterval sees the RAW cached response, not the select view.
+        refetchInterval: (query) => {
+          const map = query.state.data?.data.difficulties
+          const anyPending = !!map && Object.values(map).some((d) => d.status === 'pending')
+          return anyPending ? DIFFICULTY_PENDING_POLL_MS : false
+        },
+        meta: { showErrorToast: false },
+      })
+    ),
+  })
+
+  const difficulties: Record<string, SessionDifficulty> = {}
+  for (const result of results) {
+    if (result.data) Object.assign(difficulties, result.data)
+  }
+  return { difficulties, isLoading: results.some((r) => r.isLoading) }
+}
+
+// Exact count the mark-the-rest-known sweep would insert. Polls while the
+// track's lemma profile is still building (the server re-enqueues it).
+export const useMarkKnownPreview = (sessionId: string, enabled: boolean) => {
+  return useQuery(
+    orpcQuery.studySessions.getMarkKnownPreview.queryOptions({
+      input: { sessionId },
+      enabled,
+      select: (response) => response.data,
+      refetchInterval: (query) => (query.state.data?.data.status === 'pending' ? 2500 : false),
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+export const useMarkRemainingKnown = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.markRemainingKnown.mutationOptions({
+      meta: {
+        invalidates: [
+          ...difficultyInvalidates(),
+          orpcQuery.studySessions.getMarkKnownPreview.key({ input: { sessionId } }),
+        ],
+        errorMessage: t`Failed to mark the words as known`,
+      },
+    })
+  )
+}
+
+// Bare un-mark behind the gloss sheet's "Marked as known" chip — removes ALL
+// candidate lemmas the selected token represents (the ones the gloss
+// returned), zero SRS side effects.
+export const useUnmarkKnownLemma = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.unmarkKnownLemma.mutationOptions({
+      meta: {
+        invalidates: [...difficultyInvalidates()],
+        errorMessage: t`Failed to remove the known mark`,
       },
     })
   )
@@ -745,7 +846,9 @@ export const useDeleteHighlight = (sessionId: string) => {
   return useMutation(
     orpcQuery.highlights.delete.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
+        // Removing a highlight can remove the term from the vocabulary, which
+        // moves the difficulty stat's saved buckets.
+        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } }), ...difficultyInvalidates()],
         errorMessage: t`Failed to remove highlight`,
       },
     })

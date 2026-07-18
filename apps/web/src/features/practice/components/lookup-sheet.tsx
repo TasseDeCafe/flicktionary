@@ -22,6 +22,7 @@ import {
   FloatingSheetTitle,
 } from '@flicktionary/ui/components/floating-sheet'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
+import { KnownLemmaChip } from '@/features/sessions/components/known-lemma-chip'
 import { useGetUserPrefs, useSetCefrForLanguage, useStatelessGloss } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
 import type { PlainSelection } from './annotated-text'
@@ -36,6 +37,7 @@ type GlossState =
       register: string | null
       ipaDisplay: string | null
       ipaLemma: string | null
+      knownLemmaCandidates: string[]
     }
   | { kind: 'error' }
 
@@ -110,6 +112,7 @@ export const LookupSheet = ({
           register: result.data.register,
           ipaDisplay: result.data.ipaDisplay,
           ipaLemma: result.data.ipaLemma,
+          knownLemmaCandidates: result.data.knownLemmaCandidates,
         })
       } catch {
         if (!cancelled) setState({ kind: 'error' })
@@ -212,6 +215,17 @@ export const LookupSheet = ({
               }
               srDescription={t`Translation lookup and save action for the selected text.`}
             />
+            {state.kind === 'ready' && state.knownLemmaCandidates.length > 0 && (
+              <div className='mt-1'>
+                <KnownLemmaChip
+                  targetLanguage={targetLanguage}
+                  lemmas={state.knownLemmaCandidates}
+                  onRemoved={() =>
+                    setState((prev) => (prev.kind === 'ready' ? { ...prev, knownLemmaCandidates: [] } : prev))
+                  }
+                />
+              </div>
+            )}
           </FloatingSheetHeader>
           {state.kind === 'error' && (
             <FloatingSheetBody>

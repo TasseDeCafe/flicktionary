@@ -5,9 +5,10 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card } from '@flicktionary/ui/components/card'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { useListStudySessions } from '../api/sessions-hooks'
+import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
 import { deriveTvShows, latestEpisode } from '../utils/derive-tv-shows'
 import { SessionRemoveDialog } from './session-remove-dialog'
+import { SessionDifficultyStat } from './session-difficulty-stat'
 
 const routeApi = getRouteApi('/_authenticated/_app/sessions/show/$tmdbShowId')
 
@@ -28,6 +29,11 @@ export const ShowDetailView = () => {
     () => deriveTvShows(sessions ?? []).find((g) => g.tmdbShowId === Number(tmdbShowId)),
     [sessions, tmdbShowId]
   )
+
+  // Episode rows carry the per-session difficulty stat (they don't render
+  // through SessionCard).
+  const episodeSessionIds = useMemo(() => (group?.episodes ?? []).map((ep) => ep.sessionId), [group])
+  const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(episodeSessionIds)
 
   const close = () => navigate({ to: '/sessions' })
 
@@ -60,6 +66,9 @@ export const ShowDetailView = () => {
               <Card key={ep.sessionId} className='hover:bg-accent active:bg-accent relative transition-colors'>
                 <Link to='/sessions/$sessionId' params={{ sessionId: ep.sessionId }} className='block p-4 pr-14'>
                   <div className='truncate text-sm font-medium'>{label}</div>
+                  <div className='text-muted-foreground text-xs'>
+                    <SessionDifficultyStat difficulty={difficulties[ep.sessionId]} isLoading={isDifficultiesLoading} />
+                  </div>
                 </Link>
                 <Button
                   variant='ghost'

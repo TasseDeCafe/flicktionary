@@ -1,16 +1,25 @@
 # Checkpoint reviews, known vocabulary, and personalized difficulty
 
-> **Status: proposal — rollout phase 1 implemented.** Design for making
+> **Status: proposal — rollout phases 1 and 2 implemented.** Design for making
 > authentic content (sessions) feed the SRS and the coverage picture: explicit
 > checkpoint-based recognition reviews while reading/watching, known-vocabulary
 > marking (including never-practiced backlog terms), and a personalized
 > text-difficulty stat. Companion to
 > `docs/proposals/vocab-coverage-visualization.md` — shares its lemma/frequency
 > assets and resolves several of its open questions (deltas recorded below).
-> Designed 2026-07-16/17. Rollout phase 1 (checkpoint reviews + the backlog
-> known-assertion action) ships via the checkpoint-review PR series — behavior
-> specs in `docs/SRS.md` / `docs/READER-SPEC.md` / `docs/DATA-MODEL.md` are the
-> source of truth for it; phases 2–3 remain unimplemented proposals.
+> Designed 2026-07-16/17. Phase 1 (checkpoint reviews + the backlog
+> known-assertion action) and phase 2 (`lemma_ranks` build + the difficulty
+> stat) are implemented — behavior specs in `docs/SRS.md` /
+> `docs/READER-SPEC.md` / `docs/DATA-MODEL.md` are the source of truth.
+> Phase 2 deltas vs this design: a minimal `known_lemmas` slice was pulled
+> forward from phase 3 (per-session mark-the-rest-known sweep + gloss-sheet
+> un-mark chip — without it P=0 for every unsaved word and the headline read
+> absurdly low); the track profile stores token-level candidate GROUPS with a
+> query-time max(P) ambiguity rule so coverage conserves mass; the difficulty
+> surfaces are session cards + the session header (the source-wizard surface
+> was skipped); surface-exact form-facet crediting stays deferred (open
+> question below). Phase 3 (the grid, claimed/verified split, bulk un-mark by
+> source) remains an unimplemented proposal.
 
 ## Problem / motivation
 
@@ -513,6 +522,10 @@ TRUNCATE + reload per language:
 
 ## Open questions
 
-- Does surface-exact form-facet crediting ship in v1 or later?
-- Where the difficulty stat surfaces (source wizard, session header, source
-  cards) — no dashboard exists yet, same gap as the coverage grid.
+- Does surface-exact form-facet crediting ship in v1 or later? (Still open
+  after phase 2 — deliberately deferred until phase 1's checkpoint matching
+  has real-world signal, since it widens the SRS write surface.)
+- ~~Where the difficulty stat surfaces~~ — resolved in phase 2: session cards
+  (incl. TV episode rows) + the session header with a detail sheet; the
+  source-wizard surface was skipped (wizard-less YouTube/streaming sessions
+  would miss it; the session-keyed endpoint makes adding it later cheap).

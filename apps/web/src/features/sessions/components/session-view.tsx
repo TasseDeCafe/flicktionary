@@ -23,6 +23,7 @@ import {
   useSearchSegments,
   useListHighlightsBySession,
   useListGhostsBySession,
+  useSessionDifficulties,
   useUndoCheckpoint,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
@@ -41,6 +42,8 @@ import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
 import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkpoint-claims-sheet'
 import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
+import { SessionDifficultySheet } from './session-difficulty-sheet'
+import { SessionDifficultyStat } from './session-difficulty-stat'
 import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
@@ -290,6 +293,10 @@ export const SessionView = () => {
   // the close-out card's re-entry once the sheet/toast are gone.
   const [claims, setClaims] = useState<{ checkpointId: string; candidates: CheckpointBacklogCandidate[] } | null>(null)
   const [claimsOpen, setClaimsOpen] = useState(false)
+  // The header's difficulty stat + its detail sheet (breakdown, mark-known CTA).
+  const [difficultyOpen, setDifficultyOpen] = useState(false)
+  const { difficulties } = useSessionDifficulties(useMemo(() => [sessionId], [sessionId]))
+  const sessionDifficulty = difficulties[sessionId]
   // Checkpoints reverted this mount: an assertion-undo must not restore a
   // claims batch for a dead checkpoint (its re-assert would 404).
   const revertedCheckpointIdsRef = useRef<Set<string>>(new Set())
@@ -580,6 +587,15 @@ export const SessionView = () => {
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
         {session.targetLanguage.toUpperCase()} · {session.cefrLevel}
+        {sessionDifficulty && sessionDifficulty.status !== 'unsupported' && sessionDifficulty.status !== 'failed' && (
+          <button
+            type='button'
+            className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
+            onClick={() => setDifficultyOpen(true)}
+          >
+            <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
+          </button>
+        )}
       </span>
     </span>
   )
@@ -665,6 +681,13 @@ export const SessionView = () => {
         checkpointBacklogCount={checkpointBacklogCount}
         onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
         isCollectingCheckpoint={isCollectingCheckpoint}
+      />
+
+      <SessionDifficultySheet
+        open={difficultyOpen}
+        onOpenChange={setDifficultyOpen}
+        sessionId={sessionId}
+        difficulty={sessionDifficulty}
       />
 
       <CheckpointClaimsSheet
