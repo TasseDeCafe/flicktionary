@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import type { DbUserLookup, CheckpointVocabRow } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
+  findMweCandidates,
   foldSelectionTokens,
   matchVocabAgainstSpanLemmas,
   partitionMatches,
+  splitMweContentLemmas,
   tokenizeSegments,
   type MatchedVocabRow,
 } from './checkpoint-matching'
@@ -156,5 +158,41 @@ describe('partitionMatches', () => {
     const result = partitionMatches([dueReview, dueNew, notDue, learning], NOW)
     expect(result.creditable).toHaveLength(2)
     expect(result.encounterOnly).toHaveLength(2)
+  })
+})
+
+describe('splitMweContentLemmas', () => {
+  test('folds, splits, and drops per-language particles anywhere', () => {
+    expect(splitMweContentLemmas('run OUT of', 'en')).toEqual(['run', 'out', 'of'])
+    expect(splitMweContentLemmas('to run to ground', 'en')).toEqual(['run', 'ground'])
+    expect(splitMweContentLemmas('sich auf etwas freuen', 'de')).toEqual(['auf', 'etwas', 'freuen'])
+    expect(splitMweContentLemmas('идти дождь', 'ru')).toEqual(['идти', 'дождь'])
+  })
+})
+
+describe('findMweCandidates', () => {
+  const span = tokenizeSegments(
+    [
+      { index: 0, text: 'Er macht die Tür sofort auf.' },
+      { index: 1, text: 'Die Tür ist zu.' },
+    ],
+    'de'
+  )
+  // "macht" resolves to the lemma "machen" through the (stubbed) resolver map.
+  const lemmasByToken = new Map([['macht', new Set(['machen'])]])
+
+  test('a candidate needs every content lemma within ONE segment (inflected via lemma resolution)', () => {
+    const separable = makeRow(null, { target_language: 'de', headword: 'auf machen', sense: '' })
+    const split = makeRow(null, { target_language: 'de', headword: 'auf zu', sense: '' })
+    const candidates = findMweCandidates({ vocab: [separable, split], span, lemmasByToken, targetLanguage: 'de' })
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0]!.row.lookup.headword).toBe('auf machen')
+    expect(candidates[0]!.contextSegmentText).toBe('Er macht die Tür sofort auf.')
+    expect(candidates[0]!.matchedLemmas).toEqual(new Set(['auf', 'machen']))
+  })
+
+  test('single-word headwords are never MWE candidates', () => {
+    const single = makeRow(null, { target_language: 'de', headword: 'Tür', sense: '' })
+    expect(findMweCandidates({ vocab: [single], span, lemmasByToken, targetLanguage: 'de' })).toHaveLength(0)
   })
 })
