@@ -184,6 +184,48 @@ export type Database = {
         }
         Relationships: []
       }
+      coverage_snapshots: {
+        Row: {
+          build_version: number
+          coverage_pct: number
+          day: string
+          denominator: number
+          known_count: number
+          mwe_count: number
+          studied_count: number
+          target_language: string
+          updated_at: string
+          user_id: string
+          verified_pct: number
+        }
+        Insert: {
+          build_version: number
+          coverage_pct: number
+          day: string
+          denominator: number
+          known_count: number
+          mwe_count: number
+          studied_count: number
+          target_language: string
+          updated_at?: string
+          user_id: string
+          verified_pct: number
+        }
+        Update: {
+          build_version?: number
+          coverage_pct?: number
+          day?: string
+          denominator?: number
+          known_count?: number
+          mwe_count?: number
+          studied_count?: number
+          target_language?: string
+          updated_at?: string
+          user_id?: string
+          verified_pct?: number
+        }
+        Relationships: []
+      }
       extension_pair_nonces: {
         Row: {
           consumed_at: string | null
@@ -498,6 +540,7 @@ export type Database = {
           marked_at: string
           source: string
           source_id: string | null
+          sweep_batch_id: string | null
           target_language: string
           user_id: string
         }
@@ -506,6 +549,7 @@ export type Database = {
           marked_at?: string
           source: string
           source_id?: string | null
+          sweep_batch_id?: string | null
           target_language: string
           user_id: string
         }
@@ -514,6 +558,7 @@ export type Database = {
           marked_at?: string
           source?: string
           source_id?: string | null
+          sweep_batch_id?: string | null
           target_language?: string
           user_id?: string
         }

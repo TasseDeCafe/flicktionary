@@ -409,10 +409,21 @@ export const StudySessionsRouter = (
 
     getMarkKnownPreview: implementer.getMarkKnownPreview.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const computation = await computeMarkableLemmas(
-        { sessionId: input.sessionId, userId, toSegmentIndex: input.toSegmentIndex ?? null },
-        markKnownDependencies
-      )
+      // The marked count is independent of the preview computation: a span
+      // sweep can create marks while the whole-text profile is still pending
+      // (or terminally failed), and the un-mark correction surface must not
+      // vanish in those states.
+      const [computation, sessionMarkedCount] = await Promise.all([
+        computeMarkableLemmas(
+          { sessionId: input.sessionId, userId, toSegmentIndex: input.toSegmentIndex ?? null },
+          markKnownDependencies
+        ),
+        markKnownDependencies.knownLemmasRepository.countBySource({
+          userId,
+          source: 'bulk_text',
+          sourceId: input.sessionId,
+        }),
+      ])
       if (!computation.ok) {
         if (computation.reason === 'not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
@@ -423,9 +434,15 @@ export const StudySessionsRouter = (
             : computation.reason === 'profile_failed'
               ? ('failed' as const)
               : ('unsupported' as const)
-        return { data: { status, markableLemmaCount: 0 } }
+        return { data: { status, markableLemmaCount: 0, sessionMarkedCount } }
       }
-      return { data: { status: 'ready' as const, markableLemmaCount: computation.markableLemmas.length } }
+      return {
+        data: {
+          status: 'ready' as const,
+          markableLemmaCount: computation.markableLemmas.length,
+          sessionMarkedCount,
+        },
+      }
     }),
 
     markRemainingKnown: implementer.markRemainingKnown.handler(async ({ input, context, errors }) => {
@@ -458,7 +475,22 @@ export const StudySessionsRouter = (
           data: { errors: [{ code: 'UNSUPPORTED', message: 'This session cannot be marked as known.' }] },
         })
       }
-      return { data: { markedCount: result.markedCount } }
+      return { data: { markedCount: result.markedCount, sweepBatchId: result.sweepBatchId } }
+    }),
+
+    unmarkKnownBySession: implementer.unmarkKnownBySession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      const removedCount = await markKnownDependencies.knownLemmasRepository.deleteBySource({
+        userId,
+        source: 'bulk_text',
+        sourceId: input.sessionId,
+        sweepBatchId: input.sweepBatchId,
+      })
+      return { data: { removedCount } }
     }),
 
     unmarkKnownLemma: implementer.unmarkKnownLemma.handler(async ({ input, context }) => {

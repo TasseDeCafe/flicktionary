@@ -721,7 +721,13 @@ terms straight into review state. Service:
 - **Verification for free**: the seed puts the first review ~3 weeks out and
   checkpoint crediting is due-only, so a same-session checkpoint structurally
   cannot verify its own claim — the verifying evidence is always later and
-  independent.
+  independent. The coverage stat's claimed/verified split reads this straight
+  off the event log (`listCoverageVocab`): a term counts as verified iff it
+  has a live `good`/`easy` event on a meaning skill that is
+  explicit-or-checkpoint evidence, where the assertion lane
+  (`was_explicit = TRUE AND checkpoint_id IS NOT NULL`) is structurally
+  excluded — so neither an assertion, a pronunciation good, nor a
+  reading-mode implicit good can flip a term to verified.
 
 ## 7. Parking + scaffolded exercises: leech rehab AND warm-up
 

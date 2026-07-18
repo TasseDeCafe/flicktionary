@@ -16,13 +16,16 @@ export type BulkMarkKnownInput = {
   source: 'bulk_text'
   // First writer wins (ON CONFLICT DO NOTHING) — single-source provenance.
   sourceId: string | null
+  // Sweep-exact undo handle: one fresh uuid per press. A batch only ever owns
+  // rows it actually inserted, so delete-by-batch undoes exactly that press.
+  sweepBatchId: string | null
 }
 
 const bulkMarkKnown = async (input: BulkMarkKnownInput): Promise<number> => {
   if (input.lemmas.length === 0) return 0
   const result = await sql`
-    INSERT INTO public.known_lemmas (user_id, target_language, lemma, source, source_id)
-    SELECT ${input.userId}, ${input.targetLanguage}, lemma, ${input.source}, ${input.sourceId}
+    INSERT INTO public.known_lemmas (user_id, target_language, lemma, source, source_id, sweep_batch_id)
+    SELECT ${input.userId}, ${input.targetLanguage}, lemma, ${input.source}, ${input.sourceId}, ${input.sweepBatchId}
     FROM unnest(${sql.array([...input.lemmas])}::text[]) AS t(lemma)
     ON CONFLICT DO NOTHING
   `
@@ -69,11 +72,48 @@ const deleteByLemmas = async (params: {
   return result.count
 }
 
+// Bulk correction paths for sweep-created rows. No target_language filter —
+// the sourceId (a session) already scopes to one language's rows. With a
+// sweepBatchId the delete is sweep-exact (the toast Undo); without, it clears
+// the whole session's marks (the difficulty-sheet action).
+const deleteBySource = async (params: {
+  userId: string
+  source: 'bulk_text'
+  sourceId: string
+  sweepBatchId?: string
+}): Promise<number> => {
+  const result = await sql`
+    DELETE FROM public.known_lemmas
+    WHERE user_id = ${params.userId}
+      AND source = ${params.source}
+      AND source_id = ${params.sourceId}
+      ${params.sweepBatchId ? sql`AND sweep_batch_id = ${params.sweepBatchId}` : sql``}
+  `
+  return result.count
+}
+
+const countBySource = async (params: { userId: string; source: 'bulk_text'; sourceId: string }): Promise<number> => {
+  const rows = (await sql`
+    SELECT count(*)::int AS count FROM public.known_lemmas
+    WHERE user_id = ${params.userId}
+      AND source = ${params.source}
+      AND source_id = ${params.sourceId}
+  `) as Array<{ count: number }>
+  return rows[0]?.count ?? 0
+}
+
 export interface KnownLemmasRepositoryInterface {
   bulkMarkKnown: (input: BulkMarkKnownInput) => Promise<number>
   filterKnown: (params: { userId: string; targetLanguage: string; lemmas: readonly string[] }) => Promise<string[]>
   listLemmas: (userId: string, targetLanguage: string) => Promise<string[]>
   deleteByLemmas: (params: { userId: string; targetLanguage: string; lemmas: readonly string[] }) => Promise<number>
+  deleteBySource: (params: {
+    userId: string
+    source: 'bulk_text'
+    sourceId: string
+    sweepBatchId?: string
+  }) => Promise<number>
+  countBySource: (params: { userId: string; source: 'bulk_text'; sourceId: string }) => Promise<number>
 }
 
 export const KnownLemmasRepository = (): KnownLemmasRepositoryInterface => {
@@ -82,5 +122,7 @@ export const KnownLemmasRepository = (): KnownLemmasRepositoryInterface => {
     filterKnown,
     listLemmas,
     deleteByLemmas,
+    deleteBySource,
+    countBySource,
   }
 }

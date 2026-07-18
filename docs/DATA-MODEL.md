@@ -550,7 +550,9 @@ integration test). A "real lemma" for matching purposes has
 ### Lemma frequency ranks
 
 The per-language frequency-ranked lemma list backing the personalized
-difficulty stat (and, later, the coverage grid). Built offline by
+difficulty stat and the whole-language coverage read (`coverage.getCoverage`
+aggregates total/per-band mass over it; `coverage.getTopLemmas` serves the
+top-5k head for detail-view tooltips). Built offline by
 `apps/backend/scripts/build-lemma-ranks.ts` from a pinned wordfreq export
 (`scripts/export-wordfreq.py`) resolved against the loaded kaikki tables
 through `checkpoint_fold` (byte-for-byte fold parity with the runtime
@@ -635,6 +637,9 @@ known_lemmas
   source_id           uuid?        -- e.g. the sweeping session; FIRST writer
                                    -- wins (ON CONFLICT DO NOTHING) — later
                                    -- overlapping sweeps don't take ownership
+  sweep_batch_id      uuid?        -- one fresh uuid per sweep press; a batch
+                                   -- only ever owns rows IT inserted, so
+                                   -- delete-by-batch is a sweep-exact undo
   marked_at           timestamptz
 ```
 
@@ -648,7 +653,14 @@ DELETE behind the gloss-sheet "Marked as known" chip
 (`studySessions.unmarkKnownLemma`) — both gloss endpoints return
 `knownLemmaCandidates` (the selection's resolved lemmas ∩ known_lemmas), and
 un-marking removes ALL candidates the token represents, symmetric with the
-sweep.
+sweep. Bulk correction for sweep-created rows is
+`studySessions.unmarkKnownBySession`: with the `sweepBatchId` the sweep
+response returned it reverts exactly that press (the toast Undo — progressive
+sweeps share `source_id` but never a batch id); without it, it clears every
+mark the session's sweeps created (the difficulty-sheet action).
+`getMarkKnownPreview.sessionMarkedCount` (computed for every preview status —
+a span sweep can create marks while the whole-text profile is pending/failed)
+tells the sheet when to offer it.
 
 Correction is read-time precedence, never deletion: any live saved lookup
 beats a known mark in the difficulty/coverage math (saving a marked-known
@@ -656,6 +668,35 @@ word is the signal the user does NOT know it); soft-deleting the lookup
 falls back to known. Consumers are the difficulty/coverage reads and the
 gloss chip ONLY — ghost nominations must never read this table (suppressed
 suggestions are invisible errors; coverage miscounts are visible ones).
+
+### Coverage snapshots
+
+Lazy per-day history of the whole-language coverage stat, written
+fire-and-forget by `coverage.getCoverage` (`service/coverage/`) — the
+response never waits on or fails from the write. Purpose: a future
+progress-over-time chart needs history that a `lemma_ranks` rebuild can never
+retroactively rewrite, so each row pins the build it was computed against. No
+chart UI exists yet — this is history collection only. Backend-only; RLS
+enabled with no policies.
+
+```
+coverage_snapshots
+  user_id             uuid -> auth.users.id (ON DELETE CASCADE)
+  target_language     text         -- pk (user_id, target_language, day)
+  day                 date         -- UTC day of the compute; same-day
+                                   -- recomputes update the row in place
+  build_version       int          -- lemma_rank_builds.version at compute time
+  denominator         int          -- lemma_rank_builds.row_count
+  studied_count       int
+  known_count         int
+  mwe_count           int
+  coverage_pct        double precision  -- binary blended token-mass %
+                                        -- (studied ∪ known count as P=1)
+  verified_pct        double precision  -- share backed by a live successful
+                                        -- explicit-or-checkpoint meaning
+                                        -- review (never the assertion lane)
+  updated_at          timestamptz
+```
 
 ## Card output template
 
