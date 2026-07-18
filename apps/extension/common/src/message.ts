@@ -457,6 +457,57 @@ export interface SaveWordFlicktionaryVideoContext {
   }>
 }
 
+// Checkpoint reviews (docs/SRS.md §6b): the overlay's "I've followed up to
+// here" press. `segmentIndex` is computed CONTENT-SIDE from playback time (the
+// background's session cache stores no timings): the last subtitle whose
+// startMs <= currentTimeMs, whose `index` IS the ingested segment index. The
+// full video context rides along so a cold cache can find-or-create the
+// session — the press is an explicit user act, exactly like a first save.
+export interface FlicktionaryCollectCheckpointMessage extends MessageWithId {
+  readonly command: 'flicktionary-collect-checkpoint'
+  readonly segmentIndex: number
+  readonly flicktionaryVideo: SaveWordFlicktionaryVideoContext
+}
+
+export interface FlicktionaryCollectCheckpointResponse {
+  readonly success: boolean
+  // Backend error code (e.g. 'UNSUPPORTED_LANGUAGE', 'NEEDS_ONBOARDING',
+  // 'MISSING_CEFR') so the overlay can show the matching feedback chip.
+  readonly code?: string
+  readonly error?: string
+  readonly targetLanguage?: string
+  readonly sessionId?: string
+  // Null when the span was empty (nothing newly read since the last press).
+  readonly checkpointId?: string | null
+  readonly creditedCount?: number
+}
+
+export interface FlicktionaryUndoCheckpointMessage extends MessageWithId {
+  readonly command: 'flicktionary-undo-checkpoint'
+  readonly sessionId: string
+  readonly checkpointId: string
+}
+
+export interface FlicktionaryUndoCheckpointResponse {
+  readonly success: boolean
+  readonly undone?: boolean
+  readonly error?: string
+}
+
+// Cache-only probe (no network): the overlay hides its checkpoint button when
+// the video's CACHED session has an unsupported target language. Before first
+// registration the language is unknown, so `cachedTargetLanguage` is null and
+// the button stays visible — the press itself then reports the outcome.
+export interface FlicktionaryCheckpointAvailabilityMessage extends MessageWithId {
+  readonly command: 'flicktionary-checkpoint-availability'
+  readonly source: 'youtube' | 'streaming'
+  readonly contentHash: string
+}
+
+export interface FlicktionaryCheckpointAvailabilityResponse {
+  readonly cachedTargetLanguage: string | null
+}
+
 // Structurally identical to the backend contract's StudyIntentSchema —
 // re-declared (mutable arrays included, so it assigns to the oRPC input type)
 // because this common module stays dependency-free. FULL-SET semantics: when

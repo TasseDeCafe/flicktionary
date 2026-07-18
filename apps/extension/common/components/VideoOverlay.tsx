@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, PowerIcon, SlidersHorizontalIcon, CaptionsIcon } from 'lucide-react'
+import {
+  BookmarkCheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PowerIcon,
+  SlidersHorizontalIcon,
+  CaptionsIcon,
+} from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -63,6 +70,9 @@ interface Props {
   onSeek: (timestamp: number) => void
   onToggleSubtitles: () => void
   onDisableExtension: () => void
+  // Checkpoint reviews: collect implicit recognition credits up to the current
+  // playback position. Absent = surface not wired (asbplayerv2 web app).
+  onCheckpoint?: () => void
 }
 
 const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverlay(
@@ -80,6 +90,7 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
     onSeek,
     onToggleSubtitles,
     onDisableExtension,
+    onCheckpoint,
   }: Props,
   ref
 ) {
@@ -421,6 +432,22 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
             </span>
           </OverlayTooltip>
         </>
+      )}
+      {/* Checkpoint press ("I've followed up to here") — mirrors the Power
+          button block. Lives on the pause-state controls on purpose: the
+          press happens while paused, a deliberate act (docs/SRS.md §6b). */}
+      {onCheckpoint && !model.emptySubtitleTrack && model.checkpointAvailable && (
+        <OverlayTooltip
+          enabled={tooltipsEnabled}
+          side={tooltipSide}
+          title={t`I've followed up to here — collect reviews`}
+        >
+          <span>
+            <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onCheckpoint}>
+              <BookmarkCheckIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+            </button>
+          </span>
+        </OverlayTooltip>
       )}
       {/* Global off switch — the bar collapses to the re-enable pill (see
           VideoOverlayDisabled), so on/off share this same location. */}

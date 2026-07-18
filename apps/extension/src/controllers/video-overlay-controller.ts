@@ -1,5 +1,20 @@
 import { createElement } from 'react'
-import { VideoOverlayModel } from '@asbplayer-fork/common'
+import { v4 as uuidv4 } from 'uuid'
+import {
+  VideoOverlayModel,
+  type FlicktionaryCheckpointAvailabilityMessage,
+  type FlicktionaryCheckpointAvailabilityResponse,
+  type FlicktionaryCollectCheckpointMessage,
+  type FlicktionaryCollectCheckpointResponse,
+  type FlicktionaryUndoCheckpointMessage,
+  type FlicktionaryUndoCheckpointResponse,
+  type SaveWordFlicktionaryVideoContext,
+  type TabToExtensionCommand,
+} from '@asbplayer-fork/common'
+import type { CheckpointFeedback } from '@asbplayer-fork/common/components/CheckpointFeedbackChip'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
+import { msg } from '@lingui/core/macro'
+import { i18n } from '../ui/lingui'
 import Binding from '../services/binding'
 import { OffsetAnchor } from '../services/element-overlay'
 import { setExtensionEnabled } from '../services/flicktionary/extension-enabled-storage'
@@ -42,6 +57,15 @@ export class VideoOverlayController {
 
   private _store?: VideoOverlayStore
   private _shadowHandle?: ShadowHostHandle
+
+  // Checkpoint-review state. `_checkpointUnsupported` latches when the video's
+  // (cached) session language has no wiktionary data — the button hides for
+  // the rest of the binding. The feedback chip owns its own lifetime,
+  // independent of the pause-controls visibility.
+  private _checkpointUnsupported = false
+  private _availabilityProbedKey?: string
+  private _checkpointFeedbackTimeout?: ReturnType<typeof setTimeout>
+  private _collectingCheckpoint = false
 
   constructor(context: Binding, offsetAnchor: OffsetAnchor) {
     this._context = context
@@ -128,6 +152,7 @@ export class VideoOverlayController {
       visible: false,
       tooltipsEnabled: true,
       disabled: this._disabledMode,
+      checkpointFeedback: null,
     }))
     this._mountShadow()
 
@@ -159,6 +184,168 @@ export class VideoOverlayController {
       // change out to every binding in every tab, including this one.
       onEnableExtension: () => void setExtensionEnabled(true),
       onDisableExtension: () => void setExtensionEnabled(false),
+      onCheckpoint: () => void this._collectCheckpoint(),
+      onUndoCheckpoint: (sessionId, checkpointId) => void this._undoCheckpoint(sessionId, checkpointId),
+    }
+  }
+
+  // Playback→segment mapping happens HERE, content-side: the background's
+  // session cache stores no timings. subtitleController.subtitles[] carries
+  // the ingested segment index per cue; the press asserts comprehension up to
+  // the last cue that has STARTED by the current playback time (between cues →
+  // the last ended one).
+  private _currentSegmentIndex(): number | undefined {
+    const subtitles = this._context.subtitleController.subtitles
+    const currentMs = this._context.video.currentTime * 1000
+    let index: number | undefined
+    for (const subtitle of subtitles) {
+      if (subtitle.start > currentMs) break
+      index = subtitle.index
+    }
+    return index
+  }
+
+  private _setCheckpointFeedback(feedback: CheckpointFeedback | null, lifetimeMs = 8000) {
+    if (this._checkpointFeedbackTimeout !== undefined) {
+      clearTimeout(this._checkpointFeedbackTimeout)
+      this._checkpointFeedbackTimeout = undefined
+    }
+    this._store?.setState({ checkpointFeedback: feedback })
+    if (feedback) {
+      this._checkpointFeedbackTimeout = setTimeout(() => {
+        this._checkpointFeedbackTimeout = undefined
+        this._store?.setState({ checkpointFeedback: null })
+      }, lifetimeMs)
+    }
+  }
+
+  private async _collectCheckpoint() {
+    if (this._collectingCheckpoint) {
+      return
+    }
+    const videoCtx = this._context.flicktionaryVideoContext
+    if (!videoCtx) {
+      return
+    }
+    const segmentIndex = this._currentSegmentIndex()
+    if (segmentIndex === undefined) {
+      this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`Nothing to collect yet.`) })
+      return
+    }
+
+    this._collectingCheckpoint = true
+    try {
+      const command: TabToExtensionCommand<FlicktionaryCollectCheckpointMessage> = {
+        sender: 'asbplayer-video-tab',
+        message: {
+          command: 'flicktionary-collect-checkpoint',
+          messageId: uuidv4(),
+          segmentIndex,
+          flicktionaryVideo: videoCtx,
+        },
+      }
+      // `response` is undefined if no background handler answered (service
+      // worker mid-reload) — treat as a retryable failure, never crash.
+      const response: FlicktionaryCollectCheckpointResponse | undefined = await browser.runtime.sendMessage(command)
+      if (response?.success) {
+        if (response.checkpointId && response.sessionId && (response.creditedCount ?? 0) > 0) {
+          this._setCheckpointFeedback({
+            kind: 'success',
+            creditedCount: response.creditedCount ?? 0,
+            sessionId: response.sessionId,
+            checkpointId: response.checkpointId,
+          })
+        } else {
+          this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`No new reviews to collect.`) })
+        }
+        return
+      }
+      if (response?.code === 'UNSUPPORTED_LANGUAGE') {
+        // Latch + hide the button: the language won't become supported
+        // mid-video.
+        this._checkpointUnsupported = true
+        void this._pushModel()
+        this._setCheckpointFeedback({
+          kind: 'info',
+          text: i18n._(msg`Review collection isn't available for this language yet.`),
+        })
+        return
+      }
+      if (response?.code === 'NEEDS_ONBOARDING') {
+        this._setCheckpointFeedback({
+          kind: 'error',
+          text: i18n._(msg`Finish setting up Flicktionary on flicktionary.app first.`),
+        })
+        return
+      }
+      if (response?.code === 'MISSING_CEFR') {
+        this._setCheckpointFeedback({
+          kind: 'error',
+          text: i18n._(msg`Set your level for this language on flicktionary.app first.`),
+        })
+        return
+      }
+      this._setCheckpointFeedback({
+        kind: 'error',
+        text: response?.error || i18n._(msg`Could not collect reviews. Try again.`),
+      })
+    } finally {
+      this._collectingCheckpoint = false
+    }
+  }
+
+  private async _undoCheckpoint(sessionId: string, checkpointId: string) {
+    const command: TabToExtensionCommand<FlicktionaryUndoCheckpointMessage> = {
+      sender: 'asbplayer-video-tab',
+      message: {
+        command: 'flicktionary-undo-checkpoint',
+        messageId: uuidv4(),
+        sessionId,
+        checkpointId,
+      },
+    }
+    const response: FlicktionaryUndoCheckpointResponse | undefined = await browser.runtime.sendMessage(command)
+    if (response?.success && response.undone) {
+      this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`Reviews restored.`) }, 4000)
+    } else {
+      this._setCheckpointFeedback({
+        kind: 'error',
+        text: response?.error || i18n._(msg`Could not undo. The reviews may have changed since.`),
+      })
+    }
+  }
+
+  // One cache-only probe per video context: if the CACHED session's language is
+  // known-unsupported, the button never shows. Before first registration the
+  // language is unknown — the button shows and the press reports the outcome.
+  private async _probeCheckpointAvailability(videoCtx: SaveWordFlicktionaryVideoContext | undefined) {
+    if (!videoCtx) {
+      return
+    }
+    const key = `${videoCtx.source}:${videoCtx.contentHash}`
+    if (this._availabilityProbedKey === key) {
+      return
+    }
+    this._availabilityProbedKey = key
+    this._checkpointUnsupported = false
+    try {
+      const command: TabToExtensionCommand<FlicktionaryCheckpointAvailabilityMessage> = {
+        sender: 'asbplayer-video-tab',
+        message: {
+          command: 'flicktionary-checkpoint-availability',
+          messageId: uuidv4(),
+          source: videoCtx.source,
+          contentHash: videoCtx.contentHash,
+        },
+      }
+      const response: FlicktionaryCheckpointAvailabilityResponse | undefined =
+        await browser.runtime.sendMessage(command)
+      const cachedLanguage = response?.cachedTargetLanguage
+      if (cachedLanguage && !KAIKKI_LANGUAGES.has(cachedLanguage)) {
+        this._checkpointUnsupported = true
+      }
+    } catch {
+      // Probe is best-effort; the press itself still reports outcomes.
     }
   }
 
@@ -226,6 +413,8 @@ export class VideoOverlayController {
     const subtitleDisplaying = subtitles.length > 0 && this._context.subtitleController.currentSubtitle()[0] !== null
     const timestamp = this._context.video.currentTime * 1000
     const { language, themeType } = await this._context.settings.get(['language', 'themeType'])
+    const videoCtx = this._context.flicktionaryVideoContext
+    await this._probeCheckpointAvailability(videoCtx)
     const model: VideoOverlayModel = {
       offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
       playbackRate: this._context.video.playbackRate,
@@ -244,6 +433,9 @@ export class VideoOverlayController {
       subtitleToggleHidden: this._context.nativeCaptionsController.controllingDisplay,
       playMode: this._context.playMode,
       themeType,
+      // No subtitle track → no button (nothing to assert comprehension over);
+      // known-unsupported cached language → no button either.
+      checkpointAvailable: subtitles.length > 0 && videoCtx !== undefined && !this._checkpointUnsupported,
     }
     return model
   }
@@ -262,6 +454,7 @@ export class VideoOverlayController {
   disposeOverlay() {
     this._cancelScheduledShow()
     this._showing = false
+    this._setCheckpointFeedback(null)
     this._store?.setState({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
   }
 
@@ -349,6 +542,10 @@ export class VideoOverlayController {
     }
 
     this._cancelScheduledShow()
+    if (this._checkpointFeedbackTimeout !== undefined) {
+      clearTimeout(this._checkpointFeedbackTimeout)
+      this._checkpointFeedbackTimeout = undefined
+    }
     this._unmountShadow()
     this._store = undefined
     this._showing = false

@@ -1,6 +1,9 @@
 import type { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import VideoOverlay from '@asbplayer-fork/common/components/VideoOverlay'
 import VideoOverlayDisabled from '@asbplayer-fork/common/components/VideoOverlayDisabled'
+import CheckpointFeedbackChip, {
+  type CheckpointFeedback,
+} from '@asbplayer-fork/common/components/CheckpointFeedbackChip'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
@@ -18,6 +21,10 @@ export interface VideoOverlayState {
   // Global extension switch off: render the minimal re-enable pill instead of
   // the full controls bar.
   disabled: boolean
+  // Post-checkpoint feedback (undo chip / outcome text). Rendered OUTSIDE the
+  // `visible` gate: the controls hide on play, the chip must not — its ~8s
+  // lifetime belongs to the controller.
+  checkpointFeedback: CheckpointFeedback | null
 }
 
 export type VideoOverlayStore = StoreApi<VideoOverlayState>
@@ -33,6 +40,8 @@ export interface VideoOverlayCommands {
   onToggleSubtitles: () => void
   onEnableExtension: () => void
   onDisableExtension: () => void
+  onCheckpoint: () => void
+  onUndoCheckpoint: (sessionId: string, checkpointId: string) => void
 }
 
 export interface ShadowVideoOverlayAppProps {
@@ -57,7 +66,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 }
 
 export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands }: ShadowVideoOverlayAppProps) {
-  const { model, visible, tooltipsEnabled, disabled } = useStore(store)
+  const { model, visible, tooltipsEnabled, disabled, checkpointFeedback } = useStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
     saveLastControlType,
     fetchLastControlType,
@@ -99,7 +108,15 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
             onPlayModeSelected={commands.onPlayModeSelected}
             onToggleSubtitles={commands.onToggleSubtitles}
             onDisableExtension={commands.onDisableExtension}
+            onCheckpoint={commands.onCheckpoint}
           />
+        </div>
+      )}
+      {/* Deliberately NOT behind `visible`: pressing play hides the controls
+          bar, but the undo chip must survive the resume. */}
+      {!disabled && checkpointFeedback && (
+        <div style={{ pointerEvents: 'auto' }} className='mt-2 flex justify-center'>
+          <CheckpointFeedbackChip feedback={checkpointFeedback} onUndo={commands.onUndoCheckpoint} />
         </div>
       )}
     </ShadowUiProvider>
