@@ -30,7 +30,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
 2. **Backend grounding allowlist** — in `apps/backend/src/service/wiktionary-grounding/config.ts`, add to `KAIKKI_ENABLED_LANGUAGES`. Both sets must agree.
 
-3. **Shared grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the same code to `KAIKKI_LANGUAGES`. (Mirror of the backend set; used by the focus view's grounding badge.)
+3. **Shared grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the same code to `KAIKKI_LANGUAGES`. (Mirror of the backend set; used by the focus view's grounding badge.) Note the blast radius: this set also hard-gates **checkpoint reviews** (docs/SRS.md §6b) — adding the language turns on the reader-footer / close-out / extension checkpoint affordances for it, so the checkpoint-matching decisions in the step below are part of shipping, not optional polish.
 
 4. **Per-language grammar config** — in the same file, add (or extend) the `LANGUAGE_GRAMMAR[<code>]` entry. The fields you list drive what the focus view *and* the practice rate sheet render as chips (both consume `getLanguageGrammarConfig`), and what the focus view's editable panel exposes. The renderer narrows this list further by part-of-speech via `getEffectiveGrammarFields(targetLanguage, pos)` — POS-specific keys (e.g. `aspect` for verbs, `gender` for nouns) live in `POS_SPECIFIC_FIELDS` in the same file and apply across languages, so the language config just decides which keys even exist for that language. `ipa` is editable and dialect-aware: `FocusView` shows the picked bucket via `pickIpa(...)` above the chips, and the editable panel writes back to the correct bucket (`ga`/`rp`/`untagged`) based on the user's `englishIpaDialect` pref. Example shape:
 
@@ -77,13 +77,20 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
      Look specifically at `sounds[]`. If useful IPA is consistently tagged (regional, standard, dialect labels, etc.), add language-specific IPA handling and tests instead of silently dropping it.
 
-6. **Unit tests** — extend `apps/backend/src/service/wiktionary-grounding/extract.unit.test.ts`. At minimum, add:
+6. **Checkpoint-matching decisions** — checkpoint reviews (docs/SRS.md §6b) match span tokens against the user's vocab through language-keyed folding and particle rules. For each, the default path may be fine, but decide explicitly:
+
+   - **Fold twins.** `foldCheckpointToken` in `packages/core/src/utils/checkpoint-fold.ts` and the SQL function `public.checkpoint_fold` are byte-for-byte twins (the SQL side feeds expression indexes on `wiktionary_forms`/`wiktionary_entries`/`wiktionary_form_redirects`). The default fold (strip U+0301, NFC, trim, lowercase) covers most languages; add a per-language orthography fold ONLY if the language has variant spellings that must unify (existing: ru `ё`→`е`, de `ß`→`ss`). If you add one, change BOTH sides in lockstep — the SQL side via a NEW migration that re-creates the function AND rebuilds the expression indexes (the fold's output changed) — and extend the shared vectors in `checkpoint-fold.unit.test.ts` plus the SQL-vs-TS parity test (`checkpoint-fold-parity.integration.test.ts`).
+   - **Headword particles.** `foldUserHeadwordCandidates` (same file) de-particles LLM-normalized headwords so `to run`/`sich freuen` match the kaikki lemma. If the new language's citation convention prefixes a particle, add the strip rule.
+   - **MWE particles.** `MWE_PARTICLES` in `apps/backend/src/service/checkpoint/checkpoint-matching.ts` lists function words dropped when splitting a multi-word headword into content lemmas. Add the language's function words if MWEs are common in it; an absent entry just means no words are dropped.
+   - A redirects rebuild needs no separate step — `load-kaikki.ts` rebuilds `wiktionary_form_redirects` in the same run (locally and in the prod workflow).
+
+7. **Unit tests** — extend `apps/backend/src/service/wiktionary-grounding/extract.unit.test.ts`. At minimum, add:
 
    - A fixture for the new langCode that exercises the generic POS fallback and asserts the Russian-specific extractors do *not* fire (`gender`, `aspect`, etc. should be undefined for non-`ru`).
    - An IPA fixture covering the untagged path.
    - If you added 5a/5b/5c logic, fixtures for the new behavior.
 
-7. **Type / lint check**:
+8. **Type / lint check**:
 
    ```bash
    pnpm check:types
@@ -91,7 +98,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
    pnpm --filter @flicktionary/backend exec vitest run src/service/wiktionary-grounding
    ```
 
-8. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, and rewrites the on-disk snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
+9. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, rebuilds `wiktionary_form_redirects`, and rewrites the on-disk snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
 
    ```bash
    doppler run -- pnpm --filter @flicktionary/backend load:kaikki
@@ -106,7 +113,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
    From then on `pnpm db:reset` will restore all enabled languages from the snapshot in seconds.
 
-9. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards, so don't auto-trigger. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`).
+10. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards (and checkpoint matching with it), so don't auto-trigger. The run rebuilds `wiktionary_form_redirects` too — no separate redirect step. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`).
 
 ## Removing a language
 
@@ -117,8 +124,9 @@ Reverse of adding, in roughly this order to keep types happy:
 3. Remove from `KAIKKI_ENABLED_LANGUAGES` in `apps/backend/src/service/wiktionary-grounding/config.ts`.
 4. Remove from `LOAD_LANGUAGES` in `apps/backend/scripts/load-kaikki.ts`.
 5. Remove language-specific extractor branches and their tests if any were added.
-6. `pnpm check:types` + tests.
-7. Re-run `doppler run -- pnpm --filter @flicktionary/backend load:kaikki` to drop the language's rows from the local tables and refresh the snapshot. Trigger the prod workflow when ready.
+6. Remove any checkpoint fold/particle branches added for the language (`foldCheckpointToken` needs its SQL twin changed via a NEW migration in lockstep, plus the parity vectors; `foldUserHeadwordCandidates` / `MWE_PARTICLES` are TS-only).
+7. `pnpm check:types` + tests.
+8. Re-run `doppler run -- pnpm --filter @flicktionary/backend load:kaikki` to drop the language's rows from the local tables and refresh the snapshot (redirects rebuild in the same run). Trigger the prod workflow when ready.
 
 Existing user cards in the removed language keep whatever `groundedAt`/`grammar` they already had — there's no automatic rollback. That's intentional.
 
