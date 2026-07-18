@@ -116,6 +116,19 @@ const enqueueBuildTrackLemmaProfile = async (
   return result[0] ?? null
 }
 
+// Latest profile-build job status for a track — the difficulty read's
+// terminal-failure detector: a 'failed' latest job (and no live one) means
+// clients should stop polling; only a staleness change re-enqueues.
+const getLatestBuildProfileJobStatus = async (textTrackId: string): Promise<DbProcessingJob['status'] | null> => {
+  const rows = (await sql`
+    SELECT status FROM public.processing_jobs
+    WHERE text_track_id = ${textTrackId} AND kind = 'build_track_lemma_profile'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `) as Array<{ status: DbProcessingJob['status'] }>
+  return rows[0]?.status ?? null
+}
+
 // Atomically claim up to `limit` runnable jobs: due pending rows, plus stale
 // processing rows whose lease (locked_at) is older than `staleAfterSeconds` —
 // the lease-reclaim path that recovers work orphaned by a crashed worker.
@@ -229,6 +242,7 @@ export interface ProcessingJobsRepositoryInterface {
     params: { textTrackId: string; userId: string },
     executor?: postgres.Sql
   ) => Promise<DbProcessingJob | null>
+  getLatestBuildProfileJobStatus: (textTrackId: string) => Promise<DbProcessingJob['status'] | null>
   claimBatch: (limit: number, workerId: string, staleAfterSeconds: number) => Promise<DbProcessingJob[]>
   refreshLease: (id: string, workerId: string) => Promise<boolean>
   markDone: (id: string, workerId: string) => Promise<boolean>
@@ -249,6 +263,7 @@ export const ProcessingJobsRepository = (): ProcessingJobsRepositoryInterface =>
     enqueueSeedCardChat,
     enqueueExtractLesson,
     enqueueBuildTrackLemmaProfile,
+    getLatestBuildProfileJobStatus,
     claimBatch,
     refreshLease,
     markDone,

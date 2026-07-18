@@ -525,6 +525,67 @@ const listCheckpointVocab = async (params: {
   })
 }
 
+export type DifficultyVocabFacet = {
+  srs_state: SrsState | null
+  srs_due: string | null
+  srs_stability: number | null
+  srs_difficulty: number | null
+  srs_last_review: string | null
+  srs_reps: number
+  srs_lapses: number
+  srs_learning_steps: number
+  disabled_at: string | null
+  data_status: 'ready' | 'pending_data'
+}
+
+export type DifficultyVocabRow = {
+  headword: string
+  facet: DifficultyVocabFacet | null
+}
+
+// The difficulty stat's vocab side: every live saved term for one language
+// with the full FSRS column family of its citation recognition facet, so the
+// blend can compute retrievability. Loaded ONCE per language per batch (not
+// per session). Leaner than listCheckpointVocab on the lookup side (only the
+// headword is needed) but wider on the facet side.
+const listDifficultyVocab = async (params: {
+  userId: string
+  targetLanguage: string
+}): Promise<DifficultyVocabRow[]> => {
+  const rows = (await sql`
+    SELECT ul.headword,
+      (f.user_lookup_id IS NOT NULL) AS facet_exists,
+      f.srs_state,
+      f.srs_due,
+      f.srs_stability,
+      f.srs_difficulty,
+      f.srs_last_review,
+      COALESCE(f.srs_reps, 0) AS srs_reps,
+      COALESCE(f.srs_lapses, 0) AS srs_lapses,
+      COALESCE(f.srs_learning_steps, 0) AS srs_learning_steps,
+      f.disabled_at,
+      COALESCE(f.data_status, 'ready') AS data_status
+    FROM public.user_lookups ul
+    LEFT JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id
+      AND f.skill = 'meaning_recognition'
+      AND f.target_form = ${CITATION_FORM}
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+  `) as Array<
+    {
+      headword: string
+      facet_exists: boolean
+    } & DifficultyVocabFacet
+  >
+  return rows.map(({ headword, facet_exists, ...facet }) => ({
+    headword,
+    facet: facet_exists ? facet : null,
+  }))
+}
+
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
 // pass an explicit empty string or the corresponding clear flag.
@@ -2183,6 +2244,7 @@ export interface UserLookupsRepositoryInterface {
   recordEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
+  listDifficultyVocab: (params: { userId: string; targetLanguage: string }) => Promise<DifficultyVocabRow[]>
   listByHeadwords: (params: {
     userId: string
     targetLanguage: string
@@ -2316,6 +2378,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     recordEncounter,
     recordContentEncounter,
     listCheckpointVocab,
+    listDifficultyVocab,
     listByHeadwords,
     updateContent,
     applyGroundingPatch,

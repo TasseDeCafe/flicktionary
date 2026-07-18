@@ -270,6 +270,52 @@ The enrichment path uses these shared steps:
      interference patterns, anchored to the specific chunk and source
      context — there is no separate global L1-notes pass.
 
+## Personalized difficulty (expected vocabulary coverage)
+
+One principled number per session: **expected coverage = Σ over the track's
+matched word tokens of P(known), divided by the matched-token count** — "you'll
+understand ~93% of this text's vocabulary". Served by the batched
+`studySessions.getDifficulties` endpoint (POST, ≤100 unique session ids,
+missing/foreign ids silently omitted; sessions sharing a (track, language)
+cost one profile read, and the per-user side loads once per language). The
+stat is always a live query — never pre-aggregated or snapshotted.
+
+- **P(known) per lemma** (read-time precedence, strongest signal wins):
+  - Any **live saved lookup** beats a `known_lemmas` mark. A scheduled
+    (enabled, ready, SRS-state) citation recognition facet contributes its
+    **FSRS retrievability** (same card conversion + recognition scheduler
+    instance as rating — `recognitionRetrievabilityAt`); multiple saved
+    senses of one lemma take the max. Leech-parked facets keep their
+    retrievability as-is (accepted noise).
+  - A saved term with **no schedule** (never introduced, disabled, or
+    pending data) is **0** — and is counted in the "in your vocabulary, not
+    started" bucket, never as "unknown". Saving a marked-known word is the
+    correction signal that the user does NOT know it.
+  - A `known_lemmas` mark (with no live saved lookup) is **1**.
+  - Everything else is 0.
+- **Ambiguity conserves mass**: the track profile stores token-level
+  candidate groups, and each token contributes `token_count ×
+  max(P(candidate))` exactly once — coverage can never exceed 100%.
+- **Denominator = matched word tokens** (resolution failure is the
+  proper-noun/number/typo filter). An empty profile (no matched tokens)
+  reports `available` with a null percent/label.
+- **Counts are distinct representative lemmas**, never token types: unknown =
+  token groups where every candidate is unknown, represented by the
+  highest-`freq_mass` candidate; "frequent" = representative rank ≤ 5000 in
+  `lemma_ranks` (tuning constant); saved-not-started and known counts are the
+  distinct lemmas of their buckets.
+- **Labels** on the raw fraction — ≥0.98 comfortable, ≥0.95 challenging, else
+  frustrating — while the displayed percent is **floored**, so a shown "98%"
+  never carries a sub-0.98 label. Copy scopes honestly to *vocabulary*
+  coverage (syntax, speech rate, abstractness are excluded).
+- **Statuses**: `unsupported` (ad-hoc/lesson sessions — synthetic,
+  non-narrative content — and languages without both kaikki data and a
+  `lemma_rank_builds` manifest row), `pending` (profile build enqueued /
+  in flight / stale-and-rebuilding; clients refetch), `failed` (build job
+  terminally failed; clients stop polling — only a staleness change
+  re-enqueues), `available`. Builds never run synchronously inside the
+  request.
+
 ## Tap-to-translate (fast path)
 
 Separate, fast LLM call. Not the methodology prompt — just a gloss.

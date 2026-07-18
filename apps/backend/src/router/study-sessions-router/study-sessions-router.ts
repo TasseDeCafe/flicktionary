@@ -24,6 +24,10 @@ import {
   markRemainingKnown,
   type MarkRemainingKnownDependencies,
 } from '../../service/known-lemmas/mark-remaining-known'
+import {
+  getSessionDifficulties,
+  type SessionDifficultiesDependencies,
+} from '../../service/difficulty/session-difficulties'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import {
   collectCheckpoint,
@@ -95,7 +99,8 @@ export const StudySessionsRouter = (
   highlightsRepository: HighlightsRepositoryInterface,
   anthropicPasses: AnthropicPassesInterface,
   checkpointDependencies: CheckpointDependencies,
-  markKnownDependencies: MarkRemainingKnownDependencies
+  markKnownDependencies: MarkRemainingKnownDependencies,
+  difficultyDependencies: SessionDifficultiesDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -391,6 +396,15 @@ export const StudySessionsRouter = (
         })
       }
       return { data: { accepted: true as const } }
+    }),
+
+    getDifficulties: implementer.getDifficulties.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const difficulties = await getSessionDifficulties(
+        { userId, sessionIds: input.sessionIds },
+        difficultyDependencies
+      )
+      return { data: { difficulties } }
     }),
 
     getMarkKnownPreview: implementer.getMarkKnownPreview.handler(async ({ input, context, errors }) => {

@@ -43,11 +43,26 @@ const DB_TO_STATE: Record<SrsState, State> = {
   relearning: State.Relearning,
 }
 
+// The subset of facet columns the FSRS card conversion actually reads —
+// difficulty reads load facets through a leaner projection than the full
+// DbUserLookupWithFacet.
+export type FsrsFacetFields = Pick<
+  DbUserLookupWithFacet,
+  | 'srs_state'
+  | 'srs_due'
+  | 'srs_stability'
+  | 'srs_difficulty'
+  | 'srs_last_review'
+  | 'srs_reps'
+  | 'srs_lapses'
+  | 'srs_learning_steps'
+>
+
 // Convert a facet's FSRS columns into a ts-fsrs Card. The facet already encodes
 // the pool (via its skill), so there is a single column family to read. If the
 // state column is null (the facet has never been reviewed) we return null and
 // the caller seeds with createEmptyCard.
-const facetToFsrs = (row: DbUserLookupWithFacet): FsrsCard | null => {
+const facetToFsrs = (row: FsrsFacetFields): FsrsCard | null => {
   if (row.srs_state == null || row.srs_due == null) return null
   const lastReview = row.srs_last_review ? new Date(row.srs_last_review) : undefined
   return {
@@ -129,6 +144,18 @@ export const knownAssertResult = (now: Date): SoftReentryResult => ({
   difficulty: SOFT_REENTRY_DIFFICULTY,
   lastReview: now,
 })
+
+// Forgetting-curve retrievability of a scheduled recognition-pool facet at
+// `now` — the difficulty stat's P(known) for studied terms. Reuses the same
+// card conversion and the recognition FSRS instance as rating, so curve
+// parameters are never re-derived. Null for never-scheduled facets (the
+// caller decides what an unscheduled saved term is worth — P=0 by design).
+export const recognitionRetrievabilityAt = (row: FsrsFacetFields, now: Date): number | null => {
+  const card = facetToFsrs(row)
+  if (!card) return null
+  const retrievability = recognitionFsrs.get_retrievability(card, now, false)
+  return typeof retrievability === 'number' && Number.isFinite(retrievability) ? retrievability : null
+}
 
 export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: Date): FsrsResult => {
   // Both the scheduler instance (recognition's lower desired retention) and the

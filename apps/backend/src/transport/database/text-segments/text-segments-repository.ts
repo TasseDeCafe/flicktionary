@@ -123,6 +123,17 @@ const getMaxIndexForTrack = async (textTrackId: string): Promise<number | null> 
   return rows[0]?.max_index ?? null
 }
 
+// Count + max index in one read — the lemma-profile staleness check compares
+// both against the profile's stored bookkeeping.
+const getSegmentStats = async (textTrackId: string): Promise<{ segmentCount: number; maxIndex: number | null }> => {
+  const rows = (await sql`
+    SELECT COUNT(*)::int AS segment_count, MAX(index)::int AS max_index
+    FROM public.text_segments
+    WHERE text_track_id = ${textTrackId}
+  `) as Array<{ segment_count: number; max_index: number | null }>
+  return { segmentCount: rows[0]?.segment_count ?? 0, maxIndex: rows[0]?.max_index ?? null }
+}
+
 const listAroundIndex = async (textTrackId: string, centerIndex: number, radius: number): Promise<DbTextSegment[]> => {
   return (await sql`
     SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
@@ -175,6 +186,7 @@ export interface TextSegmentsRepositoryInterface {
   findById: (id: string) => Promise<DbTextSegment | null>
   listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
   getMaxIndexForTrack: (textTrackId: string) => Promise<number | null>
+  getSegmentStats: (textTrackId: string) => Promise<{ segmentCount: number; maxIndex: number | null }>
   listAroundIndex: (textTrackId: string, centerIndex: number, radius: number) => Promise<DbTextSegment[]>
   appendSegmentAtomic: (
     params: {
@@ -196,6 +208,7 @@ export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {
     findById,
     listByIndexRange,
     getMaxIndexForTrack,
+    getSegmentStats,
     listAroundIndex,
     appendSegmentAtomic,
   }

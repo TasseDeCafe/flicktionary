@@ -228,6 +228,45 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), checkpointId: z.string().uuid() }))
     .output(z.object({ data: z.object({ reverted: z.number().int(), skipped: z.number().int() }) })),
 
+  // Batched personalized-difficulty read for session cards + headers. POST
+  // (not GET) because the sessions list is unpaginated and an id-array in the
+  // URL risks length limits. Pinned semantics: ≤100 unique ids per call
+  // (validated), the server dedupes and runs ONE auth-scoped session query;
+  // missing/foreign/deleted ids are silently omitted from the result map;
+  // sessions sharing a (track, language) cost one profile read. Per session:
+  // `pending` while the profile build job runs (client refetches), `failed`
+  // after terminal job failure (client stops polling and shows nothing),
+  // `unsupported` for adhoc/lesson sessions and languages without a built
+  // lemma-ranks asset. All lemma counts are DISTINCT representative lemmas
+  // (one per all-candidates-unknown token group, highest-freq_mass candidate
+  // as representative), never folded token types. `expectedCoveragePercent`
+  // is floored so a shown "98%" never carries a sub-0.98 label; both it and
+  // `label` are null for an empty (no matched tokens) profile.
+  getDifficulties: oc
+    .route({ method: 'POST', path: '/study-sessions/difficulties', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionIds: z.array(z.string().uuid()).min(1).max(100) }))
+    .output(
+      z.object({
+        data: z.object({
+          difficulties: z.record(
+            z.string().uuid(),
+            z.object({
+              status: z.enum(['available', 'pending', 'failed', 'unsupported']),
+              expectedCoveragePercent: z.number().int().nullable(),
+              label: z.enum(['comfortable', 'challenging', 'frustrating']).nullable(),
+              unknownLemmaCount: z.number().int().nullable(),
+              frequentUnknownCount: z.number().int().nullable(),
+              savedNotStartedCount: z.number().int().nullable(),
+              knownLemmaCount: z.number().int().nullable(),
+            })
+          ),
+        }),
+      })
+    ),
+
   // Preview for the "mark the rest as known" sweep CTA: the EXACT number of
   // rows the sweep would insert (profile candidate lemmas minus studied
   // headword-lemmas minus already-known). `status` mirrors the difficulty
