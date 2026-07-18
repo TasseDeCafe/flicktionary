@@ -54,6 +54,8 @@ const createDeps = (params: { lookup: DbUserLookup | null; latestEvent: DbPracti
       findByIdForUser: vi.fn().mockResolvedValue(params.lookup),
     },
     studyFacetsRepository: {
+      // The serialization lock's return value is unused by the service.
+      getFacetForUpdate: vi.fn().mockResolvedValue(null),
       restoreSrsSnapshotForFacet,
     },
     practiceRatingEventsRepository: {
@@ -226,6 +228,10 @@ describe('undoRating', () => {
         findByIdForUser: vi.fn().mockResolvedValue(makeLookup()),
       },
       studyFacetsRepository: {
+        getFacetForUpdate: vi.fn(async (_params: unknown, tx: unknown) => {
+          calls.push(tx === txSentinel ? 'lock@tx' : 'lock')
+          return null
+        }),
         restoreSrsSnapshotForFacet: vi.fn(async (_params: unknown, tx: unknown) => {
           calls.push(tx === txSentinel ? 'restore@tx' : 'restore')
         }),
@@ -243,6 +249,6 @@ describe('undoRating', () => {
     } as unknown as UndoRatingDependencies
     const result = await undoRating(lookupId, userId, 'recognition', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
-    expect(calls).toEqual(['find@tx', 'restore@tx', 'markReverted@tx'])
+    expect(calls).toEqual(['lock@tx', 'find@tx', 'restore@tx', 'markReverted@tx'])
   })
 })

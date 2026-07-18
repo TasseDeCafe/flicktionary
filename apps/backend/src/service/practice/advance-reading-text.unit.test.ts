@@ -108,6 +108,11 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
   const getFacet = vi.fn(async ({ userLookupId }: { userLookupId: string }) =>
     makeFacet(userLookupId, facetOverrides[userLookupId] ?? {})
   )
+  // The in-transaction locked reload sees the same facet as the pre-read —
+  // the unit fakes model no concurrent writer.
+  const getFacetForUpdate = vi.fn(async ({ userLookupId }: { userLookupId: string }) =>
+    makeFacet(userLookupId, facetOverrides[userLookupId] ?? {})
+  )
   const ensureCitationFacet = vi.fn().mockResolvedValue(undefined)
   const applyFsrsResultForFacet = vi.fn().mockResolvedValue(undefined)
   const initializeCitationFacetIfUnderDailyCap = vi.fn().mockResolvedValue(true)
@@ -141,6 +146,7 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
     studyFacetsRepository: {
       ensureCitationFacet,
       getFacet,
+      getFacetForUpdate,
       initializeCitationFacetIfUnderDailyCap,
       initializeFacet,
       applyFsrsResultForFacet,

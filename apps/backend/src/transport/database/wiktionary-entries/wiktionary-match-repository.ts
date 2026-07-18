@@ -14,8 +14,9 @@ import { sql } from '../postgres-client'
 //   (a) inflected form: wiktionary_forms → real-lemma entry
 //   (b) direct hit: the token IS a real-lemma headword
 //   (c) precomputed stub redirects (form-of / alt-of chains, ≤2 hops)
-// Ambiguous forms return ALL candidate lemmas — phase-1 rule is to credit
-// every saved candidate. Tokens with no match are absent from the map.
+// Ambiguous forms return ALL candidate lemmas — the checkpoint matcher
+// credits every saved candidate rather than guessing which lemma the token
+// realized. Tokens with no match are absent from the map.
 export type ResolveFoldedLemmasParams = {
   targetLanguage: string
   foldedTokens: readonly string[]

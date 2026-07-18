@@ -63,6 +63,11 @@ export type CollectCheckpointResult =
 export type CheckpointPreviewResult =
   { ok: false; reason: 'not_found' } | { ok: true; pendingCount: number; backlogCount: number; supported: boolean }
 
+// The claims sheet confirms the whole backlog group in ONE assertKnownBacklog
+// call, whose contract accepts at most 200 ids — cap what a checkpoint stores
+// and returns to that bound so the confirm CTA can never exceed it.
+export const MAX_BACKLOG_CANDIDATES = 200
+
 type SpanMatch = {
   fromSegmentIndex: number | null
   clampedTo: number
@@ -277,7 +282,12 @@ export const previewCheckpoint = async (
   // part of the preview's documented overcount.
   const partition = partitionMatches([...span.matched, ...span.mweCandidates], new Date())
   const { creditable, backlog } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
-  return { ok: true, pendingCount: creditable.length, backlogCount: backlog.length, supported: true }
+  return {
+    ok: true,
+    pendingCount: creditable.length,
+    backlogCount: Math.min(backlog.length, MAX_BACKLOG_CANDIDATES),
+    supported: true,
+  }
 }
 
 // The checkpoint press. Matching and the sense pass run OUTSIDE the write
@@ -316,11 +326,12 @@ export const collectCheckpoint = async (
   const confirmedMwes = await confirmMweCandidates(span.mweCandidates, session.target_language, deps)
   const resolved = await resolveMultiSenseMatches([...span.matched, ...confirmedMwes], session.target_language, deps)
   const partition = partitionMatches(resolved, new Date())
-  const { creditable, suppressedCount, backlog } = applySuppression(
-    partition,
-    span.suppressedLemmas,
-    span.backlogExcludedLemmas
-  )
+  const {
+    creditable,
+    suppressedCount,
+    backlog: backlogUncapped,
+  } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
+  const backlog = backlogUncapped.slice(0, MAX_BACKLOG_CANDIDATES)
 
   const allMatchedIds = [...new Set(resolved.map((m) => m.row.lookup.id))]
   const creditableById = new Map(creditable.map((m) => [m.row.lookup.id, m]))
@@ -330,9 +341,11 @@ export const collectCheckpoint = async (
     if (!locked) return { conflict: true as const }
     if (locked.reviewed_until_segment_index !== span.fromSegmentIndex) return { conflict: true as const }
 
-    // Fresh reload + full predicate re-validation: applyTermRating computes
-    // from the row it is handed, so it MUST be handed these fresh rows.
-    const freshFacets = await deps.studyFacetsRepository.listFacetsByLookupIds(
+    // Locked reload + full predicate re-validation: FOR UPDATE holds every
+    // creditable facet's row until commit, so the predicate cannot be
+    // invalidated by a concurrent rating (one that landed during the LLM
+    // passes is caught here; one arriving later blocks on the row lock).
+    const freshFacets = await deps.studyFacetsRepository.listFacetsByLookupIdsForUpdate(
       { userLookupIds: [...creditableById.keys()], skill: 'meaning_recognition', targetForm: CITATION_FORM },
       tx
     )

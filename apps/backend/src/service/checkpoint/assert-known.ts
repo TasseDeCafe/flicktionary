@@ -38,7 +38,9 @@ export const assertKnownBacklog = async (
     let asserted = 0
     let skipped = 0
     const seen = new Set<string>()
-    for (const userLookupId of params.userLookupIds) {
+    // Sorted iteration = the shared multi-facet lock order (user_lookup_id
+    // asc), deadlock-free against the batch-undo loops.
+    for (const userLookupId of [...params.userLookupIds].sort()) {
       if (seen.has(userLookupId)) continue
       seen.add(userLookupId)
       if (!candidateIds.has(userLookupId)) {
@@ -50,7 +52,9 @@ export const assertKnownBacklog = async (
         skipped++
         continue
       }
-      const facet = await deps.studyFacetsRepository.getFacet(
+      // Row lock: the eligibility check and the seed/park snapshot below must
+      // describe the same state a concurrent rating or undo can't move.
+      const facet = await deps.studyFacetsRepository.getFacetForUpdate(
         { userLookupId, skill: 'meaning_recognition', targetForm: CITATION_FORM },
         tx
       )
@@ -134,7 +138,14 @@ export const undoKnownAssertions = async (
     )
     let reverted = 0
     let skipped = 0
-    for (const event of events) {
+    // Same order + facet-lock-first discipline as undoCheckpoint's loop (see
+    // there): lock the facet row, then re-check the latest-event invariant.
+    const ordered = [...events].sort((a, b) => a.user_lookup_id.localeCompare(b.user_lookup_id))
+    for (const event of ordered) {
+      await deps.studyFacetsRepository.getFacetForUpdate(
+        { userLookupId: event.user_lookup_id, skill: 'meaning_recognition', targetForm: event.target_form },
+        tx
+      )
       const latestEvent = await deps.practiceRatingEventsRepository.findLatestLiveEventForUndo(
         {
           userId: params.userId,

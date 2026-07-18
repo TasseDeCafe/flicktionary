@@ -23,8 +23,18 @@ export const undoCheckpoint = async (
   if (!checkpoint || checkpoint.study_session_id !== params.sessionId) return { ok: false, reason: 'not_found' }
 
   const result = await deps.withTransaction(async (tx) => {
-    // FOR UPDATE serializes concurrent undos of the same checkpoint; the
-    // loser re-reads reverted_at and no-ops.
+    // Lock the SESSION row first — the same lock (and lock order) the
+    // collector takes. Without it a concurrent collect could insert a newer
+    // checkpoint and advance the pointer after our latest-live check, and the
+    // pointer restore below would rewind underneath a live checkpoint.
+    const sessionLock = await deps.studySessionsRepository.lockReviewedUntilForUpdate(
+      params.sessionId,
+      params.userId,
+      tx
+    )
+    if (!sessionLock) return { undone: false, reverted: 0, skipped: 0 }
+    // The checkpoint-row lock serializes concurrent undos of the same
+    // checkpoint; the loser re-reads reverted_at and no-ops.
     const locked = await deps.studySessionCheckpointsRepository.lockByIdForUpdate(
       params.checkpointId,
       params.userId,
@@ -44,7 +54,16 @@ export const undoCheckpoint = async (
     )
     let reverted = 0
     let skipped = 0
-    for (const event of events) {
+    // Process in user_lookup_id order — the shared lock order for every
+    // multi-facet locker — and lock each facet row BEFORE the latest-event
+    // check: without the facet lock a rating committing concurrently could be
+    // clobbered by the snapshot restore right after the check passed.
+    const ordered = [...events].sort((a, b) => a.user_lookup_id.localeCompare(b.user_lookup_id))
+    for (const event of ordered) {
+      await deps.studyFacetsRepository.getFacetForUpdate(
+        { userLookupId: event.user_lookup_id, skill: event.skill as FacetSkill, targetForm: event.target_form },
+        tx
+      )
       const latestEvent = await deps.practiceRatingEventsRepository.findLatestLiveEventForUndo(
         {
           userId: params.userId,

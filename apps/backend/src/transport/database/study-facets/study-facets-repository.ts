@@ -7,12 +7,12 @@ import { Tables, Database } from '../database.public.types'
 export type DbStudyFacet = Tables<'study_facets'>
 export type SrsState = Database['public']['Enums']['srs_state']
 
-// Phase 1 ships the two meaning skills; 'pronunciation' (recognition-mode,
-// citation-only) is added in Phase 4.
+// The skills a facet can practice; 'pronunciation' is recognition-mode and
+// citation-only.
 export type FacetSkill = 'meaning_recognition' | 'meaning_production' | 'pronunciation'
 
-// The citation/lemma target. Every Phase-1 facet keys on this; specific
-// inflected forms (non-empty strings) arrive in Phase 4.
+// The citation/lemma target (empty string). Specific inflected forms are
+// facets with a non-empty target_form.
 export const CITATION_FORM = ''
 
 // `pool` (the session queue / wire param) names which review queue a facet
@@ -25,9 +25,8 @@ export const skillForPool = (pool: PracticePool): FacetSkill =>
   pool === 'production' ? 'meaning_production' : 'meaning_recognition'
 
 // The skills that belong to each pool. Returned as raw strings (not
-// FacetSkill) so 'pronunciation' is already covered for forward-compat: it has
-// no rows until Phase 4 widens the CHECK, but a recognition-pool budget/queue
-// filter that lists it is correct now and needs no change then.
+// FacetSkill) so budget/queue filters can pass the list straight into SQL
+// ANY() clauses.
 export const skillsForPool = (pool: PracticePool): string[] =>
   pool === 'production' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
 
@@ -73,13 +72,32 @@ const getFacet = async (params: FacetAddress, executor: postgres.Sql = sql): Pro
   return result[0] ?? null
 }
 
-// Batch variant of getFacet for one (skill, targetForm) across many terms —
-// the checkpoint collector's in-transaction reload (it re-validates the
-// creditable predicate on fresh rows right before rating, so a rating that
-// landed between match and commit is caught).
-const listFacetsByLookupIds = async (
+// getFacet with a row lock — the serialization point between every writer of
+// one facet's SRS state (rating, batch checkpoint credit, the undo paths).
+// Each writer locks the facet row FIRST inside its transaction, then reads /
+// re-validates, so concurrent writers chain instead of overwriting each other
+// from stale snapshots. Must be called with a transaction executor.
+const getFacetForUpdate = async (params: FacetAddress, executor: postgres.Sql): Promise<DbStudyFacet | null> => {
+  const result = (await executor`
+    SELECT *
+    FROM public.study_facets
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+    FOR UPDATE
+  `) as DbStudyFacet[]
+  return result[0] ?? null
+}
+
+// Batch variant of getFacetForUpdate for one (skill, targetForm) across many
+// terms — the checkpoint collector's in-transaction reload. The lock means the
+// creditable predicate it re-validates stays true until commit (a rating that
+// landed between match and this reload is caught; one landing after it blocks
+// on the row lock instead of being overwritten). Ordered by user_lookup_id so
+// every multi-facet locker acquires locks in the same global order.
+const listFacetsByLookupIdsForUpdate = async (
   params: { userLookupIds: string[]; skill: FacetSkill; targetForm: string },
-  executor: postgres.Sql = sql
+  executor: postgres.Sql
 ): Promise<DbStudyFacet[]> => {
   if (params.userLookupIds.length === 0) return []
   return (await executor`
@@ -88,6 +106,8 @@ const listFacetsByLookupIds = async (
     WHERE user_lookup_id = ANY(${params.userLookupIds}::uuid[])
       AND skill = ${params.skill}
       AND target_form = ${params.targetForm}
+    ORDER BY user_lookup_id
+    FOR UPDATE
   `) as DbStudyFacet[]
 }
 
@@ -682,9 +702,10 @@ const unparkAndSoftReentryFacet = async (
 
 export interface StudyFacetsRepositoryInterface {
   getFacet: (params: FacetAddress, executor?: postgres.Sql) => Promise<DbStudyFacet | null>
-  listFacetsByLookupIds: (
+  getFacetForUpdate: (params: FacetAddress, executor: postgres.Sql) => Promise<DbStudyFacet | null>
+  listFacetsByLookupIdsForUpdate: (
     params: { userLookupIds: string[]; skill: FacetSkill; targetForm: string },
-    executor?: postgres.Sql
+    executor: postgres.Sql
   ) => Promise<DbStudyFacet[]>
   ensureCitationFacet: (userLookupId: string, executor?: postgres.Sql) => Promise<void>
   ensureFacet: (
@@ -780,7 +801,8 @@ export { ensureCitationFacet, ensureDefaultCitationFacetIfUnconfigured, ensureFa
 
 export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   getFacet,
-  listFacetsByLookupIds,
+  getFacetForUpdate,
+  listFacetsByLookupIdsForUpdate,
   ensureCitationFacet,
   ensureFacet,
   initializeCitationFacetIfUnderDailyCap,
