@@ -1,101 +1,29 @@
 import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
-import type { Express } from 'express'
-import {
-  __createOrGetUserWithOurApi,
-  __createUserInSupabaseAndGetHisIdAndToken,
-  __generateUniqueId,
-  buildAuthorizationHeaders,
-  buildTestApp,
-} from '../../test/test-utils'
+import { buildAuthorizationHeaders, buildTestApp } from '../../test/test-utils'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import type {
   CheckpointSenseItem,
   CheckpointSensePick,
 } from '../../transport/third-party/anthropic/passes/checkpoint-sense-pass'
-import { UsersRepository } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { StudySessionsRepository } from '../../transport/database/study-sessions/study-sessions-repository'
-import { TextSegmentsRepository } from '../../transport/database/text-segments/text-segments-repository'
 import { PracticeRatingEventsRepository } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { sql } from '../../transport/database/postgres-client'
+import {
+  appendSegment,
+  createReadingSession,
+  getRecognitionFacet,
+  insertWiktionaryLemma,
+  patchRecognitionFacet,
+  saveAdhocTerm,
+  setupCheckpointUser,
+  uniqueCyrillicSuffix,
+} from './checkpoint-test-helpers'
 
-// Checkpoint reviews over real HTTP (docs/SRS.md "Checkpoint reviews"):
-// preview → collect (implicit goods, provenance, budget, pointer) → undo.
-//
-// Test words are nonsense Russian words with per-test unique CYRILLIC suffixes
-// (mixed-script suffixes would make Intl.Segmenter split them): the shared
-// test DB is never reset, and matching keys on exact folded strings, so
-// suffixed words are fully isolated.
-const CYRILLIC = 'абвгдежзиклмнопрстуфхцчшщыэюя'
-const uniqueCyrillicSuffix = (): string =>
-  [...__generateUniqueId('').replace(/[^a-z0-9]/g, '')].map((c) => CYRILLIC[parseInt(c, 36) % CYRILLIC.length]).join('')
-
-const REAL_LEMMA_DATA = { head_templates: [{ name: 'head' }], senses: [{ glosses: ['test gloss'] }] }
-
-const insertWiktionaryLemma = async (headword: string, forms: string[]): Promise<void> => {
-  const [row] = (await sql`
-    INSERT INTO public.wiktionary_entries (target_language, headword, pos, data)
-    VALUES ('ru', ${headword}, 'noun', ${sql.json(REAL_LEMMA_DATA)})
-    RETURNING id
-  `) as [{ id: number }]
-  for (const form of forms) {
-    await sql`
-      INSERT INTO public.wiktionary_forms (target_language, form, entry_id)
-      VALUES ('ru', ${form}, ${row.id})
-      ON CONFLICT DO NOTHING
-    `
-  }
-}
-
-const adhocChunk = (headword: string, sense: string) => ({
-  source: 'highlight' as const,
-  headword,
-  sense,
-  surfaceForm: headword,
-  segmentId: 'rebound-to-the-real-segment',
-  translation: 'translation',
-  surfaceTranslation: null,
-  definition: 'определение',
-  targetExample: null,
-  nativeExample: null,
-  grammar: { pos: 'noun' },
-  belowCefr: false,
-  zipf: 3.0,
-})
-
-type FacetPatch = {
-  state?: 'new' | 'learning' | 'review' | 'relearning' | null
-  dueOffsetDays?: number
-  leechParked?: boolean
-}
-
-const patchRecognitionFacet = async (userLookupId: string, patch: FacetPatch): Promise<void> => {
-  const state = patch.state ?? null
-  const due = patch.dueOffsetDays
-  await sql`
-    UPDATE public.study_facets
-    SET srs_state = ${state},
-        srs_due = ${due === undefined ? null : sql`NOW() + ${`${due} days`}::interval`},
-        srs_stability = ${state === null ? null : 5},
-        srs_difficulty = ${state === null ? null : 5},
-        srs_last_review = ${state === null ? null : sql`NOW() - INTERVAL '5 days'`},
-        srs_reps = ${state === null ? 0 : 3},
-        leech_parked_at = ${patch.leechParked ? sql`NOW()` : null}
-    WHERE user_lookup_id = ${userLookupId}
-      AND skill = 'meaning_recognition'
-      AND target_form = ''
-  `
-}
-
-const getRecognitionFacet = async (userLookupId: string) => {
-  const rows = (await sql`
-    SELECT srs_state, srs_due, srs_reps FROM public.study_facets
-    WHERE user_lookup_id = ${userLookupId} AND skill = 'meaning_recognition' AND target_form = ''
-  `) as Array<{ srs_state: string | null; srs_due: string | null; srs_reps: number }>
-  return rows[0] ?? null
-}
-
+// Checkpoint reviews over real HTTP (docs/SRS.md §6b): preview → collect
+// (implicit goods, provenance, budget, pointer) → undo. Shared fixtures in
+// checkpoint-test-helpers.ts.
 describe('study-sessions checkpoints', () => {
   const basicDataPass = vi.fn()
   const senseMock = vi.fn()
@@ -106,66 +34,6 @@ describe('study-sessions checkpoints', () => {
     }),
   })
 
-  const setupUser = async () => {
-    const { id, token } = await __createUserInSupabaseAndGetHisIdAndToken()
-    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
-    await UsersRepository().setNativeLanguage(id, 'en')
-    await UserTargetLanguagePrefsRepository().upsertCefr(id, 'ru', 'B1')
-    return { userId: id, token }
-  }
-
-  const saveAdhocTerm = async (
-    testAppRef: Express,
-    token: string,
-    targetLanguage: string,
-    headword: string,
-    sense: string
-  ): Promise<string> => {
-    basicDataPass.mockResolvedValueOnce([adhocChunk(headword, sense)])
-    const created = await request(testAppRef)
-      .post('/api/v1/cards/adhoc')
-      .set(buildAuthorizationHeaders(token))
-      .send({ targetLanguage, headword, context: null })
-    expect(created.status).toBe(200)
-    const card = await request(testAppRef)
-      .get(`/api/v1/cards/${created.body.data.cardId}`)
-      .set(buildAuthorizationHeaders(token))
-    expect(card.status).toBe(200)
-    return card.body.data.userLookupId as string
-  }
-
-  // A dedicated reading session (NOT the adhoc session): adhoc card saves
-  // create highlights in the adhoc session, and highlight suppression would
-  // correctly suppress every credit there.
-  const createReadingSession = async (userId: string, targetLanguage: string) => {
-    const [source] = (await sql`
-      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
-      VALUES ('text', 'checkpoint test', ${targetLanguage}, '{}'::jsonb, ${userId})
-      RETURNING id
-    `) as [{ id: string }]
-    const [track] = (await sql`
-      INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
-      VALUES (${source.id}, 'paste', ${targetLanguage}, NULL, ${__generateUniqueId('track')})
-      RETURNING id
-    `) as [{ id: string }]
-    const [session] = (await sql`
-      INSERT INTO public.study_sessions (user_id, content_source_id, text_track_id, native_language, target_language, cefr_level)
-      VALUES (${userId}, ${source.id}, ${track.id}, 'en', ${targetLanguage}, 'B1')
-      RETURNING *
-    `) as [{ id: string; text_track_id: string }]
-    return session
-  }
-
-  const appendSegment = async (textTrackId: string, text: string): Promise<number> => {
-    const segment = await TextSegmentsRepository().appendSegmentAtomic({
-      textTrackId,
-      text,
-      startMs: null,
-      endMs: null,
-    })
-    return segment.index
-  }
-
   test('returns 401 when unauthenticated', async () => {
     const response = await request(testApp)
       .get('/api/v1/study-sessions/00000000-0000-0000-0000-000000000001/checkpoint-preview?toSegmentIndex=5')
@@ -174,7 +42,7 @@ describe('study-sessions checkpoints', () => {
   })
 
   test('collect returns UNSUPPORTED_LANGUAGE for a non-kaikki language and preview reports unsupported', async () => {
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     await UserTargetLanguagePrefsRepository().upsertCefr(userId, 'es', 'B1')
     const esSession = await createReadingSession(userId, 'es')
 
@@ -194,7 +62,7 @@ describe('study-sessions checkpoints', () => {
 
   test('golden path: preview → collect credits due terms, splits lanes, stamps provenance, moves the pointer', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
 
     // Vocabulary: A due review (credited), B not due (skipped), C leech-parked
     // (excluded), D never-introduced (backlog), P multi-sense pair spanning
@@ -204,12 +72,12 @@ describe('study-sessions checkpoints', () => {
     const wordC = `дом${suf}`
     const wordD = `река${suf}`
     const wordP = `печь${suf}`
-    const idA = await saveAdhocTerm(testApp, token, 'ru', wordA, 'table')
-    const idB = await saveAdhocTerm(testApp, token, 'ru', wordB, 'window')
-    const idC = await saveAdhocTerm(testApp, token, 'ru', wordC, 'house')
-    const idD = await saveAdhocTerm(testApp, token, 'ru', wordD, 'river')
-    const idPStove = await saveAdhocTerm(testApp, token, 'ru', wordP, 'stove')
-    const idPBake = await saveAdhocTerm(testApp, token, 'ru', wordP, 'to bake')
+    const idA = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'table')
+    const idB = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'window')
+    const idC = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordC, 'house')
+    const idD = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordD, 'river')
+    const idPStove = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'stove')
+    const idPBake = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'to bake')
 
     await patchRecognitionFacet(idA, { state: 'review', dueOffsetDays: -1 })
     await patchRecognitionFacet(idB, { state: 'review', dueOffsetDays: 5 })
@@ -313,9 +181,9 @@ describe('study-sessions checkpoints', () => {
 
   test('previewed gloss spans suppress the credit (never a downgrade)', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     const word = `трава${suf}`
-    const id = await saveAdhocTerm(testApp, token, 'ru', word, 'grass')
+    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'grass')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}у`])
     const session = await createReadingSession(userId, 'ru')
@@ -339,9 +207,9 @@ describe('study-sessions checkpoints', () => {
 
   test('two concurrent collects: exactly one credits', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     const word = `гриб${suf}`
-    const id = await saveAdhocTerm(testApp, token, 'ru', word, 'mushroom')
+    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'mushroom')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}ы`])
     const session = await createReadingSession(userId, 'ru')
@@ -369,13 +237,13 @@ describe('study-sessions checkpoints', () => {
 
   test('a rating landing between match and commit skips that facet (in-tx revalidation)', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     // Two senses force the sense pass; the scripted pass rates the due facet
     // through the flashcard API before answering, simulating a concurrent
     // rating during the LLM call.
     const word = `ключ${suf}`
-    const idKey = await saveAdhocTerm(testApp, token, 'ru', word, 'key')
-    const idSpring = await saveAdhocTerm(testApp, token, 'ru', word, 'spring')
+    const idKey = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'key')
+    const idSpring = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'spring')
     await patchRecognitionFacet(idKey, { state: 'review', dueOffsetDays: -1 })
     await patchRecognitionFacet(idSpring, { state: 'review', dueOffsetDays: 5 })
     await insertWiktionaryLemma(word, [`${word}и`])
@@ -411,9 +279,9 @@ describe('study-sessions checkpoints', () => {
 
   test('undo restores snapshots, refunds the budget, and restores the NULL pointer', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     const word = `заяц${suf}`
-    const id = await saveAdhocTerm(testApp, token, 'ru', word, 'hare')
+    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'hare')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}ы`])
     const session = await createReadingSession(userId, 'ru')
@@ -456,9 +324,9 @@ describe('study-sessions checkpoints', () => {
 
   test('undo after a later explicit rating skips that facet; a stale (non-latest) checkpoint is a no-op', async () => {
     const suf = uniqueCyrillicSuffix()
-    const { userId, token } = await setupUser()
+    const { userId, token } = await setupCheckpointUser(testApp)
     const word = `волк${suf}`
-    const id = await saveAdhocTerm(testApp, token, 'ru', word, 'wolf')
+    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'wolf')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}и`])
     const session = await createReadingSession(userId, 'ru')

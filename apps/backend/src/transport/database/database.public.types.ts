@@ -595,12 +595,16 @@ export type Database = {
       practice_rating_events: {
         Row: {
           caused_parking: boolean
+          caused_unparking: boolean
           checkpoint_id: string | null
           headword: string
           id: string
           import_batch_id: string | null
           pool: string
           practice_text_id: string | null
+          prev_leech_parked_at: string | null
+          prev_leech_rehab_correct_days: number | null
+          prev_leech_rehab_last_correct_on: string | null
           prev_srs_difficulty: number | null
           prev_srs_due: string | null
           prev_srs_lapses: number | null
@@ -624,12 +628,16 @@ export type Database = {
         }
         Insert: {
           caused_parking?: boolean
+          caused_unparking?: boolean
           checkpoint_id?: string | null
           headword: string
           id?: string
           import_batch_id?: string | null
           pool: string
           practice_text_id?: string | null
+          prev_leech_parked_at?: string | null
+          prev_leech_rehab_correct_days?: number | null
+          prev_leech_rehab_last_correct_on?: string | null
           prev_srs_difficulty?: number | null
           prev_srs_due?: string | null
           prev_srs_lapses?: number | null
@@ -653,12 +661,16 @@ export type Database = {
         }
         Update: {
           caused_parking?: boolean
+          caused_unparking?: boolean
           checkpoint_id?: string | null
           headword?: string
           id?: string
           import_batch_id?: string | null
           pool?: string
           practice_text_id?: string | null
+          prev_leech_parked_at?: string | null
+          prev_leech_rehab_correct_days?: number | null
+          prev_leech_rehab_last_correct_on?: string | null
           prev_srs_difficulty?: number | null
           prev_srs_due?: string | null
           prev_srs_lapses?: number | null

@@ -24,6 +24,7 @@ import {
   type CheckpointDependencies,
 } from '../../service/checkpoint/collect-checkpoint'
 import { undoCheckpoint } from '../../service/checkpoint/undo-checkpoint'
+import { assertKnownBacklog, undoKnownAssertions } from '../../service/checkpoint/assert-known'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -293,6 +294,35 @@ export const StudySessionsRouter = (
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Checkpoint not found' }] } })
       }
       return { data: { undone: result.undone, reverted: result.reverted, skipped: result.skipped } }
+    }),
+
+    assertKnownBacklog: implementer.assertKnownBacklog.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await assertKnownBacklog(
+        {
+          sessionId: input.sessionId,
+          checkpointId: input.checkpointId,
+          userId,
+          userLookupIds: input.userLookupIds,
+        },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Checkpoint not found' }] } })
+      }
+      return { data: { asserted: result.asserted, skipped: result.skipped } }
+    }),
+
+    undoKnownAssertions: implementer.undoKnownAssertions.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await undoKnownAssertions(
+        { sessionId: input.sessionId, checkpointId: input.checkpointId, userId },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Checkpoint not found' }] } })
+      }
+      return { data: { reverted: result.reverted, skipped: result.skipped } }
     }),
 
     getProcessingStatus: implementer.getProcessingStatus.handler(async ({ input, context, errors }) => {

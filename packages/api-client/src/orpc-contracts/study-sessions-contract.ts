@@ -187,6 +187,47 @@ export const studySessionsContract = {
       })
     ),
 
+  // The backlog "I already know this" action from the claims sheet: seed the
+  // selected never-practiced terms straight into review state (first
+  // verification ~3 weeks out). Server-authoritative — only ids in the
+  // checkpoint's stored backlog candidate set are accepted; anything else
+  // (or a facet whose state changed since) counts into `skipped`.
+  assertKnownBacklog: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/{sessionId}/checkpoints/{checkpointId}/assert-known',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        checkpointId: z.string().uuid(),
+        userLookupIds: z.array(z.string().uuid()).max(200),
+      })
+    )
+    .output(z.object({ data: z.object({ asserted: z.number().int(), skipped: z.number().int() }) })),
+
+  // Batch undo of a checkpoint's known-assertions. Independent of the
+  // implicit-credit undo (the two lanes share checkpoint_id, discriminated by
+  // was_explicit): no pointer change, no latest-checkpoint requirement.
+  // Assertions superseded by a later rating are skipped.
+  undoKnownAssertions: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/{sessionId}/checkpoints/{checkpointId}/undo-assertions',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), checkpointId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ reverted: z.number().int(), skipped: z.number().int() }) })),
+
   getStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/status', successStatus: 200 })
     .errors({

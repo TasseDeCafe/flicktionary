@@ -1,7 +1,12 @@
 import { FSRS, generatorParameters, createEmptyCard, Rating, State, type Card as FsrsCard, type Grade } from 'ts-fsrs'
 import type { DbUserLookupWithFacet, SrsState } from '../../transport/database/user-lookups/user-lookups-repository'
 import { poolForSkill } from '../../transport/database/study-facets/study-facets-repository'
-import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
+import {
+  KNOWN_ASSERT_INTERVAL_DAYS,
+  KNOWN_ASSERT_STABILITY,
+  SOFT_REENTRY_DIFFICULTY,
+  SOFT_REENTRY_STABILITY,
+} from './leech-config'
 
 // Recognition-pool facets schedule against a lower desired retention: adding
 // terms is cheap and recognition is the default pool every kept term lands in,
@@ -108,6 +113,19 @@ export const softReentryResult = (now: Date): SoftReentryResult => ({
   state: 'review',
   due: new Date(now.getTime() + 24 * 60 * 60 * 1000),
   stability: SOFT_REENTRY_STABILITY,
+  difficulty: SOFT_REENTRY_DIFFICULTY,
+  lastReview: now,
+})
+
+// Seed for a backlog known-assertion (docs/SRS.md §6c): straight to review
+// state with a generous stability — first verification lands ~3 weeks out.
+// Like softReentryResult this is written directly (seedKnownAssertFacet /
+// seedKnownAssertParkedFacet), never through applyRating: there is no FSRS
+// transition to run on a facet that was never introduced.
+export const knownAssertResult = (now: Date): SoftReentryResult => ({
+  state: 'review',
+  due: new Date(now.getTime() + KNOWN_ASSERT_INTERVAL_DAYS * 24 * 60 * 60 * 1000),
+  stability: KNOWN_ASSERT_STABILITY,
   difficulty: SOFT_REENTRY_DIFFICULTY,
   lastReview: now,
 })

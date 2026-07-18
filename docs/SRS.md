@@ -640,6 +640,60 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   optimistically) — a documented slight overcount; the collect toast shows the
   real number.
 
+## 6c. Backlog known-assertions ("I already know this")
+
+The opt-in second step behind a checkpoint (never on the primary press): the
+claims sheet offers the checkpoint's backlog candidates — saved terms whose
+recognition facet was never introduced — and one confirm seeds the selected
+terms straight into review state. Service:
+`apps/backend/src/service/checkpoint/assert-known.ts`; endpoints
+`assertKnownBacklog` / `undoKnownAssertions` on the study-sessions contract.
+
+- **Server-authoritative claim set.** Only ids in the checkpoint's stored
+  `backlog_candidate_ids` are accepted; unknown ids and facets whose state
+  changed since the checkpoint (introduced, leech-parked with history,
+  disabled, pending) are counted as `skipped`, never errors. The checkpoint
+  must be live (`reverted_at IS NULL`) to assert against.
+- **Generous seed.** `knownAssertResult`: review state, due
+  `KNOWN_ASSERT_INTERVAL_DAYS` (21) out, stability `KNOWN_ASSERT_STABILITY`
+  (10), difficulty `SOFT_REENTRY_DIFFICULTY` — assertion isn't demonstration,
+  but the asymmetry favors trusting the user: a wrong claim costs one failed
+  verification (relearning → leech machinery); a short seed costs guaranteed
+  near-term reviews on every correctly-known term. Written directly via the
+  guarded seed methods, never through `applyRating` (no FSRS transition
+  exists for a never-introduced facet). reps/lapses stay 0.
+- **One action, two write paths** (discriminated by the facet's park state):
+  - *never-introduced, unparked* → `seedKnownAssertFacet`; the event logs
+    `was_introduction = TRUE` (undo restores `srs_state` NULL; its
+    introduced_at-clearing is a harmless no-op — see below);
+  - *onboarding-parked* (`srs_state IS NULL AND leech_parked_at IS NOT NULL`)
+    → `seedKnownAssertParkedFacet`: the assertion **exits onboarding** —
+    unpark + clear both rehab columns + seed. The event logs
+    `was_introduction = FALSE`, `caused_unparking = TRUE` and snapshots the
+    full prior park state (`prev_leech_parked_at`,
+    `prev_leech_rehab_correct_days`, `prev_leech_rehab_last_correct_on` —
+    onboarding-parked facets can carry PARTIAL rehab progress from warm-up
+    gates), so undo re-parks the EXACT prior state. The park-time
+    `introduced_at` is untouched — this is not a second introduction.
+- **Never touches the daily-new budget in either direction**: assertions are
+  neither refused over the cap nor consume it. Deviation from the
+  stamp-and-exclude design: known assertions do NOT stamp `introduced_at` at
+  all (mirrors `initializeFacet`'s convention for non-daily-capped
+  introductions; the rating event is the historical record). The review
+  budget is untouched too — NULL-path events fail its
+  `was_introduction = FALSE` filter, parked-path events fail
+  `prev_srs_state IN ('new','review')`.
+- **Lanes share `checkpoint_id`, discriminated by `was_explicit`** (credits
+  FALSE / assertions TRUE) and revert independently: `undoKnownAssertions`
+  reverts only the assertion lane, changes no pointer, has no
+  latest-checkpoint requirement, and still works after the checkpoint itself
+  was undone. Assertions superseded by a later rating are skipped via the
+  latest-live-event check.
+- **Verification for free**: the seed puts the first review ~3 weeks out and
+  checkpoint crediting is due-only, so a same-session checkpoint structurally
+  cannot verify its own claim — the verifying evidence is always later and
+  independent.
+
 ## 7. Parking + scaffolded exercises: leech rehab AND warm-up
 
 "Park a term and serve it scaffolded gate exercises until it graduates back into FSRS" is

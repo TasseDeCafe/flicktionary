@@ -41,6 +41,16 @@ export const MAX_HINT_WARMS_PER_COMPOSE = 20
 export const SOFT_REENTRY_STABILITY = 1
 export const SOFT_REENTRY_DIFFICULTY = 5 // ts-fsrs difficulty range is 1..10
 
+// Seed for a backlog "I already know this" assertion (docs/SRS.md §6c): a
+// GENEROUS review-state entry — the asymmetry favors trusting the user (a
+// wrong claim costs one failed verification; a short seed costs guaranteed
+// near-term reviews on every correctly-known term). At recognition's 0.8
+// retention, stability 10 puts the first verification ≈ 3 weeks out
+// (interval ≈ 2.1 × stability); the due date is set directly to the interval
+// so seed and check window can't drift apart.
+export const KNOWN_ASSERT_STABILITY = 10
+export const KNOWN_ASSERT_INTERVAL_DAYS = 21
+
 export const isParked = (lookup: DbUserLookupWithFacet): boolean => lookup.leech_parked_at != null
 
 // Leeching is restricted to CITATION MEANING facets: rehab gate exercises test
