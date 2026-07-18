@@ -489,8 +489,9 @@ export const useSessionDifficulties = (sessionIds: readonly string[]) => {
 
 // Exact count the mark-known sweep would insert. Whole-text (no
 // toSegmentIndex) polls while the track's lemma profile is still building
-// (the server re-enqueues it); a span preview tokenizes live server-side and
-// is never pending.
+// (the server re-enqueues it) and STOPS on 'failed' (terminal build failure —
+// polling would re-enqueue forever); a span preview tokenizes live
+// server-side and is never pending.
 export const useMarkKnownPreview = (sessionId: string, enabled: boolean, toSegmentIndex?: number | null) => {
   return useQuery(
     orpcQuery.studySessions.getMarkKnownPreview.queryOptions({

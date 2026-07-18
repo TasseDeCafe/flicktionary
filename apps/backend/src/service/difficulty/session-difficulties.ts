@@ -15,7 +15,7 @@ import type {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { recognitionRetrievabilityAt } from '../practice/fsrs'
-import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
+import { resolveTrackProfileReadiness } from '../lemma-profiles/profile-readiness'
 import {
   computeDifficulty,
   flooredCoveragePercent,
@@ -115,25 +115,11 @@ const resolveTrackStatus = async (
     return { kind: 'terminal', dto: EMPTY_OF('unsupported') }
   }
 
-  if (track.profile_built_at === null) {
-    // Lifecycle state machine: a terminally failed build surfaces as 'failed'
-    // so clients stop polling — it is NOT auto-requeued (only a staleness
-    // change re-enqueues). Anything else (no job yet / job in flight) is
-    // 'pending' with the ensure gate coalescing the enqueue.
-    const latestJobStatus = await deps.processingJobsRepository.getLatestBuildProfileJobStatus(track.id)
-    if (latestJobStatus === 'failed') return { kind: 'terminal', dto: EMPTY_OF('failed') }
-    await ensureTrackLemmaProfileJob({ textTrackId: track.id, userId }, deps)
-    return { kind: 'terminal', dto: EMPTY_OF('pending') }
-  }
-
-  // Cheap staleness check: non-synthetic tracks are immutable after import,
-  // so drift means the invariant broke — rebuild rather than serve a stat
-  // computed over the wrong text.
-  const stats = await deps.textSegmentsRepository.getSegmentStats(track.id)
-  if (stats.segmentCount !== track.profile_segment_count || stats.maxIndex !== track.profile_max_segment_index) {
-    await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
-    return { kind: 'terminal', dto: EMPTY_OF('pending') }
-  }
+  // Missing/stale/failed handling lives in the shared readiness resolver —
+  // the same lifecycle the mark-known sweep sees, so a terminally failed
+  // build reads 'failed' on every path and clients stop polling.
+  const readiness = await resolveTrackProfileReadiness(track, userId, deps)
+  if (readiness !== 'available') return { kind: 'terminal', dto: EMPTY_OF(readiness) }
 
   return { kind: 'compute' }
 }

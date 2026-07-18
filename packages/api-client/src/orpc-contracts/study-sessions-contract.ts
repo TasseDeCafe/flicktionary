@@ -230,8 +230,9 @@ export const studySessionsContract = {
 
   // Batched personalized-difficulty read for session cards + headers. POST
   // (not GET) because the sessions list is unpaginated and an id-array in the
-  // URL risks length limits. Pinned semantics: ≤100 unique ids per call
-  // (validated), the server dedupes and runs ONE auth-scoped session query;
+  // URL risks length limits. Pinned semantics: ≤100 ids per call, validated
+  // on the raw array BEFORE dedup (send deduped ids — the client hook does);
+  // the server dedupes again and runs ONE auth-scoped session query;
   // missing/foreign/deleted ids are silently omitted from the result map;
   // sessions sharing a (track, language) cost one profile read. Per session:
   // `pending` while the profile build job runs (client refetches), `failed`
@@ -272,7 +273,9 @@ export const studySessionsContract = {
   // headword-lemmas minus already-known). `status` mirrors the difficulty
   // gate: 'unsupported' for synthetic (adhoc/lesson) sessions and languages
   // without wiktionary support, 'pending' while the track's lemma profile is
-  // still building (the preview re-enqueues it; the client refetches).
+  // still building (the preview re-enqueues it; the client refetches),
+  // 'failed' after a terminal build failure (the client stops polling and the
+  // whole-text CTA stays absent — same lifecycle as the difficulty read).
   //
   // `toSegmentIndex` scopes the sweep to the segments [0, toSegmentIndex]
   // (clamped to the track's end) — the progressive multi-sitting flow: mark
@@ -295,7 +298,7 @@ export const studySessionsContract = {
     .output(
       z.object({
         data: z.object({
-          status: z.enum(['ready', 'pending', 'unsupported']),
+          status: z.enum(['ready', 'pending', 'failed', 'unsupported']),
           markableLemmaCount: z.number().int(),
         }),
       })
@@ -305,9 +308,10 @@ export const studySessionsContract = {
   // source_id = this session; first-writer provenance). Ambiguous tokens mark
   // ALL their candidate lemmas; saved terms are always skipped (saving is the
   // stronger signal). UNPROCESSABLE_ENTITY carries 'UNSUPPORTED' (synthetic
-  // session / unsupported language) or 'PROFILE_PENDING' (whole-text sweep
+  // session / unsupported language), 'PROFILE_PENDING' (whole-text sweep
   // while the profile is still building — retry after the preview turns
-  // ready). `toSegmentIndex` scopes to [0, toSegmentIndex] exactly like the
+  // ready), or 'PROFILE_FAILED' (terminal build failure — do not retry).
+  // `toSegmentIndex` scopes to [0, toSegmentIndex] exactly like the
   // preview; repeated span sweeps accumulate (ON CONFLICT DO NOTHING + the
   // already-known exclusion make overlap free).
   markRemainingKnown: oc

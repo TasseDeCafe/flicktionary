@@ -131,27 +131,33 @@ export const SessionDifficultySheet = ({
           <Button variant='outline' size='xl' onClick={() => onOpenChange(false)} disabled={isMarking}>
             {t`Close`}
           </Button>
-          {hasPartialRead && spanCount > 0 ? (
-            <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isMarking}>
-              {isMarking
-                ? t`Marking…`
-                : plural(spanCount, {
-                    one: 'Mark the # word read so far as known',
-                    other: 'Mark the # words read so far as known',
-                  })}
-            </Button>
-          ) : (
-            wholeCount > 0 && (
-              <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isMarking}>
-                {isMarking
-                  ? t`Marking…`
-                  : plural(wholeCount, {
-                      one: 'Mark the remaining # word as known',
-                      other: 'Mark the remaining # words as known',
-                    })}
-              </Button>
-            )
-          )}
+          {/* While partially read, the primary slot belongs to the span sweep
+              alone — when the read span is fully swept (spanCount 0) it stays
+              empty rather than falling through to the whole-text sweep, which
+              would silently promote "assert the words I have NOT read" to the
+              primary action. The whole-text sweep remains the demoted text
+              action above. */}
+          {hasPartialRead
+            ? spanCount > 0 && (
+                <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isMarking}>
+                  {isMarking
+                    ? t`Marking…`
+                    : plural(spanCount, {
+                        one: 'Mark the # word read so far as known',
+                        other: 'Mark the # words read so far as known',
+                      })}
+                </Button>
+              )
+            : wholeCount > 0 && (
+                <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isMarking}>
+                  {isMarking
+                    ? t`Marking…`
+                    : plural(wholeCount, {
+                        one: 'Mark the remaining # word as known',
+                        other: 'Mark the remaining # words as known',
+                      })}
+                </Button>
+              )}
         </OverlayFooter>
       </OverlayContent>
     </ResponsiveOverlay>

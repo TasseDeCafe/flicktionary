@@ -38,21 +38,28 @@ export const buildTrackLemmaProfile = async (
   }
   if (!KAIKKI_LANGUAGES.has(track.language)) return { status: 'skipped', reason: 'unsupported_language' }
 
-  // Bounded index-range pages — never the whole track in one load (subtitle
-  // tracks are small, but book-length pastes are not).
-  const maxSegmentIndex = await deps.textSegmentsRepository.getMaxIndexForTrack(textTrackId)
+  // Bounded keyset pages over actual rows — never the whole track in one load
+  // (subtitle tracks are small, but book-length pastes are not), and never a
+  // walk of the raw index space (extension-supplied indices are not
+  // guaranteed dense, so a sparse or crafted max index must not turn into
+  // millions of empty range queries). The bookkeeping totals derive from the
+  // rows actually scanned, keeping the staleness check honest.
   const counts = new Map<string, number>()
   let segmentCount = 0
-  if (maxSegmentIndex !== null) {
-    for (let start = 0; start <= maxSegmentIndex; start += SEGMENT_BATCH_SIZE) {
-      const segments = await deps.textSegmentsRepository.listByIndexRange(
-        textTrackId,
-        start,
-        Math.min(start + SEGMENT_BATCH_SIZE - 1, maxSegmentIndex)
-      )
-      segmentCount += segments.length
-      countFoldedTokens(segments, track.language, counts)
-    }
+  let maxSegmentIndex: number | null = null
+  let cursor: number | null = null
+  for (;;) {
+    const segments = await deps.textSegmentsRepository.listPageAfterIndex({
+      textTrackId,
+      afterIndex: cursor,
+      limit: SEGMENT_BATCH_SIZE,
+    })
+    if (segments.length === 0) break
+    segmentCount += segments.length
+    countFoldedTokens(segments, track.language, counts)
+    cursor = segments[segments.length - 1].index
+    maxSegmentIndex = cursor
+    if (segments.length < SEGMENT_BATCH_SIZE) break
   }
 
   const tokens = [...counts.keys()]

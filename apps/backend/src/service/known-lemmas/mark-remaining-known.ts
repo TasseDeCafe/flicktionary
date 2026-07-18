@@ -9,7 +9,7 @@ import type { TextTracksRepositoryInterface } from '../../transport/database/tex
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
 import { countFoldedTokens } from '../lemma-profiles/count-tokens'
-import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
+import { resolveTrackProfileReadiness } from '../lemma-profiles/profile-readiness'
 
 // The per-session "mark the rest as known" sweep (coverage proposal): every
 // candidate lemma that is neither studied nor already marked gets a
@@ -38,24 +38,29 @@ export type MarkRemainingKnownDependencies = {
 const SEGMENT_BATCH_SIZE = 500
 const RESOLVE_CHUNK_SIZE = 5_000
 
-// Candidate lemmas of the segments [0, min(toSegmentIndex, maxIndex)],
-// resolved through the same matcher the profile build uses.
+// Candidate lemmas of the segments [0, toSegmentIndex] (clamped by the rows
+// that actually exist), resolved through the same matcher the profile build
+// uses. Keyset pages over real rows — indices are client-supplied and not
+// guaranteed dense, so stepping through the index space would let a sparse or
+// crafted max index burn the request on empty range queries.
 const resolveSpanCandidates = async (
   params: { textTrackId: string; targetLanguage: string; toSegmentIndex: number },
   deps: MarkRemainingKnownDependencies
 ): Promise<Set<string>> => {
   const candidates = new Set<string>()
-  const maxIndex = await deps.textSegmentsRepository.getMaxIndexForTrack(params.textTrackId)
-  if (maxIndex === null) return candidates
-  const to = Math.min(params.toSegmentIndex, maxIndex)
   const counts = new Map<string, number>()
-  for (let start = 0; start <= to; start += SEGMENT_BATCH_SIZE) {
-    const segments = await deps.textSegmentsRepository.listByIndexRange(
-      params.textTrackId,
-      start,
-      Math.min(start + SEGMENT_BATCH_SIZE - 1, to)
-    )
+  let cursor: number | null = null
+  for (;;) {
+    const segments = await deps.textSegmentsRepository.listPageAfterIndex({
+      textTrackId: params.textTrackId,
+      afterIndex: cursor,
+      limit: SEGMENT_BATCH_SIZE,
+      toIndexInclusive: params.toSegmentIndex,
+    })
+    if (segments.length === 0) break
     countFoldedTokens(segments, params.targetLanguage, counts)
+    cursor = segments[segments.length - 1].index
+    if (segments.length < SEGMENT_BATCH_SIZE) break
   }
   const tokens = [...counts.keys()]
   for (let i = 0; i < tokens.length; i += RESOLVE_CHUNK_SIZE) {
@@ -73,8 +78,9 @@ const resolveSpanCandidates = async (
 export type SweepComputation =
   | { ok: true; targetLanguage: string; markableLemmas: string[] }
   // Synthetic sessions (adhoc/lesson) and languages without ranks/wiktionary
-  // support never sweep — same gate as the difficulty stat.
-  | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' }
+  // support never sweep — same gate as the difficulty stat. 'profile_failed'
+  // is the terminal build failure: the client must stop polling, not retry.
+  | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' | 'profile_failed' }
 
 export const computeMarkableLemmas = async (
   params: { sessionId: string; userId: string; toSegmentIndex?: number | null },
@@ -100,11 +106,12 @@ export const computeMarkableLemmas = async (
       deps
     )
   } else {
-    if (track.profile_built_at === null) {
-      // Kick (or coalesce) the build so a retry succeeds; never build inline.
-      await ensureTrackLemmaProfileJob({ textTrackId: track.id, userId: params.userId }, deps)
-      return { ok: false, reason: 'profile_pending' }
-    }
+    // Same lifecycle as the difficulty read (shared resolver): enqueue/coalesce
+    // while missing or stale, but surface a terminal build failure instead of
+    // re-enqueueing it on every preview poll.
+    const readiness = await resolveTrackProfileReadiness(track, params.userId, deps)
+    if (readiness === 'failed') return { ok: false, reason: 'profile_failed' }
+    if (readiness === 'pending') return { ok: false, reason: 'profile_pending' }
     const profileRows = await deps.textTrackLemmaProfilesRepository.listRowsByTrackId(track.id)
     candidateLemmas = new Set<string>()
     for (const row of profileRows) {
@@ -132,7 +139,8 @@ export const computeMarkableLemmas = async (
 }
 
 export type MarkRemainingKnownResult =
-  { ok: true; markedCount: number } | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' }
+  | { ok: true; markedCount: number }
+  | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' | 'profile_failed' }
 
 export const markRemainingKnown = async (
   params: { sessionId: string; userId: string; toSegmentIndex?: number | null },

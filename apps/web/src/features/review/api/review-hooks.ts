@@ -206,7 +206,9 @@ export const useUpdateChunkContent = (sessionId?: string) => {
 
 // Rename the (headword, sense) pair on the canonical chunk. Surfaces a 409
 // CONFLICT when the user already has a chunk with the target pair — the
-// caller decides how to display that.
+// caller decides how to display that. Difficulty invalidates because the
+// coverage blend and the mark-known sweep exclusion key saved vocabulary by
+// folded headword — a rename changes which lemmas the term covers.
 export const useRenameChunk = (sessionId?: string) => {
   const { t } = useLingui()
   return useMutation(
@@ -217,6 +219,7 @@ export const useRenameChunk = (sessionId?: string) => {
           orpcQuery.cards.get.key(),
           orpcQuery.chunks.get.key(),
           orpcQuery.chunks.listChunks.key(),
+          ...difficultyInvalidates(),
         ],
         errorMessage: t`Failed to rename term`,
       },
