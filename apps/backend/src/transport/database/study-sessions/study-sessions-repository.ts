@@ -588,6 +588,56 @@ const updateReadingProgress = async (sessionId: string, userId: string, segmentI
   return result.count === 1
 }
 
+// Checkpoint-review pointer methods (docs/SRS.md "Checkpoint reviews").
+// reviewed_until_segment_index is monotonic like furthest_read but only the
+// explicit checkpoint press advances it; restore (undo) is the sole
+// non-monotonic write and goes through restoreReviewedUntil.
+
+// Row-lock the session and return the current pointer — the checkpoint
+// collector's concurrency gate. The caller compares against the value its
+// span was computed from; a mismatch means a concurrent press won (CONFLICT).
+const lockReviewedUntilForUpdate = async (
+  sessionId: string,
+  userId: string,
+  executor: postgres.Sql
+): Promise<{ reviewed_until_segment_index: number | null } | null> => {
+  const rows = (await executor`
+    SELECT reviewed_until_segment_index
+    FROM public.study_sessions
+    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
+    FOR UPDATE
+  `) as Array<{ reviewed_until_segment_index: number | null }>
+  return rows[0] ?? null
+}
+
+const advanceReviewedUntil = async (
+  sessionId: string,
+  userId: string,
+  segmentIndex: number,
+  executor: postgres.Sql
+): Promise<void> => {
+  await executor`
+    UPDATE public.study_sessions
+    SET reviewed_until_segment_index = GREATEST(COALESCE(reviewed_until_segment_index, -1), ${segmentIndex})
+    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
+  `
+}
+
+// Exact restore for checkpoint undo — including NULL (a first checkpoint's
+// undo restores the never-checkpointed state, not -1).
+const restoreReviewedUntil = async (
+  sessionId: string,
+  userId: string,
+  segmentIndex: number | null,
+  executor: postgres.Sql
+): Promise<void> => {
+  await executor`
+    UPDATE public.study_sessions
+    SET reviewed_until_segment_index = ${segmentIndex}
+    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
+  `
+}
+
 const appendProcessingWarning = async (sessionId: string, userId: string, warning: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
@@ -737,6 +787,23 @@ export interface StudySessionsRepositoryInterface {
   hasVisibleSession: (userId: string) => Promise<boolean>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
   updateReadingProgress: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
+  lockReviewedUntilForUpdate: (
+    sessionId: string,
+    userId: string,
+    executor: postgres.Sql
+  ) => Promise<{ reviewed_until_segment_index: number | null } | null>
+  advanceReviewedUntil: (
+    sessionId: string,
+    userId: string,
+    segmentIndex: number,
+    executor: postgres.Sql
+  ) => Promise<void>
+  restoreReviewedUntil: (
+    sessionId: string,
+    userId: string,
+    segmentIndex: number | null,
+    executor: postgres.Sql
+  ) => Promise<void>
   appendProcessingWarning: (sessionId: string, userId: string, warning: string) => Promise<boolean>
   softDelete: (sessionId: string, userId: string) => Promise<boolean>
   getDeletePreview: (sessionId: string, userId: string) => Promise<DeletePreview | null>
@@ -758,6 +825,9 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     hasVisibleSession,
     updateContextBlob,
     updateReadingProgress,
+    lockReviewedUntilForUpdate,
+    advanceReviewedUntil,
+    restoreReviewedUntil,
     appendProcessingWarning,
     softDelete,
     getDeletePreview,

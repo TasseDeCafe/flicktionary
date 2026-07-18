@@ -18,6 +18,12 @@ import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+import {
+  collectCheckpoint,
+  previewCheckpoint,
+  type CheckpointDependencies,
+} from '../../service/checkpoint/collect-checkpoint'
+import { undoCheckpoint } from '../../service/checkpoint/undo-checkpoint'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -58,6 +64,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   contextBlob: row.context_blob,
   processingWarnings: row.processing_warnings,
   furthestReadSegmentIndex: row.furthest_read_segment_index,
+  reviewedUntilSegmentIndex: row.reviewed_until_segment_index,
   createdAt: new Date(row.created_at).toISOString(),
   contentSourceTitle: row.content_source_title,
   contentSourceType: row.content_source_type,
@@ -77,7 +84,8 @@ export const StudySessionsRouter = (
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   processingJobsRepository: ProcessingJobsRepositoryInterface,
   highlightsRepository: HighlightsRepositoryInterface,
-  anthropicPasses: AnthropicPassesInterface
+  anthropicPasses: AnthropicPassesInterface,
+  checkpointDependencies: CheckpointDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -216,6 +224,75 @@ export const StudySessionsRouter = (
         })
       }
       return { data: { ok: true as const } }
+    }),
+
+    getCheckpointPreview: implementer.getCheckpointPreview.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await previewCheckpoint(
+        { sessionId: input.sessionId, userId, toSegmentIndex: input.toSegmentIndex },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      return {
+        data: { pendingCount: result.pendingCount, backlogCount: result.backlogCount, supported: result.supported },
+      }
+    }),
+
+    collectCheckpoint: implementer.collectCheckpoint.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await collectCheckpoint(
+        {
+          sessionId: input.sessionId,
+          userId,
+          toSegmentIndex: input.toSegmentIndex,
+          previewedSpans: input.previewedSpans,
+        },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        if (result.reason === 'not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+        }
+        if (result.reason === 'unsupported_language') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: {
+              errors: [
+                {
+                  code: 'UNSUPPORTED_LANGUAGE',
+                  message: 'Checkpoint reviews are not available for this language yet.',
+                },
+              ],
+            },
+          })
+        }
+        throw errors.CONFLICT({
+          data: { errors: [{ message: 'A concurrent checkpoint advanced the reading position. Retry.' }] },
+        })
+      }
+      return {
+        data: {
+          checkpointId: result.checkpointId,
+          fromSegmentIndex: result.fromSegmentIndex,
+          toSegmentIndex: result.toSegmentIndex,
+          creditedCount: result.creditedCount,
+          suppressedCount: result.suppressedCount,
+          backlogCandidates: result.backlogCandidates,
+        },
+      }
+    }),
+
+    undoCheckpoint: implementer.undoCheckpoint.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await undoCheckpoint(
+        { sessionId: input.sessionId, checkpointId: input.checkpointId, userId },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Checkpoint not found' }] } })
+      }
+      return { data: { undone: result.undone, reverted: result.reverted, skipped: result.skipped } }
     }),
 
     getProcessingStatus: implementer.getProcessingStatus.handler(async ({ input, context, errors }) => {

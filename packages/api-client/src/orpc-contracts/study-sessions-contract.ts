@@ -82,6 +82,111 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 
+  // Checkpoint reviews ("I've followed up to here") — see docs/SRS.md
+  // "Checkpoint reviews". Counts what a collect up to `toSegmentIndex` would
+  // credit. Read-only and body-less, so it cannot see the client's ephemeral
+  // previewed-gloss spans — a slight overcount vs the collect result is
+  // accepted (the toast shows the real number). Multi-sense headwords are also
+  // counted optimistically (no LLM on the preview path). `backlogCount` is
+  // reported separately so the UI can offer the claims flow even when
+  // pendingCount is 0. `supported` = the session's target language has
+  // wiktionary data loaded (KAIKKI_LANGUAGES); when false both counts are 0
+  // and the UI hides the checkpoint affordances.
+  getCheckpointPreview: oc
+    .route({ method: 'GET', path: '/study-sessions/{sessionId}/checkpoint-preview', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), toSegmentIndex: z.coerce.number().int().nonnegative() }))
+    .output(
+      z.object({
+        data: z.object({
+          pendingCount: z.number().int(),
+          backlogCount: z.number().int(),
+          supported: z.boolean(),
+        }),
+      })
+    ),
+
+  // The checkpoint press: credit implicit `good` ratings to saved due terms in
+  // the span (reviewedUntil, toSegmentIndex], advance the monotonic pointer,
+  // and return the backlog known-assertion candidates for the claims sheet.
+  // `previewedSpans` is the client-tracked list of preview-gloss selections
+  // (the server stores nothing for preview glosses) — matched terms there are
+  // suppressed, never converted to a worse rating. `checkpointId: null` means
+  // the span was empty and nothing was written. CONFLICT = a concurrent press
+  // advanced the pointer first; the client refetches and retries.
+  // UNPROCESSABLE_ENTITY carries code 'UNSUPPORTED_LANGUAGE' when the
+  // session's language has no wiktionary data.
+  collectCheckpoint: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/checkpoints', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        toSegmentIndex: z.number().int().nonnegative(),
+        previewedSpans: z
+          .array(
+            z.object({
+              segmentIndex: z.number().int().nonnegative(),
+              selectionText: z.string().max(200),
+            })
+          )
+          .max(500),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          checkpointId: z.string().uuid().nullable(),
+          fromSegmentIndex: z.number().int().nullable(),
+          toSegmentIndex: z.number().int(),
+          creditedCount: z.number().int(),
+          suppressedCount: z.number().int(),
+          backlogCandidates: z.array(
+            z.object({
+              userLookupId: z.string().uuid(),
+              headword: z.string(),
+              sense: z.string(),
+            })
+          ),
+        }),
+      })
+    ),
+
+  // Batch undo of one checkpoint's implicit credits. Only the session's latest
+  // LIVE checkpoint may be undone (`undone: false` otherwise — a stale-safe
+  // no-op, never an error). Facets rated again after the checkpoint are
+  // skipped (`skipped`), the rest restore their snapshots (`reverted`); the
+  // reviewed-until pointer returns to the checkpoint's from value (including
+  // NULL for a first checkpoint).
+  undoCheckpoint: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/{sessionId}/checkpoints/{checkpointId}/undo',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), checkpointId: z.string().uuid() }))
+    .output(
+      z.object({
+        data: z.object({
+          undone: z.boolean(),
+          reverted: z.number().int(),
+          skipped: z.number().int(),
+        }),
+      })
+    ),
+
   getStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/status', successStatus: 200 })
     .errors({

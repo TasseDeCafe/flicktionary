@@ -595,6 +595,7 @@ export type Database = {
       practice_rating_events: {
         Row: {
           caused_parking: boolean
+          checkpoint_id: string | null
           headword: string
           id: string
           import_batch_id: string | null
@@ -613,6 +614,7 @@ export type Database = {
           reverted_at: string | null
           sense: string
           skill: string
+          study_session_id: string | null
           target_form: string
           target_language: string
           user_id: string
@@ -622,6 +624,7 @@ export type Database = {
         }
         Insert: {
           caused_parking?: boolean
+          checkpoint_id?: string | null
           headword: string
           id?: string
           import_batch_id?: string | null
@@ -640,6 +643,7 @@ export type Database = {
           reverted_at?: string | null
           sense?: string
           skill?: string
+          study_session_id?: string | null
           target_form?: string
           target_language: string
           user_id: string
@@ -649,6 +653,7 @@ export type Database = {
         }
         Update: {
           caused_parking?: boolean
+          checkpoint_id?: string | null
           headword?: string
           id?: string
           import_batch_id?: string | null
@@ -667,6 +672,7 @@ export type Database = {
           reverted_at?: string | null
           sense?: string
           skill?: string
+          study_session_id?: string | null
           target_form?: string
           target_language?: string
           user_id?: string
@@ -675,6 +681,13 @@ export type Database = {
           was_introduction?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: 'practice_rating_events_checkpoint_id_fkey'
+            columns: ['checkpoint_id']
+            isOneToOne: false
+            referencedRelation: 'study_session_checkpoints'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'practice_rating_events_import_batch_id_fkey'
             columns: ['import_batch_id']
@@ -687,6 +700,13 @@ export type Database = {
             columns: ['user_lookup_id']
             isOneToOne: false
             referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'practice_rating_events_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
             referencedColumns: ['id']
           },
           {
@@ -1108,6 +1128,50 @@ export type Database = {
           },
         ]
       }
+      study_session_checkpoints: {
+        Row: {
+          backlog_candidate_ids: string[]
+          created_at: string
+          credited_count: number
+          from_segment_index: number | null
+          id: string
+          reverted_at: string | null
+          study_session_id: string
+          to_segment_index: number
+          user_id: string
+        }
+        Insert: {
+          backlog_candidate_ids?: string[]
+          created_at?: string
+          credited_count: number
+          from_segment_index?: number | null
+          id?: string
+          reverted_at?: string | null
+          study_session_id: string
+          to_segment_index: number
+          user_id: string
+        }
+        Update: {
+          backlog_candidate_ids?: string[]
+          created_at?: string
+          credited_count?: number
+          from_segment_index?: number | null
+          id?: string
+          reverted_at?: string | null
+          study_session_id?: string
+          to_segment_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'study_session_checkpoints_session_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       study_sessions: {
         Row: {
           cefr_level: string
@@ -1119,6 +1183,7 @@ export type Database = {
           id: string
           native_language: string
           processing_warnings: string[]
+          reviewed_until_segment_index: number | null
           target_language: string
           text_track_id: string
           user_id: string
@@ -1133,6 +1198,7 @@ export type Database = {
           id?: string
           native_language: string
           processing_warnings?: string[]
+          reviewed_until_segment_index?: number | null
           target_language: string
           text_track_id: string
           user_id: string
@@ -1147,6 +1213,7 @@ export type Database = {
           id?: string
           native_language?: string
           processing_warnings?: string[]
+          reviewed_until_segment_index?: number | null
           target_language?: string
           text_track_id?: string
           user_id?: string
@@ -1361,6 +1428,7 @@ export type Database = {
       }
       user_lookups: {
         Row: {
+          content_encounter_count: number
           count: number
           created_at: string
           definition: string | null
@@ -1375,6 +1443,7 @@ export type Database = {
           grounding_patch: Json | null
           headword: string
           id: string
+          last_content_encounter_at: string | null
           last_encountered_at: string
           native_example: string | null
           sense: string
@@ -1385,6 +1454,7 @@ export type Database = {
           zipf_estimate: number | null
         }
         Insert: {
+          content_encounter_count?: number
           count?: number
           created_at?: string
           definition?: string | null
@@ -1399,6 +1469,7 @@ export type Database = {
           grounding_patch?: Json | null
           headword: string
           id?: string
+          last_content_encounter_at?: string | null
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
@@ -1409,6 +1480,7 @@ export type Database = {
           zipf_estimate?: number | null
         }
         Update: {
+          content_encounter_count?: number
           count?: number
           created_at?: string
           definition?: string | null
@@ -1423,6 +1495,7 @@ export type Database = {
           grounding_patch?: Json | null
           headword?: string
           id?: string
+          last_content_encounter_at?: string | null
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
