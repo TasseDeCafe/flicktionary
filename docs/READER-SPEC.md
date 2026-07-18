@@ -74,17 +74,22 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
   - **Collect** posts the client-tracked `previewedSpans` (every span the
     preview gloss sheet opened on this mount — the stateless gloss endpoint
     persists nothing, so the client is the only source; the list is NOT
-    cleared on checkpoint undo, so a re-collection stays suppressed). Success
+    cleared on checkpoint undo, so a re-collection stays suppressed; each
+    span's text is truncated to the contract's 200 chars so one over-long
+    selection can't fail validation on every later collect). Success
     → sonner toast (`1 review collected` / `# reviews collected`) with an
-    **Undo** action that batch-reverts the checkpoint. CONFLICT (a concurrent
-    press advanced the pointer) → the session + preview refetch automatically
-    and the error toast offers Retry. Backlog candidates in the response open
-    the **claims sheet**.
+    **Undo** action that batch-reverts the checkpoint; a successful undo also
+    clears that checkpoint's claims re-entry (sheet + close-out card), since
+    a reverted checkpoint no longer accepts assertions. CONFLICT (a
+    concurrent press advanced the pointer) → the session + preview refetch
+    automatically and the error toast offers Retry. Backlog candidates in the
+    response open the **claims sheet**.
   - **Claims sheet** (`checkpoint-claims-sheet.tsx`, ResponsiveOverlay): "N
-    words you saved but never practiced" with the candidate list (collapsed
-    behind a disclosure past 8), one confirm CTA for the whole group, and its
-    own undo toast (`undoKnownAssertions`). Never automatic — the sheet is the
-    opt-in second step, always dismissible.
+    words you saved but never practiced" with the candidate list
+    (server-capped at 200 — see `docs/SRS.md` §6b — and collapsed behind a
+    disclosure past 8), one confirm CTA for the whole group, and its own undo
+    toast (`undoKnownAssertions`). Never automatic — the sheet is the opt-in
+    second step, always dismissible.
   - **Close-out card** (`checkpoint-closeout-card.tsx`): rendered after the
     last segment once the reader's furthest-read pointer reaches the end of
     the track (hidden while searching). Offers the same collect action with a
