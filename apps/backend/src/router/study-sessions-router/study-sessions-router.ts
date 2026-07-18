@@ -417,12 +417,13 @@ export const StudySessionsRouter = (
         if (computation.reason === 'not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
         }
-        return {
-          data: {
-            status: computation.reason === 'profile_pending' ? ('pending' as const) : ('unsupported' as const),
-            markableLemmaCount: 0,
-          },
-        }
+        const status =
+          computation.reason === 'profile_pending'
+            ? ('pending' as const)
+            : computation.reason === 'profile_failed'
+              ? ('failed' as const)
+              : ('unsupported' as const)
+        return { data: { status, markableLemmaCount: 0 } }
       }
       return { data: { status: 'ready' as const, markableLemmaCount: computation.markableLemmas.length } }
     }),
@@ -443,6 +444,13 @@ export const StudySessionsRouter = (
               errors: [
                 { code: 'PROFILE_PENDING', message: 'This session is still being analyzed — try again shortly.' },
               ],
+            },
+          })
+        }
+        if (result.reason === 'profile_failed') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: {
+              errors: [{ code: 'PROFILE_FAILED', message: 'Analyzing this session failed — it cannot be swept.' }],
             },
           })
         }

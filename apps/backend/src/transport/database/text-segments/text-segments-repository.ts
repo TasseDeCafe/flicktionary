@@ -111,6 +111,29 @@ const listByIndexRange = async (
   `) as DbTextSegment[]
 }
 
+// Keyset page over a track's segments in index order: rows with
+// index > afterIndex (null starts from the beginning), optionally bounded by
+// index <= toIndexInclusive. The profile build and the mark-known span sweep
+// page with this instead of stepping through the index space — indices are
+// client-supplied on extension ingest and not guaranteed dense, so a sparse
+// or crafted max index must cost pages of real rows, not empty range queries.
+const listPageAfterIndex = async (params: {
+  textTrackId: string
+  afterIndex: number | null
+  limit: number
+  toIndexInclusive?: number
+}): Promise<DbTextSegment[]> => {
+  return (await sql`
+    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    FROM public.text_segments
+    WHERE text_track_id = ${params.textTrackId}
+      AND index > ${params.afterIndex ?? -1}
+      ${params.toIndexInclusive === undefined ? sql`` : sql`AND index <= ${params.toIndexInclusive}`}
+    ORDER BY index ASC
+    LIMIT ${params.limit}
+  `) as DbTextSegment[]
+}
+
 // The track's real maximum segment index, or null for an empty track. The
 // checkpoint collector clamps client-supplied indexes to this so a crafted
 // large index can't burn the monotonic reviewed-until pointer past the end.
@@ -185,6 +208,12 @@ export interface TextSegmentsRepositoryInterface {
   searchInTrack: (textTrackId: string, language: string, query: string) => Promise<DbTextSegment[]>
   findById: (id: string) => Promise<DbTextSegment | null>
   listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
+  listPageAfterIndex: (params: {
+    textTrackId: string
+    afterIndex: number | null
+    limit: number
+    toIndexInclusive?: number
+  }) => Promise<DbTextSegment[]>
   getMaxIndexForTrack: (textTrackId: string) => Promise<number | null>
   getSegmentStats: (textTrackId: string) => Promise<{ segmentCount: number; maxIndex: number | null }>
   listAroundIndex: (textTrackId: string, centerIndex: number, radius: number) => Promise<DbTextSegment[]>
@@ -207,6 +236,7 @@ export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {
     searchInTrack,
     findById,
     listByIndexRange,
+    listPageAfterIndex,
     getMaxIndexForTrack,
     getSegmentStats,
     listAroundIndex,

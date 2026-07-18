@@ -200,4 +200,39 @@ describe('study-sessions difficulties', () => {
     `
     expect(jobs).toHaveLength(1)
   })
+
+  test('stale profile re-enqueues once; a failed rebuild turns terminal instead of looping', async () => {
+    await ensureRuManifest()
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    const s = uniqueCyrillicSuffix()
+    // Bookkeeping deliberately disagrees with the (segment-less) track.
+    await profilesRepository.replaceProfile({
+      textTrackId: session.text_track_id,
+      rows: [{ foldedToken: `др${s}`, tokenCount: 1, candidateLemmas: [`др${s}`] }],
+      segmentCount: 7,
+      maxSegmentIndex: 6,
+      wordTokenCount: 1,
+      matchedTokenCount: 1,
+    })
+
+    const stale = await getDifficulties(token, [session.id])
+    expect(stale.body.data.difficulties[session.id].status).toBe('pending')
+    const jobs = await sql`
+      SELECT id FROM public.processing_jobs
+      WHERE text_track_id = ${session.text_track_id} AND kind = 'build_track_lemma_profile'
+    `
+    expect(jobs).toHaveLength(1)
+
+    // The rebuild exhausts its retries: the drift persists, so requeueing on
+    // every read would loop forever — the read must go terminal instead.
+    await sql`UPDATE public.processing_jobs SET status = 'failed' WHERE id = ${jobs[0].id}`
+    const afterFailure = await getDifficulties(token, [session.id])
+    expect(afterFailure.body.data.difficulties[session.id].status).toBe('failed')
+    const jobsAfter = await sql`
+      SELECT id FROM public.processing_jobs
+      WHERE text_track_id = ${session.text_track_id} AND kind = 'build_track_lemma_profile'
+    `
+    expect(jobsAfter).toHaveLength(1)
+  })
 })

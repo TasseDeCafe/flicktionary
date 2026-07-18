@@ -29,6 +29,9 @@ describe('study-sessions known lemmas', () => {
   })
   const profilesRepository = TextTrackLemmaProfilesRepository()
 
+  // Bookkeeping must match the fixture track's REAL segments (none) — the
+  // sweep shares the difficulty read's staleness check, and a mismatch would
+  // re-enqueue a rebuild and report pending instead of serving the profile.
   const seedProfile = async (textTrackId: string, candidateLemmasByToken: Record<string, string[]>) => {
     await profilesRepository.replaceProfile({
       textTrackId,
@@ -37,8 +40,8 @@ describe('study-sessions known lemmas', () => {
         tokenCount: 1,
         candidateLemmas,
       })),
-      segmentCount: 1,
-      maxSegmentIndex: 0,
+      segmentCount: 0,
+      maxSegmentIndex: null,
       wordTokenCount: Object.keys(candidateLemmasByToken).length,
       matchedTokenCount: Object.keys(candidateLemmasByToken).length,
     })
@@ -190,6 +193,37 @@ describe('study-sessions known lemmas', () => {
     expect(marked.body.data.errors[0].code).toBe('PROFILE_PENDING')
 
     // Both calls funnel through the ensure gate — exactly one live job.
+    const jobs = await sql`
+      SELECT id FROM public.processing_jobs
+      WHERE text_track_id = ${session.text_track_id} AND kind = 'build_track_lemma_profile'
+    `
+    expect(jobs).toHaveLength(1)
+  })
+
+  test('terminally failed build: preview reports failed, sweep refuses, and NO new job is enqueued', async () => {
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    await sql`
+      INSERT INTO public.processing_jobs (kind, study_session_id, text_track_id, user_id, status)
+      VALUES ('build_track_lemma_profile', NULL, ${session.text_track_id}, ${userId}, 'failed')
+    `
+
+    // The polling client must see a terminal state — 'pending' here would
+    // mean every poll mints a fresh job (the failed row is not live, so the
+    // coalescing unique index no longer guards the enqueue).
+    const preview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
+      .set(buildAuthorizationHeaders(token))
+    expect(preview.status).toBe(200)
+    expect(preview.body.data).toEqual({ status: 'failed', markableLemmaCount: 0 })
+
+    const marked = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({})
+    expect(marked.status).toBe(422)
+    expect(marked.body.data.errors[0].code).toBe('PROFILE_FAILED')
+
     const jobs = await sql`
       SELECT id FROM public.processing_jobs
       WHERE text_track_id = ${session.text_track_id} AND kind = 'build_track_lemma_profile'

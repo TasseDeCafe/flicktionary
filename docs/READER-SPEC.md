@@ -312,9 +312,18 @@ stat is always a live query — never pre-aggregated or snapshotted.
   non-narrative content — and languages without both kaikki data and a
   `lemma_rank_builds` manifest row), `pending` (profile build enqueued /
   in flight / stale-and-rebuilding; clients refetch), `failed` (build job
-  terminally failed; clients stop polling — only a staleness change
-  re-enqueues), `available`. Builds never run synchronously inside the
-  request.
+  terminally failed; clients stop polling), `available`. Builds never run
+  synchronously inside the request. The lifecycle lives in ONE shared
+  resolver (`service/lemma-profiles/profile-readiness.ts`) used by every
+  stored-profile read path — the difficulty batch and the whole-text
+  mark-known preview/sweep alike (the preview status enum carries `failed`
+  too, and the sweep refuses with 422 `PROFILE_FAILED`) — and it always
+  checks the latest job status before enqueueing: a failed job row is not
+  "live", so the coalescing unique index no longer guards, and an
+  unconditional enqueue on a polling path would mint a fresh job per poll
+  forever. A stale profile whose rebuild terminally failed likewise reads
+  `failed` rather than requeue-looping. Only ingestion-time ensure (an
+  explicit re-import event) retries after a terminal failure.
 
 ### Web surfaces
 
@@ -338,9 +347,15 @@ stat is always a live query — never pre-aggregated or snapshotted.
   sweeps accumulate; overlap is free via `ON CONFLICT DO NOTHING` + the
   already-known exclusion) — with the whole-text sweep as a secondary text
   action; read-to-the-end (or never scrolled) shows the whole-text CTA
-  alone. Span sweeps tokenize the segments live server-side through the
-  checkpoint matcher (profile rows carry no positions), so they work — and
-  never report `pending` — even while the profile build runs. The sweep
+  alone. While partially read, the primary slot belongs to the span sweep
+  ALONE: when the read span is fully swept (span count 0) the primary stays
+  absent rather than falling through to the whole-text button — promoting
+  "assert words I have NOT read" right after a successful span sweep would
+  defeat the safeguard. Span sweeps tokenize the segments live server-side
+  through the checkpoint matcher (profile rows carry no positions), so they
+  work — and never report `pending` — even while the profile build runs;
+  the whole-text preview can report `failed` (terminal build failure), which
+  stops the polling and leaves the whole-text CTA absent. The sweep
   success toasts the marked count; coverage refreshes via invalidation.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
@@ -350,7 +365,8 @@ stat is always a live query — never pre-aggregated or snapshotted.
 - **Freshness**: every SRS-writing mutation (ratings + undos, checkpoint
   collect/undo/assertions, facet enable/disable/delete, vocabulary
   delete/restore, card remove, highlight delete, adhoc/lesson imports,
-  mark-known/un-mark) composes the shared `difficultyInvalidates()` key list
+  headword rename — the blend keys saved vocab by folded headword —
+  and mark-known/un-mark) composes the shared `difficultyInvalidates()` key list
   (exported next to `practiceSummaryKeys()`); background highlight enrichment
   has no client mutation to hook, so the session-vocabulary view refetches
   difficulty when its enrichment polling transitions to idle.

@@ -43,6 +43,7 @@ describe('importSrt', () => {
       searchInTrack: vi.fn(),
       findById: vi.fn(),
       listByIndexRange: vi.fn(),
+      listPageAfterIndex: vi.fn(),
       getMaxIndexForTrack: vi.fn(),
       getSegmentStats: vi.fn(),
       listAroundIndex: vi.fn(),
