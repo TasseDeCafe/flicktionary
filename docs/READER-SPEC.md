@@ -355,8 +355,18 @@ stat is always a live query — never pre-aggregated or snapshotted.
   through the checkpoint matcher (profile rows carry no positions), so they
   work — and never report `pending` — even while the profile build runs;
   the whole-text preview can report `failed` (terminal build failure), which
-  stops the polling and leaves the whole-text CTA absent. The sweep
-  success toasts the marked count; coverage refreshes via invalidation.
+  stops the polling and leaves the whole-text CTA absent. The sweep success
+  toasts the marked count with an **Undo** action that reverts exactly that
+  press: every press stamps its rows with a fresh `sweep_batch_id`
+  (`markRemainingKnown` returns it; `unmarkKnownBySession` deletes by it), so
+  undoing sweep 2 never takes sweep 1's marks. The sheet also carries a
+  demoted **"Un-mark the N words marked known from this session"** text
+  action (session-wide `unmarkKnownBySession` without a batch id, deleting
+  all `source_id = session` sweep rows); its count is
+  `getMarkKnownPreview.sessionMarkedCount`, computed for EVERY preview status
+  — a span sweep can create marks while the whole-text profile is
+  pending/failed, and the correction surface must not vanish then. Coverage
+  refreshes via invalidation.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
   both the reader gloss sheet and the practice lookup sheet show a "Marked as

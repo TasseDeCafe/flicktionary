@@ -129,6 +129,32 @@ exercise bank + graduation, and the practice UI surfaces (landing, composed queu
 row, keyboard shortcuts, card faces, dedicated exercise sessions). Read it before touching
 practice behavior; update it — not this summary — when behavior changes.
 
+### Vocabulary coverage (dashboard)
+
+The sessions list doubles as the home screen; below the getting-started
+checklist sits the **coverage card** — one card, chips to flip between
+practiced languages (default: last-used), hidden for languages without a
+`lemma_rank_builds` row or with zero studied+known lemmas. The viz is a
+"pixel wall": one dot per lemma of the language, ordered by frequency rank,
+three states (studied / marked known / unknown — a teal ramp where lightness
+encodes strength). Desktop renders the top 10,000, narrow widths the top
+5,000. Headline: "words you know cover ~N% of typical text" — **binary**
+blended token-mass coverage (studied ∪ known count as P=1; deliberately not
+FSRS retrievability, so the number is stable and only moves when vocabulary
+changes), with the honesty valve as a secondary line: "M% verified · rest
+claimed". Verified = the lemma has a live successful explicit-or-checkpoint
+meaning review, never a known-assertion (`docs/SRS.md` §6c); known-only
+lemmas stay claimed forever. Beside the legend, "+ N expressions" counts
+multi-word headwords (they can't be dots). Pressing the card opens
+`/coverage/$lang`: the full wall (top-10k / whole-denominator toggle, hover
+tooltips naming the top-5k lemmas), per-frequency-band waffles with each
+band's own coverage %, and a 100-lemma-bucket skyline strip. Data:
+`coverage.getCoverage` (batched, all practiced languages) riding on
+`lemma_ranks` + `known_lemmas` + the user's vocab through the shared
+checkpoint fold; each compute lazily upserts a daily `coverage_snapshots`
+row (history for a future progress chart — no chart UI yet). Schema in
+`docs/DATA-MODEL.md`; sweep un-mark surfaces in `docs/READER-SPEC.md`.
+
 ### Vocabulary (browse + manage kept chunks)
 
 A separate top-level destination at `/vocabulary` for cross-session browsing of the user's kept chunks. The same `user_lookups` rows feed Practice and this view.

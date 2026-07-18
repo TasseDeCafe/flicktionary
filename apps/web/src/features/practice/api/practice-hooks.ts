@@ -20,10 +20,13 @@ export const practiceSummaryKeys = () => [
 // knows (ratings and their undos, facet lifecycle, vocabulary add/remove,
 // known-mark writes) must spread this — a hand-maintained per-writer list
 // would drift. The mark-known preview rides along: it derives from the same
-// state (profile minus studied minus known).
+// state (profile minus studied minus known). The whole-language coverage
+// read rides along too — its studied/known/verified inputs change on exactly
+// the same writes.
 export const difficultyInvalidates = () => [
   orpcQuery.studySessions.getDifficulties.key(),
   orpcQuery.studySessions.getMarkKnownPreview.key(),
+  orpcQuery.coverage.getCoverage.key(),
 ]
 
 export const useDueSummary = () => {

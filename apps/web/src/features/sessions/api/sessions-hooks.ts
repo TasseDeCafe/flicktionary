@@ -224,7 +224,9 @@ export const useSetCefrForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setCefrForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Coverage rides along: setting a CEFR level is how a language enters
+        // targetLanguagePrefs, and the coverage card enumerates from there.
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.coverage.getCoverage.key()],
         errorMessage: t`Failed to set CEFR level`,
         showErrorModal: true,
       },
@@ -514,6 +516,25 @@ export const useMarkRemainingKnown = (sessionId: string) => {
           orpcQuery.studySessions.getMarkKnownPreview.key({ input: { sessionId } }),
         ],
         errorMessage: t`Failed to mark the words as known`,
+      },
+    })
+  )
+}
+
+// Bulk correction for sweep-created known marks. With a sweepBatchId (the
+// one the sweep response returned) it reverts exactly that press — the
+// success toast's Undo; without one it clears every mark this session's
+// sweeps created — the difficulty sheet's demoted action.
+export const useUnmarkKnownBySession = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.unmarkKnownBySession.mutationOptions({
+      meta: {
+        invalidates: [
+          ...difficultyInvalidates(),
+          orpcQuery.studySessions.getMarkKnownPreview.key({ input: { sessionId } }),
+        ],
+        errorMessage: t`Failed to remove the known marks`,
       },
     })
   )
