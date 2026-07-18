@@ -126,33 +126,69 @@ export const applyTermRating = async (params: {
     }
   }
 
-  // Pre-rating snapshot of the facet's SRS family, taken from the merged row
-  // BEFORE applyRating (which reads but never mutates it). For an introduction
-  // the in-memory row still has its pre-guard NULL state — exactly the restore
-  // target a future undo needs.
-  const prev = {
-    state: lookup.srs_state,
-    due: lookup.srs_due,
-    stability: lookup.srs_stability,
-    difficulty: lookup.srs_difficulty,
-    lastReview: lookup.srs_last_review,
-    reps: lookup.srs_reps,
-    lapses: lookup.srs_lapses,
-    learningSteps: lookup.srs_learning_steps,
-  }
+  // Everything downstream of the introduction guard runs on a freshly LOCKED
+  // facet row: the facet row lock is the serialization point shared by every
+  // SRS writer (flashcard ratings, checkpoint batch credits, the undo paths).
+  // Computing FSRS from the row the caller handed in would let a rating that
+  // committed in between be silently overwritten from a stale snapshot — the
+  // checkpoint collector's LLM passes leave a seconds-wide window.
+  const outcome = await deps.withTransaction(async (tx) => {
+    const freshFacet = await deps.studyFacetsRepository.getFacetForUpdate(
+      { userLookupId: lookup.id, skill, targetForm },
+      tx
+    )
+    // Facet row gone (the lookup was deleted concurrently): nothing to rate.
+    if (!freshFacet) return { applied: false as const, parked: false }
+    const fresh = mergeFacet(lookup, freshFacet)
+    // Re-check parking on the locked row — a leech-park or warm-up entry that
+    // landed while we waited on the lock must keep the facet frozen.
+    if (isParked(fresh)) return { applied: false as const, parked: true }
 
-  // applyRating seeds null-state facets via createEmptyCard, then FSRS
-  // transitions them. applyFsrsResultForFacet overwrites the facet's srs
-  // columns; introduced_at (stamped by the guard) is left untouched.
-  const result = applyRating(lookup, rating, new Date())
+    // Whether THIS rating is the introduction: the caller saw a NULL state and
+    // the guard ran, and no concurrent rating slipped in ahead of our lock
+    // (reps would be > 0). Drives the event's was_introduction and the NULL
+    // prev snapshot below.
+    const wasIntroduction = introducedNew && fresh.srs_reps === 0
 
-  // Leech detection, computed (pure) BEFORE the write so the event records
-  // caused_parking. The park write itself stays a separate post-commit write —
-  // same exposure as the historical FSRS-then-park ordering (a tiny
-  // event-says-parked-but-park-write-failed window, reconcilable).
-  const parked = shouldParkLeech(lookup, result)
+    // Pre-rating snapshot of the facet's SRS family. For an introduction the
+    // guard has already stamped the row 'new', but the restore target a future
+    // undo needs is the pre-guard NULL family. Otherwise snapshot the locked
+    // row, so the snapshot always describes the state this rating actually
+    // transitioned from.
+    const prev = wasIntroduction
+      ? {
+          state: null,
+          due: null,
+          stability: null,
+          difficulty: null,
+          lastReview: null,
+          reps: 0,
+          lapses: 0,
+          learningSteps: 0,
+        }
+      : {
+          state: fresh.srs_state,
+          due: fresh.srs_due,
+          stability: fresh.srs_stability,
+          difficulty: fresh.srs_difficulty,
+          lastReview: fresh.srs_last_review,
+          reps: fresh.srs_reps,
+          lapses: fresh.srs_lapses,
+          learningSteps: fresh.srs_learning_steps,
+        }
 
-  const eventId = await deps.withTransaction(async (tx) => {
+    // applyRating seeds null-state facets via createEmptyCard, then FSRS
+    // transitions them (a just-introduced 'new' row with empty FSRS fields
+    // maps to the same empty card). applyFsrsResultForFacet overwrites the
+    // facet's srs columns; introduced_at (stamped by the guard) is untouched.
+    const result = applyRating(fresh, rating, new Date())
+
+    // Leech detection, computed (pure) BEFORE the write so the event records
+    // caused_parking. The park write itself stays a separate post-commit
+    // write — same exposure as the historical FSRS-then-park ordering (a tiny
+    // event-says-parked-but-park-write-failed window, reconcilable).
+    const parked = shouldParkLeech(fresh, result)
+
     await deps.studyFacetsRepository.applyFsrsResultForFacet(
       {
         userLookupId: lookup.id,
@@ -169,7 +205,7 @@ export const applyTermRating = async (params: {
       },
       tx
     )
-    return await deps.practiceRatingEventsRepository.insert(
+    const eventId = await deps.practiceRatingEventsRepository.insert(
       {
         userId,
         userLookupId: lookup.id,
@@ -179,7 +215,7 @@ export const applyTermRating = async (params: {
         targetForm,
         rating,
         wasExplicit: params.wasExplicit ?? true,
-        wasIntroduction: introducedNew,
+        wasIntroduction,
         causedParking: parked,
         practiceTextId: params.practiceTextId ?? null,
         importBatchId: params.importBatchId ?? null,
@@ -198,7 +234,11 @@ export const applyTermRating = async (params: {
       },
       tx
     )
+    return { applied: true as const, parked, wasIntroduction, eventId }
   })
+
+  if (!outcome.applied) return { ok: true, introducedNew: false, parked: outcome.parked, eventId: null }
+  const { parked, wasIntroduction, eventId } = outcome
 
   if (parked) {
     await deps.studyFacetsRepository.parkLeechFacet({ userLookupId: lookup.id, skill, targetForm })
@@ -211,7 +251,7 @@ export const applyTermRating = async (params: {
     deps.warmExerciseBank?.({ lookup, pool })
   }
 
-  return { ok: true, introducedNew, parked, eventId }
+  return { ok: true, introducedNew: wasIntroduction, parked, eventId }
 }
 
 export type RateTermResult =

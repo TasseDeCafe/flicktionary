@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { StudyFacetsRepository, ensureDefaultCitationFacetIfUnconfigured } from './study-facets-repository'
 import { UserLookupsRepository } from '../user-lookups/user-lookups-repository'
-import { sql } from '../postgres-client'
+import { beginTx, sql } from '../postgres-client'
 import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
 // These tests exercise the study_facets SQL writers against a real DB: the
@@ -325,5 +325,53 @@ describe('study-facets-repository integration tests', () => {
     const pron = await repo.getFacet({ userLookupId: recogTerm.id, skill: 'pronunciation', targetForm: '' })
     expect(pron?.srs_state).toBe('new')
     expect(pron?.introduced_at).toBeNull()
+  })
+
+  // The locked reads are the serialization point between every SRS writer
+  // (rating, checkpoint batch credit, the undo paths) — verify they really
+  // hold row locks. Probed deterministically from a second pool connection
+  // with FOR UPDATE NOWAIT (55P03 = lock_not_available) instead of timing.
+  test('getFacetForUpdate holds the facet row lock until the transaction ends', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const lookup = await createKeptTerm(userId, 'cerradura')
+    await repo.ensureCitationFacet(lookup.id)
+
+    await beginTx(async (tx) => {
+      const locked = await repo.getFacetForUpdate(
+        { userLookupId: lookup.id, skill: 'meaning_recognition', targetForm: '' },
+        tx
+      )
+      expect(locked).not.toBeNull()
+      await expect(
+        sql`SELECT id FROM public.study_facets WHERE user_lookup_id = ${lookup.id} FOR UPDATE NOWAIT`
+      ).rejects.toMatchObject({ code: '55P03' })
+    })
+
+    // After commit the row is free again.
+    const freed = (await sql`
+      SELECT id FROM public.study_facets WHERE user_lookup_id = ${lookup.id} FOR UPDATE NOWAIT
+    `) as Array<{ id: string }>
+    expect(freed.length).toBe(1)
+  })
+
+  test('listFacetsByLookupIdsForUpdate locks every returned row, ordered by lookup id', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const a = await createKeptTerm(userId, 'llave')
+    const b = await createKeptTerm(userId, 'candado')
+    await repo.ensureCitationFacet(a.id)
+    await repo.ensureCitationFacet(b.id)
+
+    await beginTx(async (tx) => {
+      const rows = await repo.listFacetsByLookupIdsForUpdate(
+        { userLookupIds: [b.id, a.id], skill: 'meaning_recognition', targetForm: '' },
+        tx
+      )
+      expect(rows.map((r) => r.user_lookup_id)).toEqual([a.id, b.id].sort())
+      for (const lookupId of [a.id, b.id]) {
+        await expect(
+          sql`SELECT id FROM public.study_facets WHERE user_lookup_id = ${lookupId} FOR UPDATE NOWAIT`
+        ).rejects.toMatchObject({ code: '55P03' })
+      }
+    })
   })
 })

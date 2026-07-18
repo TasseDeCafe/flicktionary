@@ -51,6 +51,11 @@ export const undoRating = async (
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
 
   const undone = await deps.withTransaction(async (tx) => {
+    // Lock the facet row first — the serialization point shared with every
+    // rating writer. A rating committing concurrently now lands either before
+    // the latest-event check (which then correctly no-ops this undo) or after
+    // our commit (chaining off the restored state), never in between.
+    await deps.studyFacetsRepository.getFacetForUpdate({ userLookupId, skill, targetForm }, tx)
     // Address the latest live event by the FACET identity (skill, target_form),
     // not pool — the recognition queue can serve multiple facets per term.
     const event = await deps.practiceRatingEventsRepository.findLatestLiveEventForUndo(

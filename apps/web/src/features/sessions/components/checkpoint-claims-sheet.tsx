@@ -28,6 +28,10 @@ type Props = {
   // Fired after a successful assert so the parent can drop its re-entry
   // affordance (asserting the same batch twice would just skip everything).
   onAsserted?: () => void
+  // Fired after the assertion toast's Undo actually reverted something, with
+  // the batch to restore — undo means "let me reconsider", so the re-entry
+  // must come back (the checkpoint is still live and accepts a re-assert).
+  onAssertUndone?: (restore: { checkpointId: string; candidates: CheckpointBacklogCandidate[] }) => void
 }
 
 // How many candidates show before the rest collapse behind a disclosure.
@@ -44,6 +48,7 @@ export const CheckpointClaimsSheet = ({
   checkpointId,
   candidates,
   onAsserted,
+  onAssertUndone,
 }: Props) => {
   const { t } = useLingui()
   const [expanded, setExpanded] = useState(false)
@@ -66,7 +71,18 @@ export const CheckpointClaimsSheet = ({
           toast.success(plural(assertedCount, { one: '# word marked as known', other: '# words marked as known' }), {
             action: {
               label: t`Undo`,
-              onClick: () => undoAssertions({ sessionId, checkpointId }),
+              // Restore the batch only when the undo reverted something — a
+              // fully-skipped undo (every facet superseded by a later rating)
+              // would restore a batch whose re-assert can only skip.
+              onClick: () =>
+                undoAssertions(
+                  { sessionId, checkpointId },
+                  {
+                    onSuccess: ({ data }) => {
+                      if (data.reverted > 0) onAssertUndone?.({ checkpointId, candidates })
+                    },
+                  }
+                ),
             },
           })
         },

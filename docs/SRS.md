@@ -620,7 +620,11 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   - never-introduced (`srs_state IS NULL`, incl. onboarding-parked) → offered
     as backlog known-assertion candidates
     (`study_session_checkpoints.backlog_candidate_ids`), excluding terms
-    highlighted anywhere in the session or glossed in the span.
+    highlighted anywhere in the session or glossed in the span. Stored and
+    returned capped at 200 (`MAX_BACKLOG_CANDIDATES` — the assert contract's
+    max batch, so the claims sheet's single confirm can never exceed it);
+    the preview's backlog count is capped to match. Candidates past the cap
+    re-surface in any later span they appear in.
 - **Suppression, never punishment.** A term glossed (preview glosses included —
   client-tracked `previewedSpans`, since the gloss endpoint is stateless) or
   highlighted inside the span has its credit suppressed — never converted to an
@@ -637,17 +641,28 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   `content_encounter_count` / `last_content_encounter_at`, but NEVER
   `encounter_count` (tier-1 revealed demand stays reserved for deliberate
   re-saves). Not reverted on undo (accepted noise).
-- **Concurrency.** Matching and the sense pass run outside the write
-  transaction; the transaction re-locks the session pointer (`FOR UPDATE` —
-  mismatch ⇒ 409 CONFLICT, client refetches and retries), reloads the
-  creditable facets and re-validates the full predicate on fresh rows (a
-  rating that landed during the LLM call skips that facet), then credits,
-  advances the pointer, and records encounters atomically.
+- **Concurrency.** The facet row is the serialization point for EVERY SRS
+  writer: ratings (`applyTermRating`), checkpoint credits, the undo paths, and
+  known-assertions all lock the facet row (`getFacetForUpdate`) inside their
+  transaction before reading or restoring it, so concurrent writers chain off
+  committed state instead of overwriting each other from stale snapshots.
+  Multi-facet lockers acquire locks in one global order (session row first
+  where applicable, then facets by `user_lookup_id` asc). For collect:
+  matching and the sense pass run outside the write transaction; the
+  transaction locks the session pointer (`FOR UPDATE` — mismatch ⇒ 409
+  CONFLICT, client refetches and retries), reloads the creditable facets
+  under `FOR UPDATE` and re-validates the full predicate on the locked rows
+  (a rating that landed during the LLM call skips that facet; one arriving
+  later blocks on the row lock), then credits, advances the pointer, and
+  records encounters atomically.
 - **Undo.** One checkpoint = one batch: only the session's latest LIVE
   checkpoint may be undone (stale ⇒ `{undone:false}` no-op, never an error).
-  Per event the latest-live-event-per-facet invariant is re-checked; facets
-  rated again since are skipped (partial undo, counts reported). The pointer
-  restores exactly (incl. NULL); budgets refund via the `reverted_at` filters.
+  Undo takes the session lock FIRST (same lock order as collect, so a
+  concurrent press can't advance the pointer under the restore), then the
+  checkpoint row lock. Per event the facet row is locked and the
+  latest-live-event-per-facet invariant re-checked; facets rated again since
+  are skipped (partial undo, counts reported). The pointer restores exactly
+  (incl. NULL); budgets refund via the `reverted_at` filters.
 - **Preview.** `getCheckpointPreview` (GET) powers the footer badge: counts the
   would-be credits/backlog for a span without writing. It cannot see the
   client's previewed-gloss spans and skips the sense pass (multi-sense counted

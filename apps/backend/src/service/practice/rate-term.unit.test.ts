@@ -68,6 +68,9 @@ const createDeps = (lookup: DbUserLookup | null, facet: DbStudyFacet | null = ma
   const parkLeechFacet = vi.fn().mockResolvedValue(undefined)
   const ensureCitationFacet = vi.fn().mockResolvedValue(undefined)
   const getFacet = vi.fn().mockResolvedValue(facet)
+  // The in-transaction locked reload returns the same facet as the pre-read —
+  // the unit fakes model no concurrent writer.
+  const getFacetForUpdate = vi.fn().mockResolvedValue(facet)
   // Insert returns the new event's id (the undo handle rateTerm surfaces).
   const insertRatingEvent = vi.fn().mockResolvedValue(eventId)
   const warmExerciseBank = vi.fn()
@@ -78,6 +81,7 @@ const createDeps = (lookup: DbUserLookup | null, facet: DbStudyFacet | null = ma
     studyFacetsRepository: {
       ensureCitationFacet,
       getFacet,
+      getFacetForUpdate,
       initializeCitationFacetIfUnderDailyCap,
       initializeFacet,
       applyFsrsResultForFacet,
