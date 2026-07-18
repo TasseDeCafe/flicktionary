@@ -37,6 +37,7 @@ export type Database = {
           client_id: string
           client_secret: string
           created_at: string
+          custom_claims_allowlist: string[]
           discovery_cached_at: string | null
           discovery_url: string | null
           email_optional: boolean
@@ -63,6 +64,7 @@ export type Database = {
           client_id: string
           client_secret: string
           created_at?: string
+          custom_claims_allowlist?: string[]
           discovery_cached_at?: string | null
           discovery_url?: string | null
           email_optional?: boolean
@@ -89,6 +91,7 @@ export type Database = {
           client_id?: string
           client_secret?: string
           created_at?: string
+          custom_claims_allowlist?: string[]
           discovery_cached_at?: string | null
           discovery_url?: string | null
           email_optional?: boolean

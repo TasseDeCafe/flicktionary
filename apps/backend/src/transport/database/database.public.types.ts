@@ -1568,6 +1568,24 @@ export type Database = {
         }
         Relationships: []
       }
+      wiktionary_form_redirects: {
+        Row: {
+          folded_form: string
+          lemma: string
+          target_language: string
+        }
+        Insert: {
+          folded_form: string
+          lemma: string
+          target_language: string
+        }
+        Update: {
+          folded_form?: string
+          lemma?: string
+          target_language?: string
+        }
+        Relationships: []
+      }
       wiktionary_forms: {
         Row: {
           entry_id: number
@@ -1599,7 +1617,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      checkpoint_fold: {
+        Args: { input: string; lang: string }
+        Returns: string
+      }
     }
     Enums: {
       card_chat_role: 'user' | 'assistant'
