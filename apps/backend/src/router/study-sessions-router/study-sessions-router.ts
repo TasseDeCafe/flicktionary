@@ -409,7 +409,10 @@ export const StudySessionsRouter = (
 
     getMarkKnownPreview: implementer.getMarkKnownPreview.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const computation = await computeMarkableLemmas({ sessionId: input.sessionId, userId }, markKnownDependencies)
+      const computation = await computeMarkableLemmas(
+        { sessionId: input.sessionId, userId, toSegmentIndex: input.toSegmentIndex ?? null },
+        markKnownDependencies
+      )
       if (!computation.ok) {
         if (computation.reason === 'not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
@@ -426,7 +429,10 @@ export const StudySessionsRouter = (
 
     markRemainingKnown: implementer.markRemainingKnown.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await markRemainingKnown({ sessionId: input.sessionId, userId }, markKnownDependencies)
+      const result = await markRemainingKnown(
+        { sessionId: input.sessionId, userId, toSegmentIndex: input.toSegmentIndex ?? null },
+        markKnownDependencies
+      )
       if (!result.ok) {
         if (result.reason === 'not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })

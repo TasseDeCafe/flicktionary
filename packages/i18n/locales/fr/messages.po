@@ -144,10 +144,6 @@ msgid "{introducedToday} of {budgetMax} new introductions used today"
 msgstr "{introducedToday} nouvelles introductions sur {budgetMax} utilisées aujourd'hui"
 
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
-msgid "{markableCount, plural, one {Mark the remaining # word as known} other {Mark the remaining # words as known}}"
-msgstr "{markableCount, plural, one {Marquer le # mot restant comme connu} other {Marquer les # mots restants comme connus}}"
-
-#: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{markedCount, plural, one {# word marked as known} other {# words marked as known}}"
 msgstr "{markedCount, plural, one {# mot marqué comme connu} other {# mots marqués comme connus}}"
 
@@ -179,9 +175,21 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
 msgstr "{selectedSheetCount} feuille(s) sur {sheetCount} sélectionnée(s)"
 
+#: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+msgid "{spanCount, plural, one {Mark the # word read so far as known} other {Mark the # words read so far as known}}"
+msgstr "{spanCount, plural, one {Marquer le # mot lu jusqu'ici comme connu} other {Marquer les # mots lus jusqu'ici comme connus}}"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{warmingUp} warming up"
 msgstr "{warmingUp} en échauffement"
+
+#: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+msgid "{wholeCount, plural, one {Mark the remaining # word as known} other {Mark the remaining # words as known}}"
+msgstr "{wholeCount, plural, one {Marquer le # mot restant comme connu} other {Marquer les # mots restants comme connus}}"
+
+#: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+msgid "{wholeCount, plural, one {Or mark the whole text (# word)} other {Or mark the whole text (# words)}}"
+msgstr "{wholeCount, plural, one {Ou marquer le texte entier (# mot)} other {Ou marquer le texte entier (# mots)}}"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a longer phrase."
@@ -474,6 +482,10 @@ msgstr "Déjà dans votre vocabulaire"
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Already know the rest? Marking them as known makes your coverage picture more accurate — you can un-mark any word from its gloss later."
 msgstr "Vous connaissez déjà le reste ? Les marquer comme connus rend votre aperçu de couverture plus précis — vous pouvez retirer cette marque de n'importe quel mot depuis son glossaire plus tard."
+
+#: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+msgid "Already know the words you've read? Mark them as known — come back after your next sitting to mark further. You can un-mark any word from its gloss later."
+msgstr "Vous connaissez déjà les mots que vous avez lus ? Marquez-les comme connus — revenez après votre prochaine session pour marquer la suite. Vous pourrez retirer la marque de n'importe quel mot depuis sa glose plus tard."
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Already saved as \"{duplicateHeadword}\""

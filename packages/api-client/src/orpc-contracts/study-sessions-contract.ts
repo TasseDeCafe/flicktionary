@@ -268,18 +268,30 @@ export const studySessionsContract = {
     ),
 
   // Preview for the "mark the rest as known" sweep CTA: the EXACT number of
-  // rows the sweep would insert (profile candidate lemmas minus studied
+  // rows the sweep would insert (candidate lemmas minus studied
   // headword-lemmas minus already-known). `status` mirrors the difficulty
   // gate: 'unsupported' for synthetic (adhoc/lesson) sessions and languages
   // without wiktionary support, 'pending' while the track's lemma profile is
   // still building (the preview re-enqueues it; the client refetches).
+  //
+  // `toSegmentIndex` scopes the sweep to the segments [0, toSegmentIndex]
+  // (clamped to the track's end) — the progressive multi-sitting flow: mark
+  // what you've read so far, come back later, mark further. The span is
+  // tokenized live through the checkpoint matcher (the stored profile carries
+  // no segment positions), so a span preview is never 'pending'. Omitted →
+  // the whole text via the profile.
   getMarkKnownPreview: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/mark-known-preview', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid() }))
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        toSegmentIndex: z.coerce.number().int().nonnegative().optional(),
+      })
+    )
     .output(
       z.object({
         data: z.object({
@@ -293,8 +305,11 @@ export const studySessionsContract = {
   // source_id = this session; first-writer provenance). Ambiguous tokens mark
   // ALL their candidate lemmas; saved terms are always skipped (saving is the
   // stronger signal). UNPROCESSABLE_ENTITY carries 'UNSUPPORTED' (synthetic
-  // session / unsupported language) or 'PROFILE_PENDING' (profile still
-  // building — retry after the preview turns ready).
+  // session / unsupported language) or 'PROFILE_PENDING' (whole-text sweep
+  // while the profile is still building — retry after the preview turns
+  // ready). `toSegmentIndex` scopes to [0, toSegmentIndex] exactly like the
+  // preview; repeated span sweeps accumulate (ON CONFLICT DO NOTHING + the
+  // already-known exclusion make overlap free).
   markRemainingKnown: oc
     .route({ method: 'POST', path: '/study-sessions/{sessionId}/mark-known', successStatus: 200 })
     .errors({
@@ -302,7 +317,12 @@ export const studySessionsContract = {
       UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid() }))
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        toSegmentIndex: z.number().int().nonnegative().optional(),
+      })
+    )
     .output(z.object({ data: z.object({ markedCount: z.number().int() }) })),
 
   // Un-mark behind the gloss-sheet "Marked as known" chip: a bare DELETE of

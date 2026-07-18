@@ -18,26 +18,45 @@ type Props = {
   onOpenChange: (next: boolean) => void
   sessionId: string
   difficulty: SessionDifficulty | undefined
+  // The reader's furthest-read pointer + the track's last index: mid-text they
+  // scope the primary sweep to "what you've read so far" (the progressive
+  // multi-sitting flow); read-to-the-end (or never scrolled) falls back to the
+  // whole-text sweep alone.
+  furthestReadSegmentIndex: number | null
+  maxSegmentIndex: number | null
 }
 
 // The difficulty detail sheet behind the session-header stat: the honest
 // breakdown (unknown counts, saved-not-started, known marks, the
-// vocabulary-only scoping line) plus the "mark the rest as known" sweep CTA —
-// a deliberate tap inside a sheet, with the exact count shown on the button
-// (the claims-lane posture from phase 1).
-export const SessionDifficultySheet = ({ open, onOpenChange, sessionId, difficulty }: Props) => {
+// vocabulary-only scoping line) plus the mark-known sweep CTAs — deliberate
+// taps inside a sheet, with the exact preview count on the button (the
+// claims-lane posture from phase 1). Mid-text the primary CTA covers the read
+// span; the whole-text sweep stays available as a secondary action.
+export const SessionDifficultySheet = ({
+  open,
+  onOpenChange,
+  sessionId,
+  difficulty,
+  furthestReadSegmentIndex,
+  maxSegmentIndex,
+}: Props) => {
   const { t } = useLingui()
   const labelText = useDifficultyLabelText()
-  const { data: preview } = useMarkKnownPreview(sessionId, open)
+
+  const hasPartialRead =
+    furthestReadSegmentIndex != null && maxSegmentIndex != null && furthestReadSegmentIndex < maxSegmentIndex
+  const { data: wholePreview } = useMarkKnownPreview(sessionId, open)
+  const { data: spanPreview } = useMarkKnownPreview(sessionId, open && hasPartialRead, furthestReadSegmentIndex)
   const { mutate: markRemainingKnown, isPending: isMarking } = useMarkRemainingKnown(sessionId)
 
   const available = difficulty?.status === 'available' ? difficulty : undefined
-  const markableCount = preview?.status === 'ready' ? preview.markableLemmaCount : 0
+  const wholeCount = wholePreview?.status === 'ready' ? wholePreview.markableLemmaCount : 0
+  const spanCount = hasPartialRead && spanPreview?.status === 'ready' ? spanPreview.markableLemmaCount : 0
   const frequentUnknownCount = available?.frequentUnknownCount ?? 0
 
-  const handleMarkKnown = () => {
+  const handleMarkKnown = (toSegmentIndex: number | null) => {
     markRemainingKnown(
-      { sessionId },
+      { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
       {
         onSuccess: (response) => {
           const markedCount = response.data.markedCount
@@ -86,10 +105,25 @@ export const SessionDifficultySheet = ({ open, onOpenChange, sessionId, difficul
           {difficulty?.status === 'pending' && (
             <p className='text-muted-foreground text-sm'>{t`Still analyzing this text — check back in a moment.`}</p>
           )}
-          {markableCount > 0 && (
+          {(spanCount > 0 || wholeCount > 0) && (
             <p className='text-muted-foreground text-sm'>
-              {t`Already know the rest? Marking them as known makes your coverage picture more accurate — you can un-mark any word from its gloss later.`}
+              {hasPartialRead
+                ? t`Already know the words you've read? Mark them as known — come back after your next sitting to mark further. You can un-mark any word from its gloss later.`
+                : t`Already know the rest? Marking them as known makes your coverage picture more accurate — you can un-mark any word from its gloss later.`}
             </p>
+          )}
+          {hasPartialRead && wholeCount > 0 && (
+            <button
+              type='button'
+              className='text-muted-foreground hover:text-foreground w-fit text-sm underline underline-offset-2 disabled:opacity-50'
+              disabled={isMarking}
+              onClick={() => handleMarkKnown(null)}
+            >
+              {plural(wholeCount, {
+                one: 'Or mark the whole text (# word)',
+                other: 'Or mark the whole text (# words)',
+              })}
+            </button>
           )}
         </div>
 
@@ -97,15 +131,26 @@ export const SessionDifficultySheet = ({ open, onOpenChange, sessionId, difficul
           <Button variant='outline' size='xl' onClick={() => onOpenChange(false)} disabled={isMarking}>
             {t`Close`}
           </Button>
-          {markableCount > 0 && (
-            <Button size='xl' onClick={handleMarkKnown} disabled={isMarking}>
+          {hasPartialRead && spanCount > 0 ? (
+            <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isMarking}>
               {isMarking
                 ? t`Marking…`
-                : plural(markableCount, {
-                    one: 'Mark the remaining # word as known',
-                    other: 'Mark the remaining # words as known',
+                : plural(spanCount, {
+                    one: 'Mark the # word read so far as known',
+                    other: 'Mark the # words read so far as known',
                   })}
             </Button>
+          ) : (
+            wholeCount > 0 && (
+              <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isMarking}>
+                {isMarking
+                  ? t`Marking…`
+                  : plural(wholeCount, {
+                      one: 'Mark the remaining # word as known',
+                      other: 'Mark the remaining # words as known',
+                    })}
+              </Button>
+            )
           )}
         </OverlayFooter>
       </OverlayContent>
