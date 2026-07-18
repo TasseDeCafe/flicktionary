@@ -84,6 +84,7 @@ describe('study-sessions difficulties', () => {
       lemmas: [knownLemma],
       source: 'bulk_text',
       sourceId: null,
+      sweepBatchId: null,
     })
 
     await sql`

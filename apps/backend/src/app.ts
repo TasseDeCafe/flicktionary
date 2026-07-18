@@ -48,6 +48,8 @@ import { ContentSourcesRouter } from './router/content-sources-router/content-so
 import { TextTracksRouter } from './router/text-tracks-router/text-tracks-router'
 import { TextSegmentsRouter } from './router/text-segments-router/text-segments-router'
 import { StudySessionsRouter } from './router/study-sessions-router/study-sessions-router'
+import { CoverageRouter } from './router/coverage-router/coverage-router'
+import { CoverageSnapshotsRepository } from './transport/database/coverage-snapshots/coverage-snapshots-repository'
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
 import type { WithTransaction } from './service/highlights/create-note-only-highlight'
 import { GhostsRouter } from './router/ghosts-router/ghosts-router'
@@ -420,6 +422,7 @@ export const buildApp = ({
     wiktionaryMatchRepository,
     processingJobsRepository,
   }
+  const lemmaRanksRepository = LemmaRanksRepository()
   const difficultyDependencies = {
     studySessionsRepository,
     textTracksRepository,
@@ -427,10 +430,18 @@ export const buildApp = ({
     textTrackLemmaProfilesRepository,
     userLookupsRepository,
     knownLemmasRepository,
-    lemmaRanksRepository: LemmaRanksRepository(),
+    lemmaRanksRepository,
     processingJobsRepository,
   }
+  const coverageDependencies = {
+    userTargetLanguagePrefsRepository,
+    userLookupsRepository,
+    knownLemmasRepository,
+    lemmaRanksRepository,
+    coverageSnapshotsRepository: CoverageSnapshotsRepository(),
+  }
 
+  app.use(API_V1, CoverageRouter(coverageDependencies))
   app.use(
     API_V1,
     StudySessionsRouter(

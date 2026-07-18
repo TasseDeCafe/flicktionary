@@ -76,14 +76,14 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
-    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 2 })
+    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 2, sessionMarkedCount: 0 })
 
     const marked = await request(testApp)
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
       .set(buildAuthorizationHeaders(token))
       .send({})
     expect(marked.status).toBe(200)
-    expect(marked.body.data).toEqual({ markedCount: 2 })
+    expect(marked.body.data).toEqual({ markedCount: 2, sweepBatchId: expect.any(String) })
 
     const provenance = await sql`
       SELECT lemma, source, source_id FROM public.known_lemmas
@@ -99,7 +99,7 @@ describe('study-sessions known lemmas', () => {
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
       .set(buildAuthorizationHeaders(token))
       .send({})
-    expect(remarked.body.data).toEqual({ markedCount: 0 })
+    expect(remarked.body.data).toEqual({ markedCount: 0, sweepBatchId: null })
 
     // The gloss chip read path: an inflected occurrence of the marked lemma
     // resolves through the matcher and reports the known candidate.
@@ -121,7 +121,7 @@ describe('study-sessions known lemmas', () => {
     const previewAfter = await request(testApp)
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
-    expect(previewAfter.body.data).toEqual({ status: 'ready', markableLemmaCount: 1 })
+    expect(previewAfter.body.data).toEqual({ status: 'ready', markableLemmaCount: 1, sessionMarkedCount: 1 })
   })
 
   test('span sweeps accumulate across sittings and never depend on the profile', async () => {
@@ -141,7 +141,7 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview?toSegmentIndex=0`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
-    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 1 })
+    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 1, sessionMarkedCount: 0 })
 
     // First sitting: mark up to segment 0 — only the first lemma.
     const firstSweep = await request(testApp)
@@ -149,7 +149,7 @@ describe('study-sessions known lemmas', () => {
       .set(buildAuthorizationHeaders(token))
       .send({ toSegmentIndex: 0 })
     expect(firstSweep.status).toBe(200)
-    expect(firstSweep.body.data).toEqual({ markedCount: 1 })
+    expect(firstSweep.body.data).toEqual({ markedCount: 1, sweepBatchId: expect.any(String) })
     const afterFirst = await sql`
       SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru'
     `
@@ -161,7 +161,7 @@ describe('study-sessions known lemmas', () => {
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
       .set(buildAuthorizationHeaders(token))
       .send({ toSegmentIndex: 99 })
-    expect(secondSweep.body.data).toEqual({ markedCount: 1 })
+    expect(secondSweep.body.data).toEqual({ markedCount: 1, sweepBatchId: expect.any(String) })
     const afterSecond = await sql`
       SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru' ORDER BY lemma
     `
@@ -172,7 +172,74 @@ describe('study-sessions known lemmas', () => {
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
       .set(buildAuthorizationHeaders(token))
       .send({ toSegmentIndex: 1 })
-    expect(resweep.body.data).toEqual({ markedCount: 0 })
+    expect(resweep.body.data).toEqual({ markedCount: 0, sweepBatchId: null })
+  })
+
+  test('sweep-exact toast undo vs session-wide un-mark, and sessionMarkedCount lifecycle', async () => {
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    const s = uniqueCyrillicSuffix()
+    const firstWord = `гарм${s}`
+    const secondWord = `дельт${s}`
+    await insertWiktionaryLemma(firstWord, [])
+    await insertWiktionaryLemma(secondWord, [])
+    await appendSegment(session.text_track_id, `Вот ${firstWord} тут.`)
+    await appendSegment(session.text_track_id, `А ${secondWord} там.`)
+
+    // Two accumulating span sweeps → two distinct batches on one source_id.
+    const firstSweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 0 })
+    expect(firstSweep.body.data.markedCount).toBe(1)
+    const secondSweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 1 })
+    expect(secondSweep.body.data.markedCount).toBe(1)
+    expect(secondSweep.body.data.sweepBatchId).not.toBe(firstSweep.body.data.sweepBatchId)
+
+    // The marked count is computed for every preview status — including while
+    // the whole-text profile is still pending (no profile seeded here).
+    const pendingPreview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
+      .set(buildAuthorizationHeaders(token))
+    expect(pendingPreview.body.data).toEqual({ status: 'pending', markableLemmaCount: 0, sessionMarkedCount: 2 })
+
+    // Undo of the SECOND press removes only its row — sweep 1's mark survives.
+    const batchUndo = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/unmark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ sweepBatchId: secondSweep.body.data.sweepBatchId })
+    expect(batchUndo.status).toBe(200)
+    expect(batchUndo.body.data).toEqual({ removedCount: 1 })
+    const afterBatchUndo = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru'
+    `
+    expect(afterBatchUndo.map((r) => r.lemma)).toEqual([firstWord])
+
+    // The session-wide action clears what's left.
+    const sessionUndo = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/unmark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({})
+    expect(sessionUndo.body.data).toEqual({ removedCount: 1 })
+    const afterSessionUndo = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru'
+    `
+    expect(afterSessionUndo).toHaveLength(0)
+  })
+
+  test('unmark-known on a foreign session is a 404', async () => {
+    const { userId } = await setupCheckpointUser(testApp)
+    const { token: otherToken } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+
+    const response = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/unmark-known`)
+      .set(buildAuthorizationHeaders(otherToken))
+      .send({})
+    expect(response.status).toBe(404)
   })
 
   test('missing profile: preview reports pending, sweep refuses, and a build job is enqueued', async () => {
@@ -183,7 +250,7 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
-    expect(preview.body.data).toEqual({ status: 'pending', markableLemmaCount: 0 })
+    expect(preview.body.data).toEqual({ status: 'pending', markableLemmaCount: 0, sessionMarkedCount: 0 })
 
     const marked = await request(testApp)
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
@@ -215,7 +282,7 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
-    expect(preview.body.data).toEqual({ status: 'failed', markableLemmaCount: 0 })
+    expect(preview.body.data).toEqual({ status: 'failed', markableLemmaCount: 0, sessionMarkedCount: 0 })
 
     const marked = await request(testApp)
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)
@@ -240,7 +307,7 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
-    expect(preview.body.data).toEqual({ status: 'unsupported', markableLemmaCount: 0 })
+    expect(preview.body.data).toEqual({ status: 'unsupported', markableLemmaCount: 0, sessionMarkedCount: 0 })
 
     const marked = await request(testApp)
       .post(`/api/v1/study-sessions/${session.id}/mark-known`)

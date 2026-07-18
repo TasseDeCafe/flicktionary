@@ -586,6 +586,44 @@ const listDifficultyVocab = async (params: {
   }))
 }
 
+export type CoverageVocabRow = {
+  headword: string
+  hasVerifiedReview: boolean
+}
+
+// The coverage stat's vocab side: every live saved term for one language plus
+// whether it carries verifying evidence. "Verified" means at least one live
+// successful review on a MEANING skill that is explicit-or-checkpoint
+// evidence — and never the known-assertion lane (assertions are
+// was_explicit=TRUE WITH a checkpoint_id, credits are was_explicit=FALSE —
+// docs/SRS.md §6c), so a claim can never verify itself. Reading-mode implicit
+// goods (neither explicit nor checkpoint) don't verify either. Kept separate
+// from listDifficultyVocab: coverage needs no FSRS columns and the EXISTS
+// probe should only be paid by coverage reads.
+const listCoverageVocab = async (params: { userId: string; targetLanguage: string }): Promise<CoverageVocabRow[]> => {
+  const rows = (await sql`
+    SELECT ul.headword,
+      EXISTS (
+        SELECT 1 FROM public.practice_rating_events e
+        WHERE e.user_lookup_id = ul.id
+          AND e.rating IN ('good', 'easy')
+          AND e.reverted_at IS NULL
+          AND e.skill IN ('meaning_recognition', 'meaning_production')
+          AND (e.was_explicit = TRUE OR e.checkpoint_id IS NOT NULL)
+          AND NOT (e.was_explicit = TRUE AND e.checkpoint_id IS NOT NULL)
+      ) AS has_verified_review
+    FROM public.user_lookups ul
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+  `) as Array<{ headword: string; has_verified_review: boolean }>
+  return rows.map((row) => ({
+    headword: row.headword,
+    hasVerifiedReview: row.has_verified_review,
+  }))
+}
+
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
 // pass an explicit empty string or the corresponding clear flag.
@@ -2245,6 +2283,7 @@ export interface UserLookupsRepositoryInterface {
   recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
   listDifficultyVocab: (params: { userId: string; targetLanguage: string }) => Promise<DifficultyVocabRow[]>
+  listCoverageVocab: (params: { userId: string; targetLanguage: string }) => Promise<CoverageVocabRow[]>
   listByHeadwords: (params: {
     userId: string
     targetLanguage: string
@@ -2379,6 +2418,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     recordContentEncounter,
     listCheckpointVocab,
     listDifficultyVocab,
+    listCoverageVocab,
     listByHeadwords,
     updateContent,
     applyGroundingPatch,

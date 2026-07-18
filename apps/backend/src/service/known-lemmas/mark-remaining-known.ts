@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { foldUserHeadwordCandidates } from '@flicktionary/core/utils/checkpoint-fold'
 import type { KnownLemmasRepositoryInterface } from '../../transport/database/known-lemmas/known-lemmas-repository'
@@ -139,7 +140,7 @@ export const computeMarkableLemmas = async (
 }
 
 export type MarkRemainingKnownResult =
-  | { ok: true; markedCount: number }
+  | { ok: true; markedCount: number; sweepBatchId: string | null }
   | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' | 'profile_failed' }
 
 export const markRemainingKnown = async (
@@ -148,12 +149,17 @@ export const markRemainingKnown = async (
 ): Promise<MarkRemainingKnownResult> => {
   const computation = await computeMarkableLemmas(params, deps)
   if (!computation.ok) return computation
+  // One fresh batch id per press: ON CONFLICT DO NOTHING means the batch only
+  // ever owns rows this press inserted, so delete-by-batch is exactly "undo
+  // that press" even across accumulating same-session sweeps.
+  const sweepBatchId = randomUUID()
   const markedCount = await deps.knownLemmasRepository.bulkMarkKnown({
     userId: params.userId,
     targetLanguage: computation.targetLanguage,
     lemmas: computation.markableLemmas,
     source: 'bulk_text',
     sourceId: params.sessionId,
+    sweepBatchId,
   })
-  return { ok: true, markedCount }
+  return { ok: true, markedCount, sweepBatchId: markedCount > 0 ? sweepBatchId : null }
 }

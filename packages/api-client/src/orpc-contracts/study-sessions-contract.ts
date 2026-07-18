@@ -300,6 +300,11 @@ export const studySessionsContract = {
         data: z.object({
           status: z.enum(['ready', 'pending', 'failed', 'unsupported']),
           markableLemmaCount: z.number().int(),
+          // How many known-marks this session's sweeps have created so far.
+          // Computed for EVERY status (a span sweep can create marks while
+          // the whole-text profile is pending/failed — the un-mark correction
+          // surface must not vanish then).
+          sessionMarkedCount: z.number().int(),
         }),
       })
     ),
@@ -327,7 +332,36 @@ export const studySessionsContract = {
         toSegmentIndex: z.number().int().nonnegative().optional(),
       })
     )
-    .output(z.object({ data: z.object({ markedCount: z.number().int() }) })),
+    .output(
+      z.object({
+        data: z.object({
+          markedCount: z.number().int(),
+          // Sweep-exact undo handle for THIS press (null when nothing was
+          // inserted); pass it to unmarkKnownBySession to revert exactly this
+          // sweep — progressive sweeps share source_id but not batch id.
+          sweepBatchId: z.string().uuid().nullable(),
+        }),
+      })
+    ),
+
+  // Bulk correction for sweep-created marks. With sweepBatchId: the success
+  // toast's Undo — deletes exactly one press's rows. Without: the difficulty
+  // sheet's session-wide "un-mark everything from this session". Either way
+  // only rows the sweep provenance created (source='bulk_text',
+  // source_id=this session) are touched; zero side effects on SRS state.
+  unmarkKnownBySession: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/unmark-known', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        sweepBatchId: z.string().uuid().optional(),
+      })
+    )
+    .output(z.object({ data: z.object({ removedCount: z.number().int() }) })),
 
   // Un-mark behind the gloss-sheet "Marked as known" chip: a bare DELETE of
   // the given lemmas (the `knownLemmaCandidates` the gloss returned — ALL
