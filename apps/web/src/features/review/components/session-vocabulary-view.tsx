@@ -8,6 +8,7 @@ import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
+import { difficultyInvalidates } from '@/features/practice/api/practice-hooks'
 import {
   useGetProcessingStatus,
   useGetStudySession,
@@ -43,11 +44,17 @@ export const SessionVocabularyView = () => {
     refetchInterval: isProcessingActive ? 2000 : false,
   })
   // The poll above stops the moment the status goes idle, which can race the
-  // final card insert — force one refetch on the active→idle transition.
+  // final card insert — force one refetch on the active→idle transition. The
+  // difficulty stat rides along: enrichment materializes lookups/facets with
+  // no client mutation to hook, so this transition is its only refresh signal
+  // (otherwise the header keeps the pre-enrichment value).
   const wasProcessingActiveRef = useRef(isProcessingActive)
   useEffect(() => {
     if (wasProcessingActiveRef.current && !isProcessingActive) {
       queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
+      for (const key of difficultyInvalidates()) {
+        queryClient.invalidateQueries({ queryKey: key })
+      }
     }
     wasProcessingActiveRef.current = isProcessingActive
   }, [isProcessingActive, sessionId, queryClient])

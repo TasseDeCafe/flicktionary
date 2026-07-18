@@ -1,10 +1,19 @@
 # Vocabulary coverage visualization ("how much of the language do I know?")
 
-> **Status: proposal — not implemented.** A design for a dashboard progression
-> visualization: every lemma of the target language as a dot, colored by
-> knowledge state, with a token-coverage headline stat and a per-text "mark all
-> other words as known" action. Includes the results of the ru/de feasibility
-> spikes (2026-07-12) that validated the data pipeline. Not current behavior.
+> **Status: proposal — data layer implemented, grid not.** A design for a
+> dashboard progression visualization: every lemma of the target language as a
+> dot, colored by knowledge state, with a token-coverage headline stat and a
+> per-text "mark all other words as known" action. Includes the results of the
+> ru/de feasibility spikes (2026-07-12) that validated the data pipeline.
+> Implemented via the checkpoint-reviews rollout phase 2: the `lemma_ranks`
+> build (a DB-side build over the loaded kaikki tables through
+> `checkpoint_fold` — superseding this doc's dump-CSV approach — plus a
+> `lemma_rank_builds` manifest; no separate `form_to_lemma` table, per the
+> checkpoint proposal's deltas), the `known_lemmas` table, and the per-session
+> mark-the-rest-known sweep + gloss-sheet un-mark chip. See
+> `docs/DATA-MODEL.md` / `docs/READER-SPEC.md` for as-built behavior. The
+> grid itself, the claimed/verified split, and bulk un-mark by source remain
+> unimplemented.
 
 ## Problem / motivation
 

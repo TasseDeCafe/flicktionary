@@ -1,6 +1,6 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation } from '@tanstack/react-query'
-import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
+import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
 // Mutation for the "Add a word" flow. Invalidates everything that depends on
 // the user's vocabulary set: chunks list (Vocabulary tab), language list
@@ -22,6 +22,7 @@ export const useCreateAdhocCard = () => {
           orpcQuery.chunks.listChunks.key(),
           orpcQuery.chunks.listLanguages.key(),
           ...practiceSummaryKeys(),
+          ...difficultyInvalidates(),
         ],
         showErrorToast: false,
       },

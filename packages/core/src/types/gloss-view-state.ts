@@ -21,4 +21,8 @@ export type GlossViewState =
       register: string | null
       ipaDisplay: string | null
       ipaLemma: string | null
+      // Candidate lemmas of the selection the user has marked known (web
+      // gloss-sheet chip; the extension doesn't consume it). Absent on
+      // cached-gloss seeds — the async fetch refresh fills it.
+      knownLemmaCandidates?: string[]
     }

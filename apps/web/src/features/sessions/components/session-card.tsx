@@ -6,6 +6,8 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent } from '@flicktionary/ui/components/card'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { SessionDifficulty } from '../api/sessions-hooks'
+import { SessionDifficultyStat } from './session-difficulty-stat'
 
 // Mirrors SessionCard: poster box + title / meta / timestamp lines, same Card
 // chrome, so the list doesn't reflow when sessions land.
@@ -36,6 +38,8 @@ type SessionRow = {
 type Props = {
   session: SessionRow
   onRemove: (session: SessionRow) => void
+  difficulty?: SessionDifficulty
+  difficultyLoading?: boolean
 }
 
 // Poster fallback per source type: an icon on a hue that identifies the type
@@ -56,7 +60,7 @@ const POSTER_PLACEHOLDERS: Partial<Record<ContentSourceType, { Icon: LucideIcon;
   },
 }
 
-export const SessionCard = ({ session, onRemove }: Props) => {
+export const SessionCard = ({ session, onRemove, difficulty, difficultyLoading }: Props) => {
   const { t } = useLingui()
   const title = session.contentSourceTitle ?? t`Untitled`
   const placeholder = session.contentSourceType ? POSTER_PLACEHOLDERS[session.contentSourceType] : undefined
@@ -84,7 +88,10 @@ export const SessionCard = ({ session, onRemove }: Props) => {
           )}
           <div className='min-w-0 flex-1'>
             <div className='truncate text-base font-semibold'>{title}</div>
-            <div className='text-muted-foreground text-xs'>{metaParts.join(' · ')}</div>
+            <div className='text-muted-foreground text-xs'>
+              {metaParts.join(' · ')}
+              <SessionDifficultyStat difficulty={difficulty} isLoading={difficultyLoading} prefix=' · ' />
+            </div>
             <div className='text-muted-foreground text-xs'>{new Date(session.createdAt).toLocaleString()}</div>
           </div>
         </CardContent>

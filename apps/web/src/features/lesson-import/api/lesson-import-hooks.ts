@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
+import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
 export const useCreateLessonBatch = () => {
   const { t } = useLingui()
@@ -43,6 +43,7 @@ export const useConfirmLessonBatch = (batchId: string) => {
           orpcQuery.studySessions.list.key(),
           orpcQuery.chunks.listChunks.key(),
           ...practiceSummaryKeys(),
+          ...difficultyInvalidates(),
         ],
         // `showErrorToast: false`: the confirm view's own onError turns
         // `cefr_not_set` into an inline CEFR picker (no toast) and shows a

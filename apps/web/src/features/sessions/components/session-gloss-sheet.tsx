@@ -40,6 +40,7 @@ import {
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
 import { SavedStudyTargets } from './saved-study-targets'
+import { KnownLemmaChip } from './known-lemma-chip'
 import type { SelectionResult } from '../utils/selection-adapter'
 
 export type ExistingHighlightInput = {
@@ -274,6 +275,7 @@ export const SessionGlossSheet = ({
           register: res.data.register,
           ipaDisplay: res.data.ipaDisplay,
           ipaLemma: res.data.ipaLemma,
+          knownLemmaCandidates: res.data.knownLemmaCandidates,
         })
       } catch {
         if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
@@ -332,6 +334,7 @@ export const SessionGlossSheet = ({
               register: res.data.register,
               ipaDisplay: res.data.ipaDisplay,
               ipaLemma: res.data.ipaLemma,
+              knownLemmaCandidates: res.data.knownLemmaCandidates,
             })
           } catch {
             if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
@@ -351,6 +354,7 @@ export const SessionGlossSheet = ({
             register: res.data.register,
             ipaDisplay: res.data.ipaDisplay,
             ipaLemma: res.data.ipaLemma,
+            knownLemmaCandidates: res.data.knownLemmaCandidates,
           })
         }
       } catch {
@@ -462,6 +466,7 @@ export const SessionGlossSheet = ({
         register: gloss.data.register,
         ipaDisplay: gloss.data.ipaDisplay,
         ipaLemma: gloss.data.ipaLemma,
+        knownLemmaCandidates: gloss.data.knownLemmaCandidates,
       })
     } catch {
       setGlossState({ status: 'error', message: null })
@@ -716,6 +721,15 @@ export const SessionGlossSheet = ({
                   }
                   srDescription={ariaDescription}
                 />
+                {isReady && (
+                  <KnownLemmaChip
+                    targetLanguage={targetLanguage}
+                    lemmas={(glossState as Extract<GlossViewState, { status: 'ready' }>).knownLemmaCandidates ?? []}
+                    onRemoved={() =>
+                      setGlossState((prev) => (prev.status === 'ready' ? { ...prev, knownLemmaCandidates: [] } : prev))
+                    }
+                  />
+                )}
               </div>
               {/* The LLM ghost suggestion is offered as an understated icon in the
                 top-right (with a tooltip explaining it on desktop) rather than a
