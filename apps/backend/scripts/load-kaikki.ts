@@ -8,6 +8,7 @@ import { once } from 'node:events'
 import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
+import { rebuildWiktionaryRedirects } from './build-wiktionary-redirects'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
@@ -241,6 +242,13 @@ const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: 
     await pipeline(createReadStream(formsCsv), formsWritable)
     console.log(`  ✓ forms loaded in ${((Date.now() - tForms) / 1000).toFixed(1)}s`)
 
+    // The source tables were just truncated + reloaded, so the derived
+    // redirects table rebuilds in the same lifecycle (TRUNCATE + all
+    // languages). Standalone rebuilds go through
+    // build-wiktionary-redirects.ts, which scopes by language instead.
+    console.log('Rebuilding wiktionary_form_redirects...')
+    await rebuildWiktionaryRedirects(sql, LOAD_LANGUAGES, 'truncate')
+
     const [entriesCount] = await sql<[{ count: number }]>`
       SELECT COUNT(*)::int AS count FROM public.wiktionary_entries
     `
@@ -342,6 +350,7 @@ const snapshotWiktionary = async (_connectionString: string): Promise<void> => {
         '--data-only',
         '--table=public.wiktionary_entries',
         '--table=public.wiktionary_forms',
+        '--table=public.wiktionary_form_redirects',
         '-Fc',
       ],
       { stdio: ['ignore', 'pipe', 'inherit'] }

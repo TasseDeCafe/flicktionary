@@ -42,6 +42,7 @@ if [ ! -s "$DUMP_FILE" ]; then
         --data-only \
         --table=public.wiktionary_entries \
         --table=public.wiktionary_forms \
+        --table=public.wiktionary_form_redirects \
         -Fc > "$DUMP_FILE.tmp"
       mv "$DUMP_FILE.tmp" "$DUMP_FILE"
       echo "  ✓ Saved $(du -h "$DUMP_FILE" | cut -f1) snapshot in $(($(date +%s) - DUMP_START))s"

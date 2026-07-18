@@ -458,6 +458,40 @@ Notes:
   at export are computed from the basic columns and edits go directly into
   those columns.
 
+### Wiktionary reference tables & checkpoint matching
+
+Reference data loaded from kaikki.org dumps by `apps/backend/scripts/load-kaikki.ts`
+(TRUNCATE + reload per run; backend reads only, RLS enabled with no policies):
+
+```
+wiktionary_entries
+  id                  bigserial pk
+  target_language     text         -- kaikki lang_code; loaded languages = KAIKKI_LANGUAGES
+  headword            text
+  pos                 text
+  data                jsonb        -- the verbatim kaikki record
+
+wiktionary_forms                   -- flattened paradigm cells (stress-stripped,
+  target_language     text         -- case-preserved), many-to-many form → entry
+  form                text
+  entry_id            bigint -> wiktionary_entries.id
+
+wiktionary_form_redirects          -- precomputed stub resolution (form-of /
+  target_language     text         -- alt-of chains followed ≤2 hops); rows exist
+  folded_form         text         -- only when the chain ends on a real lemma.
+  lemma               text         -- Rebuilt by build-wiktionary-redirects.ts,
+                                   -- invoked at the end of every load-kaikki run.
+```
+
+Checkpoint-review matching folds BOTH sides of every comparison through
+`public.checkpoint_fold(input, lang)` (strip U+0301 → NFC → trim → lower, then
+ru `ё→е`, de `ß→ss`). Expression indexes
+`(target_language, checkpoint_fold(form|headword, target_language))` on
+`wiktionary_forms` / `wiktionary_entries` make folded point lookups indexed;
+query-side tokens fold through the byte-pinned TS twin
+`packages/core/src/utils/checkpoint-fold.ts` (parity enforced by an
+integration test). A "real lemma" for matching purposes has
+`data ? 'head_templates'` and is neither a form-of nor an alt-of stub.
 
 ## Card output template
 
