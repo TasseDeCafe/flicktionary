@@ -89,7 +89,12 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
     (server-capped at 200 — see `docs/SRS.md` §6b — and collapsed behind a
     disclosure past 8), one confirm CTA for the whole group, and its own undo
     toast (`undoKnownAssertions`). Never automatic — the sheet is the opt-in
-    second step, always dismissible.
+    second step, always dismissible. A confirm clears the client's claims
+    batch (re-asserting the same batch would just skip), but an assertion
+    undo that actually reverted something restores it — undo means
+    reconsider — unless a newer collect replaced the batch or the checkpoint
+    itself was reverted in the meantime (a dead checkpoint rejects
+    re-asserts).
   - **Close-out card** (`checkpoint-closeout-card.tsx`): rendered after the
     last segment once the reader's furthest-read pointer reaches the end of
     the track (hidden while searching). Offers the same collect action with a
