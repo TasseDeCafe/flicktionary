@@ -54,6 +54,46 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
   also suppressed under a deep-link open (the `Open source` jump from a card /
   Vocabulary carries `?segment=`), so peeking at a term's source never moves the
   saved position. An explicit `?segment=` target also wins over resume on open.
+- **Checkpoint reviews ("I've followed up to here").** The scheduling
+  semantics live in `docs/SRS.md` §6b/§6c; this is the reader surface. Only for
+  sessions whose target language has wiktionary data (`KAIKKI_LANGUAGES`) —
+  unsupported languages show none of these affordances.
+  - **Footer button**: a secondary button beside `Session vocabulary`. The
+    label is the comprehension assertion (`I've followed up to here`) with the
+    pending review count as a passive badge — the reward ("N reviews
+    collected") is the result toast, never the button's promise. Visible when
+    `pendingCount + backlogCount > 0` (not pendingCount alone — backlog-only
+    spans must stay discoverable). Anchored to the **furthest-read pointer,
+    never the viewport**: it means "everything I've read so far" even after
+    scrolling back up.
+  - **Badge counts** come from `getCheckpointPreview`, queried against a
+    **debounced** furthest-read index (the raw index would mint a query key
+    per scrolled segment). The preview cannot see the client's previewed-gloss
+    spans and counts multi-sense headwords optimistically, so the badge may
+    slightly overcount — the collect toast shows the real number.
+  - **Collect** posts the client-tracked `previewedSpans` (every span the
+    preview gloss sheet opened on this mount — the stateless gloss endpoint
+    persists nothing, so the client is the only source; the list is NOT
+    cleared on checkpoint undo, so a re-collection stays suppressed). Success
+    → sonner toast (`1 review collected` / `# reviews collected`) with an
+    **Undo** action that batch-reverts the checkpoint. CONFLICT (a concurrent
+    press advanced the pointer) → the session + preview refetch automatically
+    and the error toast offers Retry. Backlog candidates in the response open
+    the **claims sheet**.
+  - **Claims sheet** (`checkpoint-claims-sheet.tsx`, ResponsiveOverlay): "N
+    words you saved but never practiced" with the candidate list (collapsed
+    behind a disclosure past 8), one confirm CTA for the whole group, and its
+    own undo toast (`undoKnownAssertions`). Never automatic — the sheet is the
+    opt-in second step, always dismissible.
+  - **Close-out card** (`checkpoint-closeout-card.tsx`): rendered after the
+    last segment once the reader's furthest-read pointer reaches the end of
+    the track (hidden while searching). Offers the same collect action with a
+    fuller presentation, and is available even at pendingCount 0 — a
+    zero-review close-out can still surface backlog claims, the discovery path
+    the count-gated footer button can't provide. After everything is
+    collected it flips to a passive "Reviews collected" state, keeping a
+    claims re-entry while candidates from the last collect are held in
+    memory.
 - When `LLM-suggested terms` is enabled, the reader also shows **ghost candidates**: passive underlined spans nominated by the LLM for the reading window around the user's current scroll position. Ghosts never use `data-highlight-id`, never intercept pointer events, and have no click handler; the user still selects text normally. If a fresh selection overlaps a ghost, the floating gloss sheet shows an understated **lightbulb icon button** in the sheet header (a `Use suggested term` tooltip on desktop hover). Tapping it atomically swaps the provisional user-selected highlight for the ghost's exact segment/offset span, expands the sky-wash paint to cover the full suggested span, dismisses the ghost, and sends the adopted span through the same background enrichment path as any manual highlight. Because nomination is an LLM call that can take several seconds, the reader's sticky footer shows a `Finding suggestions…` loader (beside the highlight-count hint, left of `Session vocabulary`) whenever a nomination request is in flight or a window's job is still `pending`, so the delay does not read as broken. Turning the pref off disables nomination, ghost fetching/rendering, the adoption action, and the loader.
 
 ## Processing pipeline

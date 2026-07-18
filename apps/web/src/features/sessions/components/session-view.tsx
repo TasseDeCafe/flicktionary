@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { plural } from '@lingui/core/macro'
+import { toast } from 'sonner'
+import { ORPCError } from '@orpc/contract'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   isOptimisticHighlightId,
+  useCheckpointPreview,
+  useCollectCheckpoint,
   useCreateHighlight,
   useDeleteHighlight,
   useGetStudySession,
@@ -17,6 +23,7 @@ import {
   useSearchSegments,
   useListHighlightsBySession,
   useListGhostsBySession,
+  useUndoCheckpoint,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
 import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -32,6 +39,8 @@ import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
+import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkpoint-claims-sheet'
+import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
 import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
@@ -235,6 +244,87 @@ export const SessionView = () => {
     [flushReadingProgress]
   )
 
+  // --- Checkpoint reviews (docs/READER-SPEC.md) --------------------------------
+  // Hard language gate: no wiktionary data → no checkpoint affordances at all.
+  const checkpointSupported = session != null && KAIKKI_LANGUAGES.has(session.targetLanguage)
+
+  // Preview-glossed spans, tracked client-side (the stateless gloss endpoint
+  // persists nothing): sent with the collect call so glossed terms are
+  // suppressed rather than credited. Deliberately NOT cleared on checkpoint
+  // undo — a re-collection must stay suppressed. Capped to the contract's max.
+  const previewedSpansRef = useRef<Array<{ segmentIndex: number; selectionText: string }>>([])
+  const recordPreviewedSpan = useCallback(
+    (segmentId: string, selectionText: string) => {
+      const segmentIndex = indexBySegmentId.get(segmentId)
+      if (segmentIndex == null) return
+      previewedSpansRef.current.push({ segmentIndex, selectionText })
+      if (previewedSpansRef.current.length > 500) {
+        previewedSpansRef.current = previewedSpansRef.current.slice(-500)
+      }
+    },
+    [indexBySegmentId]
+  )
+
+  // The checkpoint anchors to the furthest-READ pointer, never the viewport —
+  // "everything I've read so far" holds even after scrolling back up. Debounce
+  // the INPUT (not just the query): every raw index change would otherwise
+  // mint a new preview query key per scrolled segment.
+  const furthestReadIndex = session?.furthestReadSegmentIndex ?? null
+  const reviewedUntilIndex = session?.reviewedUntilSegmentIndex ?? null
+  const debouncedFurthestIndex = useDebouncedValue(furthestReadIndex, 6000)
+  const checkpointSpanNonEmpty = debouncedFurthestIndex != null && debouncedFurthestIndex > (reviewedUntilIndex ?? -1)
+  const { data: checkpointPreview } = useCheckpointPreview(
+    sessionId,
+    checkpointSupported && checkpointSpanNonEmpty ? debouncedFurthestIndex : null
+  )
+  const checkpointPendingCount = checkpointPreview?.pendingCount ?? 0
+  const checkpointBacklogCount = checkpointPreview?.backlogCount ?? 0
+
+  const { mutate: collectCheckpoint, isPending: isCollectingCheckpoint } = useCollectCheckpoint(sessionId)
+  const { mutate: undoCheckpoint } = useUndoCheckpoint(sessionId)
+  // Backlog candidates from the latest collect: the claims sheet's data, and
+  // the close-out card's re-entry once the sheet/toast are gone.
+  const [claims, setClaims] = useState<{ checkpointId: string; candidates: CheckpointBacklogCandidate[] } | null>(null)
+  const [claimsOpen, setClaimsOpen] = useState(false)
+
+  const handleCollectCheckpoint = () => {
+    const toIndex = session?.furthestReadSegmentIndex
+    if (toIndex == null || isCollectingCheckpoint) return
+    collectCheckpoint(
+      { sessionId, toSegmentIndex: toIndex, previewedSpans: previewedSpansRef.current.slice(-500) },
+      {
+        onSuccess: ({ data }) => {
+          if (data.checkpointId && data.creditedCount > 0) {
+            const checkpointId = data.checkpointId
+            const collectedCount = data.creditedCount
+            toast.success(plural(collectedCount, { one: '# review collected', other: '# reviews collected' }), {
+              action: {
+                label: t`Undo`,
+                onClick: () => undoCheckpoint({ sessionId, checkpointId }),
+              },
+            })
+          }
+          if (data.checkpointId && data.backlogCandidates.length > 0) {
+            setClaims({ checkpointId: data.checkpointId, candidates: data.backlogCandidates })
+            setClaimsOpen(true)
+          }
+        },
+        onError: (error) => {
+          // A concurrent press (another tab / the extension) advanced the
+          // pointer first. meta.invalidates already refetched the session and
+          // preview on settle, so a retry presses against fresh state.
+          if (error instanceof ORPCError && error.code === 'CONFLICT') {
+            toast.error(t`Your reading position changed — try again`, {
+              action: { label: t`Retry`, onClick: () => handleCollectCheckpoint() },
+            })
+            return
+          }
+          toast.error(t`Failed to collect reviews`)
+        },
+      }
+    )
+  }
+
   // Offer a quick return to the furthest-read segment when the reader scrolls back
   // up to re-read. Suppressed while searching, since the list then renders only
   // filtered matches and the anchor row may be absent.
@@ -281,6 +371,9 @@ export const SessionView = () => {
       setPendingGhostId(null)
       setAnchor(sel.rect)
       setGlossOpen(true)
+      // A fresh selection opens the sheet in preview mode, which fires the
+      // stateless gloss — record the span for checkpoint suppression.
+      recordPreviewedSpan(normalized.startSegmentId, normalized.selectionText)
     },
   })
 
@@ -409,6 +502,8 @@ export const SessionView = () => {
     // Expand the blue selection paint from the single tapped word to the full
     // adopted span so the text matches what the sheet now refers to.
     paintOffsetRange(ghost.segmentId, ghost.charStart, ghost.charEnd)
+    // The sheet re-glosses the adopted span — record it for suppression too.
+    recordPreviewedSpan(ghost.segmentId, ghost.surfaceForm)
   }
 
   const closeToSessions = () => {
@@ -492,13 +587,34 @@ export const SessionView = () => {
             {isSegmentsLoading ? (
               <SegmentListSkeleton />
             ) : (
-              <SegmentList
-                segments={visibleSegments}
-                rangesBySegmentId={rangesBySegmentId}
-                ghostRangesBySegmentId={ghostRangesBySegmentId}
-                targetLanguage={session.targetLanguage}
-                flashSegmentId={flashSegmentId}
-              />
+              <>
+                <SegmentList
+                  segments={visibleSegments}
+                  rangesBySegmentId={rangesBySegmentId}
+                  ghostRangesBySegmentId={ghostRangesBySegmentId}
+                  targetLanguage={session.targetLanguage}
+                  flashSegmentId={flashSegmentId}
+                />
+                {/* End-of-content close-out: the common case is finishing the
+                    text — offer the checkpoint press with a fuller
+                    presentation once the reader has actually reached the last
+                    segment. Hidden while searching (the filtered list isn't
+                    "the end"). */}
+                {checkpointSupported &&
+                  !isSearching &&
+                  maxSegmentIndex != null &&
+                  furthestReadIndex != null &&
+                  furthestReadIndex >= maxSegmentIndex && (
+                    <CheckpointCloseoutCard
+                      pendingCount={checkpointPendingCount}
+                      isCollected={(reviewedUntilIndex ?? -1) >= maxSegmentIndex}
+                      isCollecting={isCollectingCheckpoint}
+                      onCollect={handleCollectCheckpoint}
+                      claimsCount={claims?.candidates.length ?? 0}
+                      onOpenClaims={() => setClaimsOpen(true)}
+                    />
+                  )}
+              </>
             )}
           </div>
         </div>
@@ -523,6 +639,19 @@ export const SessionView = () => {
         onOpenSessionVocabulary={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
         }}
+        checkpointPendingCount={checkpointPendingCount}
+        checkpointBacklogCount={checkpointBacklogCount}
+        onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
+        isCollectingCheckpoint={isCollectingCheckpoint}
+      />
+
+      <CheckpointClaimsSheet
+        open={claimsOpen}
+        onOpenChange={setClaimsOpen}
+        sessionId={sessionId}
+        checkpointId={claims?.checkpointId ?? null}
+        candidates={claims?.candidates ?? []}
+        onAsserted={() => setClaims(null)}
       />
 
       <SessionGlossSheet

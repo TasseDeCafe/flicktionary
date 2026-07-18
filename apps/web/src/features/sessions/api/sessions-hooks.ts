@@ -354,6 +354,82 @@ export const useUpdateReadingProgress = () => {
   )
 }
 
+// --- Checkpoint reviews (docs/SRS.md §6b / docs/READER-SPEC.md) ---------------
+
+// Every checkpoint mutation must refresh the same trio: the practice summary
+// (credits consume the review budget), the session (reviewedUntilSegmentIndex
+// moved), and the preview badge — without the explicit preview key the badge
+// keeps showing stale counts after a collect/undo.
+const checkpointInvalidates = (sessionId: string) => [
+  ...practiceSummaryKeys(),
+  orpcQuery.studySessions.get.key({ input: { sessionId } }),
+  orpcQuery.studySessions.getCheckpointPreview.key(),
+]
+
+// Footer badge counts. The CALLER debounces `toSegmentIndex` (a raw
+// furthest-read index would mint a new query key per scrolled segment); pass
+// null while there is nothing to preview.
+export const useCheckpointPreview = (sessionId: string, toSegmentIndex: number | null) => {
+  return useQuery(
+    orpcQuery.studySessions.getCheckpointPreview.queryOptions({
+      input: { sessionId, toSegmentIndex: toSegmentIndex ?? 0 },
+      enabled: toSegmentIndex != null,
+      select: (response) => response.data,
+      // Passive badge data — never toast for it.
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+// The checkpoint press. Errors are handled by the caller (CONFLICT gets a
+// refetch-and-retry toast, not the generic failure path).
+export const useCollectCheckpoint = (sessionId: string) => {
+  return useMutation(
+    orpcQuery.studySessions.collectCheckpoint.mutationOptions({
+      meta: {
+        invalidates: checkpointInvalidates(sessionId),
+        showErrorToast: false,
+      },
+    })
+  )
+}
+
+export const useUndoCheckpoint = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.undoCheckpoint.mutationOptions({
+      meta: {
+        invalidates: checkpointInvalidates(sessionId),
+        errorMessage: t`Failed to undo the collected reviews`,
+      },
+    })
+  )
+}
+
+export const useAssertKnownBacklog = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.assertKnownBacklog.mutationOptions({
+      meta: {
+        invalidates: checkpointInvalidates(sessionId),
+        errorMessage: t`Failed to mark the words as known`,
+      },
+    })
+  )
+}
+
+export const useUndoKnownAssertions = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.undoKnownAssertions.mutationOptions({
+      meta: {
+        invalidates: checkpointInvalidates(sessionId),
+        errorMessage: t`Failed to undo`,
+      },
+    })
+  )
+}
+
 export const useListSegmentsByTrack = (textTrackId: string | null) => {
   const { t } = useLingui()
   return useQuery(
