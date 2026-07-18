@@ -6,6 +6,7 @@ import { TextTrackLemmaProfilesRepository } from '../../transport/database/text-
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { sql } from '../../transport/database/postgres-client'
 import {
+  appendSegment,
   createReadingSession,
   insertWiktionaryLemma,
   saveAdhocTerm,
@@ -118,6 +119,57 @@ describe('study-sessions known lemmas', () => {
       .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
       .set(buildAuthorizationHeaders(token))
     expect(previewAfter.body.data).toEqual({ status: 'ready', markableLemmaCount: 1 })
+  })
+
+  test('span sweeps accumulate across sittings and never depend on the profile', async () => {
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    const s = uniqueCyrillicSuffix()
+    const firstWord = `перв${s}`
+    const secondWord = `втор${s}`
+    await insertWiktionaryLemma(firstWord, [`${firstWord}ов`])
+    await insertWiktionaryLemma(secondWord, [])
+    // Segment 0 holds an inflected occurrence of the first lemma; segment 1
+    // the second. No profile is seeded — the span path tokenizes live.
+    await appendSegment(session.text_track_id, `Вот ${firstWord}ов здесь.`)
+    await appendSegment(session.text_track_id, `А ${secondWord} потом.`)
+
+    const preview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/mark-known-preview?toSegmentIndex=0`)
+      .set(buildAuthorizationHeaders(token))
+    expect(preview.status).toBe(200)
+    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 1 })
+
+    // First sitting: mark up to segment 0 — only the first lemma.
+    const firstSweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 0 })
+    expect(firstSweep.status).toBe(200)
+    expect(firstSweep.body.data).toEqual({ markedCount: 1 })
+    const afterFirst = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru'
+    `
+    expect(afterFirst.map((r) => r.lemma)).toEqual([firstWord])
+
+    // Second sitting further in (index clamped past the end): the overlap
+    // with sitting one is free, only the new lemma is inserted.
+    const secondSweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 99 })
+    expect(secondSweep.body.data).toEqual({ markedCount: 1 })
+    const afterSecond = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru' ORDER BY lemma
+    `
+    expect(afterSecond.map((r) => r.lemma).sort()).toEqual([secondWord, firstWord].sort())
+
+    // Re-sweeping the same span is a no-op.
+    const resweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 1 })
+    expect(resweep.body.data).toEqual({ markedCount: 0 })
   })
 
   test('missing profile: preview reports pending, sweep refuses, and a build job is enqueued', async () => {

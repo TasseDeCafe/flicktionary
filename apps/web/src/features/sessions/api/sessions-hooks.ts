@@ -487,12 +487,14 @@ export const useSessionDifficulties = (sessionIds: readonly string[]) => {
   return { difficulties, isLoading: results.some((r) => r.isLoading) }
 }
 
-// Exact count the mark-the-rest-known sweep would insert. Polls while the
-// track's lemma profile is still building (the server re-enqueues it).
-export const useMarkKnownPreview = (sessionId: string, enabled: boolean) => {
+// Exact count the mark-known sweep would insert. Whole-text (no
+// toSegmentIndex) polls while the track's lemma profile is still building
+// (the server re-enqueues it); a span preview tokenizes live server-side and
+// is never pending.
+export const useMarkKnownPreview = (sessionId: string, enabled: boolean, toSegmentIndex?: number | null) => {
   return useQuery(
     orpcQuery.studySessions.getMarkKnownPreview.queryOptions({
-      input: { sessionId },
+      input: { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
       enabled,
       select: (response) => response.data,
       refetchInterval: (query) => (query.state.data?.data.status === 'pending' ? 2500 : false),

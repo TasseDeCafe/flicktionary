@@ -413,9 +413,11 @@ export const buildApp = ({
   const markKnownDependencies = {
     studySessionsRepository,
     textTracksRepository,
+    textSegmentsRepository,
     textTrackLemmaProfilesRepository,
     userLookupsRepository,
     knownLemmasRepository,
+    wiktionaryMatchRepository,
     processingJobsRepository,
   }
   const difficultyDependencies = {

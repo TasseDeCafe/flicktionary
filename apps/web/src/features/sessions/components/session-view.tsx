@@ -688,6 +688,8 @@ export const SessionView = () => {
         onOpenChange={setDifficultyOpen}
         sessionId={sessionId}
         difficulty={sessionDifficulty}
+        furthestReadSegmentIndex={furthestReadIndex}
+        maxSegmentIndex={maxSegmentIndex}
       />
 
       <CheckpointClaimsSheet

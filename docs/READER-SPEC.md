@@ -329,10 +329,19 @@ stat is always a live query — never pre-aggregated or snapshotted.
   it opens the **difficulty detail sheet** — headline percent + label, the
   breakdown (unknown words with the frequent split, "in your vocabulary, not
   started", "marked as known"), the honest vocabulary-only scoping line, and
-  the **"Mark the remaining N words as known" sweep CTA** (deliberate tap
-  inside a sheet, consistent with phase 1's claims-lane posture; the exact
-  count comes from `getMarkKnownPreview` and sits on the button itself). The
-  sweep success toasts the marked count; coverage refreshes via invalidation.
+  the mark-known sweep CTAs (deliberate taps inside a sheet, consistent with
+  phase 1's claims-lane posture; the exact counts come from
+  `getMarkKnownPreview` and sit on the buttons themselves). **The sweep has
+  two scopes**: mid-text (furthest-read < track end) the primary CTA marks
+  the span `[0, furthest-read]` — the progressive multi-sitting flow: mark
+  what you've read, come back after the next sitting, mark further (repeat
+  sweeps accumulate; overlap is free via `ON CONFLICT DO NOTHING` + the
+  already-known exclusion) — with the whole-text sweep as a secondary text
+  action; read-to-the-end (or never scrolled) shows the whole-text CTA
+  alone. Span sweeps tokenize the segments live server-side through the
+  checkpoint matcher (profile rows carry no positions), so they work — and
+  never report `pending` — even while the profile build runs. The sweep
+  success toasts the marked count; coverage refreshes via invalidation.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
   both the reader gloss sheet and the practice lookup sheet show a "Marked as
