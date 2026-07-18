@@ -251,13 +251,17 @@ export const SessionView = () => {
   // Preview-glossed spans, tracked client-side (the stateless gloss endpoint
   // persists nothing): sent with the collect call so glossed terms are
   // suppressed rather than credited. Deliberately NOT cleared on checkpoint
-  // undo — a re-collection must stay suppressed. Capped to the contract's max.
+  // undo — a re-collection must stay suppressed. Capped to the contract's
+  // maxes (500 spans, 200 chars each — one over-long selection would
+  // otherwise fail validation on EVERY later collect). Truncation only
+  // weakens suppression for the cut tail, which errs in the safe direction
+  // (suppress-not-credit).
   const previewedSpansRef = useRef<Array<{ segmentIndex: number; selectionText: string }>>([])
   const recordPreviewedSpan = useCallback(
     (segmentId: string, selectionText: string) => {
       const segmentIndex = indexBySegmentId.get(segmentId)
       if (segmentIndex == null) return
-      previewedSpansRef.current.push({ segmentIndex, selectionText })
+      previewedSpansRef.current.push({ segmentIndex, selectionText: selectionText.slice(0, 200) })
       if (previewedSpansRef.current.length > 500) {
         previewedSpansRef.current = previewedSpansRef.current.slice(-500)
       }
@@ -300,7 +304,21 @@ export const SessionView = () => {
             toast.success(plural(collectedCount, { one: '# review collected', other: '# reviews collected' }), {
               action: {
                 label: t`Undo`,
-                onClick: () => undoCheckpoint({ sessionId, checkpointId }),
+                // A reverted checkpoint can't accept assertions anymore, so a
+                // successful undo must also drop this checkpoint's claims
+                // re-entry (close-out card + sheet) — confirming from it
+                // would 404 against the dead checkpoint.
+                onClick: () =>
+                  undoCheckpoint(
+                    { sessionId, checkpointId },
+                    {
+                      onSuccess: ({ data }) => {
+                        if (!data.undone) return
+                        setClaimsOpen(false)
+                        setClaims((prev) => (prev?.checkpointId === checkpointId ? null : prev))
+                      },
+                    }
+                  ),
               },
             })
           }
