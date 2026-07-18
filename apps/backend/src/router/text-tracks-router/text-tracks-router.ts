@@ -8,9 +8,11 @@ import { searchByTmdbId, searchEpisodeSubtitles } from '../../transport/third-pa
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { importSrt } from '../../service/text-tracks/import-srt'
 import { importFromOpenSubtitles } from '../../service/text-tracks/import-from-opensubtitles'
 import { importPastedText } from '../../service/text-tracks/import-pasted-text'
+import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
 
 const toTextTrackDto = (row: DbTextTrack) => ({
   id: row.id,
@@ -26,11 +28,12 @@ export type TextTracksRouterDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
   textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
+  processingJobsRepository: ProcessingJobsRepositoryInterface
 }
 
 export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => {
   const implementer = implement(textTracksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
-  const { contentSourcesRepository, textTracksRepository, textSegmentsRepository } = deps
+  const { contentSourcesRepository, textTracksRepository, textSegmentsRepository, processingJobsRepository } = deps
 
   const router = implementer.router({
     searchOpenSubtitles: implementer.searchOpenSubtitles.handler(async ({ input }) => {
@@ -43,7 +46,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
       return { data: tracks }
     }),
 
-    importFromOpenSubtitles: implementer.importFromOpenSubtitles.handler(async ({ input, errors }) => {
+    importFromOpenSubtitles: implementer.importFromOpenSubtitles.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
       if (!contentSource) {
         throw errors.INTERNAL_SERVER_ERROR({
@@ -56,10 +59,14 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
         })
       }
+      await ensureTrackLemmaProfileJob(
+        { textTrackId: result.track.id, userId: context.res.locals.userId },
+        { textTracksRepository, processingJobsRepository }
+      )
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }
     }),
 
-    uploadSrt: implementer.uploadSrt.handler(async ({ input, errors }) => {
+    uploadSrt: implementer.uploadSrt.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
       if (!contentSource) {
         throw errors.BAD_REQUEST({
@@ -82,10 +89,14 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
         })
       }
+      await ensureTrackLemmaProfileJob(
+        { textTrackId: result.track.id, userId: context.res.locals.userId },
+        { textTracksRepository, processingJobsRepository }
+      )
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }
     }),
 
-    importFromPaste: implementer.importFromPaste.handler(async ({ input, errors }) => {
+    importFromPaste: implementer.importFromPaste.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
       if (!contentSource) {
         throw errors.BAD_REQUEST({
@@ -98,6 +109,10 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           data: { errors: [{ message: 'Pasted text did not contain any usable lines' }] },
         })
       }
+      await ensureTrackLemmaProfileJob(
+        { textTrackId: result.track.id, userId: context.res.locals.userId },
+        { textTracksRepository, processingJobsRepository }
+      )
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }
     }),
   })

@@ -221,6 +221,8 @@ export const buildApp = ({
     telegramPendingImportsRepository: TelegramPendingImportsRepository(),
     userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
     studySessionsRepository: StudySessionsRepository(),
+    textTracksRepository: TextTracksRepository(),
+    processingJobsRepository: ProcessingJobsRepository(),
   }
 
   if (FEATURES.TELEGRAM) {
@@ -385,6 +387,7 @@ export const buildApp = ({
       contentSourcesRepository,
       textTracksRepository,
       textSegmentsRepository,
+      processingJobsRepository,
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
@@ -409,6 +412,7 @@ export const buildApp = ({
       usersRepository,
       userTargetLanguagePrefsRepository,
       processingJobsRepository,
+      textTracksRepository,
       highlightsRepository,
       anthropicPasses,
       checkpointDependencies

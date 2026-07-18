@@ -12,11 +12,13 @@ import {
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
+import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import {
   collectCheckpoint,
@@ -84,6 +86,7 @@ export const StudySessionsRouter = (
   usersRepository: UsersRepositoryInterface,
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   processingJobsRepository: ProcessingJobsRepositoryInterface,
+  textTracksRepository: TextTracksRepositoryInterface,
   highlightsRepository: HighlightsRepositoryInterface,
   anthropicPasses: AnthropicPassesInterface,
   checkpointDependencies: CheckpointDependencies
@@ -98,6 +101,8 @@ export const StudySessionsRouter = (
     studySessionsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository: targetLanguagePrefsRepository,
+    textTracksRepository,
+    processingJobsRepository,
   }
 
   const resolveExtensionIngestPrefs = (userId: string, segments: ReadonlyArray<{ text: string }>) =>
@@ -441,6 +446,13 @@ export const StudySessionsRouter = (
         })
       })
 
+      // Lemma-profile build for the difficulty stat — no-op on the idempotent
+      // re-registers the extension fires on every video load.
+      await ensureTrackLemmaProfileJob(
+        { textTrackId: track.id, userId },
+        { textTracksRepository, processingJobsRepository }
+      )
+
       return {
         data: {
           sessionId: session.id,
@@ -481,6 +493,11 @@ export const StudySessionsRouter = (
             error,
           })
         })
+
+        await ensureTrackLemmaProfileJob(
+          { textTrackId: track.id, userId },
+          { textTracksRepository, processingJobsRepository }
+        )
 
         return {
           data: {

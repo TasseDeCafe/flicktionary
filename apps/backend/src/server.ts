@@ -23,6 +23,7 @@ import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth
 import { TelegramPendingImportsRepository } from './transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { StudySessionsRepository } from './transport/database/study-sessions/study-sessions-repository'
+import { TextTracksRepository } from './transport/database/text-tracks/text-tracks-repository'
 import { posthogClient, registerPosthogShutdownHandlers } from './transport/third-party/posthog/posthog-client'
 import { setupExpressErrorHandler } from 'posthog-node'
 
@@ -54,6 +55,8 @@ const startServer = async () => {
       telegramPendingImportsRepository: TelegramPendingImportsRepository(),
       userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
       studySessionsRepository: StudySessionsRepository(),
+      textTracksRepository: TextTracksRepository(),
+      processingJobsRepository: ProcessingJobsRepository(),
     })
 
     const expressApp = getConfig().shouldMockThirdParties

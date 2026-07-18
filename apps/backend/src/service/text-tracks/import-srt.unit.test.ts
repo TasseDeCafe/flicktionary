@@ -19,6 +19,11 @@ const buildTrack = (overrides: Partial<DbTextTrack> = {}): DbTextTrack => ({
   external_id: null,
   hash: 'hash',
   created_at: '2026-05-01T00:00:00.000Z',
+  profile_built_at: null,
+  profile_segment_count: null,
+  profile_max_segment_index: null,
+  profile_word_token_count: null,
+  profile_matched_token_count: null,
   ...overrides,
 })
 
@@ -29,6 +34,7 @@ describe('importSrt', () => {
       findByContentSourceLanguageAndHash: vi.fn().mockResolvedValue(existingTrack),
       insertTextTrack: vi.fn(),
       findById: vi.fn(),
+      findByIdWithSourceType: vi.fn(),
     }
     const textSegmentsRepository: TextSegmentsRepositoryInterface = {
       bulkInsertSegments: vi.fn(),

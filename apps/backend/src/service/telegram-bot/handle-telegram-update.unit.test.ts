@@ -11,6 +11,8 @@ import type {
   TelegramPendingImportRecord,
   TelegramPendingImportsRepositoryInterface,
 } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
+import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
+import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
@@ -75,6 +77,13 @@ const buildDeps = (
     anthropicPasses: MockAnthropicPasses({
       languageDetectionPass: vi.fn().mockResolvedValue(detectedLanguage),
     }),
+    // The profile-job gate reads the track back; null short-circuits it.
+    textTracksRepository: {
+      findByIdWithSourceType: vi.fn().mockResolvedValue(null),
+    } as unknown as TextTracksRepositoryInterface,
+    processingJobsRepository: {
+      enqueueBuildTrackLemmaProfile: vi.fn().mockResolvedValue(null),
+    } as unknown as ProcessingJobsRepositoryInterface,
     importCooldownMs: 0,
   }
 }

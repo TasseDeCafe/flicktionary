@@ -102,3 +102,57 @@ describe('processing-jobs-repository enqueue integration tests', () => {
     expect(second?.id).not.toBe(first?.id)
   })
 })
+
+// Same predicate/index-lockstep guard for the track-keyed profile-build jobs
+// (uq_processing_jobs_live_build_track_lemma_profile), plus the identity-CHECK
+// branch: the job carries ONLY a text track (no session/highlight/batch).
+describe('processing-jobs-repository enqueueBuildTrackLemmaProfile integration tests', () => {
+  const { enqueueBuildTrackLemmaProfile } = ProcessingJobsRepository()
+  const studySessionsRepository = StudySessionsRepository()
+
+  const createTrackFixture = async (userId: string) => {
+    const { track } = await studySessionsRepository.getOrCreateAdhocStudySession({
+      userId,
+      targetLanguage: 'es',
+      nativeLanguage: 'en',
+      cefrLevel: 'B1',
+      title: 'Profile job test source',
+      trackHash: __generateUniqueId('track'),
+      contextBlob: 'integration test context',
+    })
+    return track
+  }
+
+  test('enqueues a track-only job and coalesces while it is live', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const track = await createTrackFixture(userId)
+
+    const first = await enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
+    expect(first).not.toBeNull()
+    expect(first?.kind).toBe('build_track_lemma_profile')
+    expect(first?.text_track_id).toBe(track.id)
+    expect(first?.study_session_id).toBeNull()
+    expect(first?.highlight_id).toBeNull()
+    expect(first?.import_batch_id).toBeNull()
+    expect(first?.status).toBe('pending')
+
+    const second = await enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
+    expect(second).toBeNull()
+
+    const rows = await sql`SELECT id FROM public.processing_jobs WHERE text_track_id = ${track.id}`
+    expect(rows).toHaveLength(1)
+  })
+
+  test('allows a fresh build once the previous job is no longer live', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const track = await createTrackFixture(userId)
+
+    const first = await enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
+    expect(first).not.toBeNull()
+    await sql`UPDATE public.processing_jobs SET status = 'done' WHERE id = ${first!.id}`
+
+    const second = await enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
+    expect(second).not.toBeNull()
+    expect(second?.id).not.toBe(first?.id)
+  })
+})

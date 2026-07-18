@@ -846,6 +846,7 @@ export type Database = {
           run_after: string
           status: Database['public']['Enums']['processing_job_status']
           study_session_id: string | null
+          text_track_id: string | null
           updated_at: string
           user_id: string
           window_end_index: number | null
@@ -864,6 +865,7 @@ export type Database = {
           run_after?: string
           status?: Database['public']['Enums']['processing_job_status']
           study_session_id?: string | null
+          text_track_id?: string | null
           updated_at?: string
           user_id: string
           window_end_index?: number | null
@@ -882,6 +884,7 @@ export type Database = {
           run_after?: string
           status?: Database['public']['Enums']['processing_job_status']
           study_session_id?: string | null
+          text_track_id?: string | null
           updated_at?: string
           user_id?: string
           window_end_index?: number | null
@@ -907,6 +910,13 @@ export type Database = {
             columns: ['study_session_id']
             isOneToOne: false
             referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'processing_jobs_text_track_id_fkey'
+            columns: ['text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
             referencedColumns: ['id']
           },
         ]
@@ -1448,6 +1458,35 @@ export type Database = {
           },
         ]
       }
+      text_track_lemma_profiles: {
+        Row: {
+          candidate_lemmas: string[]
+          folded_token: string
+          text_track_id: string
+          token_count: number
+        }
+        Insert: {
+          candidate_lemmas: string[]
+          folded_token: string
+          text_track_id: string
+          token_count: number
+        }
+        Update: {
+          candidate_lemmas?: string[]
+          folded_token?: string
+          text_track_id?: string
+          token_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'text_track_lemma_profiles_text_track_id_fkey'
+            columns: ['text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       text_tracks: {
         Row: {
           content_source_id: string
@@ -1456,6 +1495,11 @@ export type Database = {
           hash: string
           id: string
           language: string
+          profile_built_at: string | null
+          profile_matched_token_count: number | null
+          profile_max_segment_index: number | null
+          profile_segment_count: number | null
+          profile_word_token_count: number | null
           source: Database['public']['Enums']['text_track_source']
         }
         Insert: {
@@ -1465,6 +1509,11 @@ export type Database = {
           hash: string
           id?: string
           language: string
+          profile_built_at?: string | null
+          profile_matched_token_count?: number | null
+          profile_max_segment_index?: number | null
+          profile_segment_count?: number | null
+          profile_word_token_count?: number | null
           source: Database['public']['Enums']['text_track_source']
         }
         Update: {
@@ -1474,6 +1523,11 @@ export type Database = {
           hash?: string
           id?: string
           language?: string
+          profile_built_at?: string | null
+          profile_matched_token_count?: number | null
+          profile_max_segment_index?: number | null
+          profile_segment_count?: number | null
+          profile_word_token_count?: number | null
           source?: Database['public']['Enums']['text_track_source']
         }
         Relationships: [
@@ -1763,7 +1817,12 @@ export type Database = {
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind:
-        'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat' | 'extract_lesson'
+        | 'enrich_highlight'
+        | 'discover_session'
+        | 'nominate_window'
+        | 'seed_card_chat'
+        | 'extract_lesson'
+        | 'build_track_lemma_profile'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
@@ -2034,6 +2093,7 @@ export const Constants = {
         'nominate_window',
         'seed_card_chat',
         'extract_lesson',
+        'build_track_lemma_profile',
       ],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],
       revenuecat_auto_renewal_status: [

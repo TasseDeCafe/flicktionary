@@ -9,6 +9,7 @@ import { enrichHighlight } from '../../processing/enrich-highlight'
 import { nominateWindow } from '../../processing/nominate-window'
 import { seedCardChatFromNote } from '../../processing/seed-card-chat-from-note'
 import { extractLessonJob } from '../../lesson-import/extract-lesson-job'
+import { buildTrackLemmaProfile } from '../../lemma-profiles/build-track-lemma-profile'
 
 export interface EnrichmentWorkerInterface {
   initialize: () => void
@@ -89,6 +90,9 @@ export const EnrichmentWorker = (
           { jobId: job.id, importBatchId: job.import_batch_id, userId: job.user_id },
           processingDependencies
         )
+      } else if (job.kind === 'build_track_lemma_profile') {
+        if (!job.text_track_id) throw new Error('build_track_lemma_profile job missing text_track_id')
+        await buildTrackLemmaProfile(job.text_track_id, processingDependencies)
       } else {
         // Retired Phase-1 discovery jobs can still exist in old local queues or
         // the enum. Treat them as no-ops instead of retrying forever.

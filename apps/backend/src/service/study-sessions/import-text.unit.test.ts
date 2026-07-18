@@ -4,6 +4,8 @@ import { importTextForUser, ImportTextDependencies, suggestTitleFromText } from 
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
+import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
@@ -35,6 +37,13 @@ const buildDeps = (
     anthropicPasses: MockAnthropicPasses({
       languageDetectionPass: vi.fn().mockResolvedValue(detectedLanguage),
     }),
+    // The profile-job gate reads the track back; null short-circuits it.
+    textTracksRepository: {
+      findByIdWithSourceType: vi.fn().mockResolvedValue(null),
+    } as unknown as TextTracksRepositoryInterface,
+    processingJobsRepository: {
+      enqueueBuildTrackLemmaProfile: vi.fn().mockResolvedValue(null),
+    } as unknown as ProcessingJobsRepositoryInterface,
   }
 }
 
