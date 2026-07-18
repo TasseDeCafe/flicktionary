@@ -595,6 +595,20 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   headword, a Haiku pass (`checkpointSensePass`) picks the sense used — before
   lane partitioning, so a rejected sense can neither credit nor surface as
   backlog; a pass failure drops those headwords (conservative).
+- **Multi-word expressions** can't single-token match, and contiguous n-gram
+  matching structurally misses separable verbs, free word order, and
+  interruptions — so MWEs run two stages instead. (1) Liberal recall filter
+  (`findMweCandidates`): the saved headword splits into folded content lemmas
+  (per-language particles dropped — en `to`, de `sich`); it is a candidate iff
+  every content lemma appears within ONE segment, either as a resolved lemma
+  of that segment's tokens (inflected occurrences count) or as a raw folded
+  token. (2) Haiku confirm (`checkpointMwePass`): judges whether the
+  expression actually occurs in the candidate segment (inflected/reordered
+  yes; shared words in unrelated roles no); a failed pass or missing verdict
+  drops the candidate — never credit on a guess. Confirmed candidates join
+  the normal sense-resolution → partition → credit path; the preview counts
+  recall-filter candidates optimistically (no LLM on the GET path, part of
+  the documented overcount).
 - **Lanes** (strength of evidence must match strength of the write):
   - review-state (`new`/`review`), due, enabled, `ready`, unparked → implicit
     `good` (`was_explicit = false`), the same predicate as the review-budget

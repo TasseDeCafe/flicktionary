@@ -22,6 +22,7 @@ import type { CheckpointSenseItem } from '../../transport/third-party/anthropic/
 import { applyTermRating, type WithTransaction } from '../practice/rate-term'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import {
+  findMweCandidates,
   foldSelectionTokens,
   matchVocabAgainstSpanLemmas,
   partitionMatches,
@@ -67,6 +68,10 @@ type SpanMatch = {
   clampedTo: number
   empty: boolean
   matched: MatchedVocabRow[]
+  // Multi-word expressions that passed the liberal recall filter but still
+  // need the Haiku confirm pass (collect) — preview counts them
+  // optimistically instead.
+  mweCandidates: MatchedVocabRow[]
   suppressedLemmas: Set<string>
   backlogExcludedLemmas: Set<string>
 }
@@ -93,6 +98,7 @@ const computeSpanMatch = async (
       clampedTo,
       empty: true,
       matched: [],
+      mweCandidates: [],
       suppressedLemmas: new Set(),
       backlogExcludedLemmas: new Set(),
     }
@@ -158,13 +164,46 @@ const computeSpanMatch = async (
   const vocab = await deps.userLookupsRepository.listCheckpointVocab({ userId, targetLanguage: lang })
   const matched = matchVocabAgainstSpanLemmas({ vocab, spanLemmas, contextByLemma, targetLanguage: lang })
 
+  // MWE recall filter, minus rows the single-token pass already matched (a
+  // particle-stripped two-worder like "to run" resolves there).
+  const singleMatchedIds = new Set(matched.map((m) => m.row.lookup.id))
+  const mweCandidates = findMweCandidates({ vocab, span, lemmasByToken, targetLanguage: lang }).filter(
+    (m) => !singleMatchedIds.has(m.row.lookup.id)
+  )
+
   return {
     fromSegmentIndex: from,
     clampedTo,
     empty: false,
     matched,
+    mweCandidates,
     suppressedLemmas: collectLemmas(suppressionTokens),
     backlogExcludedLemmas: collectLemmas(backlogExclusionTokens),
+  }
+}
+
+// Precision stage for MWE candidates (collect only): the Haiku pass judges
+// whether each expression actually occurs in its candidate segment
+// (inflected/reordered yes; shared words in unrelated roles no). A pass
+// failure drops all candidates — never credit on a guess.
+const confirmMweCandidates = async (
+  candidates: MatchedVocabRow[],
+  targetLanguage: string,
+  deps: CheckpointDependencies
+): Promise<MatchedVocabRow[]> => {
+  if (candidates.length === 0) return []
+  try {
+    const verdicts = await deps.anthropicPasses.checkpointMwePass({
+      targetLanguage,
+      items: candidates.map((c) => ({
+        mweHeadword: c.row.lookup.headword,
+        segmentText: c.contextSegmentText ?? '',
+      })),
+    })
+    return candidates.filter((_, index) => verdicts[index]?.occurs === true)
+  } catch (error) {
+    logWithSentry({ message: 'checkpointMwePass failed; dropping MWE candidates', params: {}, error })
+    return []
   }
 }
 
@@ -234,7 +273,9 @@ export const previewCheckpoint = async (
   }
   const span = await computeSpanMatch(session, params.userId, params.toSegmentIndex, [], deps)
   if (span.empty) return { ok: true, pendingCount: 0, backlogCount: 0, supported: true }
-  const partition = partitionMatches(span.matched, new Date())
+  // MWE candidates count optimistically (no confirm pass on the GET path) —
+  // part of the preview's documented overcount.
+  const partition = partitionMatches([...span.matched, ...span.mweCandidates], new Date())
   const { creditable, backlog } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
   return { ok: true, pendingCount: creditable.length, backlogCount: backlog.length, supported: true }
 }
@@ -271,7 +312,9 @@ export const collectCheckpoint = async (
     }
   }
 
-  const resolved = await resolveMultiSenseMatches(span.matched, session.target_language, deps)
+  // Confirmed MWEs join the normal sense-resolution → partition → credit path.
+  const confirmedMwes = await confirmMweCandidates(span.mweCandidates, session.target_language, deps)
+  const resolved = await resolveMultiSenseMatches([...span.matched, ...confirmedMwes], session.target_language, deps)
   const partition = partitionMatches(resolved, new Date())
   const { creditable, suppressedCount, backlog } = applySuppression(
     partition,

@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient } from './anthropic-client'
 import { basicDataPass } from './passes/basic-data-pass'
+import { checkpointMwePass } from './passes/checkpoint-mwe-pass'
 import { checkpointSensePass } from './passes/checkpoint-sense-pass'
 import { enrichmentPass } from './passes/enrichment-pass'
 import { extractLessonPass } from './passes/extract-lesson-pass'
@@ -22,6 +23,7 @@ import { verifyExercisePass } from './passes/verify-exercise-pass'
 // directly unit-testable; only the call surface is behind the interface.
 export type AnthropicPassesInterface = {
   basicDataPass: typeof basicDataPass
+  checkpointMwePass: typeof checkpointMwePass
   checkpointSensePass: typeof checkpointSensePass
   enrichmentPass: typeof enrichmentPass
   extractLessonPass: typeof extractLessonPass
@@ -41,6 +43,7 @@ export type AnthropicPassesInterface = {
 
 export const AnthropicPasses = (): AnthropicPassesInterface => ({
   basicDataPass,
+  checkpointMwePass,
   checkpointSensePass,
   enrichmentPass,
   extractLessonPass,
@@ -64,6 +67,7 @@ const notScripted = (name: string) => (): never => {
 // so an unexpected LLM call fails loudly instead of reaching the network.
 export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface> = {}): AnthropicPassesInterface => ({
   basicDataPass: notScripted('basicDataPass'),
+  checkpointMwePass: notScripted('checkpointMwePass'),
   checkpointSensePass: notScripted('checkpointSensePass'),
   enrichmentPass: notScripted('enrichmentPass'),
   extractLessonPass: notScripted('extractLessonPass'),
