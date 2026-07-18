@@ -37,6 +37,10 @@ msgstr "(Expiré)"
 msgid "(unset)"
 msgstr "(non défini)"
 
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "{assertedCount, plural, one {# word marked as known} other {# words marked as known}}"
+msgstr "{assertedCount, plural, one {# mot marqué comme connu} other {# mots marqués comme connus}}"
+
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} carte(s) — dont {keptCardCount} conservée(s)"
@@ -45,10 +49,26 @@ msgstr "{cardCount} carte(s) — dont {keptCardCount} conservée(s)"
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
 
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "{claimsCount, plural, one {# word you may already know} other {# words you may already know}}"
+msgstr "{claimsCount, plural, one {# mot que vous connaissez peut-être déjà} other {# mots que vous connaissez peut-être déjà}}"
+
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "{collectedCount, plural, one {# review collected} other {# reviews collected}}"
+msgstr "{collectedCount, plural, one {# révision collectée} other {# révisions collectées}}"
+
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "{correctCount} of {total} correct."
 msgstr "{correctCount} sur {total} correctes."
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "{count, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
+msgstr "{count, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}"
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "{count, plural, one {Mark # word as known} other {Mark # words as known}}"
+msgstr "{count, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
 
 #: apps/web/src/features/sessions/components/show-group-card.tsx
 msgid "{count} episodes"
@@ -121,6 +141,10 @@ msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{parkedTotal} parked"
 msgstr "{parkedTotal} en pause"
+
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "{pendingCount, plural, one {Confirm you followed along to collect # review.} other {Confirm you followed along to collect # reviews.}}"
+msgstr "{pendingCount, plural, one {Confirmez que vous avez suivi pour collecter # révision.} other {Confirmez que vous avez suivi pour collecter # révisions.}}"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{productionCount} in production"
@@ -815,6 +839,10 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 msgid "Close"
 msgstr "Fermer"
 
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "Collecting…"
+msgstr "Collecte en cours…"
+
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Collocations"
 msgstr "Cooccurrences"
@@ -850,6 +878,10 @@ msgstr "Lecture condensée : Activée"
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 msgid "Confirm deletion"
 msgstr "Confirmer la suppression"
+
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "Confirm you followed along — words you already know may be waiting."
+msgstr "Confirmez que vous avez suivi — des mots que vous connaissez déjà pourraient être en attente."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Conjunction"
@@ -1483,6 +1515,10 @@ msgstr "Échec de l'avancement"
 msgid "Failed to advance the practice clock"
 msgstr "Échec de l'avancement de l'horloge de pratique"
 
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Failed to collect reviews"
+msgstr "Échec de la collecte des révisions"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to complete onboarding"
 msgstr "Échec de la finalisation de l'intégration"
@@ -1653,6 +1689,10 @@ msgstr "Échec du chargement de votre progression"
 msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to mark the words as known"
+msgstr "Échec du marquage des mots comme connus"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to move the term to flashcards"
 msgstr "Impossible de déplacer le terme vers les cartes mémoire"
@@ -1763,9 +1803,17 @@ msgstr "Échec de l'envoi de la réponse"
 msgid "Failed to trigger Sentry message"
 msgstr "Échec du déclenchement du message Sentry"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to undo"
+msgstr "Échec de l'annulation"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to undo rating"
 msgstr "Échec de l'annulation de la note"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to undo the collected reviews"
+msgstr "Échec de l'annulation des révisions collectées"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to update English IPA dialect"
@@ -2164,6 +2212,14 @@ msgstr "Comment fonctionne votre essai gratuit"
 msgid "Human translation"
 msgstr "Traduction humaine"
 
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "I've followed to the end"
+msgstr "J'ai suivi jusqu'à la fin"
+
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
+msgid "I've followed up to here"
+msgstr "J'ai suivi jusqu'ici"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Idiom"
 msgstr "Expression idiomatique"
@@ -2480,6 +2536,10 @@ msgstr "Assurez-vous que l'extension est installée et réessayez depuis sa popu
 msgid "Manage Subscription"
 msgstr "Gérer l'Abonnement"
 
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "Marking…"
+msgstr "Marquage…"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Masculine"
 msgstr "Masculin"
@@ -2762,6 +2822,10 @@ msgstr "Normal"
 #: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "not available"
 msgstr "non disponible"
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "Not now"
+msgstr "Pas maintenant"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
@@ -3526,6 +3590,7 @@ msgid "Restoring…"
 msgstr "Restauration…"
 
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -3571,6 +3636,10 @@ msgstr "Révisez à travers un court texte généré."
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Reviewing and practicing"
 msgstr "Révision et pratique"
+
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "Reviews collected for everything you've read."
+msgstr "Révisions collectées pour tout ce que vous avez lu."
 
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Right-click a word or phrase to save it with the sentence it appeared in."
@@ -3880,6 +3949,10 @@ msgstr "Révisions à court terme, de retour dans quelques jours"
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "Show"
 msgstr "Série"
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "Show all {count} words"
+msgstr "Afficher les {count} mots"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
@@ -4369,6 +4442,10 @@ msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. 
 msgid "There was an error. Please contact support."
 msgstr "Il y a eu une erreur. Veuillez contacter le support."
 
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "These saved words appeared in what you just read. Mark them as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
+msgstr "Ces mots sauvegardés sont apparus dans ce que vous venez de lire. Marquez-les comme connus pour ignorer leur phase d'apprentissage — chacun d'eux bénéficiera d'une première révision dans environ trois semaines, et vous pourrez annuler juste après."
+
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
@@ -4644,6 +4721,11 @@ msgstr "Non lié"
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Understand it when you read or hear it"
 msgstr "Comprendre lorsque vous le lisez ou l'entendez"
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Undo"
+msgstr "Annuler"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
@@ -5029,6 +5111,10 @@ msgstr "Vous avez déjà utilisé votre essai gratuit"
 msgid "You're all set"
 msgstr "Vous êtes prêt"
 
+#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
+msgid "You've reached the end"
+msgstr "Vous avez atteint la fin"
+
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "You've reviewed every due term for this language. Come back later when more are ready."
 msgstr "Vous avez révisé tous les termes dus pour cette langue. Revenez plus tard lorsque d'autres seront prêts."
@@ -5076,6 +5162,10 @@ msgstr "Votre prochain exercice est encore en cours de préparation — il appar
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Your next session"
 msgstr "Votre prochaine session"
+
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Your reading position changed — try again"
+msgstr "Votre position de lecture a changé — réessayez"
 
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 msgid "Your vocabulary"
