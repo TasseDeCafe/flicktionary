@@ -142,14 +142,54 @@ const armInnerTubePrefetch = () => {
   innerTubePrefetch = { videoId, promise: androidInnerTubeTracks(videoId).catch(() => undefined) }
 }
 
+// Timedtext URLs are signed with a ~6 h expiry (`expire` unix seconds,
+// covered by `sparams` — an expired signature 404s). A cached player response
+// can outlive that: when a long-idle tab wakes, YouTube partial-reloads the
+// player for the SAME video id, the binding re-requests tracks, and both the
+// InnerTube prefetch and the ytInitialPlayerResponse global still "match"
+// while holding hours-old URLs. Serving those 404s the subtitle fetch and
+// silently downgrades the video to native captions, so every cached source is
+// checked against its own URL expiry before use. The margin covers the rest
+// of the pipeline (auto-sync fetch) plus modest client-clock skew.
+const URL_EXPIRY_MARGIN_MS = 60 * 1000
+
+const timedtextUrlExpired = (url: string | string[] | undefined): boolean => {
+  const urlString = Array.isArray(url) ? url[0] : url
+
+  if (!urlString) {
+    return false
+  }
+
+  try {
+    // Web-response baseUrls can be host-relative.
+    const expireParam = new URL(urlString, `https://${window.location.host}`).searchParams.get('expire')
+
+    if (expireParam === null) {
+      return false
+    }
+
+    const expire = Number(expireParam)
+    return Number.isFinite(expire) && expire * 1000 < Date.now() + URL_EXPIRY_MARGIN_MS
+  } catch {
+    return false
+  }
+}
+
 // The web-client player response for the current video: the page global when
 // it's fresh (zero cost — this script runs in the page realm), else the
-// watch-page re-fetch (the global can lag SPA navigations).
+// watch-page re-fetch (the global can lag SPA navigations, and its signed
+// track URLs can expire during a long idle).
 const pagePlayerResponse = async (videoId: string): Promise<YtPlayerResponse | undefined> => {
   const inline = window.ytInitialPlayerResponse
-  if (inline?.videoDetails?.videoId === videoId) {
+  const inlineTracks = inline?.captions?.playerCaptionsTracklistRenderer?.captionTracks
+
+  if (
+    inline?.videoDetails?.videoId === videoId &&
+    inlineTracks?.some((track) => timedtextUrlExpired(track.baseUrl)) !== true
+  ) {
     return inline
   }
+
   return await fetchPlayerContextForPage()
 }
 
@@ -435,7 +475,17 @@ const publishCurrentTracks = async ({
 
     // A failed prefetch (resolved undefined) falls through to a direct fetch —
     // the failure may have been transient.
-    const prefetched = innerTubePrefetch?.videoId === videoId ? await innerTubePrefetch.promise : undefined
+    let prefetched = innerTubePrefetch?.videoId === videoId ? await innerTubePrefetch.promise : undefined
+
+    if (prefetched?.subtitles?.some((track) => timedtextUrlExpired(track.url))) {
+      // Long-idle wake: the prefetch outlived its URLs' signatures. Drop the
+      // cache entry too, so the interval re-arms a fresh one for this video.
+      if (innerTubePrefetch?.videoId === videoId) {
+        innerTubePrefetch = undefined
+      }
+      prefetched = undefined
+    }
+
     const androidInnerTubeInfo = prefetched ?? (await androidInnerTubeTracks(videoId))
 
     if (androidInnerTubeInfo) {
