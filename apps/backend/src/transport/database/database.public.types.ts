@@ -492,6 +492,54 @@ export type Database = {
           },
         ]
       }
+      lemma_rank_builds: {
+        Row: {
+          built_at: string
+          mass_matched_pct: number
+          row_count: number
+          target_language: string
+          version: number
+          wordfreq_version: string
+        }
+        Insert: {
+          built_at?: string
+          mass_matched_pct: number
+          row_count: number
+          target_language: string
+          version: number
+          wordfreq_version: string
+        }
+        Update: {
+          built_at?: string
+          mass_matched_pct?: number
+          row_count?: number
+          target_language?: string
+          version?: number
+          wordfreq_version?: string
+        }
+        Relationships: []
+      }
+      lemma_ranks: {
+        Row: {
+          freq_mass: number
+          lemma: string
+          rank: number
+          target_language: string
+        }
+        Insert: {
+          freq_mass: number
+          lemma: string
+          rank: number
+          target_language: string
+        }
+        Update: {
+          freq_mass?: number
+          lemma?: string
+          rank?: number
+          target_language?: string
+        }
+        Relationships: []
+      }
       nominated_windows: {
         Row: {
           created_at: string
