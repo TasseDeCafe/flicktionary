@@ -42,6 +42,9 @@ import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/upda
 import SaveFlicktionaryWordHandler from '@/handlers/flicktionary/save-flicktionary-word-handler'
 import GetFlicktionaryStudyTargetsHandler from '@/handlers/flicktionary/get-study-targets-handler'
 import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
+import CollectCheckpointHandler from '@/handlers/flicktionary/collect-checkpoint-handler'
+import UndoCheckpointHandler from '@/handlers/flicktionary/undo-checkpoint-handler'
+import CheckpointAvailabilityHandler from '@/handlers/flicktionary/checkpoint-availability-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import { isVideoPlatformUrl } from '@/services/pages'
@@ -122,6 +125,9 @@ export default defineBackground(() => {
     new SaveFlicktionaryWordHandler(),
     new GetFlicktionaryStudyTargetsHandler(),
     new FlicktionarySavedGlossHandler(),
+    new CollectCheckpointHandler(),
+    new UndoCheckpointHandler(),
+    new CheckpointAvailabilityHandler(),
     new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),

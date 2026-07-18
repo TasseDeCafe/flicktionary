@@ -211,6 +211,10 @@ export interface VideoOverlayModel {
   // own matchMedia), never in controllers.
   themeType: 'dark' | 'light' | 'system'
   playMode: PlayMode
+  // Checkpoint-review button visibility: a subtitle track is loaded with a
+  // prepared video context, and the video's (cached) session language isn't
+  // known-unsupported. See VideoOverlayController.
+  checkpointAvailable: boolean
 }
 
 export enum ControlType {

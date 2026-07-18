@@ -96,6 +96,13 @@ export default class Binding {
   // payload — the first save creates the backend session from it.
   private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined
 
+  // The prepared per-video context (metadata + canonical segments + hash),
+  // read by the controls overlay's checkpoint press — the same payload the
+  // save flow ships for cold-start find-or-create.
+  get flicktionaryVideoContext(): FlicktionaryVideoContext | undefined {
+    return this._flicktionaryVideoContext
+  }
+
   // BCP-47 language code of the YouTube caption track the user selected, set
   // by the video-data-sync flow before subtitles load. A hint only: the overlay
   // uses it as the tokenizer/gloss language until the first save delivers the

@@ -807,6 +807,46 @@ since the pill is the only on-video way back — and the bar renders as a single
 dimmed logo pill (`VideoOverlayDisabled`, same shell and pause/grace behavior)
 whose click writes the global flag back on.
 
+### Checkpoint press (collect reviews)
+
+The controls bar hosts the video counterpart of the web reader's "I've
+followed up to here" (scheduling semantics: the web app's `docs/SRS.md` §6b) —
+a BookmarkCheck button beside the power button. It deliberately lives on the
+pause-state controls: the press happens while paused, a deliberate act; the
+evidence is the explicit press, not playback position.
+
+- **Playback→segment mapping is CONTENT-SIDE**: the background session cache
+  stores no timings. The controller picks the last
+  `subtitleController.subtitles[]` cue with `startMs <= currentTimeMs`
+  (between cues → the last ended one); its `index` IS the ingested segment
+  index. The `flicktionary-collect-checkpoint` message carries that index plus
+  the same self-contained video-context payload the save flow ships, so a cold
+  cache can find-or-create the session (the press is an explicit user act).
+- **Background handler** (`collect-checkpoint-handler.ts`): resolves the
+  session via `session-resolver.ts` (session cache → `lookupForVideo` probe
+  (SELECT-only) → find-or-create), then calls
+  `studySessions.collectCheckpoint` with an empty `previewedSpans` (the
+  extension popover has no stateless preview lane to track; saved highlights
+  are suppressed server-side).
+- **Visibility**: shown whenever a subtitle track is loaded and a video
+  context is prepared. The target language is unknown before first
+  registration (the backend detects it), so pre-emptive hiding is impossible —
+  except via the cache: a one-shot `flicktionary-checkpoint-availability`
+  probe (cache-only, no network) hides the button when the CACHED session's
+  language has no wiktionary data, and an UNSUPPORTED_LANGUAGE response to a
+  press latches the same hide. Cold-start outcomes mirror the save flow —
+  UNSUPPORTED_LANGUAGE / NEEDS_ONBOARDING / MISSING_CEFR — reported through
+  the feedback chip.
+- **Undo chip** (`CheckpointFeedbackChip`, rendered by
+  `ShadowVideoOverlayApp` OUTSIDE the pause-visibility gate): "N reviews
+  collected" + Undo, with its own ~8s lifetime owned by the controller — the
+  controls disappear when playback resumes, the chip must not. Undo sends
+  `flicktionary-undo-checkpoint`; a stale undo (`undone: false`) reports "may
+  have changed since", never an error. All message responses tolerate
+  `undefined` (background mid-reload).
+- **No claims sheet** in the extension (phase-1 scope): backlog
+  known-assertions are web-only.
+
 ### Native caption control (YouTube CC button)
 
 On YouTube, once subtitles load, the player's own CC button (and YouTube's

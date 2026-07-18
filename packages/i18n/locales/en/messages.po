@@ -37,6 +37,11 @@ msgstr "(Expired)"
 msgid "(unset)"
 msgstr "(unset)"
 
+#. placeholder {0}: feedback.creditedCount
+#: apps/extension/common/components/CheckpointFeedbackChip.tsx
+msgid "{0, plural, one {# review collected} other {# reviews collected}}"
+msgstr "{0, plural, one {# review collected} other {# reviews collected}}"
+
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "{assertedCount, plural, one {# word marked as known} other {# words marked as known}}"
 msgstr "{assertedCount, plural, one {# word marked as known} other {# words marked as known}}"
@@ -949,6 +954,10 @@ msgstr "Correct!"
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Could not collect reviews. Try again."
+msgstr "Could not collect reviews. Try again."
+
 #: apps/native/src/features/billing/hooks/use-paywall.ts
 msgid "Could not display payment options at this time."
 msgstr "Could not display payment options at this time."
@@ -1028,6 +1037,10 @@ msgstr "Could not save your level. Please try again."
 #: apps/native/src/features/auth/components/user-setup-gate.tsx
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Could not set up your account. Please try restarting the app."
+
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Could not undo. The reviews may have changed since."
+msgstr "Could not undo. The reviews may have changed since."
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't generate the form's data"
@@ -1893,6 +1906,10 @@ msgstr "Finding suggestions…"
 msgid "Finish setting up Flicktionary"
 msgstr "Finish setting up Flicktionary"
 
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Finish setting up Flicktionary on flicktionary.app first."
+msgstr "Finish setting up Flicktionary on flicktionary.app first."
+
 #: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 msgid "Finish setting up Flicktionary to save words."
 msgstr "Finish setting up Flicktionary to save words."
@@ -2220,6 +2237,10 @@ msgstr "I've followed to the end"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "I've followed up to here"
 msgstr "I've followed up to here"
+
+#: apps/extension/common/components/VideoOverlay.tsx
+msgid "I've followed up to here — collect reviews"
+msgstr "I've followed up to here — collect reviews"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Idiom"
@@ -2746,6 +2767,10 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "No new reviews to collect."
+msgstr "No new reviews to collect."
+
 #: apps/web/src/features/practice/components/reading-history-view.tsx
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
@@ -2857,6 +2882,10 @@ msgstr "Notes"
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Nothing new to learn right now."
 msgstr "Nothing new to learn right now."
+
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Nothing to collect yet."
+msgstr "Nothing to collect yet."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Nothing to practice right now."
@@ -3622,6 +3651,10 @@ msgstr "Review"
 msgid "Review (due, no new)"
 msgstr "Review (due, no new)"
 
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Review collection isn't available for this language yet."
+msgstr "Review collection isn't available for this language yet."
+
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Review it any time from the Vocabulary tab — newest terms are listed first."
 msgstr "Review it any time from the Vocabulary tab — newest terms are listed first."
@@ -3641,6 +3674,10 @@ msgstr "Reviewing and practicing"
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "Reviews collected for everything you've read."
 msgstr "Reviews collected for everything you've read."
+
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Reviews restored."
+msgstr "Reviews restored."
 
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Right-click a word or phrase to save it with the sentence it appeared in."
@@ -3913,6 +3950,10 @@ msgstr "Set up form"
 msgid "Set your CEFR level, translation behavior and daily practice limits for each target language."
 msgstr "Set your CEFR level, translation behavior and daily practice limits for each target language."
 
+#: apps/extension/src/controllers/video-overlay-controller.ts
+msgid "Set your level for this language on flicktionary.app first."
+msgstr "Set your level for this language on flicktionary.app first."
+
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Set your native language first."
@@ -3969,6 +4010,10 @@ msgstr "Show suggested terms while reading"
 #: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 msgid "Sign in"
 msgstr "Sign in"
+
+#: apps/extension/src/handlers/flicktionary/collect-checkpoint-handler.ts
+msgid "Sign in to Flicktionary to collect reviews."
+msgstr "Sign in to Flicktionary to collect reviews."
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Sign in to Flicktionary to import text."
@@ -4723,6 +4768,7 @@ msgstr "Unbound"
 msgid "Understand it when you read or hear it"
 msgstr "Understand it when you read or hear it"
 
+#: apps/extension/common/components/CheckpointFeedbackChip.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Undo"
