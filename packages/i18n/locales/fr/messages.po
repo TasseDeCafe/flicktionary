@@ -69,7 +69,7 @@ msgstr "{correctCount} sur {total} correctes."
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "{count, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
-msgstr "{count, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}"
+msgstr "{count, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}}"
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "{count, plural, one {Mark # word as known} other {Mark # words as known}}"
