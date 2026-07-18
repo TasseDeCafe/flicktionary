@@ -539,6 +539,26 @@ const findByIdForUserWithSource = async (
   return result[0] ?? null
 }
 
+// The difficulty batch read's ONE auth-scoped session query: missing,
+// deleted, or foreign ids simply don't come back (the DTO omits them).
+const listByIdsForUserWithSource = async (
+  sessionIds: readonly string[],
+  userId: string
+): Promise<DbStudySessionWithSource[]> => {
+  if (sessionIds.length === 0) return []
+  return (await sql`
+    SELECT s.*,
+           cs.title AS content_source_title,
+           cs.type AS content_source_type,
+           cs.metadata AS content_source_metadata
+    FROM public.study_sessions s
+    LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+    WHERE s.id = ANY(${sql.array([...sessionIds])}::uuid[])
+      AND s.user_id = ${userId}
+      AND s.deleted_at IS NULL
+  `) as DbStudySessionWithSource[]
+}
+
 const findByIdForUser = async (sessionId: string, userId: string): Promise<DbStudySession | null> => {
   const result = (await sql`
     SELECT * FROM public.study_sessions
@@ -781,6 +801,7 @@ export interface StudySessionsRepositoryInterface {
   } | null>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
+  listByIdsForUserWithSource: (sessionIds: readonly string[], userId: string) => Promise<DbStudySessionWithSource[]>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
   listByUserId: (userId: string) => Promise<DbStudySession[]>
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
@@ -819,6 +840,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     findForVideo,
     findByIdForUser,
     findByIdForUserWithSource,
+    listByIdsForUserWithSource,
     hasTextTrackForUser,
     listByUserId,
     listByUserIdWithSource,

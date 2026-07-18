@@ -74,6 +74,7 @@ import { WiktionaryEntriesRepository } from './transport/database/wiktionary-ent
 import { WiktionaryMatchRepository } from './transport/database/wiktionary-entries/wiktionary-match-repository'
 import { KnownLemmasRepository } from './transport/database/known-lemmas/known-lemmas-repository'
 import { TextTrackLemmaProfilesRepository } from './transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
+import { LemmaRanksRepository } from './transport/database/lemma-ranks/lemma-ranks-repository'
 import { StudySessionCheckpointsRepository } from './transport/database/study-sessions/study-session-checkpoints-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { GhostCandidatesRepository } from './transport/database/ghost-candidates/ghost-candidates-repository'
@@ -408,12 +409,23 @@ export const buildApp = ({
     anthropicPasses,
     withTransaction,
   }
+  const textTrackLemmaProfilesRepository = TextTrackLemmaProfilesRepository()
   const markKnownDependencies = {
     studySessionsRepository,
     textTracksRepository,
-    textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepository(),
+    textTrackLemmaProfilesRepository,
     userLookupsRepository,
     knownLemmasRepository,
+    processingJobsRepository,
+  }
+  const difficultyDependencies = {
+    studySessionsRepository,
+    textTracksRepository,
+    textSegmentsRepository,
+    textTrackLemmaProfilesRepository,
+    userLookupsRepository,
+    knownLemmasRepository,
+    lemmaRanksRepository: LemmaRanksRepository(),
     processingJobsRepository,
   }
 
@@ -428,7 +440,8 @@ export const buildApp = ({
       highlightsRepository,
       anthropicPasses,
       checkpointDependencies,
-      markKnownDependencies
+      markKnownDependencies,
+      difficultyDependencies
     )
   )
   app.use(
