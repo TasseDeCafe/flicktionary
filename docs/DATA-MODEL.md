@@ -338,6 +338,12 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
                                     -- the daily-new budget, not the review budget)
   caused_parking      bool          -- this rating crossed the leech threshold and
                                     -- parked the facet
+  caused_unparking    bool          -- known-assertion on an onboarding-parked facet
+                                    -- (docs/SRS.md §6c): the write unparked it; undo
+                                    -- re-parks from the prev_leech_* snapshot below
+  prev_leech_parked_at timestamptz? -- park-state snapshot for caused_unparking
+  prev_leech_rehab_correct_days int? -- events (onboarding-parked facets can carry
+  prev_leech_rehab_last_correct_on date? -- partial rehab progress from warm-up gates)
   practice_text_id    uuid? -> practice_text.id (ON DELETE SET NULL)
                                     -- reading-mode context; null for flashcard ratings
   import_batch_id     uuid? -> import_batches.id (ON DELETE SET NULL)

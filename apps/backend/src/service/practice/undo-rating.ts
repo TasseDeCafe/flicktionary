@@ -73,6 +73,10 @@ export const undoRating = async (
         prevLearningSteps: event.prev_srs_learning_steps,
         wasIntroduction: event.was_introduction,
         causedParking: event.caused_parking,
+        causedUnparking: event.caused_unparking,
+        prevLeechParkedAt: event.prev_leech_parked_at,
+        prevLeechRehabCorrectDays: event.prev_leech_rehab_correct_days,
+        prevLeechRehabLastCorrectOn: event.prev_leech_rehab_last_correct_on,
       },
       tx
     )

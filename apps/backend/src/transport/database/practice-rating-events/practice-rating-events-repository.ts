@@ -23,6 +23,13 @@ export type InsertRatingEventInput = {
   wasIntroduction: boolean
   // This rating crossed the leech threshold and parked the term.
   causedParking: boolean
+  // Known-assertion on an onboarding-parked facet: the write unparked it, and
+  // the prev_leech_* snapshot lets undo re-park with the exact prior state
+  // (incl. partial rehab progress).
+  causedUnparking?: boolean
+  prevLeechParkedAt?: string | null
+  prevLeechRehabCorrectDays?: number | null
+  prevLeechRehabLastCorrectOn?: string | null
   // Reading-mode context; null for flashcard ratings.
   practiceTextId: string | null
   // Lesson-import provenance; set only on the implicit 'again' lapses a
@@ -69,6 +76,10 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       was_explicit,
       was_introduction,
       caused_parking,
+      caused_unparking,
+      prev_leech_parked_at,
+      prev_leech_rehab_correct_days,
+      prev_leech_rehab_last_correct_on,
       practice_text_id,
       import_batch_id,
       study_session_id,
@@ -95,6 +106,10 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.wasExplicit},
       ${params.wasIntroduction},
       ${params.causedParking},
+      ${params.causedUnparking ?? false},
+      ${params.prevLeechParkedAt ?? null},
+      ${params.prevLeechRehabCorrectDays ?? null},
+      ${params.prevLeechRehabLastCorrectOn ?? null},
       ${params.practiceTextId},
       ${params.importBatchId ?? null},
       ${params.studySessionId ?? null},

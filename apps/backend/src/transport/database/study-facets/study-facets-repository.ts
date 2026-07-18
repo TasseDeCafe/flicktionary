@@ -441,6 +441,83 @@ const initializeFacet = async (params: FacetAddress): Promise<void> => {
   `
 }
 
+// Backlog known-assertion seed (docs/SRS.md §6c), NULL-state path: write the
+// generous review-state seed onto a never-introduced facet. The WHERE clause
+// is the full eligibility guard, so a facet that got introduced / parked /
+// disabled since the caller looked is an atomic no-op (returns false).
+// Deliberately does NOT stamp introduced_at — known assertions never touch
+// the daily-new budget in either direction (initializeFacet's convention for
+// non-daily-capped introductions); the rating event is the historical record.
+// reps/lapses stay 0.
+const seedKnownAssertFacet = async (
+  params: FacetAddress & {
+    state: SrsState
+    due: Date
+    stability: number
+    difficulty: number
+    lastReview: Date
+  },
+  executor: postgres.Sql = sql
+): Promise<boolean> => {
+  const result = await executor`
+    UPDATE public.study_facets
+    SET srs_state = ${params.state},
+        srs_due = ${params.due.toISOString()},
+        srs_stability = ${params.stability},
+        srs_difficulty = ${params.difficulty},
+        srs_last_review = ${params.lastReview.toISOString()},
+        srs_learning_steps = 0,
+        updated_at = NOW()
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+      AND srs_state IS NULL
+      AND leech_parked_at IS NULL
+      AND disabled_at IS NULL
+      AND data_status = 'ready'
+  `
+  return result.count === 1
+}
+
+// Backlog known-assertion seed, ONBOARDING-PARKED path: the facet was parked
+// at introduction time (warm-up on-ramp) and may carry partial rehab
+// progress. The assertion EXITS onboarding: clears the park + both rehab
+// columns and writes the same generous seed. introduced_at (stamped at park
+// time) is untouched — this is not a second introduction. The caller
+// snapshots the park state onto the event first, so undo can re-park exactly.
+const seedKnownAssertParkedFacet = async (
+  params: FacetAddress & {
+    state: SrsState
+    due: Date
+    stability: number
+    difficulty: number
+    lastReview: Date
+  },
+  executor: postgres.Sql = sql
+): Promise<boolean> => {
+  const result = await executor`
+    UPDATE public.study_facets
+    SET srs_state = ${params.state},
+        srs_due = ${params.due.toISOString()},
+        srs_stability = ${params.stability},
+        srs_difficulty = ${params.difficulty},
+        srs_last_review = ${params.lastReview.toISOString()},
+        srs_learning_steps = 0,
+        leech_parked_at = NULL,
+        leech_rehab_correct_days = 0,
+        leech_rehab_last_correct_on = NULL,
+        updated_at = NOW()
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+      AND srs_state IS NULL
+      AND leech_parked_at IS NOT NULL
+      AND disabled_at IS NULL
+      AND data_status = 'ready'
+  `
+  return result.count === 1
+}
+
 // Patch a facet's FSRS columns from a ts-fsrs result. `executor` defaults to the
 // pool; pass a transaction so the patch commits atomically with its
 // practice_rating_events row.
@@ -477,8 +554,11 @@ const applyFsrsResultForFacet = async (
 // Undo support: restore a facet's FSRS family from a practice_rating_events
 // prev_srs_* snapshot. wasIntroduction additionally clears introduced_at
 // (refunding the daily-new slot); causedParking un-parks and zeroes rehab
-// progress. reps/lapses columns are NOT NULL; the snapshot's nulls only occur
-// on the introduction path where 0 is the correct pre-introduction value.
+// progress; causedUnparking (a known-assertion on an onboarding-parked facet)
+// RE-parks, restoring the exact prior park state including partial rehab
+// progress from the event's prev_leech_* snapshot. reps/lapses columns are
+// NOT NULL; the snapshot's nulls only occur on the introduction path where 0
+// is the correct pre-introduction value.
 const restoreSrsSnapshotForFacet = async (
   params: FacetAddress & {
     prevState: SrsState | null
@@ -491,9 +571,14 @@ const restoreSrsSnapshotForFacet = async (
     prevLearningSteps: number | null
     wasIntroduction: boolean
     causedParking: boolean
+    causedUnparking?: boolean
+    prevLeechParkedAt?: string | null
+    prevLeechRehabCorrectDays?: number | null
+    prevLeechRehabLastCorrectOn?: string | null
   },
   executor: postgres.Sql = sql
 ): Promise<void> => {
+  const causedUnparking = params.causedUnparking ?? false
   await executor`
     UPDATE public.study_facets
     SET srs_state = ${params.prevState},
@@ -505,9 +590,21 @@ const restoreSrsSnapshotForFacet = async (
         srs_lapses = ${params.prevLapses ?? 0},
         srs_learning_steps = ${params.prevLearningSteps ?? 0},
         introduced_at = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE introduced_at END,
-        leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_parked_at END,
-        leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE leech_rehab_correct_days END,
-        leech_rehab_last_correct_on = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_rehab_last_correct_on END,
+        leech_parked_at = CASE
+          WHEN ${params.causedParking} THEN NULL
+          WHEN ${causedUnparking} THEN ${params.prevLeechParkedAt ?? null}::timestamptz
+          ELSE leech_parked_at
+        END,
+        leech_rehab_correct_days = CASE
+          WHEN ${params.causedParking} THEN 0
+          WHEN ${causedUnparking} THEN ${params.prevLeechRehabCorrectDays ?? 0}::int
+          ELSE leech_rehab_correct_days
+        END,
+        leech_rehab_last_correct_on = CASE
+          WHEN ${params.causedParking} THEN NULL
+          WHEN ${causedUnparking} THEN ${params.prevLeechRehabLastCorrectOn ?? null}::date
+          ELSE leech_rehab_last_correct_on
+        END,
         updated_at = NOW()
     WHERE user_lookup_id = ${params.userLookupId}
       AND skill = ${params.skill}
@@ -615,6 +712,14 @@ export interface StudyFacetsRepositoryInterface {
   }) => Promise<'scaffolded' | 'cap_reached' | 'not_eligible'>
   listSessionKeptCitationFacets: (studySessionId: string, skill?: FacetSkill) => Promise<SessionKeptCitationFacet[]>
   initializeFacet: (params: FacetAddress) => Promise<void>
+  seedKnownAssertFacet: (
+    params: FacetAddress & { state: SrsState; due: Date; stability: number; difficulty: number; lastReview: Date },
+    executor?: postgres.Sql
+  ) => Promise<boolean>
+  seedKnownAssertParkedFacet: (
+    params: FacetAddress & { state: SrsState; due: Date; stability: number; difficulty: number; lastReview: Date },
+    executor?: postgres.Sql
+  ) => Promise<boolean>
   applyFsrsResultForFacet: (
     params: FacetAddress & {
       state: SrsState
@@ -640,6 +745,10 @@ export interface StudyFacetsRepositoryInterface {
       prevLearningSteps: number | null
       wasIntroduction: boolean
       causedParking: boolean
+      causedUnparking?: boolean
+      prevLeechParkedAt?: string | null
+      prevLeechRehabCorrectDays?: number | null
+      prevLeechRehabLastCorrectOn?: string | null
     },
     executor?: postgres.Sql
   ) => Promise<void>
@@ -678,6 +787,8 @@ export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   initializeAndParkCitationFacetIfUnderDailyCap,
   listSessionKeptCitationFacets,
   initializeFacet,
+  seedKnownAssertFacet,
+  seedKnownAssertParkedFacet,
   applyFsrsResultForFacet,
   restoreSrsSnapshotForFacet,
   applyStudyIntentFacets,
