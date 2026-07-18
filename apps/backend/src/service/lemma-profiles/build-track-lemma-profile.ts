@@ -1,0 +1,91 @@
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
+import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
+import type { TextTrackLemmaProfilesRepositoryInterface } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
+import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import { countFoldedTokens } from './count-tokens'
+
+// Builds (or rebuilds) a track's lemma profile: batch-tokenize the segments
+// with occurrence counts, resolve every distinct folded token to its candidate
+// lemma set through the shared checkpoint matcher, and swap the profile rows +
+// track bookkeeping in one transaction (see the repository). Synthetic tracks
+// (adhoc: mutable, "headword — context" lines; lesson: independent imported
+// vocabulary items, non-narrative) and languages without loaded wiktionary
+// data are skipped — the difficulty stat treats them as unsupported.
+
+const SEGMENT_BATCH_SIZE = 500
+const RESOLVE_CHUNK_SIZE = 5_000
+
+export type BuildTrackLemmaProfileDependencies = {
+  textTracksRepository: TextTracksRepositoryInterface
+  textSegmentsRepository: TextSegmentsRepositoryInterface
+  wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
+  textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepositoryInterface
+}
+
+export type BuildTrackLemmaProfileResult =
+  | { status: 'built'; wordTokenCount: number; matchedTokenCount: number }
+  | { status: 'skipped'; reason: 'track_not_found' | 'synthetic_source' | 'unsupported_language' }
+
+export const buildTrackLemmaProfile = async (
+  textTrackId: string,
+  deps: BuildTrackLemmaProfileDependencies
+): Promise<BuildTrackLemmaProfileResult> => {
+  const track = await deps.textTracksRepository.findByIdWithSourceType(textTrackId)
+  if (!track) return { status: 'skipped', reason: 'track_not_found' }
+  if (track.content_source_type === 'adhoc' || track.content_source_type === 'lesson') {
+    return { status: 'skipped', reason: 'synthetic_source' }
+  }
+  if (!KAIKKI_LANGUAGES.has(track.language)) return { status: 'skipped', reason: 'unsupported_language' }
+
+  // Bounded index-range pages — never the whole track in one load (subtitle
+  // tracks are small, but book-length pastes are not).
+  const maxSegmentIndex = await deps.textSegmentsRepository.getMaxIndexForTrack(textTrackId)
+  const counts = new Map<string, number>()
+  let segmentCount = 0
+  if (maxSegmentIndex !== null) {
+    for (let start = 0; start <= maxSegmentIndex; start += SEGMENT_BATCH_SIZE) {
+      const segments = await deps.textSegmentsRepository.listByIndexRange(
+        textTrackId,
+        start,
+        Math.min(start + SEGMENT_BATCH_SIZE - 1, maxSegmentIndex)
+      )
+      segmentCount += segments.length
+      countFoldedTokens(segments, track.language, counts)
+    }
+  }
+
+  const tokens = [...counts.keys()]
+  const lemmasByToken = new Map<string, Set<string>>()
+  for (let i = 0; i < tokens.length; i += RESOLVE_CHUNK_SIZE) {
+    const resolved = await deps.wiktionaryMatchRepository.resolveFoldedLemmasForTokens({
+      targetLanguage: track.language,
+      foldedTokens: tokens.slice(i, i + RESOLVE_CHUNK_SIZE),
+    })
+    for (const [token, lemmas] of resolved) lemmasByToken.set(token, lemmas)
+  }
+
+  // Unresolved tokens (proper nouns, numbers, typos) stay out of the profile:
+  // resolution failure IS the filter, and the difficulty denominator is
+  // matched tokens. Both totals are stored so the gap stays visible.
+  let wordTokenCount = 0
+  let matchedTokenCount = 0
+  const rows: Array<{ foldedToken: string; tokenCount: number; candidateLemmas: string[] }> = []
+  for (const [foldedToken, tokenCount] of counts) {
+    wordTokenCount += tokenCount
+    const lemmas = lemmasByToken.get(foldedToken)
+    if (!lemmas || lemmas.size === 0) continue
+    matchedTokenCount += tokenCount
+    rows.push({ foldedToken, tokenCount, candidateLemmas: [...lemmas] })
+  }
+
+  await deps.textTrackLemmaProfilesRepository.replaceProfile({
+    textTrackId,
+    rows,
+    segmentCount,
+    maxSegmentIndex,
+    wordTokenCount,
+    matchedTokenCount,
+  })
+  return { status: 'built', wordTokenCount, matchedTokenCount }
+}

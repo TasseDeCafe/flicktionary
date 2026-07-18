@@ -1,7 +1,9 @@
 import { CefrLevelSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName, isSupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
 import { getConfig } from '../../config/environment-config'
+import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { TelegramPairNoncesRepositoryInterface } from '../../transport/database/telegram-pair-nonces/telegram-pair-nonces-repository'
 import { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
@@ -25,6 +27,8 @@ export type TelegramBotDependencies = {
   telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
+  textTracksRepository: TextTracksRepositoryInterface
+  processingJobsRepository: ProcessingJobsRepositoryInterface
   anthropicPasses: AnthropicPassesInterface
   // Injectable so unit tests can disable the per-chat throttle.
   importCooldownMs?: number
@@ -98,6 +102,8 @@ export const runImportAttempt = async (
       usersRepository: deps.usersRepository,
       userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
       anthropicPasses: deps.anthropicPasses,
+      textTracksRepository: deps.textTracksRepository,
+      processingJobsRepository: deps.processingJobsRepository,
     }
   )
 

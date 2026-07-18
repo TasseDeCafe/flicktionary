@@ -47,6 +47,21 @@ const findById = async (id: string): Promise<DbTextTrack | null> => {
   return result[0] ?? null
 }
 
+export type ContentSourceType = Database['public']['Enums']['content_source_type']
+export type DbTextTrackWithSourceType = DbTextTrack & { content_source_type: ContentSourceType }
+
+// Track + its content source's type in one read — the lemma-profile gates
+// (adhoc/lesson tracks are synthetic, never profiled) need both.
+const findByIdWithSourceType = async (id: string): Promise<DbTextTrackWithSourceType | null> => {
+  const result = (await sql`
+    SELECT t.*, cs.type AS content_source_type
+    FROM public.text_tracks t
+    JOIN public.content_sources cs ON cs.id = t.content_source_id
+    WHERE t.id = ${id}
+  `) as DbTextTrackWithSourceType[]
+  return result[0] ?? null
+}
+
 export interface TextTracksRepositoryInterface {
   insertTextTrack: (params: {
     contentSourceId: string
@@ -61,6 +76,7 @@ export interface TextTracksRepositoryInterface {
     hash: string
   }) => Promise<DbTextTrack | null>
   findById: (id: string) => Promise<DbTextTrack | null>
+  findByIdWithSourceType: (id: string) => Promise<DbTextTrackWithSourceType | null>
 }
 
 export const TextTracksRepository = (): TextTracksRepositoryInterface => {
@@ -68,5 +84,6 @@ export const TextTracksRepository = (): TextTracksRepositoryInterface => {
     insertTextTrack,
     findByContentSourceLanguageAndHash,
     findById,
+    findByIdWithSourceType,
   }
 }

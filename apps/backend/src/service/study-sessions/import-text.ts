@@ -1,10 +1,13 @@
 import { createHash } from 'crypto'
+import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { parsePastedText } from '../../utils/text-paste-parser'
+import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
 
 // languageDetectionPass reads the first ~1k chars; concatenating a few dozen
 // segments is more than enough to identify the language while keeping the
@@ -47,6 +50,8 @@ export type ImportTextDependencies = {
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   anthropicPasses: AnthropicPassesInterface
+  textTracksRepository: TextTracksRepositoryInterface
+  processingJobsRepository: ProcessingJobsRepositoryInterface
 }
 
 export const resolveIngestPrefs = async (
@@ -132,6 +137,11 @@ export const importTextForUser = async (
       error,
     })
   })
+
+  // Kick off the lemma-profile build for the difficulty stat (no-op when the
+  // track already has one — the same text re-imported resolves to the same
+  // track). Never fails the import.
+  await ensureTrackLemmaProfileJob({ textTrackId: track.id, userId }, deps)
 
   return {
     ok: true,

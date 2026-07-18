@@ -19,6 +19,8 @@ import { ProcessingJobsRepository } from '../../transport/database/processing-jo
 import { PracticeRatingEventsRepository } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { TelegramPendingImportsRepository } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import { TelegramAuthNoncesRepository } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
+import { WiktionaryMatchRepository } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import { TextTrackLemmaProfilesRepository } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -40,6 +42,8 @@ import type { ProcessingJobsRepositoryInterface } from '../../transport/database
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { TelegramPendingImportsRepositoryInterface } from '../../transport/database/telegram-pending-imports/telegram-pending-imports-repository'
 import type { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
+import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import type { TextTrackLemmaProfilesRepositoryInterface } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { AnthropicPasses, type AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 export type ProcessingDependencies = {
@@ -65,6 +69,8 @@ export type ProcessingDependencies = {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   telegramPendingImportsRepository: TelegramPendingImportsRepositoryInterface
   telegramAuthNoncesRepository: TelegramAuthNoncesRepositoryInterface
+  wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
+  textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepositoryInterface
 }
 
 // Repos are stateless factories over the shared postgres client, so the worker
@@ -93,4 +99,6 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   practiceRatingEventsRepository: PracticeRatingEventsRepository(),
   telegramPendingImportsRepository: TelegramPendingImportsRepository(),
   telegramAuthNoncesRepository: TelegramAuthNoncesRepository(),
+  wiktionaryMatchRepository: WiktionaryMatchRepository(),
+  textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepository(),
 })

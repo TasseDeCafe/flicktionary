@@ -40,6 +40,11 @@ text_track
   language            text
   external_id         text?        -- e.g. opensubtitles file id
   hash                text         -- sha256 of normalized text, dedup helper
+  profile_built_at    timestamptz? -- lemma-profile bookkeeping (see
+  profile_segment_count int?       -- "Per-track lemma profiles" below):
+  profile_max_segment_index int?   -- built_at doubles as "profile exists";
+  profile_word_token_count int?    -- segment count + max index are the
+  profile_matched_token_count int? -- staleness check
   created_at          timestamptz
 
 text_segment
@@ -175,19 +180,26 @@ card_chat_read_state                 -- per-card chat read marker (server-side, 
                                    -- with role='assistant' has created_at > last_read_at.
                                    -- card_id alone is the PK (a card has exactly one owner).
 
-processing_jobs                      -- durable background-job queue (enrichment + ghost nomination + lesson extraction)
+processing_jobs                      -- durable background-job queue (enrichment + ghost nomination + lesson extraction + lemma-profile builds)
   id                  uuid pk
-  kind                'enrich_highlight' | 'nominate_window' | 'seed_card_chat' | 'extract_lesson'
+  kind                'enrich_highlight' | 'nominate_window' | 'seed_card_chat' | 'extract_lesson' | 'build_track_lemma_profile'
                                    -- legacy enum may still include discover_session; worker treats it as no-op
   study_session_id    uuid? -> study_session.id  (ON DELETE CASCADE; required for
-                                    -- every kind EXCEPT extract_lesson — the
-                                    -- lesson session is created at confirm,
-                                    -- not upload, so extract jobs carry only
-                                    -- an import_batch_id)
+                                    -- every kind EXCEPT extract_lesson and
+                                    -- build_track_lemma_profile — the lesson
+                                    -- session is created at confirm, not
+                                    -- upload, and profile builds are keyed by
+                                    -- track, which precedes any session in the
+                                    -- SRT/paste wizard flows)
   import_batch_id     uuid? -> import_batches.id (ON DELETE CASCADE; required for
                                     -- extract_lesson, null otherwise; a partial
                                     -- unique index keeps one LIVE extract job
                                     -- per batch)
+  text_track_id       uuid? -> text_track.id     (ON DELETE CASCADE; required for
+                                    -- build_track_lemma_profile, null otherwise;
+                                    -- a partial unique index keeps one LIVE
+                                    -- build job per track — the enqueue-
+                                    -- coalescing mechanism)
   highlight_id        uuid? -> highlight.id      (ON DELETE CASCADE; required for
                                     -- enrich_highlight/seed_card_chat, null otherwise)
   window_start_index  int?          -- required for nominate_window
@@ -572,6 +584,41 @@ lemmas weighted by each candidate's own corpus frequency (never evenly);
 `pos = 'character'` entries and multi-word lemmas are excluded; German
 capitalized lemmas competing with their lowercase twin for the same form are
 discounted ×0.02 (wordfreq is caseless).
+
+### Per-track lemma profiles
+
+The cached tokenization+resolution of one text track, consumed by the
+personalized difficulty stat. Backend reads/writes only; RLS enabled with no
+policies.
+
+```
+text_track_lemma_profiles
+  text_track_id       uuid -> text_track.id (ON DELETE CASCADE)
+  folded_token        text         -- pk (text_track_id, folded_token)
+  token_count         int          -- occurrences in the track; CHECK > 0
+  candidate_lemmas    text[]       -- ALL folded lemmas the matcher resolves
+                                   -- the token to; deduped; CHECK non-empty
+```
+
+Token-level candidate GROUPS (not per-lemma counts) are stored so ambiguity
+conserves mass: each token contributes `token_count × max(P(candidate))`
+exactly once and coverage can never exceed 100%. Unresolved tokens (proper
+nouns, numbers, typos) are omitted — resolution failure is the filter; the
+difficulty denominator is matched tokens (`profile_matched_token_count`,
+stored on the track next to `profile_word_token_count` for honesty).
+
+Lifecycle: a `build_track_lemma_profile` job is enqueued at every prose-track
+creation point (SRT upload, OpenSubtitles import, paste, extension
+YouTube/streaming ingest, text import incl. the Telegram bot) when the track
+has no profile yet; a partial unique index coalesces concurrent enqueues to
+one live job per track. The build (service/lemma-profiles/) batch-tokenizes
+segments with occurrence counts, resolves through the shared checkpoint
+matcher, and swaps rows + bookkeeping in one transaction serialized by a
+per-track advisory lock. Ad-hoc tracks (mutable, "headword — context" lines)
+and lesson tracks (independent imported vocabulary items, non-narrative) are
+never profiled — difficulty treats them as unsupported. Missing/stale
+profiles at difficulty-read time re-enqueue and report `pending`; builds are
+never run synchronously inside a request.
 
 ## Card output template
 

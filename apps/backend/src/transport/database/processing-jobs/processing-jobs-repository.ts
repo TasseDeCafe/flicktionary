@@ -98,6 +98,24 @@ const enqueueExtractLesson = async (
   return result[0] ?? null
 }
 
+// Idempotent per LIVE (pending/processing) profile build. A profile build
+// belongs to a text track (tracks precede sessions in the SRT/paste wizard
+// flows, and one track can back many sessions) — user_id records who
+// triggered it. Mirrors uq_processing_jobs_live_build_track_lemma_profile.
+const enqueueBuildTrackLemmaProfile = async (
+  params: { textTrackId: string; userId: string },
+  executor: postgres.Sql = sql
+): Promise<DbProcessingJob | null> => {
+  const result = (await executor`
+    INSERT INTO public.processing_jobs (kind, study_session_id, text_track_id, user_id)
+    VALUES ('build_track_lemma_profile', NULL, ${params.textTrackId}, ${params.userId})
+    ON CONFLICT (text_track_id) WHERE kind = 'build_track_lemma_profile' AND status IN ('pending', 'processing')
+    DO NOTHING
+    RETURNING *
+  `) as DbProcessingJob[]
+  return result[0] ?? null
+}
+
 // Atomically claim up to `limit` runnable jobs: due pending rows, plus stale
 // processing rows whose lease (locked_at) is older than `staleAfterSeconds` —
 // the lease-reclaim path that recovers work orphaned by a crashed worker.
@@ -207,6 +225,10 @@ export interface ProcessingJobsRepositoryInterface {
     params: { importBatchId: string; userId: string },
     executor?: postgres.Sql
   ) => Promise<DbProcessingJob | null>
+  enqueueBuildTrackLemmaProfile: (
+    params: { textTrackId: string; userId: string },
+    executor?: postgres.Sql
+  ) => Promise<DbProcessingJob | null>
   claimBatch: (limit: number, workerId: string, staleAfterSeconds: number) => Promise<DbProcessingJob[]>
   refreshLease: (id: string, workerId: string) => Promise<boolean>
   markDone: (id: string, workerId: string) => Promise<boolean>
@@ -226,6 +248,7 @@ export const ProcessingJobsRepository = (): ProcessingJobsRepositoryInterface =>
     enqueue,
     enqueueSeedCardChat,
     enqueueExtractLesson,
+    enqueueBuildTrackLemmaProfile,
     claimBatch,
     refreshLease,
     markDone,
