@@ -228,6 +228,61 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), checkpointId: z.string().uuid() }))
     .output(z.object({ data: z.object({ reverted: z.number().int(), skipped: z.number().int() }) })),
 
+  // Preview for the "mark the rest as known" sweep CTA: the EXACT number of
+  // rows the sweep would insert (profile candidate lemmas minus studied
+  // headword-lemmas minus already-known). `status` mirrors the difficulty
+  // gate: 'unsupported' for synthetic (adhoc/lesson) sessions and languages
+  // without wiktionary support, 'pending' while the track's lemma profile is
+  // still building (the preview re-enqueues it; the client refetches).
+  getMarkKnownPreview: oc
+    .route({ method: 'GET', path: '/study-sessions/{sessionId}/mark-known-preview', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(
+      z.object({
+        data: z.object({
+          status: z.enum(['ready', 'pending', 'unsupported']),
+          markableLemmaCount: z.number().int(),
+        }),
+      })
+    ),
+
+  // The sweep itself: bulk-insert known_lemmas rows (source 'bulk_text',
+  // source_id = this session; first-writer provenance). Ambiguous tokens mark
+  // ALL their candidate lemmas; saved terms are always skipped (saving is the
+  // stronger signal). UNPROCESSABLE_ENTITY carries 'UNSUPPORTED' (synthetic
+  // session / unsupported language) or 'PROFILE_PENDING' (profile still
+  // building — retry after the preview turns ready).
+  markRemainingKnown: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/mark-known', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ markedCount: z.number().int() }) })),
+
+  // Un-mark behind the gloss-sheet "Marked as known" chip: a bare DELETE of
+  // the given lemmas (the `knownLemmaCandidates` the gloss returned — ALL
+  // candidates the selected token represents, symmetric with the sweep
+  // marking all of them). Zero side effects on SRS state.
+  unmarkKnownLemma: oc
+    .route({ method: 'POST', path: '/known-lemmas/unmark', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().trim().min(1).max(40),
+        lemmas: z.array(z.string().trim().min(1).max(100)).min(1).max(50),
+      })
+    )
+    .output(z.object({ data: z.object({ removedCount: z.number().int() }) })),
+
   getStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/status', successStatus: 200 })
     .errors({

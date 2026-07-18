@@ -620,6 +620,43 @@ never profiled — difficulty treats them as unsupported. Missing/stale
 profiles at difficulty-read time re-enqueue and report `pending`; builds are
 never run synchronously inside a request.
 
+### Known lemmas
+
+The stateless known-vocabulary assertion layer (coverage proposal): one row =
+"the user claims to know this lemma" — no facets, no FSRS state, no history,
+which is what keeps every correction path a trivial write.
+
+```
+known_lemmas
+  user_id             uuid -> auth.users.id (ON DELETE CASCADE)
+  target_language     text         -- pk (user_id, target_language, lemma)
+  lemma               text         -- checkpoint_fold-folded canonical key
+  source              text         -- 'bulk_text' (the per-session sweep)
+  source_id           uuid?        -- e.g. the sweeping session; FIRST writer
+                                   -- wins (ON CONFLICT DO NOTHING) — later
+                                   -- overlapping sweeps don't take ownership
+  marked_at           timestamptz
+```
+
+Write paths: the per-session "mark the rest as known" sweep
+(`studySessions.markRemainingKnown`, preview via `getMarkKnownPreview`) —
+profile candidate lemmas minus studied headword-lemmas minus already-known;
+ambiguous tokens mark ALL candidates (over-crediting a rare homograph is
+invisible noise); refused for adhoc/lesson sessions and unsupported
+languages, `pending` while the track profile builds. Un-mark is a bare
+DELETE behind the gloss-sheet "Marked as known" chip
+(`studySessions.unmarkKnownLemma`) — both gloss endpoints return
+`knownLemmaCandidates` (the selection's resolved lemmas ∩ known_lemmas), and
+un-marking removes ALL candidates the token represents, symmetric with the
+sweep.
+
+Correction is read-time precedence, never deletion: any live saved lookup
+beats a known mark in the difficulty/coverage math (saving a marked-known
+word is the signal the user does NOT know it); soft-deleting the lookup
+falls back to known. Consumers are the difficulty/coverage reads and the
+gloss chip ONLY — ghost nominations must never read this table (suppressed
+suggestions are invisible errors; coverage miscounts are visible ones).
+
 ## Card output template
 
 Cards have two tiers of data:

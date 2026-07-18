@@ -8,7 +8,10 @@ import type { UsersRepositoryInterface } from '../../transport/database/users/us
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+import type { KnownLemmasRepositoryInterface } from '../../transport/database/known-lemmas/known-lemmas-repository'
+import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
+import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
@@ -19,7 +22,9 @@ export const GlossesRouter = (
   usersRepository: UsersRepositoryInterface,
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
-  anthropicPasses: AnthropicPassesInterface
+  anthropicPasses: AnthropicPassesInterface,
+  wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface,
+  knownLemmasRepository: KnownLemmasRepositoryInterface
 ): Router => {
   const implementer = implement(glossesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -43,13 +48,19 @@ export const GlossesRouter = (
       if (!languagePrefs.nativeLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
       }
-      const gloss = await anthropicPasses.fastGlossPass({
-        targetLanguage,
-        nativeLanguage: languagePrefs.nativeLanguage,
-        hideTranslationFields: languagePrefs.hideTranslationFields,
-        contextLine: input.contextLine,
-        selectionText: input.selectionText,
-      })
+      const [gloss, knownLemmaCandidates] = await Promise.all([
+        anthropicPasses.fastGlossPass({
+          targetLanguage,
+          nativeLanguage: languagePrefs.nativeLanguage,
+          hideTranslationFields: languagePrefs.hideTranslationFields,
+          contextLine: input.contextLine,
+          selectionText: input.selectionText,
+        }),
+        getKnownLemmaCandidates(
+          { userId, targetLanguage, selectionText: input.selectionText },
+          { wiktionaryMatchRepository, knownLemmasRepository }
+        ),
+      ])
       const ipaResult = await lookupFastGlossIpa({
         targetLanguage,
         selectionText: input.selectionText,
@@ -67,6 +78,7 @@ export const GlossesRouter = (
           ipa,
           ipaDisplay: pickIpa(ipa, targetLanguage, dialect) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
+          knownLemmaCandidates,
         },
       }
     }),

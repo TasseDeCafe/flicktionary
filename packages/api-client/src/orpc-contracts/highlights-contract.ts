@@ -83,6 +83,8 @@ export const highlightsContract = {
           // Lemma the IPA was sourced from on form-of fallback — see
           // glosses-contract's fastGloss output for the convention.
           ipaLemma: z.string().nullable(),
+          // Known-mark chip read path — see glosses-contract's fastGloss.
+          knownLemmaCandidates: z.array(z.string()),
         }),
       })
     ),
