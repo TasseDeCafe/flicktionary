@@ -98,7 +98,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
    pnpm --filter @flicktionary/backend exec vitest run src/service/wiktionary-grounding
    ```
 
-9. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, rebuilds `wiktionary_form_redirects`, and rewrites the on-disk snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
+9. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, rebuilds `wiktionary_form_redirects`, and rewrites the on-disk reference-table snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` (see `scripts/snapshot-reference-tables.ts`) that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
 
    ```bash
    doppler run -- pnpm --filter @flicktionary/backend load:kaikki
@@ -113,7 +113,16 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
    From then on `pnpm db:reset` will restore all enabled languages from the snapshot in seconds.
 
-10. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards (and checkpoint matching with it), so don't auto-trigger. The run rebuilds `wiktionary_form_redirects` too — no separate redirect step. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`).
+10. **Lemma-ranks build** — the personalized difficulty stat and coverage read only treat a language as supported once it has a `lemma_rank_builds` row (docs/DATA-MODEL.md § Lemma frequency ranks), so a new grounded language also needs a ranks build. Check first that wordfreq even covers the language (`top_n_list` in `scripts/export-wordfreq.py` throws for unsupported codes) — if it doesn't, the language ships without difficulty support and you're done. Otherwise, add `<code>` to `DEFAULT_LANGUAGES` in both `scripts/export-wordfreq.py` and `scripts/build-lemma-ranks.ts`, then:
+
+    ```bash
+    pnpm --filter @flicktionary/backend export:wordfreq <code>
+    pnpm --filter @flicktionary/backend build:lemma-ranks <code>
+    ```
+
+    The build fails loud below the 95% mass-matched acceptance threshold instead of publishing a degraded list — investigate resolution misses rather than lowering the bar. A successful local run also refreshes the reference-table snapshot, so `pnpm db:reset` keeps the ranks.
+
+11. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards (and checkpoint matching with it), so don't auto-trigger. The run rebuilds `wiktionary_form_redirects` too — no separate redirect step. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`). The prod lemma-ranks build is a separate manual step after the load lands: `doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts <code>` (per-language atomic publish; safe while the app is live).
 
 ## Removing a language
 
@@ -126,7 +135,8 @@ Reverse of adding, in roughly this order to keep types happy:
 5. Remove language-specific extractor branches and their tests if any were added.
 6. Remove any checkpoint fold/particle branches added for the language (`foldCheckpointToken` needs its SQL twin changed via a NEW migration in lockstep, plus the parity vectors; `foldUserHeadwordCandidates` / `MWE_PARTICLES` are TS-only).
 7. `pnpm check:types` + tests.
-8. Re-run `doppler run -- pnpm --filter @flicktionary/backend load:kaikki` to drop the language's rows from the local tables and refresh the snapshot (redirects rebuild in the same run). Trigger the prod workflow when ready.
+8. Remove the language from `DEFAULT_LANGUAGES` in `scripts/export-wordfreq.py` + `scripts/build-lemma-ranks.ts` (if it was ever added) and delete its rows from `lemma_ranks` / `lemma_rank_builds` by hand — the build script only touches languages it's asked to build, so nothing deletes them automatically.
+9. Re-run `doppler run -- pnpm --filter @flicktionary/backend load:kaikki` to drop the language's rows from the local tables and refresh the snapshot (redirects rebuild in the same run). Trigger the prod workflow when ready.
 
 Existing user cards in the removed language keep whatever `groundedAt`/`grammar` they already had — there's no automatic rollback. That's intentional.
 
