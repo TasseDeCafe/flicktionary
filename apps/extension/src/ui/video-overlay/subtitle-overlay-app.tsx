@@ -961,6 +961,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // Suppress the single-word gloss while starting a (possible) drag; the
       // mouseup handler re-arms the gloss for whatever ends up under the pointer.
       clearHoverTimer()
+      // Close an open saved-mode popover at press time. Radix (popover ≥1.1.16)
+      // resolves its outside-pointerdown dismissal on the gesture's trailing
+      // click — after mouseup — but the release-time chunk-gloss open is gated
+      // on no saved popover being up, so waiting for the deferred close would
+      // swallow the popover for a drag-selection. Closing here restores the
+      // press-time dismissal that gate was built against.
+      setSavedPopover(null)
       const state = interaction.getState()
       state.setSelecting(true)
       state.setSelection({ lineIndex: tl.line.index, anchorOrdinal: token.ordinal, headOrdinal: token.ordinal })
