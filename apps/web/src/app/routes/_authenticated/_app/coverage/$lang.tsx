@@ -3,4 +3,5 @@ import { CoverageDetailView } from '@/features/coverage/components/coverage-deta
 
 export const Route = createFileRoute('/_authenticated/_app/coverage/$lang')({
   component: CoverageDetailView,
+  staticData: { hideAppChrome: true },
 })

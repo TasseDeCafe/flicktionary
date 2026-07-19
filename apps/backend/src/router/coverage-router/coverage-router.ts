@@ -22,17 +22,16 @@ export const CoverageRouter = (dependencies: CoverageDependencies): Router => {
     }),
 
     getTopLemmas: implementer.getTopLemmas.handler(async ({ input, errors }) => {
-      const manifest = await dependencies.lemmaRanksRepository.findBuildManifest(input.targetLanguage)
-      if (!manifest) {
+      const build = await dependencies.lemmaRanksRepository.getTopLemmasBuild({
+        targetLanguage: input.targetLanguage,
+        limit: TOP_LEMMAS_LIMIT,
+      })
+      if (!build) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'No frequency data for this language' }] },
         })
       }
-      const lemmas = await dependencies.lemmaRanksRepository.listTopLemmas({
-        targetLanguage: input.targetLanguage,
-        limit: TOP_LEMMAS_LIMIT,
-      })
-      return { data: { buildVersion: manifest.version, lemmas } }
+      return { data: { buildVersion: build.version, lemmas: build.lemmas } }
     }),
   })
 

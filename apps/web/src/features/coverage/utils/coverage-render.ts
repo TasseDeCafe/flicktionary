@@ -152,6 +152,18 @@ export const computeSkylineBuckets = (states: Uint8Array, bucketSize: number): S
   return buckets
 }
 
+export const computeSkylineColumnLayout = (
+  bucketCount: number,
+  cssWidth: number
+): { gap: number; colWidth: number } => {
+  if (bucketCount <= 0) return { gap: 0, colWidth: 0 }
+  // A one-pixel gap only fits when every bucket can also keep at least one
+  // pixel. Narrow canvases drop the gaps and use sub-pixel columns instead of
+  // producing negative widths for larger language denominators.
+  const gap = bucketCount > 1 && cssWidth >= bucketCount * 2 - 1 ? 1 : 0
+  return { gap, colWidth: Math.max(0, (cssWidth - gap * (bucketCount - 1)) / bucketCount) }
+}
+
 export const renderSkyline = (
   canvas: HTMLCanvasElement,
   params: {
@@ -172,8 +184,7 @@ export const renderSkyline = (
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   ctx.scale(dpr, dpr)
-  const gap = 1
-  const colWidth = (params.cssWidth - gap * (buckets.length - 1)) / buckets.length
+  const { gap, colWidth } = computeSkylineColumnLayout(buckets.length, params.cssWidth)
   buckets.forEach((bucket, index) => {
     const x = index * (colWidth + gap)
     // The last bucket can be a partial one; its stack heights stay
