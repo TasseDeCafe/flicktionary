@@ -1,7 +1,6 @@
 ---
 name: create-pr
 description: Ships the work from this conversation as a pull request — creates a branch, makes one or more conventional commits, syncs the behavior specs, pushes with gh, and opens a PR with a detailed description. Stops before merge. Run this when the user is satisfied with the work and wants it turned into a PR.
-disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git branch:*), Bash(git checkout:*), Bash(git switch:*), Bash(git push:*), Bash(pnpm translate:sync:*), Bash(pnpm translate:check:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Read, Edit
 ---
 
