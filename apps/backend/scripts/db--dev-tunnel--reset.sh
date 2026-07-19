@@ -1,15 +1,17 @@
 #!/bin/bash
 #
-# Reset the dev-tunnel Supabase DB while preserving the wiktionary reference
-# data. The flow is:
+# Reset the dev-tunnel Supabase DB while preserving the reference data
+# (wiktionary tables + lemma ranks). The flow is:
 #
-#   1. If no snapshot exists yet, dump the current wiktionary tables to
+#   1. If no snapshot exists yet, dump the current reference tables to
 #      .cache/wiktionary/wiktionary.dump.
 #   2. Run `supabase db reset` (drops + re-applies migrations + reseeds).
-#   3. If a snapshot exists, pg_restore the wiktionary tables.
+#   3. If a snapshot exists, pg_restore the reference tables.
 #
-# A fresh `pnpm load:kaikki` invalidates and rewrites the snapshot at the end
-# of its run, so refreshes from a newer kaikki dump propagate automatically.
+# The table list mirrors REFERENCE_TABLES in snapshot-reference-tables.ts:
+# a fresh `pnpm load:kaikki` or `pnpm build:lemma-ranks` invalidates and
+# rewrites the snapshot at the end of its run, so refreshes propagate
+# automatically.
 #
 # We run pg_dump / pg_restore *inside* the Supabase Postgres container so the
 # client tool versions always match the server (15.x). Using Homebrew's
@@ -32,7 +34,7 @@ if [ ! -s "$DUMP_FILE" ]; then
     ENTRY_COUNT=$(psql "$CONNECTION_STRING" -tAc \
       "SELECT COUNT(*) FROM public.wiktionary_entries" 2>/dev/null || echo "0")
     if [ "$ENTRY_COUNT" -gt 0 ]; then
-      echo "→ No snapshot cached. Dumping current wiktionary tables (via container)..."
+      echo "→ No snapshot cached. Dumping current reference tables (via container)..."
       mkdir -p "$DUMP_DIR"
       DUMP_START=$(date +%s)
       # Write to a tmp path and only rename on success, so a failed pg_dump
@@ -43,6 +45,8 @@ if [ ! -s "$DUMP_FILE" ]; then
         --table=public.wiktionary_entries \
         --table=public.wiktionary_forms \
         --table=public.wiktionary_form_redirects \
+        --table=public.lemma_ranks \
+        --table=public.lemma_rank_builds \
         -Fc > "$DUMP_FILE.tmp"
       mv "$DUMP_FILE.tmp" "$DUMP_FILE"
       echo "  ✓ Saved $(du -h "$DUMP_FILE" | cut -f1) snapshot in $(($(date +%s) - DUMP_START))s"
@@ -60,9 +64,9 @@ echo "→ Running supabase db reset (dev-tunnel)..."
 cd "$BACKEND_DIR/supabase/supabase-dev-tunnel/supabase"
 doppler run --project backend --config dev_personal -- supabase db reset
 
-# --- Phase 3: restore wiktionary -----------------------------------------
+# --- Phase 3: restore reference tables -----------------------------------
 if [ -s "$DUMP_FILE" ]; then
-  echo "→ Restoring wiktionary tables from snapshot (via container, serial)..."
+  echo "→ Restoring reference tables from snapshot (via container, serial)..."
   RESTORE_START=$(date +%s)
   docker exec -i "$CONTAINER" pg_restore \
     -U postgres -d postgres \
@@ -73,8 +77,10 @@ if [ -s "$DUMP_FILE" ]; then
     "SELECT COUNT(*) FROM public.wiktionary_entries" 2>/dev/null || echo "?")
   FORMS=$(psql "$CONNECTION_STRING" -tAc \
     "SELECT COUNT(*) FROM public.wiktionary_forms" 2>/dev/null || echo "?")
-  echo "  ✓ Restored: $ENTRIES entries, $FORMS forms in ${RESTORE_ELAPSED}s"
+  RANKS=$(psql "$CONNECTION_STRING" -tAc \
+    "SELECT COUNT(*) FROM public.lemma_ranks" 2>/dev/null || echo "?")
+  echo "  ✓ Restored: $ENTRIES entries, $FORMS forms, $RANKS lemma ranks in ${RESTORE_ELAPSED}s"
 else
-  echo "→ Reset complete. No wiktionary snapshot to restore."
-  echo "  Run 'pnpm --filter @flicktionary/backend load:kaikki' to populate."
+  echo "→ Reset complete. No reference-table snapshot to restore."
+  echo "  Run 'pnpm --filter @flicktionary/backend load:reference-data' to populate."
 fi
