@@ -587,6 +587,12 @@ lemmas weighted by each candidate's own corpus frequency (never evenly);
 capitalized lemmas competing with their lowercase twin for the same form are
 discounted ×0.02 (wordfreq is caseless).
 
+Each coverage repository response reads its manifest, mass totals, and
+requested ranks or labels from one SQL statement snapshot. An atomic build
+publication therefore cannot leave one response mixing positions from one
+build with another build's version or denominator; the detail client keys its
+top-lemma cache by that same build version.
+
 ### Per-track lemma profiles
 
 The cached tokenization+resolution of one text track, consumed by the
@@ -792,4 +798,3 @@ the CSV.
 
 In the CSV the blank line is rendered as `<br><br>` (the export imports with
 `#html:true`).
-

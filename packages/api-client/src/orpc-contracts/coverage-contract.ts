@@ -55,8 +55,9 @@ export const coverageContract = {
     ),
 
   // The head of the frequency list (index = rank − 1) for the detail view's
-  // dot tooltips. buildVersion lets the client refuse to pair these labels
-  // with coverage ranks from a different lemma_ranks build.
+  // dot tooltips. The requested buildVersion is part of the query-cache key;
+  // the response carries the build actually read so the client can still
+  // refuse labels when a publication landed between the two requests.
   getTopLemmas: oc
     .route({ method: 'GET', path: '/coverage/{targetLanguage}/lemmas', successStatus: 200 })
     .errors({
@@ -66,6 +67,7 @@ export const coverageContract = {
     .input(
       z.object({
         targetLanguage: z.string().trim().min(1).max(40),
+        buildVersion: z.coerce.number().int().positive(),
       })
     )
     .output(

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
+import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useCoverage, useCoverageTopLemmas, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, STATE_KNOWN, STATE_STUDIED } from '../utils/coverage-render'
 import { CoverageDotGrid, CoverageSkyline, type DotHover } from './coverage-canvas'
 import { CoverageLegend } from './coverage-legend'
+import { getLocalizedCoverageLanguageName } from '../utils/coverage-language-names'
 
 const routeApi = getRouteApi('/_authenticated/_app/coverage/$lang')
 
@@ -27,10 +28,10 @@ const TOOLTIP_LEMMA_LIMIT = 5000
 // waffles, and the aggregated skyline — all renderings of one cached
 // getCoverage response.
 export const CoverageDetailView = () => {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const navigate = useNavigate()
   const { lang } = routeApi.useParams()
-  const { data: languages, isLoading } = useCoverage()
+  const { data: languages, isLoading, isError, isFetching, refetch } = useCoverage()
 
   const entry = languages?.find((language) => language.targetLanguage === lang)
   const usable = entry !== undefined && entry.supported && entry.denominator !== null
@@ -38,16 +39,38 @@ export const CoverageDetailView = () => {
   // A stale or unsupported deep link falls back to the sessions list instead
   // of rendering an empty shell.
   useEffect(() => {
-    if (!isLoading && languages && !usable) void navigate({ to: '/sessions', replace: true })
-  }, [isLoading, languages, usable, navigate])
+    if (!isLoading && !isError && languages && !usable) void navigate({ to: '/sessions', replace: true })
+  }, [isLoading, isError, languages, usable, navigate])
 
   const close = () => void navigate({ to: '/sessions' })
-  const languageName = getLanguageName(lang)
+  const languageName = getLocalizedCoverageLanguageName(i18n, lang)
 
   return (
     <ModalScreen onClose={close} closeIcon='chevron' title={t`${languageName} vocabulary`}>
-      {!usable ? <FullViewLoader /> : <CoverageDetailBody coverage={entry} />}
+      {isLoading ? (
+        <FullViewLoader />
+      ) : isError ? (
+        <CoverageDetailError isRetrying={isFetching} onRetry={() => void refetch()} />
+      ) : !usable ? (
+        <FullViewLoader />
+      ) : (
+        <CoverageDetailBody coverage={entry} />
+      )}
     </ModalScreen>
+  )
+}
+
+const CoverageDetailError = ({ isRetrying, onRetry }: { isRetrying: boolean; onRetry: () => void }) => {
+  const { t } = useLingui()
+  return (
+    <div className='flex flex-1 items-center justify-center px-4 py-8'>
+      <div className='flex max-w-sm flex-col items-center gap-3 text-center'>
+        <p className='text-muted-foreground text-sm'>{t`We couldn't load your vocabulary coverage.`}</p>
+        <Button type='button' variant='outline' size='sm' onClick={onRetry} disabled={isRetrying}>
+          {isRetrying ? t`Trying again…` : t`Try again`}
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -62,7 +85,7 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
     [denominator, coverage]
   )
 
-  const { data: topLemmas } = useCoverageTopLemmas(coverage.targetLanguage, true)
+  const { data: topLemmas } = useCoverageTopLemmas(coverage.targetLanguage, coverage.buildVersion, true)
   // Never pair lemma labels with ranks from a different lemma_ranks build —
   // a rebuild reorders ranks, and a mislabeled dot is worse than a bare one.
   const lemmaLabels = topLemmas?.buildVersion === coverage.buildVersion ? topLemmas.lemmas : undefined
@@ -84,82 +107,84 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
   const wallEndRank = showAll ? denominator : Math.min(10000, denominator)
 
   return (
-    <div className='mx-auto w-full max-w-4xl px-4 py-4'>
-      <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
-        <span className='text-3xl font-bold tabular-nums'>~{coveragePct}%</span>
-        <span className='text-muted-foreground text-sm'>{t`of typical text`}</span>
-        <span className='text-muted-foreground text-sm tabular-nums'>{t`${verifiedPct}% verified · rest claimed`}</span>
-      </div>
-      <p className='text-muted-foreground mt-1 text-sm'>
-        {t`One dot per word, ordered by frequency — the most common words sit top-left. This measures vocabulary only.`}
-      </p>
-
-      {denominator > 10000 && (
-        <div className='mt-4 inline-flex overflow-hidden rounded-lg border'>
-          <RangeToggleButton active={!showAll} onClick={() => setShowAll(false)}>
-            {t`Top ${topRangeLabel}`}
-          </RangeToggleButton>
-          <RangeToggleButton active={showAll} onClick={() => setShowAll(true)}>
-            {t`All ${denominatorLabel}`}
-          </RangeToggleButton>
+    <div className='flex-1 overflow-y-auto'>
+      <div className='mx-auto w-full max-w-4xl px-4 py-4'>
+        <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
+          <span className='text-3xl font-bold tabular-nums'>~{coveragePct}%</span>
+          <span className='text-muted-foreground text-sm'>{t`of typical text`}</span>
+          <span className='text-muted-foreground text-sm tabular-nums'>{t`${verifiedPct}% verified · rest claimed`}</span>
         </div>
-      )}
+        <p className='text-muted-foreground mt-1 text-sm'>
+          {t`One dot per word, ordered by frequency — the most common words sit top-left. This measures vocabulary only.`}
+        </p>
 
-      <div className='mt-3'>
-        <CoverageDotGrid states={states} endRank={wallEndRank} cell={showAll ? 3 : 4} gap={1} onDotHover={setHover} />
-      </div>
-      <CoverageLegend
-        studiedCount={coverage.studiedRanks.length}
-        knownCount={coverage.knownRanks.length}
-        notYetCount={denominator - coverage.studiedRanks.length - coverage.knownRanks.length}
-        mweCount={coverage.mweCount ?? 0}
-      />
+        {denominator > 10000 && (
+          <div className='mt-4 inline-flex overflow-hidden rounded-lg border'>
+            <RangeToggleButton active={!showAll} onClick={() => setShowAll(false)}>
+              {t`Top ${topRangeLabel}`}
+            </RangeToggleButton>
+            <RangeToggleButton active={showAll} onClick={() => setShowAll(true)}>
+              {t`All ${denominatorLabel}`}
+            </RangeToggleButton>
+          </div>
+        )}
 
-      <h2 className='mt-8 font-semibold'>{t`By frequency band`}</h2>
-      <div className='mt-3 flex flex-col gap-5'>
-        {coverage.bands.map((band, index) => {
-          const from = band.fromRank
-          const to = Math.min(band.toRank ?? denominator, denominator)
-          if (from > denominator) return null
-          const bandPct = Math.round(band.coveragePct)
-          const metrics = BAND_CELLS[Math.min(index, BAND_CELLS.length - 1)]
-          const toLabel = format(to)
-          return (
-            <div key={from}>
-              <div className='flex items-baseline justify-between text-sm tabular-nums'>
-                <span className='font-medium'>
-                  {band.toRank === null
-                    ? `${format(from)}+`
-                    : from === 1
-                      ? t`Top ${toLabel}`
-                      : `${format(from)} – ${toLabel}`}
-                </span>
-                <span className='text-muted-foreground'>{t`${bandPct}% of this band's text share`}</span>
+        <div className='mt-3'>
+          <CoverageDotGrid states={states} endRank={wallEndRank} cell={showAll ? 3 : 4} gap={1} onDotHover={setHover} />
+        </div>
+        <CoverageLegend
+          studiedCount={coverage.studiedRanks.length}
+          knownCount={coverage.knownRanks.length}
+          notYetCount={denominator - coverage.studiedRanks.length - coverage.knownRanks.length}
+          mweCount={coverage.mweCount ?? 0}
+        />
+
+        <h2 className='mt-8 font-semibold'>{t`By frequency band`}</h2>
+        <div className='mt-3 flex flex-col gap-5'>
+          {coverage.bands.map((band, index) => {
+            const from = band.fromRank
+            const to = Math.min(band.toRank ?? denominator, denominator)
+            if (from > denominator) return null
+            const bandPct = Math.round(band.coveragePct)
+            const metrics = BAND_CELLS[Math.min(index, BAND_CELLS.length - 1)]
+            const toLabel = format(to)
+            return (
+              <div key={from}>
+                <div className='flex items-baseline justify-between text-sm tabular-nums'>
+                  <span className='font-medium'>
+                    {band.toRank === null
+                      ? `${format(from)}+`
+                      : from === 1
+                        ? t`Top ${toLabel}`
+                        : `${format(from)} – ${toLabel}`}
+                  </span>
+                  <span className='text-muted-foreground'>{t`${bandPct}% of this band's text share`}</span>
+                </div>
+                <div className='mt-1.5'>
+                  <CoverageDotGrid
+                    states={states}
+                    startRank={from}
+                    endRank={to}
+                    cell={metrics.cell}
+                    gap={metrics.gap}
+                    onDotHover={setHover}
+                  />
+                </div>
               </div>
-              <div className='mt-1.5'>
-                <CoverageDotGrid
-                  states={states}
-                  startRank={from}
-                  endRank={to}
-                  cell={metrics.cell}
-                  gap={metrics.gap}
-                  onDotHover={setHover}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
 
-      <h2 className='mt-8 font-semibold'>{t`At a glance`}</h2>
-      <p className='text-muted-foreground mt-1 text-sm'>
-        {t`Each column is 100 words; the filled share is how many of them you know.`}
-      </p>
-      <div className='mt-3'>
-        <CoverageSkyline states={states} />
-      </div>
+        <h2 className='mt-8 font-semibold'>{t`At a glance`}</h2>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          {t`Each column is 100 words; the filled share is how many of them you know.`}
+        </p>
+        <div className='mt-3'>
+          <CoverageSkyline states={states} />
+        </div>
 
-      {hover && <DotTooltip hover={hover} states={states} lemmaLabels={lemmaLabels} />}
+        {hover && <DotTooltip hover={hover} states={states} lemmaLabels={lemmaLabels} />}
+      </div>
     </div>
   )
 }

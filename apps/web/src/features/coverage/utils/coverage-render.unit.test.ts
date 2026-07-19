@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   buildStateArray,
   computeGridLayout,
+  computeSkylineColumnLayout,
   computeSkylineBuckets,
   hitTest,
   STATE_KNOWN,
@@ -67,5 +68,10 @@ describe('computeSkylineBuckets', () => {
       { studied: 0, known: 1 },
       { studied: 0, known: 0 },
     ])
+  })
+
+  test('drops gaps before narrow canvases can produce negative column widths', () => {
+    expect(computeSkylineColumnLayout(300, 288)).toEqual({ gap: 0, colWidth: 0.96 })
+    expect(computeSkylineColumnLayout(300, 800)).toEqual({ gap: 1, colWidth: 501 / 300 })
   })
 })

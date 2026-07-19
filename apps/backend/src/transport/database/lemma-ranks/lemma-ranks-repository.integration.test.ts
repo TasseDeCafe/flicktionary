@@ -22,8 +22,8 @@ const seedLanguage = async (ranks: Array<[string, number, number]>): Promise<str
   return language
 }
 
-describe('lemma-ranks aggregates', () => {
-  test('listBuildAggregates returns exact totals and per-band masses (incl. tail)', async () => {
+describe('lemma-ranks coverage reads', () => {
+  test("getCoverageData returns one build's totals, bands, and requested ranks", async () => {
     const language = await seedLanguage([
       ['a', 1, 0.4],
       ['b', 1000, 0.1],
@@ -31,31 +31,52 @@ describe('lemma-ranks aggregates', () => {
       ['d', 9000, 0.15],
       ['e', 12000, 0.05],
     ])
-    const aggregates = await repo.listBuildAggregates([1000, 3000, 10000])
-    const aggregate = aggregates.get(language)
-    expect(aggregate).toBeDefined()
-    expect(aggregate!.version).toBe(7)
-    expect(aggregate!.rowCount).toBe(5)
-    expect(aggregate!.totalMass).toBeCloseTo(0.9)
-    expect(aggregate!.bandMasses[0]).toBeCloseTo(0.5)
-    expect(aggregate!.bandMasses[1]).toBeCloseTo(0.2)
-    expect(aggregate!.bandMasses[2]).toBeCloseTo(0.15)
-    expect(aggregate!.bandMasses[3]).toBeCloseTo(0.05)
+    const data = await repo.getCoverageData({
+      targetLanguage: language,
+      lemmas: ['a', 'd', 'missing'],
+      bandUpperBounds: [1000, 3000, 10000],
+    })
+    expect(data).not.toBeNull()
+    expect(data!.aggregate.version).toBe(7)
+    expect(data!.aggregate.rowCount).toBe(5)
+    expect(data!.aggregate.totalMass).toBeCloseTo(0.9)
+    expect(data!.aggregate.bandMasses[0]).toBeCloseTo(0.5)
+    expect(data!.aggregate.bandMasses[1]).toBeCloseTo(0.2)
+    expect(data!.aggregate.bandMasses[2]).toBeCloseTo(0.15)
+    expect(data!.aggregate.bandMasses[3]).toBeCloseTo(0.05)
+    expect(data!.ranksByLemma).toEqual(
+      new Map([
+        ['a', { rank: 1, freqMass: 0.4 }],
+        ['d', { rank: 9000, freqMass: 0.15 }],
+      ])
+    )
+    const emptyVocabulary = await repo.getCoverageData({
+      targetLanguage: language,
+      lemmas: [],
+      bandUpperBounds: [1000, 3000, 10000],
+    })
+    expect(emptyVocabulary?.aggregate.version).toBe(7)
+    expect(emptyVocabulary?.ranksByLemma.size).toBe(0)
+    expect(
+      await repo.getCoverageData({
+        targetLanguage: __generateUniqueId('zz'),
+        lemmas: [],
+        bandUpperBounds: [1000, 3000, 10000],
+      })
+    ).toBeNull()
   })
 
-  test('findBuildManifest returns the build row, null for unknown languages', async () => {
-    const language = await seedLanguage([['a', 1, 0.5]])
-    expect(await repo.findBuildManifest(language)).toEqual({ version: 7, rowCount: 1 })
-    expect(await repo.findBuildManifest(__generateUniqueId('zz'))).toBeNull()
-  })
-
-  test('listTopLemmas returns the head of the list in rank order', async () => {
+  test('getTopLemmasBuild returns the manifest version with its ranked head', async () => {
     const language = await seedLanguage([
       ['third', 3, 0.1],
       ['first', 1, 0.5],
       ['second', 2, 0.3],
       ['fourth', 4, 0.05],
     ])
-    expect(await repo.listTopLemmas({ targetLanguage: language, limit: 3 })).toEqual(['first', 'second', 'third'])
+    expect(await repo.getTopLemmasBuild({ targetLanguage: language, limit: 3 })).toEqual({
+      version: 7,
+      lemmas: ['first', 'second', 'third'],
+    })
+    expect(await repo.getTopLemmasBuild({ targetLanguage: __generateUniqueId('zz'), limit: 3 })).toBeNull()
   })
 })

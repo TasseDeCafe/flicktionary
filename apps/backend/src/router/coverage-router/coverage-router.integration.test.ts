@@ -44,7 +44,9 @@ describe('coverage router', () => {
   test('returns 401 when unauthenticated', async () => {
     const coverage = await request(testApp).get('/api/v1/coverage').set({ Authorization: 'Bearer wrong-token' })
     expect(coverage.status).toBe(401)
-    const lemmas = await request(testApp).get('/api/v1/coverage/ru/lemmas').set({ Authorization: 'Bearer wrong-token' })
+    const lemmas = await request(testApp)
+      .get('/api/v1/coverage/ru/lemmas?buildVersion=1')
+      .set({ Authorization: 'Bearer wrong-token' })
     expect(lemmas.status).toBe(401)
   })
 
@@ -159,13 +161,15 @@ describe('coverage router', () => {
     ])
 
     const response = await request(testApp)
-      .get(`/api/v1/coverage/${language}/lemmas`)
+      // A publication may land after coverage was read. The endpoint reports
+      // the build it actually read so the client can reject a stale pairing.
+      .get(`/api/v1/coverage/${language}/lemmas?buildVersion=2`)
       .set(buildAuthorizationHeaders(token))
     expect(response.status).toBe(200)
     expect(response.body.data).toEqual({ buildVersion: 3, lemmas: ['alpha', 'beta'] })
 
     const missing = await request(testApp)
-      .get(`/api/v1/coverage/${__generateUniqueId('zz')}/lemmas`)
+      .get(`/api/v1/coverage/${__generateUniqueId('zz')}/lemmas?buildVersion=3`)
       .set(buildAuthorizationHeaders(token))
     expect(missing.status).toBe(404)
   })

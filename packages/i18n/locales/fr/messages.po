@@ -575,6 +575,10 @@ msgstr "Répondu incorrectement."
 msgid "Appearance"
 msgstr "Apparence"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Arabic"
+msgstr "Arabe"
+
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 msgid "Are you absolutely sure?"
@@ -740,6 +744,10 @@ msgstr "Débutant — phrases de base et besoins immédiats."
 msgid "Being introduced through warm-up exercises before their first flashcard."
 msgstr "En cours d'introduction via des exercices d'échauffement avant leur première carte mémoire."
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Bengali"
+msgstr "Bengali"
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "best value"
 msgstr "meilleur rapport qualité-prix"
@@ -860,6 +868,10 @@ msgstr "Vérification de la version de l'application..."
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Checking…"
 msgstr "Vérification…"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Chinese"
+msgstr "Chinois"
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx
 msgid "Choose a plan to unlock all features"
@@ -1471,6 +1483,10 @@ msgstr "Activé avec reprise automatique"
 msgid "End of list"
 msgstr "Fin de la liste"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "English"
+msgstr "Anglais"
+
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
 msgid "Enjoy unlimited access to all our premium features and content."
 msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus premium."
@@ -2076,6 +2092,10 @@ msgstr "Essai gratuit"
 msgid "Free-form notes that don't fit the structured fields above."
 msgstr "Notes libres qui ne correspondent pas aux champs structurés ci-dessus."
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "French"
+msgstr "Français"
+
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Frequency"
 msgstr "Fréquence"
@@ -2147,6 +2167,10 @@ msgstr "Génération…"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Genitive"
 msgstr "Génitif"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "German"
+msgstr "Allemand"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 msgid "Get started"
@@ -2275,6 +2299,10 @@ msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le r
 #: apps/web/src/features/review/components/processing-view.tsx
 msgid "Highlights are enriched as you read. Session vocabulary is available immediately."
 msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le vocabulaire de la session est disponible immédiatement."
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Hindi"
+msgstr "Hindi"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
@@ -2432,6 +2460,10 @@ msgstr "Augmenter la vitesse de lecture"
 msgid "Indeclinable"
 msgstr "Indéclinable"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Indonesian"
+msgstr "Indonésien"
+
 #: apps/native/src/features/auth/components/revenuecat-initializer.tsx
 msgid "Initializing payments..."
 msgstr "Initialisation des paiements..."
@@ -2485,6 +2517,10 @@ msgstr "Dialecte API"
 msgid "Item types"
 msgstr "Types d'éléments"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Japanese"
+msgstr "Japonais"
+
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Jump to latest"
 msgstr "Aller au plus récent"
@@ -2508,6 +2544,10 @@ msgstr "Conservé ici pour que rien ne soit supprimé silencieusement"
 #: apps/extension/common/components/SettingsForm.tsx
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Korean"
+msgstr "Coréen"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "L1 notes"
@@ -2658,6 +2698,10 @@ msgstr "Assurez-vous que l'extension est installée et réessayez depuis sa popu
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "Manage Subscription"
 msgstr "Gérer l'Abonnement"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Marathi"
+msgstr "Marathi"
 
 #: apps/web/src/features/sessions/components/known-lemma-chip.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
@@ -3377,6 +3421,10 @@ msgstr "Pluriel"
 msgid "Plural-only"
 msgstr "Pluriel uniquement"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Portuguese"
+msgstr "Portugais"
+
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
@@ -3831,6 +3879,10 @@ msgstr "Faites un clic droit sur un mot ou une phrase pour l'enregistrer avec la
 msgid "RP"
 msgstr "RP"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Russian"
+msgstr "Russe"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
@@ -4267,6 +4319,10 @@ msgstr "Trier et filtrer"
 msgid "Sort and filter"
 msgstr "Trier et filtrer"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Spanish"
+msgstr "Espagnol"
+
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Standalone"
 msgstr "Autonome"
@@ -4502,6 +4558,10 @@ msgstr "Largeur des sous-titres"
 msgid "Success!"
 msgstr "Succès !"
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Swahili"
+msgstr "Swahili"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Switch"
@@ -4523,6 +4583,10 @@ msgstr "Synonymes"
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "System"
 msgstr "Système"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Tamil"
+msgstr "Tamoul"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Target example"
@@ -4548,6 +4612,10 @@ msgstr "Telegram connecté !"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Telugu"
+msgstr "Télougou"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
@@ -4860,12 +4928,21 @@ msgstr "Dépannage"
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
 
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "Try again"
 msgstr "Réessayer"
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "Trying again…"
+msgstr "Nouvelle tentative…"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Turkish"
+msgstr "Turc"
 
 #: apps/extension/common/components/VideoOverlay.tsx
 msgid "Turn Flicktionary off"
@@ -5009,6 +5086,10 @@ msgstr "Téléchargement…"
 msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
 msgstr "Intermédiaire supérieur — courant sur des sujets familiers, quelques idées abstraites."
 
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Urdu"
+msgstr "Ourdou"
+
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Use “{term}” in a sentence"
 msgstr "Utilisez « {term} » dans une phrase"
@@ -5083,6 +5164,10 @@ msgstr "Élément vidéo"
 #: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Video Name"
 msgstr "Nom de la vidéo"
+
+#: apps/web/src/features/coverage/utils/coverage-language-names.ts
+msgid "Vietnamese"
+msgstr "Vietnamien"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 msgid "View Premium Demo"
@@ -5171,6 +5256,10 @@ msgstr "Regarder des vidéos"
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "We couldn't create an exercise for “{headword}”."
 msgstr "Nous n'avons pas pu créer un exercice pour \"{headword}\"."
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "We couldn't load your vocabulary coverage."
+msgstr "Nous n'avons pas pu charger votre couverture de vocabulaire."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "We couldn't prepare this answer. Save the note again to retry."

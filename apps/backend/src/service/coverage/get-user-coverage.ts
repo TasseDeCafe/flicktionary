@@ -11,9 +11,9 @@ import { COVERAGE_BANDS, computeCoverage } from './coverage-math'
 // response for every practiced language (the dashboard card's chips and the
 // detail route share one cached payload). Only COVERED ranks ship — an
 // unknown dot is the absence of a rank — so the client can render any rank
-// range without a second fetch. The supported gate is the lemma_rank_builds
-// manifest row alone (an empty ranks table can't claim support; tests can
-// seed synthetic language codes).
+// range without a second fetch. A manifest joined to its rank rows is the
+// supported gate (an empty ranks table can't claim support; tests can seed
+// synthetic language codes).
 
 export type CoverageBandDto = {
   fromRank: number
@@ -69,17 +69,9 @@ export const getUserCoverage = async (
   const prefs = await deps.userTargetLanguagePrefsRepository.listForUser(params.userId)
   if (prefs.length === 0) return []
 
-  const aggregates = await deps.lemmaRanksRepository.listBuildAggregates(COVERAGE_BANDS)
-
   const results: LanguageCoverageDto[] = []
   for (const pref of prefs) {
     const language = pref.target_language
-    const aggregate = aggregates.get(language)
-    if (!aggregate) {
-      results.push(UNSUPPORTED_OF(language))
-      continue
-    }
-
     const [vocab, knownLemmas] = await Promise.all([
       deps.userLookupsRepository.listCoverageVocab({ userId: params.userId, targetLanguage: language }),
       deps.knownLemmasRepository.listLemmas(params.userId, language),
@@ -92,10 +84,16 @@ export const getUserCoverage = async (
         candidateLemmas.add(lemma)
       }
     }
-    const ranksByLemma = await deps.lemmaRanksRepository.listRanksForLemmas({
+    const coverageData = await deps.lemmaRanksRepository.getCoverageData({
       targetLanguage: language,
       lemmas: [...candidateLemmas],
+      bandUpperBounds: COVERAGE_BANDS,
     })
+    if (!coverageData) {
+      results.push(UNSUPPORTED_OF(language))
+      continue
+    }
+    const { aggregate, ranksByLemma } = coverageData
 
     const computation = computeCoverage({ vocab, knownLemmas, ranksByLemma, targetLanguage: language })
 

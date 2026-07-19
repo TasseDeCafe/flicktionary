@@ -26,11 +26,14 @@ const TOP_LEMMAS_STALE_MS = 24 * 60 * 60 * 1000
 // buildVersion and the consumer must refuse to pair labels with coverage
 // ranks from a different build (a rank rebuild would otherwise mislabel dots
 // until the cache expires).
-export const useCoverageTopLemmas = (targetLanguage: string | null, enabled: boolean) => {
+export const useCoverageTopLemmas = (targetLanguage: string | null, buildVersion: number | null, enabled: boolean) => {
   return useQuery(
     orpcQuery.coverage.getTopLemmas.queryOptions({
-      input: { targetLanguage: targetLanguage ?? '' },
-      enabled: enabled && !!targetLanguage,
+      // buildVersion belongs in the input so a newly published rank build gets
+      // a fresh query key instead of inheriting the previous build's 24-hour
+      // cache entry.
+      input: { targetLanguage: targetLanguage ?? '', buildVersion: buildVersion ?? 0 },
+      enabled: enabled && !!targetLanguage && buildVersion !== null,
       select: (response) => response.data,
       staleTime: TOP_LEMMAS_STALE_MS,
       meta: { showErrorToast: false },

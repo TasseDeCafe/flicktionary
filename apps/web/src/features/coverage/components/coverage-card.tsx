@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useCoverage, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, CARD_COMPACT_RULE } from '../utils/coverage-render'
 import { CoverageDotGrid } from './coverage-canvas'
 import { CoverageLegend } from './coverage-legend'
+import { getLocalizedCoverageLanguageName } from '../utils/coverage-language-names'
 
 // The sessions-page coverage card (the dashboard's second tenant, after
 // GettingStartedChecklist): ONE card showing the last-used practiced language
@@ -71,7 +71,7 @@ const CoverageCardHeader = ({
   chips: string[]
   onSelect: (language: string) => void
 }) => {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const coveragePct = Math.round(coverage.coveragePct ?? 0)
   const verifiedPct = Math.round(coverage.verifiedPct ?? 0)
   const studiedCount = coverage.studiedRanks.length.toLocaleString()
@@ -105,7 +105,7 @@ const CoverageCardHeader = ({
                   : 'bg-muted text-foreground hover:bg-accent active:bg-accent/80'
               }`}
             >
-              {getLanguageName(language)}
+              {getLocalizedCoverageLanguageName(i18n, language)}
             </button>
           ))}
         </div>

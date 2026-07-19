@@ -34,9 +34,9 @@ type Props = {
 // The difficulty detail sheet behind the session-header stat: the honest
 // breakdown (unknown counts, saved-not-started, known marks, the
 // vocabulary-only scoping line) plus the mark-known sweep CTAs — deliberate
-// taps inside a sheet, with the exact preview count on the button (the
-// claims-lane posture from phase 1). Mid-text the primary CTA covers the read
-// span; the whole-text sweep stays available as a secondary action.
+// taps inside a sheet, with the exact preview count on the button. Mid-text
+// the primary CTA covers the read span; the whole-text sweep stays available
+// as a secondary action.
 export const SessionDifficultySheet = ({
   open,
   onOpenChange,
