@@ -383,7 +383,15 @@ additionally offers:
   cookies; metadata-only merges never wait. The ANDROID fetch itself is
   **prefetched speculatively** at page-script startup (keyed by video id,
   re-armed by the 500 ms interval on SPA navigations, retried until `ytcfg`
-  exists) so its round trip overlaps the content script's boot; relatedly the
+  exists) so its round trip overlaps the content script's boot. **Signed-URL
+  expiry trap:** timedtext URLs carry a ~6 h signed `expire` (expired
+  signatures 404), and a long-idle tab wake makes YouTube partial-reload the
+  player for the *same* video id — so the still-"matching" prefetch and
+  `ytInitialPlayerResponse` global can hold hours-old URLs whose fetch would
+  404 and silently downgrade the video to native captions. Both cached
+  sources are therefore validated against their URLs' own `expire` before use
+  (a stale prefetch is dropped and re-armed, a stale global bypassed via the
+  watch-page re-fetch); relatedly the
   video content script starts at `document_idle` without waiting for
   `readyState === 'complete'` (that gate stalled subtitle takeover behind
   every image on a cold load). Confirming
