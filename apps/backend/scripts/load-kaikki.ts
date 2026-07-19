@@ -249,6 +249,14 @@ const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: 
     console.log('Rebuilding wiktionary_form_redirects...')
     await rebuildWiktionaryRedirects(sql, LOAD_LANGUAGES, 'truncate')
 
+    // TRUNCATE wipes the tables' statistics and autovacuum can take a long
+    // time to re-ANALYZE after the bulk COPY. Without fresh stats the planner
+    // has none for the checkpoint_fold expression indexes and flips the
+    // checkpoint matcher's = ANY(tokens) lookups to seq scans that fold every
+    // row (~40s per preview in prod), so re-collect them in the same run.
+    console.log('Analyzing wiktionary tables...')
+    await sql`ANALYZE public.wiktionary_entries, public.wiktionary_forms, public.wiktionary_form_redirects`
+
     const [entriesCount] = await sql<[{ count: number }]>`
       SELECT COUNT(*)::int AS count FROM public.wiktionary_entries
     `
