@@ -26,6 +26,7 @@ import {
   type FlicktionaryFacetSkill,
   type GlossData,
 } from '../../services/flicktionary/flicktionary-client'
+import { PERSISTENT_HOST_ATTR } from '../../services/element-overlay'
 
 // The shared gloss view state under this file's historical name — the overlay
 // never constructs the web-only `idle` member.
@@ -54,6 +55,19 @@ const CARD_FOOTER_CLASS = 'bg-popover sticky bottom-0 z-10 mt-auto flex flex-col
 // scroll-capped Radix popover surface the web reader uses; `desktopOnly` keeps
 // the extension's desktop overlay anchored even in narrow browser windows.
 const POPOVER_CONTENT_CLASS = 'dark w-88 pointer-events-auto z-[2147483647]'
+
+// Pointerdowns on the subtitle surface never dismiss the preview gloss — they
+// start interactions (hover swap, drag-select, saved-popover open) that update
+// or replace the popover themselves (web-reader parity: its word/highlight
+// spans are the same kind of ignore target). This matters because Radix
+// (popover ≥1.1.16) resolves outside-pointerdown dismissal on the gesture's
+// trailing *click*: for a drag-select that starts while the hover preview is
+// open, that deferred dismissal would land right after mouseup swapped the
+// popover into the born-pinned chunk gloss, and close it. The selector covers
+// both shapes the pointerdown target takes at Radix's document-level listener:
+// the subtitle shadow host (retargeted) and the in-shadow lines container
+// (`data-asb-subtitles`, the composed-path target).
+const SUBTITLE_SURFACE_SELECTOR = `[${PERSISTENT_HOST_ATTR}], [data-asb-subtitles]`
 
 // The gloss body, shared by the preview and saved modes: the web app's
 // GlossCardBody (IPA + gloss + POS/register badges + loading skeletons) plus
@@ -180,6 +194,7 @@ export function GlossTooltip({
       modal={false}
       portalContainer={portalContainer}
       desktopOnly
+      ignoreOutsidePointerDownSelector={SUBTITLE_SURFACE_SELECTOR}
     >
       <FloatingSheetContent
         data-flicktionary-gloss-popover=''

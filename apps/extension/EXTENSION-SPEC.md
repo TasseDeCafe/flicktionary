@@ -580,6 +580,14 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   popover; right-button presses are exempt — right-click is the save/remove
   toggle and morphs the popover instead), play, cue change, overlay hide, or
   by hovering another word (the new gloss replaces it and starts unpinned).
+  Presses on the SUBTITLE SURFACE itself are also exempt
+  (`ignoreOutsidePointerDownSelector` covers the overlay host + lines
+  container, web-reader parity with its word/highlight spans): a press on a
+  word starts an interaction — hover swap, drag-select, saved-popover open —
+  that updates or replaces the popover itself, so it is never a dismiss
+  intent. This exemption is also load-bearing: Radix popover ≥1.1.16 resolves
+  outside-press dismissal on the gesture's trailing *click*, which would land
+  right after a drag's release opens the born-pinned chunk gloss and close it.
   **Saved words don't get the preview:** hovering a word on a saved span opens
   the SAVED-MODE popover instead (hover variant — same 300 ms debounce and
   150 ms hover-out grace; entering it flips it sticky), so a saved word never
@@ -594,8 +602,9 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   popover opens instead (a preview's Save would stack a duplicate row; the
   chunk twin of the saved-span routing below, and the counterpart of the web
   sheet's findCachedHighlight dedup) — **born pinned** (an
-  intentional drag shouldn't die to a stray hover-out; outside pointerdown /
-  play / cue change / hovering another word dismiss it), with the word-ordinal
+  intentional drag shouldn't die to a stray hover-out; outside pointerdown
+  OFF the subtitle surface / play / cue change / hovering another word
+  dismiss it), with the word-ordinal
   range SNAPSHOTTED into the gloss's save target (`GlossSaveTarget` chunk
   carries `minOrd`/`maxOrd`, so Save / right-click power-save stay correct
   even if the live selection is cleared independently of the gloss). Color
@@ -779,6 +788,11 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
     outside pointerdown (composedPath — shadow root; right-button presses are
     exempt — right-click is the toggle and morphs the popover instead), play,
     cue change, or overlay hide — never pointer-leave (it has a textarea).
+    A left-press on a subtitle word closes it AT PRESS TIME (in
+    `onWordMouseDown`, not via Radix, whose ≥1.1.16 dismissal only resolves
+    on the gesture's trailing click): the release-time chunk-gloss open is
+    gated on no saved popover being up, so a drag that starts on a word must
+    find it already closed.
     A right-click remove while this popover is open swaps it into the preview
     gloss for the removed span (see the save/toggle bullet).
 - **CEFR picker** — if a save bounces with `MISSING_CEFR`, an over-video A1–C2
