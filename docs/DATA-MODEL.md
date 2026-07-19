@@ -587,6 +587,30 @@ lemmas weighted by each candidate's own corpus frequency (never evenly);
 capitalized lemmas competing with their lowercase twin for the same form are
 discounted ×0.02 (wordfreq is caseless).
 
+### Populating the reference tables locally
+
+Three scripts (all run from `apps/backend`, all defaulting to the dev-tunnel
+DB) fill the reference tables above; `pnpm load:reference-data` chains them
+for the fresh-machine case:
+
+1. `pnpm export:wordfreq` — exports the pinned wordfreq form/frequency lists
+   to `scripts/.cache/wordfreq/{lang}.csv` (needs `uv`; no DB).
+2. `pnpm load:kaikki` — downloads (and caches) the raw kaikki dump, fills
+   `wiktionary_entries` / `wiktionary_forms`, rebuilds
+   `wiktionary_form_redirects`.
+3. `pnpm build:lemma-ranks [lang...]` — builds `lemma_ranks` +
+   `lemma_rank_builds` from the wordfreq export resolved against the loaded
+   kaikki tables.
+
+Steps 2 and 3 end a local run by snapshotting all five reference tables
+(`scripts/snapshot-reference-tables.ts` →
+`scripts/.cache/wiktionary/wiktionary.dump`), which `pnpm db:reset` restores
+after wiping — so a reset preserves the reference data and the scripts only
+need re-running to pick up new upstream data or ranking-logic changes. In
+prod, the kaikki load runs via the manually-triggered
+`load-kaikki-prod.yaml` workflow; the lemma-ranks build is a separate manual
+`doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts` step.
+
 Each coverage repository response reads its manifest, mass totals, and
 requested ranks or labels from one SQL statement snapshot. An atomic build
 publication therefore cannot leave one response mixing positions from one

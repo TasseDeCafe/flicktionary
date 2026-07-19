@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process'
 import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, statSync, unlinkSync } from 'node:fs'
 import { createGunzip } from 'node:zlib'
 import { dirname, join } from 'node:path'
@@ -9,11 +8,10 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 import { rebuildWiktionaryRedirects } from './build-wiktionary-redirects'
+import { snapshotReferenceTables } from './snapshot-reference-tables'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
-const SNAPSHOT_DIR = join(__dirname, '.cache', 'wiktionary')
-const SNAPSHOT_PATH = join(SNAPSHOT_DIR, 'wiktionary.dump')
 
 // Canonical raw wiktextract dump — covers every language. We filter at parse
 // time by `lang_code` to keep only the languages in LOAD_LANGUAGES. The
@@ -312,59 +310,13 @@ const main = async (): Promise<void> => {
   await loadCsvs(connectionString, out.entriesCsv, out.formsCsv)
 
   if (connectionString === DEFAULT_LOCAL_DEV_CONNECTION) {
-    console.log('\nSnapshotting wiktionary tables for fast db reset...')
-    await snapshotWiktionary(connectionString)
+    console.log('\nSnapshotting reference tables for fast db reset...')
+    await snapshotReferenceTables()
   } else {
     console.log('\nSkipping snapshot (only relevant for the local dev tunnel DB).')
   }
 
   console.log('\n✓ Done.')
-}
-
-// Run pg_dump inside the Supabase Postgres container so the client tool
-// version always matches the server. Hardcoded container name targets the
-// dev-tunnel instance; refactor to a parameter if this script ever needs to
-// snapshot another instance.
-const SUPABASE_CONTAINER = 'supabase_db_supabase-dev-tunnel'
-
-const snapshotWiktionary = async (_connectionString: string): Promise<void> => {
-  if (!existsSync(SNAPSHOT_DIR)) mkdirSync(SNAPSHOT_DIR, { recursive: true })
-  // Write to a tmp path and rename on success so a failed pg_dump never
-  // leaves a zero-byte file masquerading as a valid snapshot.
-  const tmpPath = SNAPSHOT_PATH + '.tmp'
-  if (existsSync(tmpPath)) unlinkSync(tmpPath)
-
-  const out = createWriteStream(tmpPath)
-  await new Promise<void>((resolve, reject) => {
-    const proc = spawn(
-      'docker',
-      [
-        'exec',
-        '-i',
-        SUPABASE_CONTAINER,
-        'pg_dump',
-        '-U',
-        'postgres',
-        '-d',
-        'postgres',
-        '--data-only',
-        '--table=public.wiktionary_entries',
-        '--table=public.wiktionary_forms',
-        '--table=public.wiktionary_form_redirects',
-        '-Fc',
-      ],
-      { stdio: ['ignore', 'pipe', 'inherit'] }
-    )
-    proc.stdout.pipe(out)
-    proc.on('error', reject)
-    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`pg_dump exited with code ${code}`))))
-  })
-
-  if (existsSync(SNAPSHOT_PATH)) unlinkSync(SNAPSHOT_PATH)
-  renameSync(tmpPath, SNAPSHOT_PATH)
-
-  const sizeMb = (statSync(SNAPSHOT_PATH).size / 1024 / 1024).toFixed(1)
-  console.log(`  ✓ Snapshot saved at ${SNAPSHOT_PATH} (${sizeMb} MB)`)
 }
 
 main().catch((err: unknown) => {

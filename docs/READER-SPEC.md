@@ -228,14 +228,15 @@ The enrichment path uses these shared steps:
    grammar patches and re-grounding (including the backfill) skip that row so
    manual changes stay authoritative.
    Languages outside the set are pure-LLM and `grounded_at` stays null.
-   In local dev-tunnel, the reference tables are not part of ordinary user
-   data; if a reset leaves `public.wiktionary_entries` empty, grounding will
-   still run but every lookup will miss and no field will earn a Wiktionary
-   indicator. Reload with `pnpm --filter @flicktionary/backend load:kaikki`
-   (uses the cached raw dump when present) and confirm non-zero per-language
-   counts before testing Wiktionary indicators.
-   See `WIKTIONARY_GROUNDING.md` and
-   `.claude/skills/add-wiktionary-language/SKILL.md` for the operational
+   In local dev-tunnel, the reference tables survive `pnpm db:reset` via the
+   snapshot/restore in `db--dev-tunnel--reset.sh`; if they end up empty
+   anyway, grounding will still run but every lookup will miss and no field
+   will earn a Wiktionary indicator. Reload with
+   `pnpm --filter @flicktionary/backend load:kaikki` (uses the cached raw
+   dump when present) and confirm non-zero per-language counts before testing
+   Wiktionary indicators (the full local pipeline is in
+   `docs/DATA-MODEL.md` § Populating the reference tables locally).
+   See `.claude/skills/add-wiktionary-language/SKILL.md` for the operational
    workflow and per-language extraction guidance.
 4. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
    triggered manually by clicking `Generate full exploration` in the focus

@@ -9,6 +9,7 @@ import {
   splitFormMass,
   type FormCandidate,
 } from '../src/service/lemma-ranks/build-ranking'
+import { snapshotReferenceTables } from './snapshot-reference-tables'
 
 // Builds public.lemma_ranks + its lemma_rank_builds manifest row per language
 // from the wordfreq export (scripts/export-wordfreq.py → .cache/wordfreq/) and
@@ -28,7 +29,7 @@ import {
 // the acceptance thresholds instead of publishing a degraded list.
 //
 // Usage (from apps/backend, DB conventions mirror load-kaikki.ts):
-//   npx tsx scripts/build-lemma-ranks.ts [lang...]        # local dev tunnel
+//   pnpm build:lemma-ranks [lang...]                      # local dev tunnel
 //   doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts ru de en
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -295,6 +296,14 @@ const main = async (): Promise<void> => {
   } finally {
     await sql.end()
   }
+
+  if (connectionString === DEFAULT_LOCAL_DEV_CONNECTION) {
+    console.log('\nSnapshotting reference tables for fast db reset...')
+    await snapshotReferenceTables()
+  } else {
+    console.log('\nSkipping snapshot (only relevant for the local dev tunnel DB).')
+  }
+
   console.log('\n✓ Done.')
 }
 
