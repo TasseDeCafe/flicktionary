@@ -2,7 +2,7 @@ import type postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
-// One row per checkpoint press ("I've followed up to here"). The row is the
+// One row per checkpoint press ("I understood up to here"). The row is the
 // batch-undo handle — implicit credits reference it via
 // practice_rating_events.checkpoint_id — and `backlog_candidate_ids` is the
 // server-authoritative claim set the known-assertion action verifies against.

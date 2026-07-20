@@ -433,14 +433,14 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
           </OverlayTooltip>
         </>
       )}
-      {/* Checkpoint press ("I've followed up to here") — mirrors the Power
+      {/* Checkpoint press ("I understood up to here") — mirrors the Power
           button block. Lives on the pause-state controls on purpose: the
           press happens while paused, a deliberate act (docs/SRS.md §6b). */}
       {onCheckpoint && !model.emptySubtitleTrack && model.checkpointAvailable && (
         <OverlayTooltip
           enabled={tooltipsEnabled}
           side={tooltipSide}
-          title={t`I've followed up to here — collect reviews`}
+          title={t`I understood up to here — collect reviews`}
         >
           <span>
             <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onCheckpoint}>

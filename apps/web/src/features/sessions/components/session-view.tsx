@@ -614,6 +614,16 @@ export const SessionView = () => {
             <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
           </button>
         )}
+        {/* The session's highlight count, tappable through to the vocabulary
+            list — the header owns this stat (the footer stays action-only). */}
+        <button
+          type='button'
+          className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
+          onClick={() => void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })}
+        >
+          {' · '}
+          {plural(highlights?.length ?? 0, { one: '# highlight', other: '# highlights' })}
+        </button>
       </span>
     </span>
   )
@@ -690,7 +700,6 @@ export const SessionView = () => {
 
       <SessionVocabularyFooter
         sessionId={sessionId}
-        highlightCount={highlights?.length ?? 0}
         isGeneratingCandidates={isGeneratingCandidates}
         onOpenSessionVocabulary={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })

@@ -37,6 +37,11 @@ msgstr "(Expiré)"
 msgid "(unset)"
 msgstr "(non défini)"
 
+#. placeholder {0}: highlights?.length ?? 0
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "{0, plural, one {# highlight} other {# highlights}}"
+msgstr "{0, plural, one {# surlignage} other {# surlignages}}"
+
 #. placeholder {0}: feedback.creditedCount
 #: apps/extension/common/components/CheckpointFeedbackChip.tsx
 msgid "{0, plural, one {# review collected} other {# reviews collected}}"
@@ -135,10 +140,6 @@ msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices ra
 msgid "{highlightCount} highlight(s)"
 msgstr "{highlightCount} surlignage(s)"
 
-#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
-msgid "{highlightCount} highlight(s) saved."
-msgstr "{highlightCount} surlignage(s) enregistré(s)."
-
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 msgid "{intake} enter your next session"
 msgstr "{intake} entrent dans votre prochaine session"
@@ -168,8 +169,8 @@ msgid "{parkedTotal} parked"
 msgstr "{parkedTotal} en pause"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
-msgid "{pendingCount, plural, one {Confirm you followed along to collect # review.} other {Confirm you followed along to collect # reviews.}}"
-msgstr "{pendingCount, plural, one {Confirmez que vous avez suivi pour collecter # révision.} other {Confirmez que vous avez suivi pour collecter # révisions.}}"
+msgid "{pendingCount, plural, one {Confirm you understood what you read to collect # review.} other {Confirm you understood what you read to collect # reviews.}}"
+msgstr "{pendingCount, plural, one {Confirmez que vous avez compris ce que vous avez lu pour collecter # révision.} other {Confirmez que vous avez compris ce que vous avez lu pour collecter # révisions.}}"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{productionCount} in production"
@@ -987,8 +988,8 @@ msgid "Confirm deletion"
 msgstr "Confirmer la suppression"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
-msgid "Confirm you followed along — words you already know may be waiting."
-msgstr "Confirmez que vous avez suivi — des mots que vous connaissez déjà pourraient être en attente."
+msgid "Confirm you understood what you read — words you already know may be waiting."
+msgstr "Confirmez que vous avez compris ce que vous avez lu — des mots que vous connaissez déjà pourraient être en attente."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Conjunction"
@@ -2364,16 +2365,16 @@ msgid "Human translation"
 msgstr "Traduction humaine"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
-msgid "I've followed to the end"
-msgstr "J'ai suivi jusqu'à la fin"
+msgid "I understood everything"
+msgstr "J'ai tout compris"
 
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
-msgid "I've followed up to here"
-msgstr "J'ai suivi jusqu'ici"
+msgid "I understood up to here"
+msgstr "J'ai compris jusqu'ici"
 
 #: apps/extension/common/components/VideoOverlay.tsx
-msgid "I've followed up to here — collect reviews"
-msgstr "J'ai suivi jusqu'ici — collecter les révisions"
+msgid "I understood up to here — collect reviews"
+msgstr "J'ai compris jusqu'ici — collecter les révisions"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Idiom"
@@ -2607,6 +2608,10 @@ msgstr "Apprendre {n} de plus"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Learn a language from the videos you already watch and the articles you already read."
 msgstr "Apprenez une langue grâce aux vidéos que vous regardez déjà et aux articles que vous lisez déjà."
+
+#: apps/web/src/features/sessions/components/checkpoint-info-popover.tsx
+msgid "Learn more in the user guide"
+msgstr "En savoir plus dans le guide utilisateur"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Learn new"
@@ -2919,10 +2924,6 @@ msgstr "Aucun épisode trouvé."
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "No extension needed for the rest of the app — <0>open Flicktionary</0> to import texts and practice your vocabulary."
 msgstr "Aucune extension nécessaire pour le reste de l'application — <0>ouvrez Flicktionary</0> pour importer des textes et pratiquer votre vocabulaire."
-
-#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
-msgid "No highlights yet."
-msgstr "Aucune sélection pour le moment."
 
 #: apps/web/src/components/language-option-list.tsx
 msgid "No languages found."
@@ -3496,6 +3497,10 @@ msgstr "Préposition"
 #: apps/extension/src/controllers/subtitle-controller.ts
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des sous-titres"
+
+#: apps/web/src/features/sessions/components/checkpoint-info-popover.tsx
+msgid "Pressing this tells Flicktionary you read and understood the text up to this point. Saved words that appeared in it and were due for review are counted as successful reviews automatically — no flashcards needed. Words you looked up along the way are simply skipped, never penalized. You can undo from the toast right after."
+msgstr "Appuyer ici indique à Flicktionary que vous avez lu et compris le texte jusqu'à ce point. Les mots enregistrés qui y apparaissent et étaient dus pour révision sont comptés automatiquement comme des révisions réussies — aucune carte mémoire nécessaire. Les mots que vous avez recherchés en chemin sont simplement ignorés, jamais pénalisés. Vous pouvez annuler depuis la notification juste après."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
@@ -5331,6 +5336,10 @@ msgstr "Que signifie « {headword} » ?"
 msgid "What does the highlighted term mean?"
 msgstr "Que signifie le terme en surbrillance ?"
 
+#: apps/web/src/features/sessions/components/checkpoint-info-popover.tsx
+msgid "What does this button do?"
+msgstr "Que fait ce bouton ?"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "What is Flicktionary?"
 msgstr "Qu'est-ce que Flicktionary ?"
@@ -5360,8 +5369,8 @@ msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Quelle prononciation afficher pour les cartes de vocabulaire anglais."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
-msgid "While you read a session, a button labeled <0>I've followed up to here</0> appears (at the end of the text: <1>I've followed to the end</1>). Pressing it tells Flicktionary you read and understood everything up to that point. Words you saved earlier that appeared in that stretch of text and were due for review are credited as successful reviews automatically — reading counts as practice, so they won't come up as flashcards that day. Words you looked up or saved while reading are simply left out; looking something up never counts against you."
-msgstr "Pendant que vous lisez une session, un bouton intitulé <0>J'ai suivi jusqu'ici</0> apparaît (à la fin du texte : <1>J'ai suivi jusqu'à la fin</1>). En appuyant dessus, vous indiquez à Flicktionary que vous avez lu et compris tout jusqu'à ce point. Les mots que vous avez sauvegardés précédemment qui sont apparus dans cette portion de texte et qui devaient être révisés sont automatiquement comptabilisés comme des révisions réussies — la lecture compte comme de la pratique, donc ils n'apparaîtront pas en cartes mémoire ce jour-là. Les mots que vous avez recherchés ou sauvegardés pendant la lecture sont simplement exclus ; rechercher quelque chose ne compte jamais contre vous."
+msgid "While you read a session, a button labeled <0>I understood up to here</0> appears (at the end of the text: <1>I understood everything</1>). Pressing it tells Flicktionary you read and understood everything up to that point. Words you saved earlier that appeared in that stretch of text and were due for review are credited as successful reviews automatically — reading counts as practice, so they won't come up as flashcards that day. Words you looked up or saved while reading are simply left out; looking something up never counts against you."
+msgstr "Pendant que vous lisez une session, un bouton intitulé <0>J'ai compris jusqu'ici</0> apparaît (à la fin du texte : <1>J'ai tout compris</1>). En appuyant dessus, vous indiquez à Flicktionary que vous avez lu et compris tout jusqu'à ce point. Les mots que vous avez sauvegardés précédemment qui sont apparus dans cette portion de texte et qui étaient dus pour révision sont automatiquement crédités comme des révisions réussies — la lecture compte comme pratique, ils n'apparaîtront donc pas comme cartes mémoire ce jour-là. Les mots que vous avez recherchés ou sauvegardés pendant la lecture sont simplement exclus ; rechercher quelque chose ne compte jamais contre vous."
 
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Why does it appear in this particular form here?"
