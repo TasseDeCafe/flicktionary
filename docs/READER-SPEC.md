@@ -54,6 +54,37 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
   also suppressed under a deep-link open (the `Open source` jump from a card /
   Vocabulary carries `?segment=`), so peeking at a term's source never moves the
   saved position. An explicit `?segment=` target also wins over resume on open.
+  - **Manual bookmark ("read up to here").** The auto-tracker stays the
+    default writer, but the pointer is user-correctable: a bookmark button in
+    the reader header enters a **placement mode** — word-gloss taps,
+    right-click saves, and the gloss sheet are suspended; pressing any line
+    moves a sky-tinted preview divider below it (word presses place via the
+    selection callback, since the gesture pointer-captures them and desktop
+    Chrome then retargets the ensuing click to the container; non-word taps
+    place via the click path — and placement works in the search-filtered
+    list too, indices being track-relative); a sticky footer replaces the
+    vocabulary footer with Cancel / **Set reading position**. Confirming
+    calls `setReadingPosition` — a plain SET, deliberately non-monotonic:
+    backwards corrects scroll inflation, forwards asserts previously-read
+    content — and drops any queued throttled advance first (the server's
+    GREATEST on the advance path would immediately re-raise the pointer over
+    the correction). The client's monotonic merge guard stands down for that
+    session until the next advance write re-arms it. Collected checkpoints
+    are never clawed back by a pull-back — the checkpoint span just reads
+    empty until the reader passes `reviewed_until` again.
+  - **Auto-advance suspension.** After a manual set (or cancelling placement —
+    browsing for a line isn't reading), auto-tracking suspends until the
+    viewport scrolls back up to the pin — the natural "re-read from here"
+    gesture — else the still-visible deeper lines would re-advance the
+    pointer on the next scroll tick. The pin is client-session state only: a
+    remount resumes at the pointer, so tracking re-engages next sitting.
+  - **The divider marks a resting boundary.** A `READ UP TO HERE` divider row
+    renders below the pointer's line — but only at the position the sitting
+    opened with (or a manual set placed). Once the reader reads past it, the
+    divider disappears for the rest of the sitting (a marker chasing the live
+    reading edge would shift content under the thumb on every throttled
+    write); the next mount rests it at the new frontier. Hidden while
+    searching.
 - **Checkpoint reviews ("I understood up to here").** The scheduling
   semantics live in `docs/SRS.md` §6b/§6c; this is the reader surface. Only for
   sessions whose target language has wiktionary data (`KAIKKI_LANGUAGES`) —
@@ -377,6 +408,50 @@ stat is always a live query — never pre-aggregated or snapshotted.
   — a span sweep can create marks while the whole-text profile is
   pending/failed, and the correction surface must not vanish then. Coverage
   refreshes via invalidation.
+- **Reader sweep surfaces** (beyond the sheet — same sweep endpoints and
+  batch-scoped undo; their counts only ever cover words actually READ: the
+  read span mid-text via the checkpoint preview's debounced pointer with a
+  raw fallback for the first fetch, the whole text at read-to-end, nothing on
+  a never-scrolled session; all gated on an `available` profile so a passive
+  offer never polls a pending build; the previews hold the previous span's
+  data across debounce re-keys — `keepPreviousData` — so count-driven UI
+  doesn't blink out while a new key loads):
+  - **Coverage meter**: a thin solid bar under the reader header (fill =
+    expected coverage percent), animating on sweeps as the payoff. The
+    read-but-unclaimed striped tail needs a projected-coverage number the
+    preview doesn't return — shelved, see
+    `docs/proposals/mark-known-projected-coverage.md`.
+  - **Footer dock line**: mid-text only, a quiet "Already know the words
+    you've read?" line in the sticky footer's left slot — no count at rest;
+    the press expands the footer in place (the exercise layout's
+    feedback-slot pattern, not a popover) with the count sentence, the sweep
+    button, and the un-mark note. Collapses once the reader scrolls a real
+    distance (the baseline is captured a frame after opening so the footer's
+    own resize doesn't read as scrolling). Holds back until the count clears
+    a floor (20, shared with the welcome-back card), stands down while the
+    welcome-back card is ON SCREEN (IntersectionObserver — the undismissed
+    card stays mounted after scrolling away and must not suppress the dock
+    for the whole sitting), and never renders at read-to-end — the close-out
+    card owns the offer there.
+  - **Close-out rider**: the checkpoint close-out card carries an "Already
+    know the N remaining words?" section with an outline mark-as-known
+    button. Any non-zero count shows — a surface the reader deliberately
+    reached needs no floor.
+  - **Welcome-back card**: once per mount, on returning to a partially-read
+    session with at least the floor's worth of unswept read words: an inline
+    card below the divider — "You read N new words, up to <timestamp>.
+    Already know them?" with **Not yet** / **Mark as known**. Its anchor and
+    count are snapshotted from the pointer the mount OPENED with (last
+    sitting's span, never the live pointer). The resume scroll extends once
+    to include the card when its preview lands — but only while the reader
+    is still parked at the restore frame, so a late preview never yanks
+    someone already reading. "Not yet" dismisses for the sitting only;
+    deep-link opens suppress the card entirely.
+  - **Post-sweep confirmation**: reader-surface sweeps (dock, close-out
+    rider, welcome-back card) don't toast — a footer strip takes the dock's
+    slot ("N words marked as known" + the batch-scoped **Undo**) for ~8
+    seconds, then the footer returns to resting. The difficulty sheet's own
+    sweeps keep their toast.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
   both the reader gloss sheet and the practice lookup sheet show a "Marked as
