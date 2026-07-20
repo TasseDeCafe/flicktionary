@@ -42,6 +42,8 @@ import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
 import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList, SegmentListSkeleton } from './segment-list'
+import { formatTimestamp } from '../utils/format-timestamp'
+import { WelcomeBackCard } from './welcome-back-card'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
@@ -56,11 +58,15 @@ import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 // over a handful of words.
 const MARK_KNOWN_OFFER_FLOOR = 20
 
+const alignBottomTo = (scrollContainer: HTMLElement, target: Element): void => {
+  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
+  scrollContainer.scrollTop += delta
+}
+
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
   const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
   if (!target) return false
-  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
-  scrollContainer.scrollTop += delta
+  alignBottomTo(scrollContainer, target)
   return true
 }
 
@@ -209,6 +215,7 @@ export const SessionView = () => {
   // appears already parked there (the same trick the chat uses to open at the
   // bottom), rather than starting at the top and animating down. Runs once per mount.
   const didRestoreRef = useRef(false)
+  const restoredScrollTopRef = useRef<number | null>(null)
   useLayoutEffect(() => {
     if (didRestoreRef.current) return
     if (targetSegmentId) return // an explicit deep-link target wins over resume
@@ -223,7 +230,11 @@ export const SessionView = () => {
     // Align the deepest-read line to the bottom of the viewport — reproduces the
     // frame the reader left on, with everything below it still unread. scrollTop is
     // clamped by the browser, so an early segment just lands at the top.
-    alignSegmentToBottom(el, furthestReadSegmentId)
+    if (alignSegmentToBottom(el, furthestReadSegmentId)) {
+      // Remembered so the welcome-back reveal below can tell "still parked at
+      // the restore frame" from "already reading".
+      restoredScrollTopRef.current = el.scrollTop
+    }
   }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId])
 
   const writeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -366,14 +377,117 @@ export const SessionView = () => {
     spanMarkKnownQuery.data?.status === 'ready' ? spanMarkKnownQuery.data.markableLemmaCount : 0
   const wholeMarkKnownCount =
     wholeMarkKnownQuery.data?.status === 'ready' ? wholeMarkKnownQuery.data.markableLemmaCount : 0
+  // --- Welcome-back offer (once per mount) -------------------------------------
+  // Snapshot the pointer the mount opened with: the card refers to LAST
+  // sitting's span, so its anchor and count never follow the live pointer as
+  // the reader reads on. Write-once render snapshot (undefined = session not
+  // loaded yet).
+  const welcomeAnchorIndexRef = useRef<number | null | undefined>(undefined)
+  if (welcomeAnchorIndexRef.current === undefined && session) {
+    welcomeAnchorIndexRef.current = session.furthestReadSegmentIndex ?? null
+  }
+  const welcomeAnchorIndex = welcomeAnchorIndexRef.current ?? null
+  // The divider marks a RESTING boundary only: where this sitting opened, or
+  // where a manual set placed it. Once the reader reads past it the pointer
+  // advances beyond the anchor and the divider disappears for the rest of the
+  // sitting — a marker chasing the live reading edge would shift content under
+  // the thumb on every throttled progress write. Next mount it rests at the
+  // new frontier.
+  const restingDividerIndexRef = useRef<number | null | undefined>(undefined)
+  if (restingDividerIndexRef.current === undefined && session) {
+    restingDividerIndexRef.current = session.furthestReadSegmentIndex ?? null
+  }
+  const showRestingDivider =
+    restingDividerIndexRef.current != null && furthestReadIndex === restingDividerIndexRef.current
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false)
+  // Suppressed on deep-link opens: following a word into the text isn't
+  // "returning to read".
+  const welcomeEligible =
+    !welcomeDismissed &&
+    !targetSegmentId &&
+    welcomeAnchorIndex != null &&
+    maxSegmentIndex != null &&
+    welcomeAnchorIndex < maxSegmentIndex
+  const welcomeQuery = useMarkKnownPreview(sessionId, markKnownSupported && welcomeEligible, welcomeAnchorIndex)
+  const welcomeCount =
+    welcomeEligible && welcomeQuery.data?.status === 'ready' ? welcomeQuery.data.markableLemmaCount : 0
+  const showWelcomeCard = welcomeCount >= MARK_KNOWN_OFFER_FLOOR
+  const welcomeAnchorSegment = useMemo(() => {
+    if (welcomeAnchorIndex == null) return null
+    return allSegments?.find((s) => s.index === welcomeAnchorIndex) ?? null
+  }, [allSegments, welcomeAnchorIndex])
+
+  // The card lands async (its preview query resolves after the resume-scroll
+  // has run), which would leave it just below the fold. One shot: extend the
+  // restored frame to include it — but only while the reader is still parked
+  // exactly at the restore position; once they've scrolled, yanking the
+  // viewport would be worse than the card waiting below.
+  const didRevealWelcomeRef = useRef(false)
+  useLayoutEffect(() => {
+    if (didRevealWelcomeRef.current) return
+    if (!showWelcomeCard || !scrollEl || !didRestoreRef.current) return
+    const restoredTop = restoredScrollTopRef.current
+    if (restoredTop == null || Math.abs(scrollEl.scrollTop - restoredTop) > 2) {
+      didRevealWelcomeRef.current = true
+      return
+    }
+    const card = scrollEl.querySelector('[data-welcome-card]')
+    if (!card) return
+    didRevealWelcomeRef.current = true
+    alignBottomTo(scrollEl, card)
+    restoredScrollTopRef.current = scrollEl.scrollTop
+  }, [showWelcomeCard, scrollEl])
+
+  // The card stays mounted (undismissed, scrolled away) for the whole sitting,
+  // so "the offer never appears twice at once" must key on it being ON SCREEN
+  // — suppressing the dock for as long as the card merely exists would hide
+  // the dock for the rest of the sitting. Starts true: when the card first
+  // renders it's at the revealed resume frame, in view.
+  const [welcomeCardInView, setWelcomeCardInView] = useState(true)
+  useEffect(() => {
+    if (!showWelcomeCard || !scrollEl || isSearching) return
+    const card = scrollEl.querySelector('[data-welcome-card]')
+    if (!card) return
+    const observer = new IntersectionObserver(([entry]) => setWelcomeCardInView(entry?.isIntersecting ?? false), {
+      root: scrollEl,
+    })
+    observer.observe(card)
+    return () => observer.disconnect()
+  }, [showWelcomeCard, scrollEl, isSearching])
+  const welcomeCardBlocksDock = showWelcomeCard && welcomeCardInView
+
   // The dock is an unprompted offer, so it holds back until the count clears
-  // the floor; the close-out rider is a surface the reader deliberately
-  // reached and shows any non-zero count. Read-to-end sessions get no dock —
-  // the close-out card owns the offer there.
-  const markKnownDockCount = hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
+  // the floor, and stands down while the welcome-back card is on screen (the
+  // offer never appears twice at once); the close-out rider is a surface the
+  // reader deliberately reached and shows any non-zero count. Read-to-end
+  // sessions get no dock — the close-out card owns the offer there.
+  const markKnownDockCount =
+    !welcomeCardBlocksDock && hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
 
   const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
   const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
+  // The dock panel's open state lives here so scrolling the reader can
+  // collapse it — left open it flashes on every preview refetch mid-read.
+  const [dockOpen, setDockOpen] = useState(false)
+  useEffect(() => {
+    if (!dockOpen || !scrollEl) return
+    // Baseline a frame later: expanding the footer resizes the scroll
+    // container, which can nudge scrollTop (bottom clamp) — that nudge must
+    // not read as the user scrolling.
+    let baseline: number | null = null
+    const raf = requestAnimationFrame(() => {
+      baseline = scrollEl.scrollTop
+    })
+    const onScroll = () => {
+      if (baseline == null) return
+      if (Math.abs(scrollEl.scrollTop - baseline) > 24) setDockOpen(false)
+    }
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      scrollEl.removeEventListener('scroll', onScroll)
+    }
+  }, [dockOpen, scrollEl])
   // Post-sweep feedback lives in the footer slot (not a toast): the count plus
   // a sweep-scoped Undo, cleared after a few seconds. The difficulty sheet
   // keeps its own toast — this strip only serves the reader-surface sweeps.
@@ -708,6 +822,9 @@ export const SessionView = () => {
     setIsPlacingBookmark(false)
     isPlacingBookmarkRef.current = false
     autoTrackPinRef.current = placementIndex
+    // A manual set is the new resting boundary — the divider stays put there
+    // until the reader reads past it.
+    restingDividerIndexRef.current = placementIndex
   }
 
   const closeToSessions = () => {
@@ -754,9 +871,13 @@ export const SessionView = () => {
   }
 
   // Where the divider renders: the pending preview while placing (visible even
-  // in the search-filtered list, if its row is), else the persisted pointer on
-  // a normal (unfiltered) read.
-  const readPositionSegmentId = isPlacingBookmark ? placementSegmentId : isSearching ? null : furthestReadSegmentId
+  // in the search-filtered list, if its row is), else the resting boundary on
+  // a normal (unfiltered) read — never the live, advancing pointer.
+  const readPositionSegmentId = isPlacingBookmark
+    ? placementSegmentId
+    : isSearching || !showRestingDivider
+      ? null
+      : furthestReadSegmentId
 
   const sourceTitle = session.contentSourceTitle ?? t`Untitled`
   const titleNode = (
@@ -852,6 +973,23 @@ export const SessionView = () => {
                   flashSegmentId={flashSegmentId}
                   readPositionSegmentId={readPositionSegmentId}
                   readPositionVariant={isPlacingBookmark ? 'placing' : 'set'}
+                  welcomeCardSegmentId={
+                    showWelcomeCard && !isSearching && welcomeAnchorSegment ? welcomeAnchorSegment.id : null
+                  }
+                  welcomeCard={
+                    welcomeAnchorSegment ? (
+                      <WelcomeBackCard
+                        count={welcomeCount}
+                        untilLabel={formatTimestamp(welcomeAnchorSegment.startMs) || null}
+                        isMarking={isMarkingKnown}
+                        onMarkKnown={() => {
+                          setWelcomeDismissed(true)
+                          handleMarkKnown(welcomeAnchorIndex)
+                        }}
+                        onDismiss={() => setWelcomeDismissed(true)}
+                      />
+                    ) : undefined
+                  }
                 />
                 {/* End-of-content close-out: the common case is finishing the
                     text — offer the checkpoint press with a fuller
@@ -926,6 +1064,8 @@ export const SessionView = () => {
           onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
           isCollectingCheckpoint={isCollectingCheckpoint}
           markKnownDockCount={markKnownDockCount}
+          dockOpen={dockOpen}
+          onDockOpenChange={setDockOpen}
           onMarkKnown={() => handleMarkKnown(markKnownSpanIndex)}
           isMarkingKnown={isMarkingKnown}
           sweepConfirmation={

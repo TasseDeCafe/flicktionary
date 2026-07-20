@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import { BookmarkCheck, Check, ChevronUp, Loader2 } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
 import { useProcessStudySession } from '../api/sessions-hooks'
 import { CheckpointInfoPopover } from './checkpoint-info-popover'
 
@@ -25,7 +23,10 @@ type Props = {
   // Mark-known dock (docs/READER-SPEC.md): the quiet mid-text entry to the
   // sweep. The resting line deliberately carries no number — the count appears
   // only inside the opened panel, next to the deliberate button. 0 hides it.
+  // Open state is controlled by the caller, which collapses it on scroll.
   markKnownDockCount?: number
+  dockOpen?: boolean
+  onDockOpenChange?: (open: boolean) => void
   onMarkKnown?: () => void
   isMarkingKnown?: boolean
   // Post-sweep confirmation: takes the dock line's slot for a few seconds with
@@ -43,13 +44,14 @@ export const SessionVocabularyFooter = ({
   onCollectCheckpoint,
   isCollectingCheckpoint = false,
   markKnownDockCount = 0,
+  dockOpen = false,
+  onDockOpenChange,
   onMarkKnown,
   isMarkingKnown = false,
   sweepConfirmation = null,
 }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
-  const [dockOpen, setDockOpen] = useState(false)
 
   const label = isPending ? t`Opening…` : t`Session vocabulary`
 
@@ -69,102 +71,109 @@ export const SessionVocabularyFooter = ({
   // The confirmation strip owns the slot while present, so the offer and its
   // outcome never show at once.
   const showDock = !sweepConfirmation && markKnownDockCount > 0 && !!onMarkKnown
+  const isDockExpanded = showDock && dockOpen
 
   return (
     <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
-      <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
-        {/* Kept even when empty so justify-between keeps the buttons on the
-            right. The highlight count lives in the reader header. */}
-        <span className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
-          {sweepConfirmation && (
-            <span className='flex items-center gap-2'>
-              <span className='flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300'>
-                <Check className='size-4' />
-                {plural(sweepConfirmation.count, { one: '# word marked as known', other: '# words marked as known' })}
-              </span>
-              {sweepConfirmation.onUndo && (
-                <button
-                  type='button'
-                  className='hover:text-foreground active:text-foreground cursor-pointer font-medium underline underline-offset-2 transition-colors'
-                  onClick={sweepConfirmation.onUndo}
-                >
-                  {t`Undo`}
-                </button>
-              )}
-            </span>
-          )}
-          {showDock && (
-            <Popover open={dockOpen} onOpenChange={setDockOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type='button'
-                  className='hover:text-foreground active:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors'
-                >
-                  {t`Already know the words you've read?`}
-                  <ChevronUp className={cn('size-3.5 transition-transform', dockOpen && 'rotate-180')} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align='start' side='top' className='w-80'>
-                <div className='text-muted-foreground text-[10px] font-semibold tracking-[0.08em] uppercase'>
-                  {t`Words you've read`}
-                </div>
-                <p className='mt-2 text-sm'>
-                  {plural(markKnownDockCount, {
-                    one: "You've read # word that isn't marked as known yet.",
-                    other: "You've read # words that aren't marked as known yet.",
-                  })}
-                </p>
-                <Button
-                  className='mt-3 w-full'
-                  disabled={isMarkingKnown}
-                  onClick={() => {
-                    setDockOpen(false)
-                    onMarkKnown?.()
-                  }}
-                >
-                  {isMarkingKnown
-                    ? t`Marking…`
-                    : plural(markKnownDockCount, { one: 'Mark the # word as known', other: 'Mark all # as known' })}
-                </Button>
-                <p className='text-muted-foreground mt-2 text-center text-xs'>{t`You can un-mark any word later.`}</p>
-              </PopoverContent>
-            </Popover>
-          )}
-          {isGeneratingCandidates && (
-            <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
-              <Loader2 className='size-3.5 animate-spin' />
-              {t`Finding suggestions…`}
-            </span>
-          )}
-        </span>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          {showCheckpoint && (
-            <div className='flex w-full items-center gap-1 sm:w-auto'>
-              <Button
-                size='xl'
-                variant='secondary'
-                disabled={isCollectingCheckpoint}
-                onClick={onCollectCheckpoint}
-                className='flex-1'
-              >
-                {isCollectingCheckpoint ? (
-                  <Loader2 className='size-4 animate-spin' />
-                ) : (
-                  <BookmarkCheck className='size-4' />
-                )}
-                {t`I understood up to here`}
-                {checkpointPendingCount > 0 && (
-                  <span className='bg-foreground/10 ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums'>
-                    {checkpointPendingCount}
-                  </span>
-                )}
-              </Button>
-              <CheckpointInfoPopover />
+      <div className='mx-auto flex max-w-4xl flex-col gap-2'>
+        {/* Expanded dock panel: the bar is bottom-anchored so it grows upward
+            in place — the exercise layout's feedback-slot pattern
+            (practice/components/exercise-layout.tsx) — instead of floating a
+            popover over the text. */}
+        {isDockExpanded && (
+          <div className='w-full pb-1 sm:max-w-sm'>
+            <div className='text-muted-foreground text-[10px] font-semibold tracking-[0.08em] uppercase'>
+              {t`Words you've read`}
             </div>
-          )}
-          <Button size='xl' disabled={isPending} onClick={handleClick} className='w-full sm:w-auto'>
-            {label}
-          </Button>
+            <p className='mt-2 text-sm'>
+              {plural(markKnownDockCount, {
+                one: "You've read # word that isn't marked as known yet.",
+                other: "You've read # words that aren't marked as known yet.",
+              })}
+            </p>
+            <Button
+              className='mt-3 w-full'
+              disabled={isMarkingKnown}
+              onClick={() => {
+                onDockOpenChange?.(false)
+                onMarkKnown?.()
+              }}
+            >
+              {isMarkingKnown
+                ? t`Marking…`
+                : plural(markKnownDockCount, { one: 'Mark the # word as known', other: 'Mark all # as known' })}
+            </Button>
+            <p className='text-muted-foreground mt-2 text-xs'>{t`You can un-mark any word later.`}</p>
+          </div>
+        )}
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+          {/* Kept even when empty so justify-between keeps the buttons on the
+              right. The highlight count lives in the reader header. */}
+          <span className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
+            {sweepConfirmation && (
+              <span className='flex items-center gap-2'>
+                <span className='flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300'>
+                  <Check className='size-4' />
+                  {plural(sweepConfirmation.count, { one: '# word marked as known', other: '# words marked as known' })}
+                </span>
+                {sweepConfirmation.onUndo && (
+                  <button
+                    type='button'
+                    className='hover:text-foreground active:text-foreground cursor-pointer font-medium underline underline-offset-2 transition-colors'
+                    onClick={sweepConfirmation.onUndo}
+                  >
+                    {t`Undo`}
+                  </button>
+                )}
+              </span>
+            )}
+            {showDock && (
+              <button
+                type='button'
+                aria-expanded={dockOpen}
+                className='hover:text-foreground active:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors'
+                onClick={() => onDockOpenChange?.(!dockOpen)}
+              >
+                {t`Already know the words you've read?`}
+                <ChevronUp className={cn('size-3.5 transition-transform', dockOpen && 'rotate-180')} />
+              </button>
+            )}
+            {isGeneratingCandidates && (
+              <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
+                <Loader2 className='size-3.5 animate-spin' />
+                {t`Finding suggestions…`}
+              </span>
+            )}
+          </span>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            {showCheckpoint && (
+              <div className='flex w-full items-center gap-1 sm:w-auto'>
+                <Button
+                  size='xl'
+                  variant='secondary'
+                  disabled={isCollectingCheckpoint}
+                  onClick={onCollectCheckpoint}
+                  className='flex-1'
+                >
+                  {isCollectingCheckpoint ? (
+                    <Loader2 className='size-4 animate-spin' />
+                  ) : (
+                    <BookmarkCheck className='size-4' />
+                  )}
+                  {t`I understood up to here`}
+                  {checkpointPendingCount > 0 && (
+                    <span className='bg-foreground/10 ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums'>
+                      {checkpointPendingCount}
+                    </span>
+                  )}
+                </Button>
+                <CheckpointInfoPopover />
+              </div>
+            )}
+            <Button size='xl' disabled={isPending} onClick={handleClick} className='w-full sm:w-auto'>
+              {label}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

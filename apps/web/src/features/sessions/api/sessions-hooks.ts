@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
 import type { Highlight, StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -559,6 +559,11 @@ export const useMarkKnownPreview = (sessionId: string, enabled: boolean, toSegme
       input: { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
       enabled,
       select: (response) => response.data,
+      // Span callers re-key as the debounced reading pointer advances; holding
+      // the previous span's data across the swap keeps count-driven UI (the
+      // footer dock) from blinking out while the new key loads. First-ever
+      // loads still report isLoading (no previous data to hold).
+      placeholderData: keepPreviousData,
       refetchInterval: (query) => (query.state.data?.data.status === 'pending' ? 2500 : false),
       meta: { showErrorToast: false },
     })

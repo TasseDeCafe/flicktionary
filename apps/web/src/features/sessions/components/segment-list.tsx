@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
@@ -51,6 +52,10 @@ type Props = {
   // placement mode is previewing in the sky tone of the selection paint.
   readPositionSegmentId?: string | null
   readPositionVariant?: 'set' | 'placing'
+  // The welcome-back offer, rendered below this row (after the divider when
+  // both anchor to the same line).
+  welcomeCardSegmentId?: string | null
+  welcomeCard?: ReactNode
 }
 
 export const SegmentList = ({
@@ -61,6 +66,8 @@ export const SegmentList = ({
   flashSegmentId,
   readPositionSegmentId,
   readPositionVariant = 'set',
+  welcomeCardSegmentId,
+  welcomeCard,
 }: Props) => {
   const { t } = useLingui()
   return (
@@ -88,6 +95,7 @@ export const SegmentList = ({
               {t`Read up to here`}
             </div>
           )}
+          {welcomeCardSegmentId === s.id && welcomeCard}
         </div>
       ))}
     </div>
