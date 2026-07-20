@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BookmarkCheck, Check, ChevronUp, Loader2 } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
@@ -24,7 +23,10 @@ type Props = {
   // Mark-known dock (docs/READER-SPEC.md): the quiet mid-text entry to the
   // sweep. The resting line deliberately carries no number — the count appears
   // only inside the opened panel, next to the deliberate button. 0 hides it.
+  // Open state is controlled by the caller, which collapses it on scroll.
   markKnownDockCount?: number
+  dockOpen?: boolean
+  onDockOpenChange?: (open: boolean) => void
   onMarkKnown?: () => void
   isMarkingKnown?: boolean
   // Post-sweep confirmation: takes the dock line's slot for a few seconds with
@@ -42,13 +44,14 @@ export const SessionVocabularyFooter = ({
   onCollectCheckpoint,
   isCollectingCheckpoint = false,
   markKnownDockCount = 0,
+  dockOpen = false,
+  onDockOpenChange,
   onMarkKnown,
   isMarkingKnown = false,
   sweepConfirmation = null,
 }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
-  const [dockOpen, setDockOpen] = useState(false)
 
   const label = isPending ? t`Opening…` : t`Session vocabulary`
 
@@ -92,7 +95,7 @@ export const SessionVocabularyFooter = ({
               className='mt-3 w-full'
               disabled={isMarkingKnown}
               onClick={() => {
-                setDockOpen(false)
+                onDockOpenChange?.(false)
                 onMarkKnown?.()
               }}
             >
@@ -129,7 +132,7 @@ export const SessionVocabularyFooter = ({
                 type='button'
                 aria-expanded={dockOpen}
                 className='hover:text-foreground active:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors'
-                onClick={() => setDockOpen((open) => !open)}
+                onClick={() => onDockOpenChange?.(!dockOpen)}
               >
                 {t`Already know the words you've read?`}
                 <ChevronUp className={cn('size-3.5 transition-transform', dockOpen && 'rotate-180')} />

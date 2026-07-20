@@ -21,7 +21,9 @@ type Props = {
 export const WelcomeBackCard = ({ count, untilLabel, isMarking, onMarkKnown, onDismiss }: Props) => {
   const { t } = useLingui()
   return (
-    <div className='bg-muted/30 mx-auto my-3 w-full max-w-md rounded-xl border p-4'>
+    // data-welcome-card: the reveal scroll in session-view aligns to this
+    // element once the card's preview lands.
+    <div data-welcome-card className='bg-muted/30 mx-auto my-3 w-full max-w-md rounded-xl border p-4'>
       <div className='text-muted-foreground text-[10px] font-semibold tracking-[0.08em] uppercase'>{t`Last sitting`}</div>
       <p className='mt-1.5 text-sm'>
         {untilLabel

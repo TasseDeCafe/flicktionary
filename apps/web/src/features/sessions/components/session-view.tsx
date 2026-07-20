@@ -58,11 +58,15 @@ import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 // over a handful of words.
 const MARK_KNOWN_OFFER_FLOOR = 20
 
+const alignBottomTo = (scrollContainer: HTMLElement, target: Element): void => {
+  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
+  scrollContainer.scrollTop += delta
+}
+
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
   const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
   if (!target) return false
-  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
-  scrollContainer.scrollTop += delta
+  alignBottomTo(scrollContainer, target)
   return true
 }
 
@@ -211,6 +215,7 @@ export const SessionView = () => {
   // appears already parked there (the same trick the chat uses to open at the
   // bottom), rather than starting at the top and animating down. Runs once per mount.
   const didRestoreRef = useRef(false)
+  const restoredScrollTopRef = useRef<number | null>(null)
   useLayoutEffect(() => {
     if (didRestoreRef.current) return
     if (targetSegmentId) return // an explicit deep-link target wins over resume
@@ -225,7 +230,11 @@ export const SessionView = () => {
     // Align the deepest-read line to the bottom of the viewport — reproduces the
     // frame the reader left on, with everything below it still unread. scrollTop is
     // clamped by the browser, so an early segment just lands at the top.
-    alignSegmentToBottom(el, furthestReadSegmentId)
+    if (alignSegmentToBottom(el, furthestReadSegmentId)) {
+      // Remembered so the welcome-back reveal below can tell "still parked at
+      // the restore frame" from "already reading".
+      restoredScrollTopRef.current = el.scrollTop
+    }
   }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId])
 
   const writeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -408,6 +417,27 @@ export const SessionView = () => {
     return allSegments?.find((s) => s.index === welcomeAnchorIndex) ?? null
   }, [allSegments, welcomeAnchorIndex])
 
+  // The card lands async (its preview query resolves after the resume-scroll
+  // has run), which would leave it just below the fold. One shot: extend the
+  // restored frame to include it — but only while the reader is still parked
+  // exactly at the restore position; once they've scrolled, yanking the
+  // viewport would be worse than the card waiting below.
+  const didRevealWelcomeRef = useRef(false)
+  useLayoutEffect(() => {
+    if (didRevealWelcomeRef.current) return
+    if (!showWelcomeCard || !scrollEl || !didRestoreRef.current) return
+    const restoredTop = restoredScrollTopRef.current
+    if (restoredTop == null || Math.abs(scrollEl.scrollTop - restoredTop) > 2) {
+      didRevealWelcomeRef.current = true
+      return
+    }
+    const card = scrollEl.querySelector('[data-welcome-card]')
+    if (!card) return
+    didRevealWelcomeRef.current = true
+    alignBottomTo(scrollEl, card)
+    restoredScrollTopRef.current = scrollEl.scrollTop
+  }, [showWelcomeCard, scrollEl])
+
   // The dock is an unprompted offer, so it holds back until the count clears
   // the floor, and stands down while the welcome-back card is on screen (the
   // offer never appears twice at once); the close-out rider is a surface the
@@ -418,6 +448,28 @@ export const SessionView = () => {
 
   const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
   const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
+  // The dock panel's open state lives here so scrolling the reader can
+  // collapse it — left open it flashes on every preview refetch mid-read.
+  const [dockOpen, setDockOpen] = useState(false)
+  useEffect(() => {
+    if (!dockOpen || !scrollEl) return
+    // Baseline a frame later: expanding the footer resizes the scroll
+    // container, which can nudge scrollTop (bottom clamp) — that nudge must
+    // not read as the user scrolling.
+    let baseline: number | null = null
+    const raf = requestAnimationFrame(() => {
+      baseline = scrollEl.scrollTop
+    })
+    const onScroll = () => {
+      if (baseline == null) return
+      if (Math.abs(scrollEl.scrollTop - baseline) > 24) setDockOpen(false)
+    }
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      scrollEl.removeEventListener('scroll', onScroll)
+    }
+  }, [dockOpen, scrollEl])
   // Post-sweep feedback lives in the footer slot (not a toast): the count plus
   // a sweep-scoped Undo, cleared after a few seconds. The difficulty sheet
   // keeps its own toast — this strip only serves the reader-surface sweeps.
@@ -994,6 +1046,8 @@ export const SessionView = () => {
           onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
           isCollectingCheckpoint={isCollectingCheckpoint}
           markKnownDockCount={markKnownDockCount}
+          dockOpen={dockOpen}
+          onDockOpenChange={setDockOpen}
           onMarkKnown={() => handleMarkKnown(markKnownSpanIndex)}
           isMarkingKnown={isMarkingKnown}
           sweepConfirmation={
