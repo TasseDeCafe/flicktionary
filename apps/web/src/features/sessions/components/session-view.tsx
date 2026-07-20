@@ -47,16 +47,28 @@ import { WelcomeBackCard } from './welcome-back-card'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
+import { deriveDeclarationPillState } from './declaration-pill-state'
+import {
+  CheckpointSweepSheet,
+  type CollectOutcome,
+  type DeclarationRun,
+  type SweepOutcome,
+} from './checkpoint-sweep-sheet'
 import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkpoint-claims-sheet'
 import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
-// Unprompted sweep offers (the footer dock now, the welcome-back card later)
-// hold back until this many unswept read words exist — no greeting the reader
-// over a handful of words.
+// The welcome-back card holds back until this many unswept read words exist —
+// no greeting the reader over a handful of words. (The footer pill has no
+// floor: it's ambient, not an interruption.)
 const MARK_KNOWN_OFFER_FLOOR = 20
+
+// How far above the deepest point reached the reader must scroll before the
+// "Last read" chip appears — displacement smaller than this reads as noise
+// (bounce, clamp), not an intent to re-read.
+const SCROLL_UP_GATE_PX = 120
 
 const alignBottomTo = (scrollContainer: HTMLElement, target: Element): void => {
   const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
@@ -112,6 +124,55 @@ export const SessionView = () => {
   // virtualization. We drive off the FULL track, not the (search-filtered) visible
   // slice.
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null)
+
+  // --- "Last read" chip gate --------------------------------------------------
+  // The chip must mean "the reader scrolled UP to re-read", not merely "the
+  // frontier row is off-screen": the restore frame parks that row exactly at
+  // the bottom edge, where any container clamp or search-list swap would flip
+  // the IntersectionObserver and pop the chip in without a gesture. We track
+  // the deepest scrollTop reached and arm the chip only on real upward
+  // displacement; every programmatic or structural scroll re-baselines
+  // through suppressScrollGate so it can never satisfy the gate.
+  const maxScrollTopRef = useRef(0)
+  const [hasScrolledUp, setHasScrolledUp] = useState(false)
+  const programmaticScrollUntilRef = useRef(0)
+  const suppressScrollGate = useCallback(
+    (ms = 400) => {
+      programmaticScrollUntilRef.current = Date.now() + ms
+      if (scrollEl) maxScrollTopRef.current = scrollEl.scrollTop
+      setHasScrolledUp(false)
+    },
+    [scrollEl]
+  )
+  useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-external-store-subscription -- the listener maintains a mutable high-water mark with programmatic-scroll suppression windows that outside code re-baselines (suppressScrollGate); useSyncExternalStore has no way to express that reset API */
+    if (!scrollEl) return
+    maxScrollTopRef.current = scrollEl.scrollTop
+    setHasScrolledUp(false)
+    const onScroll = () => {
+      const top = scrollEl.scrollTop
+      // Inside a programmatic-scroll window: follow the position without ever
+      // arming the gate (smooth scrolls emit a whole train of events).
+      if (Date.now() < programmaticScrollUntilRef.current) {
+        maxScrollTopRef.current = top
+        setHasScrolledUp(false)
+        return
+      }
+      if (top > maxScrollTopRef.current) maxScrollTopRef.current = top
+      setHasScrolledUp(maxScrollTopRef.current - top > SCROLL_UP_GATE_PX)
+    }
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => scrollEl.removeEventListener('scroll', onScroll)
+    /* eslint-enable react-you-might-not-need-an-effect/no-external-store-subscription */
+  }, [scrollEl])
+  // The search list swap clamps scrollTop (fewer rows, smaller scroll range) —
+  // entering AND leaving search must re-baseline, not read as scrolling up.
+  useEffect(() => {
+    // isSearching is the trigger; only the transition matters.
+    void isSearching
+    suppressScrollGate()
+  }, [isSearching, suppressScrollGate])
+
   const indexBySegmentId = useMemo(() => {
     const map = new Map<string, number>()
     for (const s of allSegments ?? []) map.set(s.id, s.index)
@@ -177,15 +238,21 @@ export const SessionView = () => {
   // Scroll a segment to the center of the viewport and flash it briefly. Shared by
   // the deep-link (`?segment=`) restore and the "jump to last highlight" button.
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const scrollToSegment = useCallback((segmentId: string) => {
-    const el = document.querySelector(`[data-segment-id="${segmentId}"]`)
-    if (el && 'scrollIntoView' in el) {
-      ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }
-    setFlashSegmentId(segmentId)
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-    flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
-  }, [])
+  const scrollToSegment = useCallback(
+    (segmentId: string) => {
+      const el = document.querySelector(`[data-segment-id="${segmentId}"]`)
+      if (el && 'scrollIntoView' in el) {
+        // A smooth scroll emits events for its whole duration — keep the
+        // Last-read gate suppressed until it settles.
+        suppressScrollGate(800)
+        ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+      setFlashSegmentId(segmentId)
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+      flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
+    },
+    [suppressScrollGate]
+  )
 
   useEffect(() => () => (flashTimerRef.current ? clearTimeout(flashTimerRef.current) : undefined), [])
 
@@ -234,8 +301,9 @@ export const SessionView = () => {
       // Remembered so the welcome-back reveal below can tell "still parked at
       // the restore frame" from "already reading".
       restoredScrollTopRef.current = el.scrollTop
+      suppressScrollGate()
     }
-  }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId])
+  }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId, suppressScrollGate])
 
   const writeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingMaxRef = useRef<number | null>(null)
@@ -281,12 +349,23 @@ export const SessionView = () => {
     if (isPlacingBookmarkRef.current || autoTrackPinRef.current != null) return
     if (deepestIndex <= writtenMaxRef.current) return
     pendingMaxRef.current = deepestIndex
+    // Reaching the last line flushes immediately: the close-out surfaces and
+    // the checkpoint press key on the persisted pointer, and a 3s throttle
+    // lag right at the finish line is user-visible.
+    if (maxSegmentIndex != null && deepestIndex >= maxSegmentIndex) {
+      if (writeTimerRef.current) {
+        clearTimeout(writeTimerRef.current)
+        writeTimerRef.current = null
+      }
+      flushReadingProgress()
+      return
+    }
     if (writeTimerRef.current) return // throttle: a trailing write is already queued
     writeTimerRef.current = setTimeout(() => {
       writeTimerRef.current = null
       flushReadingProgress()
     }, 3000)
-  }, [deepestIndex, shallowestIndex, trackingEnabled, flushReadingProgress])
+  }, [deepestIndex, shallowestIndex, trackingEnabled, flushReadingProgress, maxSegmentIndex])
 
   useEffect(
     () => () => {
@@ -336,8 +415,12 @@ export const SessionView = () => {
   const checkpointPendingCount = checkpointPreview?.pendingCount ?? 0
   const checkpointBacklogCount = checkpointPreview?.backlogCount ?? 0
 
-  const { mutate: collectCheckpoint, isPending: isCollectingCheckpoint } = useCollectCheckpoint(sessionId)
-  const { mutate: undoCheckpoint } = useUndoCheckpoint(sessionId)
+  const {
+    mutate: collectCheckpoint,
+    mutateAsync: collectCheckpointAsync,
+    isPending: isCollectingCheckpoint,
+  } = useCollectCheckpoint(sessionId)
+  const { mutate: undoCheckpoint, mutateAsync: undoCheckpointAsync } = useUndoCheckpoint(sessionId)
   // The claims sheet's data (backlog candidates) has two sources. Local state
   // holds the batch from this mount's collect/assert/undo actions; while it is
   // null (no local action yet), the server-rehydrated copy below fills in so a
@@ -371,10 +454,18 @@ export const SessionView = () => {
   const markKnownSpanIndex = debouncedFurthestIndex ?? furthestReadIndex
   const hasPartialRead = markKnownSpanIndex != null && maxSegmentIndex != null && markKnownSpanIndex < maxSegmentIndex
   const isReadToEnd = furthestReadIndex != null && maxSegmentIndex != null && furthestReadIndex >= maxSegmentIndex
+  // The eye reaches the end seconds before the throttled progress write and
+  // its refetch move the persisted pointer there. End-of-text surfaces (the
+  // close-out card, the pill's whole-text count) key on the LIVE viewport so
+  // the card is already mounted when the reader arrives — waiting for the
+  // pointer would mount it below the fold and demand an extra scroll.
+  // Viewport-based only while tracking is on (searching and deep-link opens
+  // don't count as reading to the end).
+  const reachedEnd =
+    isReadToEnd ||
+    (trackingEnabled && deepestIndex != null && maxSegmentIndex != null && deepestIndex >= maxSegmentIndex)
   const spanMarkKnownQuery = useMarkKnownPreview(sessionId, markKnownSupported && hasPartialRead, markKnownSpanIndex)
-  const wholeMarkKnownQuery = useMarkKnownPreview(sessionId, markKnownSupported && isReadToEnd)
-  const spanMarkKnownCount =
-    spanMarkKnownQuery.data?.status === 'ready' ? spanMarkKnownQuery.data.markableLemmaCount : 0
+  const wholeMarkKnownQuery = useMarkKnownPreview(sessionId, markKnownSupported && reachedEnd)
   const wholeMarkKnownCount =
     wholeMarkKnownQuery.data?.status === 'ready' ? wholeMarkKnownQuery.data.markableLemmaCount : 0
   // --- Welcome-back offer (once per mount) -------------------------------------
@@ -387,18 +478,26 @@ export const SessionView = () => {
     welcomeAnchorIndexRef.current = session.furthestReadSegmentIndex ?? null
   }
   const welcomeAnchorIndex = welcomeAnchorIndexRef.current ?? null
-  // The divider marks a RESTING boundary only: where this sitting opened, or
-  // where a manual set placed it. Once the reader reads past it the pointer
-  // advances beyond the anchor and the divider disappears for the rest of the
-  // sitting — a marker chasing the live reading edge would shift content under
-  // the thumb on every throttled progress write. Next mount it rests at the
-  // new frontier.
-  const restingDividerIndexRef = useRef<number | null | undefined>(undefined)
-  if (restingDividerIndexRef.current === undefined && session) {
-    restingDividerIndexRef.current = session.furthestReadSegmentIndex ?? null
+  // The divider rests where this sitting opened (or where a manual set placed
+  // it) and stays there for the WHOLE sitting — WhatsApp's unread-messages
+  // bar. It never chases the live pointer and never unmounts mid-sitting:
+  // both would shift the text under the thumb. The next mount rests it at the
+  // new frontier. The origin picks the label: a sitting-open divider says
+  // "Resumed here"; a manual set says "Read up to here" (nothing was resumed
+  // — the reader just declared this line read). `undefined` = session not
+  // loaded yet; the one-shot init is a render-phase adjustment (same pattern
+  // as the welcome anchor above).
+  const [restingDivider, setRestingDivider] = useState<
+    { index: number | null; origin: 'resume' | 'manual' } | undefined
+  >(undefined)
+  if (restingDivider === undefined && session) {
+    setRestingDivider({ index: session.furthestReadSegmentIndex ?? null, origin: 'resume' })
   }
-  const showRestingDivider =
-    restingDividerIndexRef.current != null && furthestReadIndex === restingDividerIndexRef.current
+  const restingDividerSegmentId = useMemo(() => {
+    const index = restingDivider?.index
+    if (index == null) return null
+    return allSegments?.find((s) => s.index === index)?.id ?? null
+  }, [allSegments, restingDivider])
   const [welcomeDismissed, setWelcomeDismissed] = useState(false)
   // Suppressed on deep-link opens: following a word into the text isn't
   // "returning to read".
@@ -436,58 +535,35 @@ export const SessionView = () => {
     didRevealWelcomeRef.current = true
     alignBottomTo(scrollEl, card)
     restoredScrollTopRef.current = scrollEl.scrollTop
-  }, [showWelcomeCard, scrollEl])
+    suppressScrollGate()
+  }, [showWelcomeCard, scrollEl, suppressScrollGate])
 
-  // The card stays mounted (undismissed, scrolled away) for the whole sitting,
-  // so "the offer never appears twice at once" must key on it being ON SCREEN
-  // — suppressing the dock for as long as the card merely exists would hide
-  // the dock for the rest of the sitting. Starts true: when the card first
-  // renders it's at the revealed resume frame, in view.
-  const [welcomeCardInView, setWelcomeCardInView] = useState(true)
-  useEffect(() => {
-    if (!showWelcomeCard || !scrollEl || isSearching) return
-    const card = scrollEl.querySelector('[data-welcome-card]')
-    if (!card) return
-    const observer = new IntersectionObserver(([entry]) => setWelcomeCardInView(entry?.isIntersecting ?? false), {
-      root: scrollEl,
-    })
-    observer.observe(card)
-    return () => observer.disconnect()
-  }, [showWelcomeCard, scrollEl, isSearching])
-  const welcomeCardBlocksDock = showWelcomeCard && welcomeCardInView
+  // The footer's declaration pill: the ambient entry to the merged
+  // checkpoint + sweep sheet. No floor — the pill is a passive meter, not an
+  // interruption — and it always shows the real count so it AGREES with
+  // whatever inline offer is on screen (welcome-back card, close-out card): a
+  // zeroed pill next to their numbers would read as a contradiction. At the
+  // end of the text the span preview stands down, so the pill switches to the
+  // whole-text preview the close-out card uses.
+  const pillPreviewData = reachedEnd ? wholeMarkKnownQuery.data : spanMarkKnownQuery.data
+  const pillState = deriveDeclarationPillState({
+    markKnownSupported,
+    hasSweepableSpan: hasPartialRead || reachedEnd,
+    sweepPreviewStatus: pillPreviewData?.status ?? null,
+    markableLemmaCount: pillPreviewData?.markableLemmaCount ?? 0,
+    sessionMarkedCount: pillPreviewData?.sessionMarkedCount ?? 0,
+    checkpointSupported,
+    checkpointSpanNonEmpty,
+    checkpointPendingCount,
+    checkpointBacklogCount,
+  })
 
-  // The dock is an unprompted offer, so it holds back until the count clears
-  // the floor, and stands down while the welcome-back card is on screen (the
-  // offer never appears twice at once); the close-out rider is a surface the
-  // reader deliberately reached and shows any non-zero count. Read-to-end
-  // sessions get no dock — the close-out card owns the offer there.
-  const markKnownDockCount =
-    !welcomeCardBlocksDock && hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
-
-  const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
-  const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
-  // The dock panel's open state lives here so scrolling the reader can
-  // collapse it — left open it flashes on every preview refetch mid-read.
-  const [dockOpen, setDockOpen] = useState(false)
-  useEffect(() => {
-    if (!dockOpen || !scrollEl) return
-    // Baseline a frame later: expanding the footer resizes the scroll
-    // container, which can nudge scrollTop (bottom clamp) — that nudge must
-    // not read as the user scrolling.
-    let baseline: number | null = null
-    const raf = requestAnimationFrame(() => {
-      baseline = scrollEl.scrollTop
-    })
-    const onScroll = () => {
-      if (baseline == null) return
-      if (Math.abs(scrollEl.scrollTop - baseline) > 24) setDockOpen(false)
-    }
-    scrollEl.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      cancelAnimationFrame(raf)
-      scrollEl.removeEventListener('scroll', onScroll)
-    }
-  }, [dockOpen, scrollEl])
+  const {
+    mutate: markRemainingKnown,
+    mutateAsync: markRemainingKnownAsync,
+    isPending: isMarkingKnown,
+  } = useMarkRemainingKnown(sessionId)
+  const { mutate: unmarkKnownBySession, mutateAsync: unmarkKnownBySessionAsync } = useUnmarkKnownBySession(sessionId)
   // Post-sweep feedback lives in the footer slot (not a toast): the count plus
   // a sweep-scoped Undo, cleared after a few seconds. The difficulty sheet
   // keeps its own toast — this strip only serves the reader-surface sweeps.
@@ -533,6 +609,10 @@ export const SessionView = () => {
       ? { checkpointId: serverClaims.checkpointId, candidates: serverClaims.candidates }
       : null
 
+  // The close-out card's checkpoint press keeps its original presentation:
+  // success toast with Undo, claims sheet opening immediately. The footer
+  // pill's flow lives in the declaration sheet below, which shares the same
+  // mutations but presents success in-sheet and queues the claims.
   const handleCollectCheckpoint = () => {
     const toIndex = session?.furthestReadSegmentIndex
     if (toIndex == null || isCollectingCheckpoint) return
@@ -586,18 +666,133 @@ export const SessionView = () => {
     )
   }
 
+  // --- Declaration sheet (footer pill → checkpoint + sweep) --------------------
+  // One frontier snapshot per run, mirrored in a ref so the sheet's async
+  // callbacks (and a conflict re-snapshot) read the latest value without
+  // waiting for a re-render. `declarationRun` stays set through the closing
+  // animation; only a new open replaces it.
+  const [declarationOpen, setDeclarationOpen] = useState(false)
+  const [declarationRun, setDeclarationRun] = useState<DeclarationRun | null>(null)
+  // Bumped per open — remounts the sheet so each run initializes fresh state
+  // (no reset-on-open effect needed). Stable through the closing animation.
+  const [declarationRunKey, setDeclarationRunKey] = useState(0)
+  const declarationRunRef = useRef<DeclarationRun | null>(null)
+  // Backlog claims produced by a sheet collect wait until the sheet closes —
+  // opening the claims sheet mid-flow would stack the two overlays. A
+  // successful in-sheet checkpoint undo clears the queue.
+  const claimsQueuedRef = useRef(false)
+
+  const openDeclarationSheet = () => {
+    const toIndex = session?.furthestReadSegmentIndex
+    if (toIndex == null) return
+    const run: DeclarationRun = {
+      toSegmentIndex: toIndex,
+      checkpointIncluded: checkpointSupported && toIndex > (reviewedUntilIndex ?? -1),
+      sweepIncluded: markKnownSupported,
+    }
+    if (!run.checkpointIncluded && !run.sweepIncluded) return
+    declarationRunRef.current = run
+    setDeclarationRun(run)
+    setDeclarationRunKey((key) => key + 1)
+    claimsQueuedRef.current = false
+    setDeclarationOpen(true)
+  }
+
+  // After a collect CONFLICT the invalidation refetch has already brought the
+  // fresh pointer — move the run's frontier there so the retry presses
+  // against current state (the step inclusion is left alone mid-run).
+  const refreshDeclarationSnapshot = () => {
+    const toIndex = session?.furthestReadSegmentIndex
+    const prev = declarationRunRef.current
+    if (toIndex == null || !prev) return
+    const next = { ...prev, toSegmentIndex: toIndex }
+    declarationRunRef.current = next
+    setDeclarationRun(next)
+  }
+
+  // Stable: it sits in the sheet's auto-close effect deps — a fresh identity
+  // per render would restart the 4s timer on every parent re-render.
+  const handleDeclarationOpenChange = useCallback((next: boolean) => {
+    if (next) return
+    setDeclarationOpen(false)
+    if (claimsQueuedRef.current) {
+      claimsQueuedRef.current = false
+      setClaimsOpen(true)
+    }
+  }, [])
+
+  const collectForSheet = async (): Promise<CollectOutcome> => {
+    const run = declarationRunRef.current
+    if (!run) return { ok: false, reason: 'error' }
+    try {
+      const { data } = await collectCheckpointAsync({
+        sessionId,
+        toSegmentIndex: run.toSegmentIndex,
+        previewedSpans: previewedSpansRef.current.slice(-500),
+      })
+      if (data.checkpointId && data.backlogCandidates.length > 0) {
+        setLocalClaims({ value: { checkpointId: data.checkpointId, candidates: data.backlogCandidates } })
+        claimsQueuedRef.current = true
+      }
+      return { ok: true, checkpointId: data.checkpointId, creditedCount: data.creditedCount }
+    } catch (error) {
+      if (error instanceof ORPCError && error.code === 'CONFLICT') return { ok: false, reason: 'conflict' }
+      return { ok: false, reason: 'error' }
+    }
+  }
+
+  // The sheet's sweep bypasses `sweepConfirmation` — its done step owns the
+  // confirmation and the combined Undo.
+  const sweepForSheet = async (): Promise<SweepOutcome> => {
+    const run = declarationRunRef.current
+    if (!run) return { ok: false }
+    try {
+      const { data } = await markRemainingKnownAsync({ sessionId, toSegmentIndex: run.toSegmentIndex })
+      return { ok: true, markedCount: data.markedCount, sweepBatchId: data.sweepBatchId }
+    } catch {
+      return { ok: false }
+    }
+  }
+
+  const undoSweepForSheet = async (sweepBatchId: string): Promise<boolean> => {
+    try {
+      await unmarkKnownBySessionAsync({ sessionId, sweepBatchId })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const undoCheckpointForSheet = async (checkpointId: string): Promise<{ ok: boolean; undone: boolean }> => {
+    try {
+      const { data } = await undoCheckpointAsync({ sessionId, checkpointId })
+      if (data.undone) {
+        // Same bookkeeping as the close-out toast's undo: a reverted
+        // checkpoint can't accept assertions anymore.
+        revertedCheckpointIdsRef.current.add(checkpointId)
+        claimsQueuedRef.current = false
+        setLocalClaims((prev) => (prev?.value?.checkpointId === checkpointId ? { value: null } : prev))
+      }
+      return { ok: true, undone: data.undone }
+    } catch {
+      return { ok: false, undone: false }
+    }
+  }
+
   // Offer a quick return to the furthest-read segment when the reader scrolls back
   // up to re-read. Suppressed while searching, since the list then renders only
   // filtered matches and the anchor row may be absent.
   const furthestReadPosition = useSegmentPosition(scrollEl, furthestReadSegmentId)
-  const showJumpToLastRead = !isSearching && furthestReadSegmentId != null && furthestReadPosition === 'below'
+  const showJumpToLastRead =
+    !isSearching && hasScrolledUp && furthestReadSegmentId != null && furthestReadPosition === 'below'
   const jumpToLastRead = useCallback(() => {
     if (!scrollEl || !furthestReadSegmentId) return
     if (!alignSegmentToBottom(scrollEl, furthestReadSegmentId)) return
+    suppressScrollGate()
     setFlashSegmentId(furthestReadSegmentId)
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
     flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
-  }, [furthestReadSegmentId, scrollEl])
+  }, [furthestReadSegmentId, scrollEl, suppressScrollGate])
 
   // Tap-to-select-word gesture. Replaces native browser selection: a single
   // click/tap selects a word, press-and-drag extends a range. The adapter maps
@@ -806,6 +1001,9 @@ export const SessionView = () => {
     // unchanged pointer (top of the track for a never-read session) so the
     // deepest line merely *seen* while hunting doesn't get written.
     autoTrackPinRef.current = furthestReadIndex ?? 0
+    // Hunting for a line moved the viewport programmatically-adjacent ways —
+    // don't let that displacement arm the Last-read chip.
+    suppressScrollGate()
   }
 
   const confirmBookmarkPlacement = () => {
@@ -822,9 +1020,11 @@ export const SessionView = () => {
     setIsPlacingBookmark(false)
     isPlacingBookmarkRef.current = false
     autoTrackPinRef.current = placementIndex
-    // A manual set is the new resting boundary — the divider stays put there
-    // until the reader reads past it.
-    restingDividerIndexRef.current = placementIndex
+    // A manual set is the new resting boundary — the divider re-rests there
+    // for the remainder of the sitting, labeled as a declaration rather than
+    // a resume point.
+    setRestingDivider({ index: placementIndex, origin: 'manual' })
+    suppressScrollGate()
   }
 
   const closeToSessions = () => {
@@ -873,11 +1073,7 @@ export const SessionView = () => {
   // Where the divider renders: the pending preview while placing (visible even
   // in the search-filtered list, if its row is), else the resting boundary on
   // a normal (unfiltered) read — never the live, advancing pointer.
-  const readPositionSegmentId = isPlacingBookmark
-    ? placementSegmentId
-    : isSearching || !showRestingDivider
-      ? null
-      : furthestReadSegmentId
+  const readPositionSegmentId = isPlacingBookmark ? placementSegmentId : isSearching ? null : restingDividerSegmentId
 
   const sourceTitle = session.contentSourceTitle ?? t`Untitled`
   const titleNode = (
@@ -972,7 +1168,9 @@ export const SessionView = () => {
                   targetLanguage={session.targetLanguage}
                   flashSegmentId={flashSegmentId}
                   readPositionSegmentId={readPositionSegmentId}
-                  readPositionVariant={isPlacingBookmark ? 'placing' : 'set'}
+                  readPositionVariant={
+                    isPlacingBookmark ? 'placing' : restingDivider?.origin === 'manual' ? 'manual' : 'resumed'
+                  }
                   welcomeCardSegmentId={
                     showWelcomeCard && !isSearching && welcomeAnchorSegment ? welcomeAnchorSegment.id : null
                   }
@@ -994,25 +1192,22 @@ export const SessionView = () => {
                 {/* End-of-content close-out: the common case is finishing the
                     text — offer the checkpoint press with a fuller
                     presentation once the reader has actually reached the last
-                    segment. Hidden while searching (the filtered list isn't
-                    "the end"). */}
-                {checkpointSupported &&
-                  !isSearching &&
-                  maxSegmentIndex != null &&
-                  furthestReadIndex != null &&
-                  furthestReadIndex >= maxSegmentIndex && (
-                    <CheckpointCloseoutCard
-                      pendingCount={checkpointPendingCount}
-                      isCollected={(reviewedUntilIndex ?? -1) >= maxSegmentIndex}
-                      isCollecting={isCollectingCheckpoint}
-                      onCollect={handleCollectCheckpoint}
-                      claimsCount={claims?.candidates.length ?? 0}
-                      onOpenClaims={() => setClaimsOpen(true)}
-                      markKnownCount={wholeMarkKnownCount}
-                      isMarkingKnown={isMarkingKnown}
-                      onMarkKnown={() => handleMarkKnown(null)}
-                    />
-                  )}
+                    segment (live viewport, so the card is already there when
+                    the scroll arrives). Hidden while searching (the filtered
+                    list isn't "the end"). */}
+                {checkpointSupported && !isSearching && reachedEnd && (
+                  <CheckpointCloseoutCard
+                    pendingCount={checkpointPendingCount}
+                    isCollected={(reviewedUntilIndex ?? -1) >= maxSegmentIndex}
+                    isCollecting={isCollectingCheckpoint}
+                    onCollect={handleCollectCheckpoint}
+                    claimsCount={claims?.candidates.length ?? 0}
+                    onOpenClaims={() => setClaimsOpen(true)}
+                    markKnownCount={wholeMarkKnownCount}
+                    isMarkingKnown={isMarkingKnown}
+                    onMarkKnown={() => handleMarkKnown(null)}
+                  />
+                )}
               </>
             )}
           </div>
@@ -1020,10 +1215,10 @@ export const SessionView = () => {
         {showJumpToLastRead && !isPlacingBookmark && (
           <Button
             type='button'
-            variant='secondary'
+            variant='outline'
             size='sm'
             onClick={jumpToLastRead}
-            className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border shadow-md'
+            className='bg-background absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full shadow-lg'
           >
             <ChevronDown className='h-4 w-4' />
             {t`Last read`}
@@ -1059,15 +1254,8 @@ export const SessionView = () => {
           onOpenSessionVocabulary={() => {
             void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
           }}
-          checkpointPendingCount={checkpointPendingCount}
-          checkpointBacklogCount={checkpointBacklogCount}
-          onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
-          isCollectingCheckpoint={isCollectingCheckpoint}
-          markKnownDockCount={markKnownDockCount}
-          dockOpen={dockOpen}
-          onDockOpenChange={setDockOpen}
-          onMarkKnown={() => handleMarkKnown(markKnownSpanIndex)}
-          isMarkingKnown={isMarkingKnown}
+          pillState={pillState}
+          onOpenDeclarationSheet={openDeclarationSheet}
           sweepConfirmation={
             sweepConfirmation
               ? { count: sweepConfirmation.count, onUndo: sweepConfirmation.sweepBatchId ? handleUndoSweep : null }
@@ -1075,6 +1263,20 @@ export const SessionView = () => {
           }
         />
       )}
+
+      <CheckpointSweepSheet
+        key={declarationRunKey}
+        open={declarationOpen}
+        onOpenChange={handleDeclarationOpenChange}
+        sessionId={sessionId}
+        run={declarationRun}
+        checkpointPendingCount={checkpointPendingCount}
+        onCollect={collectForSheet}
+        onRefreshSnapshot={refreshDeclarationSnapshot}
+        onSweep={sweepForSheet}
+        onUndoSweep={undoSweepForSheet}
+        onUndoCheckpoint={undoCheckpointForSheet}
+      />
 
       <SessionDifficultySheet
         open={difficultyOpen}

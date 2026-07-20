@@ -48,7 +48,11 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
   `study_session.furthest_read_segment_index`. Reopening the session lands back
   at that line with no visible scroll (positioned in a pre-paint layout effect),
   and a floating `Last read` pill appears when that furthest-read segment has
-  scrolled *below* the viewport (the reader scrolled back up to re-read). Tapping
+  scrolled *below* the viewport AND the reader actually scrolled up (a
+  ~120px-above-the-deepest-point gate; programmatic scrolls — the restore, the
+  welcome-card reveal, deep-link jumps, search enter/exit clamps, placement
+  confirm/cancel — re-baseline the gate, so a container resize or list swap can
+  never pop the pill in on its own). Tapping
   it returns to the same saved line, aligned at the bottom of the viewport.
   Restore and the pill are suppressed while searching, and resume-tracking is
   also suppressed under a deep-link open (the `Open source` jump from a card /
@@ -78,46 +82,80 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
     gesture — else the still-visible deeper lines would re-advance the
     pointer on the next scroll tick. The pin is client-session state only: a
     remount resumes at the pointer, so tracking re-engages next sitting.
-  - **The divider marks a resting boundary.** A `READ UP TO HERE` divider row
-    renders below the pointer's line — but only at the position the sitting
-    opened with (or a manual set placed). Once the reader reads past it, the
-    divider disappears for the rest of the sitting (a marker chasing the live
-    reading edge would shift content under the thumb on every throttled
-    write); the next mount rests it at the new frontier. Hidden while
-    searching.
+  - **The divider rests for the whole sitting.** A hairline divider row
+    renders below the position the sitting opened with (labeled `Resumed
+    here`) or a manual set placed (`Read up to here` — nothing was resumed
+    there), and STAYS mounted there for the entire sitting even after the
+    reader passes it — WhatsApp's unread-messages bar; unmounting or chasing
+    the live edge would shift content under the thumb. The next mount rests
+    it at the new frontier. Hidden while searching.
 - **Checkpoint reviews ("I understood up to here").** The scheduling
   semantics live in `docs/SRS.md` §6b/§6c; this is the reader surface. Only for
   sessions whose target language has wiktionary data (`KAIKKI_LANGUAGES`) —
   unsupported languages show none of these affordances.
-  - **Footer button**: a secondary button beside `Session vocabulary`. The
-    label is the comprehension assertion (`I understood up to here`) with the
-    pending review count as a passive badge — the reward ("N reviews
-    collected") is the result toast, never the button's promise. Visible when
-    `pendingCount + backlogCount > 0` (not pendingCount alone — backlog-only
-    spans must stay discoverable). Anchored to the **furthest-read pointer,
-    never the viewport**: it means "everything I've read so far" even after
-    scrolling back up. An adjacent **(i) popover** (also on the close-out
-    card) explains what the press actually does — the assertion-shaped label
-    deliberately hides the mechanism — and links to the user guide's
-    `#checkpoint-reviews` section.
-  - **Badge counts** come from `getCheckpointPreview`, queried against a
+  - **Declaration pill** (footer): the sticky footer is one fixed-height row —
+    the pill on the left, the sole primary `Session vocabulary` on the right;
+    nothing in it ever expands in place (the reading surface must never
+    shift). The pill is the single ambient entry to the merged declaration
+    sheet, and its face is a priority ladder (pure derivation in
+    `declaration-pill-state.ts`, unit-tested): the sweep's markable word
+    count (an animated digit roll on each ~6s debounced preview update, no
+    floor — it's a passive meter); else **checkpoint mode** (`BookmarkCheck`
+    + the pending review count) whenever `pendingCount + backlogCount > 0` on
+    a non-empty span, so review collection stays reachable when the word
+    count is 0 or the sweep is unsupported (profile pending/failed,
+    adhoc/lesson sources); else a quiet `All known` label (span fully swept
+    with session marks); else a dimmed non-interactive `0`. Hidden only when
+    both systems are unsupported. The pill always shows the REAL cumulative
+    count so it agrees with whatever inline offer is on screen (welcome-back
+    card, close-out rider) — at reached-end it switches to the whole-text
+    preview so it matches the close-out card's number. Anchored to the
+    **furthest-read pointer, never the viewport**.
+  - **Declaration sheet** (`checkpoint-sweep-sheet.tsx`, ResponsiveOverlay;
+    step machine in `checkpoint-sweep-sheet-state.ts`, unit-tested): pressing
+    the pill opens the merged checkpoint + sweep flow as an overlay (mobile
+    drawer / desktop dialog — the transcript never moves), remounted per run.
+    One **frontier snapshot** per run — the live pointer at open — feeds both
+    writes, and the sweep step's count comes from a dedicated exact-span
+    preview for that snapshot (the pill's debounced count can lag). Steps are
+    included only when applicable, with a "Step X of Y" kicker when both are:
+    **checkpoint** (`I understood up to here` — the old (i)-popover copy
+    folded into the body, the pending count, the user-guide
+    `#checkpoint-reviews` link; Confirm collects) → **sweep** ("Mark N words
+    as known?" with Skip; a count that resolves to 0 skips itself) → **done**
+    ("Checkpoint saved" + credited/marked counts, a secondary combined
+    **Undo**, auto-close ~4s). No success toast — the done step IS the
+    confirmation. The combined Undo reverts sweep then checkpoint
+    sequentially and never silently swallows a partial failure: an
+    `undoError` state names what wasn't reverted (a stale checkpoint —
+    `undone: false`, a newer checkpoint exists — is explained, not
+    retryable; network-failed parts get Retry). Dismissal is blocked while a
+    mutation is in flight; before the first write it's a plain cancel; after
+    a successful collect it means "skip the rest" (the checkpoint stays).
+    CONFLICT renders an inline retry that re-snapshots the frontier first.
+    Backlog candidates from a sheet collect are **queued**: the claims sheet
+    opens only after the declaration sheet closes (never stacked on top),
+    and a successful in-sheet checkpoint undo clears the queue.
+  - **Preview counts** come from `getCheckpointPreview`, queried against a
     **debounced** furthest-read index (the raw index would mint a query key
     per scrolled segment). The preview cannot see the client's previewed-gloss
-    spans and counts multi-sense headwords optimistically, so the badge may
-    slightly overcount — the collect toast shows the real number.
+    spans and counts multi-sense headwords optimistically, so the pill may
+    slightly overcount — the collect result shows the real number.
   - **Collect** posts the client-tracked `previewedSpans` (every span the
     preview gloss sheet opened on this mount — the stateless gloss endpoint
     persists nothing, so the client is the only source; the list is NOT
     cleared on checkpoint undo, so a re-collection stays suppressed; each
     span's text is truncated to the contract's 200 chars so one over-long
-    selection can't fail validation on every later collect). Success
-    → sonner toast (`1 review collected` / `# reviews collected`) with an
-    **Undo** action that batch-reverts the checkpoint; a successful undo also
-    clears that checkpoint's claims re-entry (sheet + close-out card), since
-    a reverted checkpoint no longer accepts assertions. CONFLICT (a
-    concurrent press advanced the pointer) → the session + preview refetch
-    automatically and the error toast offers Retry. Backlog candidates in the
-    response open the **claims sheet**.
+    selection can't fail validation on every later collect). The two
+    surfaces share the mutation but present it differently: the **close-out
+    card** keeps the original toast presentation — success → sonner toast
+    (`# reviews collected`) with an **Undo** action, CONFLICT → error toast
+    with Retry (session + preview refetch automatically), backlog candidates
+    open the claims sheet immediately; the **declaration sheet** presents
+    success as its done step and handles CONFLICT/undo inline as above. A
+    successful undo on either path clears that checkpoint's claims re-entry
+    (sheet + close-out card), since a reverted checkpoint no longer accepts
+    assertions.
   - **Claims sheet** (`checkpoint-claims-sheet.tsx`, ResponsiveOverlay): "N
     words you saved but never practiced" with the candidate list
     (server-capped at 200 — see `docs/SRS.md` §6b — and collapsed behind a
@@ -130,9 +168,15 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
     itself was reverted in the meantime (a dead checkpoint rejects
     re-asserts).
   - **Close-out card** (`checkpoint-closeout-card.tsx`): rendered after the
-    last segment once the reader's furthest-read pointer reaches the end of
-    the track (hidden while searching). Offers the same collect action with a
-    fuller presentation, and is available even at pendingCount 0 — a
+    last segment once the reader reaches the end of the track — keyed on the
+    LIVE viewport (deepest visible segment) while tracking is on, not on the
+    persisted pointer, so the card is already mounted when the scroll arrives
+    instead of appearing below the fold after the throttled write lands;
+    reaching the last line also flushes the progress write immediately
+    (bypassing the 3s throttle) so the pointer the collect uses catches up.
+    Hidden while searching; deep-link opens don't count as reaching the end.
+    Offers the same collect action with a
+    fuller presentation (keeping the (i) info popover), and is available even at pendingCount 0 — a
     zero-review close-out can still surface backlog claims, the discovery path
     the count-gated footer button can't provide. After everything is
     collected it flips to a passive "Reviews collected" state, keeping a
@@ -411,7 +455,7 @@ stat is always a live query — never pre-aggregated or snapshotted.
 - **Reader sweep surfaces** (beyond the sheet — same sweep endpoints and
   batch-scoped undo; their counts only ever cover words actually READ: the
   read span mid-text via the checkpoint preview's debounced pointer with a
-  raw fallback for the first fetch, the whole text at read-to-end, nothing on
+  raw fallback for the first fetch, the whole text at reached-end, nothing on
   a never-scrolled session; all gated on an `available` profile so a passive
   offer never polls a pending build; the previews hold the previous span's
   data across debounce re-keys — `keepPreviousData` — so count-driven UI
@@ -421,37 +465,35 @@ stat is always a live query — never pre-aggregated or snapshotted.
     read-but-unclaimed striped tail needs a projected-coverage number the
     preview doesn't return — shelved, see
     `docs/proposals/mark-known-projected-coverage.md`.
-  - **Footer dock line**: mid-text only, a quiet "Already know the words
-    you've read?" line in the sticky footer's left slot — no count at rest;
-    the press expands the footer in place (the exercise layout's
-    feedback-slot pattern, not a popover) with the count sentence, the sweep
-    button, and the un-mark note. Collapses once the reader scrolls a real
-    distance (the baseline is captured a frame after opening so the footer's
-    own resize doesn't read as scrolling). Holds back until the count clears
-    a floor (20, shared with the welcome-back card), stands down while the
-    welcome-back card is ON SCREEN (IntersectionObserver — the undismissed
-    card stays mounted after scrolling away and must not suppress the dock
-    for the whole sitting), and never renders at read-to-end — the close-out
-    card owns the offer there.
+  - **Footer pill**: the declaration pill (see the checkpoint section) is
+    the sweep's ambient surface — the live markable count with no floor,
+    deliberately NOT standing down while the welcome-back or close-out cards
+    are on screen (the numbers agree; a zeroed pill next to a card's real
+    count reads as a contradiction). Mid-text it shows the span count; at
+    reached-end it switches to the whole-text preview. The sweep action
+    itself lives in the declaration sheet's sweep step.
   - **Close-out rider**: the checkpoint close-out card carries an "Already
     know the N remaining words?" section with an outline mark-as-known
     button. Any non-zero count shows — a surface the reader deliberately
     reached needs no floor.
   - **Welcome-back card**: once per mount, on returning to a partially-read
-    session with at least the floor's worth of unswept read words: an inline
-    card below the divider — "You read N new words, up to <timestamp>.
-    Already know them?" with **Not yet** / **Mark as known**. Its anchor and
+    session with at least the floor's worth (20) of unswept read words: an
+    inline card below the divider — "N words from last time (up to
+    <timestamp>) aren't marked as known yet." with secondary-weight **Mark
+    as known** / **Not yet** (the footer CTA stays the only primary on
+    screen). Its anchor and
     count are snapshotted from the pointer the mount OPENED with (last
     sitting's span, never the live pointer). The resume scroll extends once
     to include the card when its preview lands — but only while the reader
     is still parked at the restore frame, so a late preview never yanks
     someone already reading. "Not yet" dismisses for the sitting only;
     deep-link opens suppress the card entirely.
-  - **Post-sweep confirmation**: reader-surface sweeps (dock, close-out
-    rider, welcome-back card) don't toast — a footer strip takes the dock's
-    slot ("N words marked as known" + the batch-scoped **Undo**) for ~8
-    seconds, then the footer returns to resting. The difficulty sheet's own
-    sweeps keep their toast.
+  - **Post-sweep confirmation**: welcome-back and close-out sweeps don't
+    toast — a footer strip takes the pill's slot ("N words marked as known"
+    + the batch-scoped **Undo**) for ~8 seconds, then the footer returns to
+    resting. Declaration-sheet sweeps confirm in the sheet's done step
+    instead (with the combined Undo). The difficulty sheet's own sweeps keep
+    their toast.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
   both the reader gloss sheet and the practice lookup sheet show a "Marked as

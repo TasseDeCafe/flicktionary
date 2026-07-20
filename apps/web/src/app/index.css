@@ -56,6 +56,46 @@ body {
   }
 }
 
+/* Reader footer word-count tick (AnimatedCount in session-vocabulary-footer):
+   the outgoing number slides up and out while the new one slides in from
+   below. Plain classes (not Tailwind animate-*) so the keyframes stay next to
+   their reduced-motion fallback. */
+@keyframes count-tick-in {
+  from {
+    transform: translateY(0.7em);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes count-tick-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-0.7em);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .count-tick-in {
+    animation: count-tick-in 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .count-tick-out {
+    animation: count-tick-out 450ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+}
+/* Without the animation the absolutely-positioned outgoing span would sit on
+   top of the new value until its cleanup timeout — hide it outright. */
+@media (prefers-reduced-motion: reduce) {
+  .count-tick-out {
+    visibility: hidden;
+  }
+}
+
 /* Tap-to-select-word paint. Applied via a direct DOM attribute (not React
    state) by useWordSelection so an in-flight drag doesn't fight React
    reconciliation. Background only — no padding — so elementFromPoint hit-tests
