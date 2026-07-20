@@ -243,6 +243,17 @@ export const StudySessionsRouter = (
       return { data: { ok: true as const } }
     }),
 
+    setReadingPosition: implementer.setReadingPosition.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await studySessionsRepository.setReadingPosition(input.sessionId, userId, input.segmentIndex)
+      if (!ok) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      return { data: { ok: true as const } }
+    }),
+
     getCheckpointPreview: implementer.getCheckpointPreview.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const result = await previewCheckpoint(

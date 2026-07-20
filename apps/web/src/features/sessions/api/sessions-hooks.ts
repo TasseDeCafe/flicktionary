@@ -23,8 +23,16 @@ const isStudySessionQueryData = (value: unknown): value is StudySessionQueryData
   return typeof data === 'object' && data !== null && 'furthestReadSegmentIndex' in data
 }
 
+// Sessions whose reading position was explicitly SET (the manual bookmark)
+// since the last throttled advance. While a session is in here the monotonic
+// merge below stands down — the set is allowed to move the pointer backwards,
+// and raising refetches back up would resurrect the value the user just
+// corrected. The next advance write re-arms the guard.
+const manualReadingPositionSessionIds = new Set<string>()
+
 const mergeFurthestReadSegmentIndex = (cached: unknown, incoming: unknown): unknown => {
   if (!isStudySessionQueryData(incoming)) return incoming
+  if (manualReadingPositionSessionIds.has(incoming.data.id)) return incoming
   const cachedData = isStudySessionQueryData(cached) ? cached : undefined
   const cachedIndex = cachedData?.data.furthestReadSegmentIndex
   const incomingIndex = incoming.data.furthestReadSegmentIndex
@@ -344,6 +352,9 @@ export const useUpdateReadingProgress = () => {
   return useMutation(
     orpcQuery.studySessions.updateReadingProgress.mutationOptions({
       onMutate: ({ sessionId, segmentIndex }) => {
+        // An advance means normal monotonic semantics are back — re-arm the
+        // merge guard a manual set may have stood down.
+        manualReadingPositionSessionIds.delete(sessionId)
         const key = orpcQuery.studySessions.get.queryKey({ input: { sessionId } })
         queryClient.setQueryData<StudySessionQueryData>(key, (cached) => {
           if (!cached?.data) return cached
@@ -353,6 +364,35 @@ export const useUpdateReadingProgress = () => {
         })
       },
       meta: { showErrorModal: false },
+    })
+  )
+}
+
+// The manual bookmark ("read up to here"): an explicit, possibly-backward SET
+// of the pointer from the reader's placement mode. Patches the cache to the
+// exact value (the merge guard stands down via manualReadingPositionSessionIds)
+// and refetches everything whose span hangs off the pointer.
+export const useSetReadingPosition = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.studySessions.setReadingPosition.mutationOptions({
+      onMutate: ({ segmentIndex }) => {
+        manualReadingPositionSessionIds.add(sessionId)
+        const key = orpcQuery.studySessions.get.queryKey({ input: { sessionId } })
+        queryClient.setQueryData<StudySessionQueryData>(key, (cached) => {
+          if (!cached?.data) return cached
+          return { ...cached, data: { ...cached.data, furthestReadSegmentIndex: segmentIndex } }
+        })
+      },
+      meta: {
+        invalidates: [
+          orpcQuery.studySessions.get.key({ input: { sessionId } }),
+          orpcQuery.studySessions.getCheckpointPreview.key(),
+          orpcQuery.studySessions.getMarkKnownPreview.key({ input: { sessionId } }),
+        ],
+        errorMessage: t`Failed to set the reading position`,
+      },
     })
   )
 }

@@ -82,6 +82,19 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 
+  // The manual bookmark: an explicit "read up to here" assertion from the
+  // reader's placement mode. Unlike updateReadingProgress this is a plain SET —
+  // it may move the pointer backwards (correcting scroll inflation) or forwards
+  // (asserting previously-read content); the deliberate press is the authority.
+  setReadingPosition: oc
+    .route({ method: 'PUT', path: '/study-sessions/{sessionId}/reading-position', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
   // Checkpoint reviews ("I understood up to here") — see docs/SRS.md
   // "Checkpoint reviews". Counts what a collect up to `toSegmentIndex` would
   // credit. Read-only and body-less, so it cannot see the client's ephemeral

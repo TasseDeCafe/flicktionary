@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { ORPCError } from '@orpc/contract'
-import { ChevronDown } from 'lucide-react'
+import { Bookmark, ChevronDown } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
@@ -25,6 +25,7 @@ import {
   useListHighlightsBySession,
   useListGhostsBySession,
   useSessionDifficulties,
+  useSetReadingPosition,
   useUndoCheckpoint,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
@@ -229,8 +230,36 @@ export const SessionView = () => {
     }
   }, [sessionId, updateReadingProgress])
 
+  // --- Manual reading-position bookmark (the "read up to here" divider) --------
+  // Placement mode: taps place the divider instead of glossing/selecting, and a
+  // sticky footer confirms with an explicit (possibly backward) set. After a
+  // set, `autoTrackPin` suspends auto-advance until the viewport scrolls back
+  // up to the pin — the natural "re-read from here" gesture — because the
+  // deeper lines still on screen would otherwise re-advance the pointer past
+  // the correction on the next scroll tick. The pin is session-state only: a
+  // remount resumes at the pin, so tracking re-engages naturally next sitting.
+  const [isPlacingBookmark, setIsPlacingBookmark] = useState(false)
+  const [placementIndex, setPlacementIndex] = useState<number | null>(null)
+  // Mirrors for the tracking effect and the word-selection callback — neither
+  // the mode nor the pin drives a render from inside them.
+  const isPlacingBookmarkRef = useRef(false)
+  const autoTrackPinRef = useRef<number | null>(null)
+  const { mutate: setReadingPosition, isPending: isSettingPosition } = useSetReadingPosition(sessionId)
+  const placementSegmentId = useMemo(() => {
+    if (placementIndex == null) return null
+    return allSegments?.find((s) => s.index === placementIndex)?.id ?? null
+  }, [allSegments, placementIndex])
+
   useEffect(() => {
     if (!trackingEnabled || deepestIndex == null) return
+    // The pin releases once the viewport is back up at it — the natural
+    // "re-read from here" gesture after a manual set.
+    if (autoTrackPinRef.current != null && shallowestIndex != null && shallowestIndex <= autoTrackPinRef.current) {
+      autoTrackPinRef.current = null
+    }
+    // Suspended while placing (browsing for a line isn't reading) and while
+    // the pin holds.
+    if (isPlacingBookmarkRef.current || autoTrackPinRef.current != null) return
     if (deepestIndex <= writtenMaxRef.current) return
     pendingMaxRef.current = deepestIndex
     if (writeTimerRef.current) return // throttle: a trailing write is already queued
@@ -238,7 +267,7 @@ export const SessionView = () => {
       writeTimerRef.current = null
       flushReadingProgress()
     }, 3000)
-  }, [deepestIndex, trackingEnabled, flushReadingProgress])
+  }, [deepestIndex, shallowestIndex, trackingEnabled, flushReadingProgress])
 
   useEffect(
     () => () => {
@@ -399,6 +428,18 @@ export const SessionView = () => {
     isBlockedTarget: (el) => el.closest('[data-highlight-id]') != null,
     enableEdgeAutoScroll: true,
     onSelect: ({ anchor: anchorWord, end: endWord, rect }) => {
+      // Placement mode owns the gesture. Word presses must place the divider
+      // HERE, not in the click handler: the hook pointer-captures them, and
+      // with capture active desktop Chrome retargets the ensuing click to the
+      // scroll container, where closest('[data-segment-id]') finds nothing.
+      // (Non-word taps — timestamps, padding — skip capture and still place
+      // via handleSegmentListClick; on touch both paths fire, idempotently.)
+      if (isPlacingBookmarkRef.current) {
+        clearPaint()
+        const index = indexBySegmentId.get(endWord.ownerKey)
+        if (index != null) setPlacementIndex(index)
+        return
+      }
       lastSelectionAtRef.current = Date.now()
       const normalized = normalizeCrossSegmentSelection(anchorWord, endWord, visibleSegments)
       // Bail paths must clear the paint themselves — it persists past pointerup
@@ -440,7 +481,7 @@ export const SessionView = () => {
   // double right-click faster than the roundtrip would save it twice.
   const pendingRightClickSavesRef = useRef<Set<string>>(new Set())
   const handleRightClickToggle = (e: React.PointerEvent) => {
-    if (e.button !== 2 || glossOpen) return
+    if (e.button !== 2 || glossOpen || isPlacingBookmark) return
     const target = e.target instanceof Element ? e.target : null
     if (!target) return
     const highlightEl = target.closest('[data-highlight-id]')
@@ -477,6 +518,17 @@ export const SessionView = () => {
   }
 
   const handleSegmentListClick = (e: React.MouseEvent) => {
+    // Placement mode: any tap on a line moves the divider preview there.
+    // Track-relative indices, so this works in the search-filtered list too
+    // ("search the last line you remember, tap it").
+    if (isPlacingBookmark) {
+      const row = e.target instanceof Element ? e.target.closest('[data-segment-id]') : null
+      if (row instanceof HTMLElement && row.dataset.segmentId) {
+        const index = indexBySegmentId.get(row.dataset.segmentId)
+        if (index != null) setPlacementIndex(index)
+      }
+      return
+    }
     // Suppress the click that closes a freshly-completed selection.
     if (Date.now() - lastSelectionAtRef.current < 250) return
     const target = e.target instanceof Element ? e.target.closest('[data-highlight-id]') : null
@@ -553,6 +605,40 @@ export const SessionView = () => {
     recordPreviewedSpan(ghost.segmentId, ghost.surfaceForm)
   }
 
+  const enterBookmarkPlacement = () => {
+    // The mode owns taps — close the gloss sheet and drop any selection paint.
+    setGlossOpen(false)
+    clearPaint()
+    setPlacementIndex(furthestReadIndex)
+    setIsPlacingBookmark(true)
+    isPlacingBookmarkRef.current = true
+  }
+
+  const cancelBookmarkPlacement = () => {
+    setIsPlacingBookmark(false)
+    isPlacingBookmarkRef.current = false
+    // Browsing around during placement isn't reading: pin auto-advance to the
+    // unchanged pointer (top of the track for a never-read session) so the
+    // deepest line merely *seen* while hunting doesn't get written.
+    autoTrackPinRef.current = furthestReadIndex ?? 0
+  }
+
+  const confirmBookmarkPlacement = () => {
+    if (placementIndex == null || isSettingPosition) return
+    // Drop any queued throttled advance — flushed after the set, the server's
+    // GREATEST would immediately raise the pointer back over the correction.
+    if (writeTimerRef.current) {
+      clearTimeout(writeTimerRef.current)
+      writeTimerRef.current = null
+    }
+    pendingMaxRef.current = null
+    writtenMaxRef.current = placementIndex
+    setReadingPosition({ sessionId, segmentIndex: placementIndex })
+    setIsPlacingBookmark(false)
+    isPlacingBookmarkRef.current = false
+    autoTrackPinRef.current = placementIndex
+  }
+
   const closeToSessions = () => {
     if (from === 'vocabulary') {
       // Restore the sort/filter state the user was browsing under (same as the
@@ -596,6 +682,11 @@ export const SessionView = () => {
     )
   }
 
+  // Where the divider renders: the pending preview while placing (visible even
+  // in the search-filtered list, if its row is), else the persisted pointer on
+  // a normal (unfiltered) read.
+  const readPositionSegmentId = isPlacingBookmark ? placementSegmentId : isSearching ? null : furthestReadSegmentId
+
   const sourceTitle = session.contentSourceTitle ?? t`Untitled`
   const titleNode = (
     <span className='flex min-w-0 flex-col leading-tight'>
@@ -629,7 +720,23 @@ export const SessionView = () => {
   )
 
   return (
-    <ModalScreen onClose={closeToSessions} title={titleNode}>
+    <ModalScreen
+      onClose={closeToSessions}
+      title={titleNode}
+      rightSlot={
+        allSegments && allSegments.length > 0 ? (
+          <Button
+            variant={isPlacingBookmark ? 'secondary' : 'ghost'}
+            size='icon'
+            aria-label={t`Set reading position`}
+            aria-pressed={isPlacingBookmark}
+            onClick={() => (isPlacingBookmark ? cancelBookmarkPlacement() : enterBookmarkPlacement())}
+          >
+            <Bookmark className='size-5' />
+          </Button>
+        ) : undefined
+      }
+    >
       <div className='bg-background border-b px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <TrackSearchBar value={search} onChange={setSearch} />
@@ -660,6 +767,8 @@ export const SessionView = () => {
                   ghostRangesBySegmentId={ghostRangesBySegmentId}
                   targetLanguage={session.targetLanguage}
                   flashSegmentId={flashSegmentId}
+                  readPositionSegmentId={readPositionSegmentId}
+                  readPositionVariant={isPlacingBookmark ? 'placing' : 'set'}
                 />
                 {/* End-of-content close-out: the common case is finishing the
                     text — offer the checkpoint press with a fuller
@@ -684,7 +793,7 @@ export const SessionView = () => {
             )}
           </div>
         </div>
-        {showJumpToLastRead && (
+        {showJumpToLastRead && !isPlacingBookmark && (
           <Button
             type='button'
             variant='secondary'
@@ -698,17 +807,40 @@ export const SessionView = () => {
         )}
       </div>
 
-      <SessionVocabularyFooter
-        sessionId={sessionId}
-        isGeneratingCandidates={isGeneratingCandidates}
-        onOpenSessionVocabulary={() => {
-          void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
-        }}
-        checkpointPendingCount={checkpointPendingCount}
-        checkpointBacklogCount={checkpointBacklogCount}
-        onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
-        isCollectingCheckpoint={isCollectingCheckpoint}
-      />
+      {isPlacingBookmark ? (
+        // Placement mode takes over the footer: instruction + cancel/confirm,
+        // mirroring the vocabulary footer's chrome so the swap doesn't jump.
+        <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
+          <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+            <span className='text-muted-foreground text-sm'>{t`Tap the last line you've read.`}</span>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <Button size='xl' variant='outline' className='w-full sm:w-auto' onClick={cancelBookmarkPlacement}>
+                {t`Cancel`}
+              </Button>
+              <Button
+                size='xl'
+                className='w-full sm:w-auto'
+                disabled={placementIndex == null || isSettingPosition}
+                onClick={confirmBookmarkPlacement}
+              >
+                {t`Set reading position`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <SessionVocabularyFooter
+          sessionId={sessionId}
+          isGeneratingCandidates={isGeneratingCandidates}
+          onOpenSessionVocabulary={() => {
+            void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
+          }}
+          checkpointPendingCount={checkpointPendingCount}
+          checkpointBacklogCount={checkpointBacklogCount}
+          onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
+          isCollectingCheckpoint={isCollectingCheckpoint}
+        />
+      )}
 
       <SessionDifficultySheet
         open={difficultyOpen}
