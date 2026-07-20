@@ -676,8 +676,19 @@ claims sheet offers the checkpoint's backlog candidates — saved terms whose
 recognition facet was never introduced — and one confirm seeds the selected
 terms straight into review state. Service:
 `apps/backend/src/service/checkpoint/assert-known.ts`; endpoints
-`assertKnownBacklog` / `undoKnownAssertions` on the study-sessions contract.
+`assertKnownBacklog` / `undoKnownAssertions` / `getCheckpointClaims` on the
+study-sessions contract.
 
+- **Rehydration across remounts.** The collect response's candidate list
+  lives only in client memory, but the ids persist on the checkpoint row —
+  `getCheckpointClaims` (GET) re-offers the latest LIVE checkpoint's
+  candidates that still pass the assert eligibility (recognition facet never
+  introduced, enabled, ready; parked or not), preserving the stored order, so
+  a reload or navigation can't strand the claims re-entry. Client precedence:
+  a local collect/assert/undo this mount overrides the server copy (an
+  exhausted batch stays gone while the invalidated query catches up). Earlier
+  live checkpoints' leftovers are not re-offered here; they re-surface in
+  later spans.
 - **Server-authoritative claim set.** Only ids in the checkpoint's stored
   `backlog_candidate_ids` are accepted; unknown ids and facets whose state
   changed since the checkpoint (introduced, leech-parked with history,

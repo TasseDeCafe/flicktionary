@@ -13,6 +13,7 @@ import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-s
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   isOptimisticHighlightId,
+  useCheckpointClaims,
   useCheckpointPreview,
   useCollectCheckpoint,
   useCreateHighlight,
@@ -289,17 +290,34 @@ export const SessionView = () => {
 
   const { mutate: collectCheckpoint, isPending: isCollectingCheckpoint } = useCollectCheckpoint(sessionId)
   const { mutate: undoCheckpoint } = useUndoCheckpoint(sessionId)
-  // Backlog candidates from the latest collect: the claims sheet's data, and
-  // the close-out card's re-entry once the sheet/toast are gone.
-  const [claims, setClaims] = useState<{ checkpointId: string; candidates: CheckpointBacklogCandidate[] } | null>(null)
+  // The claims sheet's data (backlog candidates) has two sources. Local state
+  // holds the batch from this mount's collect/assert/undo actions; while it is
+  // null (no local action yet), the server-rehydrated copy below fills in so a
+  // reload or navigation can't strand the re-entry — the candidates persist on
+  // the checkpoint row. `{ value: null }` is distinct from null: a locally
+  // exhausted batch (asserted, or its checkpoint undone) must suppress the
+  // server copy until the invalidated query catches up.
+  const [localClaims, setLocalClaims] = useState<{
+    value: { checkpointId: string; candidates: CheckpointBacklogCandidate[] } | null
+  } | null>(null)
   const [claimsOpen, setClaimsOpen] = useState(false)
+  const { data: serverClaims } = useCheckpointClaims(sessionId, checkpointSupported)
   // The header's difficulty stat + its detail sheet (breakdown, mark-known CTA).
   const [difficultyOpen, setDifficultyOpen] = useState(false)
   const { difficulties } = useSessionDifficulties(useMemo(() => [sessionId], [sessionId]))
   const sessionDifficulty = difficulties[sessionId]
   // Checkpoints reverted this mount: an assertion-undo must not restore a
-  // claims batch for a dead checkpoint (its re-assert would 404).
+  // claims batch for a dead checkpoint (its re-assert would 404), and the
+  // server-rehydrated claims may still name it until the refetch lands.
   const revertedCheckpointIdsRef = useRef<Set<string>>(new Set())
+
+  const claims = localClaims
+    ? localClaims.value
+    : serverClaims?.checkpointId != null &&
+        serverClaims.candidates.length > 0 &&
+        !revertedCheckpointIdsRef.current.has(serverClaims.checkpointId)
+      ? { checkpointId: serverClaims.checkpointId, candidates: serverClaims.candidates }
+      : null
 
   const handleCollectCheckpoint = () => {
     const toIndex = session?.furthestReadSegmentIndex
@@ -326,7 +344,7 @@ export const SessionView = () => {
                         if (!data.undone) return
                         revertedCheckpointIdsRef.current.add(checkpointId)
                         setClaimsOpen(false)
-                        setClaims((prev) => (prev?.checkpointId === checkpointId ? null : prev))
+                        setLocalClaims((prev) => (prev?.value?.checkpointId === checkpointId ? { value: null } : prev))
                       },
                     }
                   ),
@@ -334,7 +352,7 @@ export const SessionView = () => {
             })
           }
           if (data.checkpointId && data.backlogCandidates.length > 0) {
-            setClaims({ checkpointId: data.checkpointId, candidates: data.backlogCandidates })
+            setLocalClaims({ value: { checkpointId: data.checkpointId, candidates: data.backlogCandidates } })
             setClaimsOpen(true)
           }
         },
@@ -698,13 +716,13 @@ export const SessionView = () => {
         sessionId={sessionId}
         checkpointId={claims?.checkpointId ?? null}
         candidates={claims?.candidates ?? []}
-        onAsserted={() => setClaims(null)}
+        onAsserted={() => setLocalClaims({ value: null })}
         // Restore the re-entry on assertion undo — but never clobber a newer
         // collect's batch that replaced it, and never resurrect a batch whose
         // checkpoint was reverted in the meantime.
         onAssertUndone={(restored) => {
           if (revertedCheckpointIdsRef.current.has(restored.checkpointId)) return
-          setClaims((prev) => prev ?? restored)
+          setLocalClaims((prev) => (prev?.value ? prev : { value: restored }))
         }}
       />
 

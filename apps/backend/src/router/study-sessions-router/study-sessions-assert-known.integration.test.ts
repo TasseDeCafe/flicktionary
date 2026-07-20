@@ -199,6 +199,73 @@ describe('study-sessions assert-known', () => {
     expect(asserted.body.data).toEqual({ asserted: 0, skipped: 2 })
   })
 
+  test('claims rehydration: 401 unauthenticated and 404 unknown session', async () => {
+    const unauth = await request(testApp)
+      .get('/api/v1/study-sessions/00000000-0000-0000-0000-000000000001/checkpoint-claims')
+      .set({ Authorization: 'Bearer wrong-token' })
+    expect(unauth.status).toBe(401)
+
+    const { token } = await setupCheckpointUser(testApp)
+    const missing = await request(testApp)
+      .get(`/api/v1/study-sessions/${randomUUID()}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(missing.status).toBe(404)
+  })
+
+  test('claims rehydration: re-fetch mirrors the collect response, minus moved-on and asserted candidates', async () => {
+    const suf = uniqueCyrillicSuffix()
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const wordA = `сундук${suf}`
+    const wordB = `фонар${suf}`
+    const idA = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'chest')
+    const idB = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'lantern')
+    await insertWiktionaryLemma(wordA, [`${wordA}а`])
+    await insertWiktionaryLemma(wordB, [`${wordB}а`])
+
+    const session = await createReadingSession(userId, 'ru')
+    // No checkpoint yet — nothing to rehydrate.
+    const before = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(before.status).toBe(200)
+    expect(before.body.data).toEqual({ checkpointId: null, candidates: [] })
+
+    const lastIndex = await appendSegment(session.text_track_id, `Вот ${wordA}а и ${wordB}а.`)
+    const collected = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoints`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans: [] })
+    expect(collected.status).toBe(200)
+    const checkpointId = collected.body.data.checkpointId as string
+    expect(collected.body.data.backlogCandidates).toHaveLength(2)
+
+    // What a reloaded client sees: the same batch the collect returned.
+    const claims = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(claims.status).toBe(200)
+    expect(claims.body.data.checkpointId).toBe(checkpointId)
+    expect(claims.body.data.candidates).toEqual(collected.body.data.backlogCandidates)
+
+    // A facet whose state moved on since the checkpoint drops out of the offer.
+    await patchRecognitionFacet(idA, { state: 'review', dueOffsetDays: 3 })
+    const afterMove = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(afterMove.body.data.candidates).toEqual([{ userLookupId: idB, headword: wordB, sense: 'lantern' }])
+
+    // Asserting the rest empties the offer while the checkpoint stays live.
+    const asserted = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoints/${checkpointId}/assert-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ userLookupIds: [idB] })
+    expect(asserted.body.data.asserted).toBe(1)
+    const afterAssert = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(afterAssert.body.data).toEqual({ checkpointId, candidates: [] })
+  })
+
   test('lane isolation: checkpoint undo leaves assertions live, and vice versa', async () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)

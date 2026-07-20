@@ -1,8 +1,42 @@
 import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
 import { knownAssertResult } from '../practice/fsrs'
-import type { CheckpointDependencies } from './collect-checkpoint'
+import type { BacklogCandidate, CheckpointDependencies } from './collect-checkpoint'
 
 export type AssertKnownResult = { ok: false; reason: 'not_found' } | { ok: true; asserted: number; skipped: number }
+
+export type BacklogClaimsResult =
+  { ok: false; reason: 'not_found' } | { ok: true; checkpointId: string | null; candidates: BacklogCandidate[] }
+
+// Rehydrates the claims sheet after a remount: the collect response's backlog
+// candidates live only in client memory, but the ids persist on the checkpoint
+// row — re-offer the ones still assertable (same eligibility the seed guards
+// enforce, so an id asserted or introduced since simply drops out). Only the
+// latest LIVE checkpoint is offered: assert-known accepts any live checkpoint,
+// but earlier checkpoints' leftovers re-surface through later spans instead.
+export const listBacklogClaims = async (
+  params: { sessionId: string; userId: string },
+  deps: CheckpointDependencies
+): Promise<BacklogClaimsResult> => {
+  const session = await deps.studySessionsRepository.findByIdForUser(params.sessionId, params.userId)
+  if (!session) return { ok: false, reason: 'not_found' }
+  const checkpoint = await deps.studySessionCheckpointsRepository.findLatestLiveBySession(
+    params.sessionId,
+    params.userId
+  )
+  if (!checkpoint) return { ok: true, checkpointId: null, candidates: [] }
+  const rows = await deps.userLookupsRepository.listAssertableBacklogCandidates({
+    userId: params.userId,
+    userLookupIds: checkpoint.backlog_candidate_ids,
+  })
+  // Preserve the checkpoint's stored candidate order (the collect's backlog
+  // ordering) rather than the join's row order.
+  const rowById = new Map(rows.map((row) => [row.id, row]))
+  const candidates = checkpoint.backlog_candidate_ids.flatMap((id) => {
+    const row = rowById.get(id)
+    return row ? [{ userLookupId: row.id, headword: row.headword, sense: row.sense }] : []
+  })
+  return { ok: true, checkpointId: checkpoint.id, candidates }
+}
 
 export type UndoKnownAssertionsResult =
   { ok: false; reason: 'not_found' } | { ok: true; reverted: number; skipped: number }

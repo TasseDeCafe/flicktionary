@@ -525,6 +525,38 @@ const listCheckpointVocab = async (params: {
   })
 }
 
+export type AssertableBacklogCandidateRow = {
+  id: string
+  headword: string
+  sense: string
+}
+
+// The subset of a checkpoint's stored backlog_candidate_ids that is STILL
+// assertable — the same eligibility the assert-known seed guards enforce
+// (recognition-citation facet never introduced, enabled, ready; parked-or-not
+// both qualify). Powers the claims sheet's rehydration after a remount, so a
+// candidate asserted or introduced since the checkpoint silently drops out.
+const listAssertableBacklogCandidates = async (params: {
+  userId: string
+  userLookupIds: readonly string[]
+}): Promise<AssertableBacklogCandidateRow[]> => {
+  if (params.userLookupIds.length === 0) return []
+  return (await sql`
+    SELECT ul.id, ul.headword, ul.sense
+    FROM public.user_lookups ul
+    JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id
+      AND f.skill = 'meaning_recognition'
+      AND f.target_form = ${CITATION_FORM}
+    WHERE ul.user_id = ${params.userId}
+      AND ul.id = ANY(${params.userLookupIds as string[]}::uuid[])
+      AND ul.deleted_at IS NULL
+      AND f.srs_state IS NULL
+      AND f.disabled_at IS NULL
+      AND f.data_status = 'ready'
+  `) as AssertableBacklogCandidateRow[]
+}
+
 export type DifficultyVocabFacet = {
   srs_state: SrsState | null
   srs_due: string | null
@@ -2282,6 +2314,10 @@ export interface UserLookupsRepositoryInterface {
   recordEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
+  listAssertableBacklogCandidates: (params: {
+    userId: string
+    userLookupIds: readonly string[]
+  }) => Promise<AssertableBacklogCandidateRow[]>
   listDifficultyVocab: (params: { userId: string; targetLanguage: string }) => Promise<DifficultyVocabRow[]>
   listCoverageVocab: (params: { userId: string; targetLanguage: string }) => Promise<CoverageVocabRow[]>
   listByHeadwords: (params: {
@@ -2417,6 +2453,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     recordEncounter,
     recordContentEncounter,
     listCheckpointVocab,
+    listAssertableBacklogCandidates,
     listDifficultyVocab,
     listCoverageVocab,
     listByHeadwords,

@@ -228,6 +228,34 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), checkpointId: z.string().uuid() }))
     .output(z.object({ data: z.object({ reverted: z.number().int(), skipped: z.number().int() }) })),
 
+  // Rehydrates the claims sheet's re-entry after a reload/navigation: the
+  // latest live checkpoint's backlog candidates that are STILL assertable
+  // (facet never introduced, enabled, ready). The collect response carries the
+  // same candidates for the in-session flow; this read-only path exists so a
+  // remount can re-offer them (they live server-side on the checkpoint row).
+  // `checkpointId: null` means the session has no live checkpoint.
+  getCheckpointClaims: oc
+    .route({ method: 'GET', path: '/study-sessions/{sessionId}/checkpoint-claims', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(
+      z.object({
+        data: z.object({
+          checkpointId: z.string().uuid().nullable(),
+          candidates: z.array(
+            z.object({
+              userLookupId: z.string().uuid(),
+              headword: z.string(),
+              sense: z.string(),
+            })
+          ),
+        }),
+      })
+    ),
+
   // Batched personalized-difficulty read for session cards + headers. POST
   // (not GET) because the sessions list is unpaginated and an id-array in the
   // URL risks length limits. Pinned semantics: ≤100 ids per call, validated
