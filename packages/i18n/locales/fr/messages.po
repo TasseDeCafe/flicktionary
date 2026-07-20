@@ -5541,6 +5541,11 @@ msgstr "Écrivez votre phrase…"
 msgid "Yearly"
 msgstr "Annuel"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+msgid "You already had a session for this — picking up where you left off."
+msgstr "Vous aviez déjà une session pour cela — reprise là où vous vous êtes arrêté."
+
 #: apps/native/src/features/profile/components/profile-view.tsx
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "You are a special user with free access. You have no active subscription."
