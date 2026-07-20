@@ -341,7 +341,11 @@ stat is always a live query — never pre-aggregated or snapshotted.
   started", "marked as known"), the honest vocabulary-only scoping line, and
   the mark-known sweep CTAs (deliberate taps inside a sheet, consistent with
   phase 1's claims-lane posture; the exact counts come from
-  `getMarkKnownPreview` and sit on the buttons themselves). **The sweep has
+  `getMarkKnownPreview` and sit on the buttons themselves). While the
+  previews are on their first in-flight load, the explainer/text-action
+  block and the footer's primary slot hold their space with skeletons so
+  the Close button doesn't reflow around the late CTA (first open only —
+  reopens render instantly from the query cache). **The sweep has
   two scopes**: mid-text (furthest-read < track end) the primary CTA marks
   the span `[0, furthest-read]` — the progressive multi-sitting flow: mark
   what you've read, come back after the next sitting, mark further (repeat
