@@ -42,6 +42,8 @@ import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
 import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList, SegmentListSkeleton } from './segment-list'
+import { formatTimestamp } from '../utils/format-timestamp'
+import { WelcomeBackCard } from './welcome-back-card'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
@@ -366,11 +368,41 @@ export const SessionView = () => {
     spanMarkKnownQuery.data?.status === 'ready' ? spanMarkKnownQuery.data.markableLemmaCount : 0
   const wholeMarkKnownCount =
     wholeMarkKnownQuery.data?.status === 'ready' ? wholeMarkKnownQuery.data.markableLemmaCount : 0
+  // --- Welcome-back offer (once per mount) -------------------------------------
+  // Snapshot the pointer the mount opened with: the card refers to LAST
+  // sitting's span, so its anchor and count never follow the live pointer as
+  // the reader reads on. Write-once render snapshot (undefined = session not
+  // loaded yet).
+  const welcomeAnchorIndexRef = useRef<number | null | undefined>(undefined)
+  if (welcomeAnchorIndexRef.current === undefined && session) {
+    welcomeAnchorIndexRef.current = session.furthestReadSegmentIndex ?? null
+  }
+  const welcomeAnchorIndex = welcomeAnchorIndexRef.current ?? null
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false)
+  // Suppressed on deep-link opens: following a word into the text isn't
+  // "returning to read".
+  const welcomeEligible =
+    !welcomeDismissed &&
+    !targetSegmentId &&
+    welcomeAnchorIndex != null &&
+    maxSegmentIndex != null &&
+    welcomeAnchorIndex < maxSegmentIndex
+  const welcomeQuery = useMarkKnownPreview(sessionId, markKnownSupported && welcomeEligible, welcomeAnchorIndex)
+  const welcomeCount =
+    welcomeEligible && welcomeQuery.data?.status === 'ready' ? welcomeQuery.data.markableLemmaCount : 0
+  const showWelcomeCard = welcomeCount >= MARK_KNOWN_OFFER_FLOOR
+  const welcomeAnchorSegment = useMemo(() => {
+    if (welcomeAnchorIndex == null) return null
+    return allSegments?.find((s) => s.index === welcomeAnchorIndex) ?? null
+  }, [allSegments, welcomeAnchorIndex])
+
   // The dock is an unprompted offer, so it holds back until the count clears
-  // the floor; the close-out rider is a surface the reader deliberately
-  // reached and shows any non-zero count. Read-to-end sessions get no dock —
-  // the close-out card owns the offer there.
-  const markKnownDockCount = hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
+  // the floor, and stands down while the welcome-back card is on screen (the
+  // offer never appears twice at once); the close-out rider is a surface the
+  // reader deliberately reached and shows any non-zero count. Read-to-end
+  // sessions get no dock — the close-out card owns the offer there.
+  const markKnownDockCount =
+    !showWelcomeCard && hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
 
   const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
   const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
@@ -852,6 +884,23 @@ export const SessionView = () => {
                   flashSegmentId={flashSegmentId}
                   readPositionSegmentId={readPositionSegmentId}
                   readPositionVariant={isPlacingBookmark ? 'placing' : 'set'}
+                  welcomeCardSegmentId={
+                    showWelcomeCard && !isSearching && welcomeAnchorSegment ? welcomeAnchorSegment.id : null
+                  }
+                  welcomeCard={
+                    welcomeAnchorSegment ? (
+                      <WelcomeBackCard
+                        count={welcomeCount}
+                        untilLabel={formatTimestamp(welcomeAnchorSegment.startMs) || null}
+                        isMarking={isMarkingKnown}
+                        onMarkKnown={() => {
+                          setWelcomeDismissed(true)
+                          handleMarkKnown(welcomeAnchorIndex)
+                        }}
+                        onDismiss={() => setWelcomeDismissed(true)}
+                      />
+                    ) : undefined
+                  }
                 />
                 {/* End-of-content close-out: the common case is finishing the
                     text — offer the checkpoint press with a fuller
