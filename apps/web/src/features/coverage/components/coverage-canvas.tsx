@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useResolvedTheme } from '../hooks/use-resolved-theme'
 import {
+  computeGridLayout,
   hitTest,
   readCoverageColors,
   renderDotGrid,
@@ -9,6 +10,28 @@ import {
   type CoverageColors,
   type GridLayout,
 } from '../utils/coverage-render'
+
+// True once the element has come within a screenful of the viewport, then
+// latched. Painting every canvas in one post-commit batch froze the detail
+// view on phones for seconds; the below-the-fold waffles and skyline can wait
+// until the user scrolls toward them.
+const useNearViewport = (ref: React.RefObject<HTMLElement | null>) => {
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    if (near) return
+    const element = ref.current
+    if (!element) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true)
+      },
+      { rootMargin: '100% 0px' }
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near, ref])
+  return near
+}
 
 // Canvas math needs pixel widths, so the responsive split (full wall vs the
 // compact top-5k mobile wall) keys off the measured container instead of
@@ -62,16 +85,26 @@ export const CoverageDotGrid = ({
   const colors = useCoverageColors()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const layoutRef = useRef<{ layout: GridLayout; startRank: number; count: number } | null>(null)
+  const near = useNearViewport(ref)
 
   const compact = compactRule !== undefined && width > 0 && width <= compactRule.maxWidth
   const effectiveEndRank = compact ? compactRule.endRank : endRank
   const effectiveCell = compact ? compactRule.cell : cell
   const effectiveGap = compact ? compactRule.gap : gap
 
+  // The final height is pure layout math, so it's reserved before the (maybe
+  // deferred) paint — the page doesn't reflow when a canvas fills in, and the
+  // viewport observer above sees real geometry instead of collapsed boxes.
+  const reservedHeight = useMemo(() => {
+    if (width === 0) return undefined
+    const count = Math.max(0, Math.min(effectiveEndRank, states.length) - startRank + 1)
+    return computeGridLayout({ count, cssWidth: width, cell: effectiveCell, gap: effectiveGap }).cssHeight
+  }, [width, effectiveEndRank, states.length, startRank, effectiveCell, effectiveGap])
+
   useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- painting is not a user event: the canvas is imperative and must repaint whenever the measured width (ResizeObserver), the resolved theme (MutationObserver), or the coverage data changes — there is no handler that sees all three */
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- painting is not a user event: the canvas is imperative and must repaint whenever the measured width (ResizeObserver), the resolved theme (MutationObserver), the viewport proximity (IntersectionObserver), or the coverage data changes — there is no handler that sees all four */
     const canvas = canvasRef.current
-    if (!canvas || width === 0) return
+    if (!canvas || width === 0 || !near) return
     const layout = renderDotGrid(canvas, {
       states,
       startRank,
@@ -88,7 +121,7 @@ export const CoverageDotGrid = ({
       count: Math.max(0, Math.min(effectiveEndRank, states.length) - startRank + 1),
     }
     /* eslint-enable react-you-might-not-need-an-effect/no-event-handler */
-  }, [states, startRank, effectiveEndRank, effectiveCell, effectiveGap, width, colors])
+  }, [states, startRank, effectiveEndRank, effectiveCell, effectiveGap, width, colors, near])
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -111,6 +144,7 @@ export const CoverageDotGrid = ({
       <canvas
         ref={canvasRef}
         className={`block w-full ${onDotHover ? 'cursor-crosshair' : ''}`}
+        style={{ height: reservedHeight }}
         onMouseMove={onDotHover ? handleMouseMove : undefined}
         onMouseLeave={onDotHover ? () => onDotHover(null) : undefined}
       />
@@ -128,11 +162,12 @@ export const CoverageSkyline = ({ states, bucketSize = 100, height = 130 }: Skyl
   const { ref, width } = useContainerWidth()
   const colors = useCoverageColors()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const near = useNearViewport(ref)
 
   useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- same imperative-canvas repaint as CoverageDotGrid: width/theme/data changes have no shared user event */
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- same imperative-canvas repaint as CoverageDotGrid: width/theme/proximity/data changes have no shared user event */
     const canvas = canvasRef.current
-    if (!canvas || width === 0) return
+    if (!canvas || width === 0 || !near) return
     renderSkyline(canvas, {
       states,
       bucketSize,
@@ -142,11 +177,11 @@ export const CoverageSkyline = ({ states, bucketSize = 100, height = 130 }: Skyl
       devicePixelRatio: window.devicePixelRatio || 1,
     })
     /* eslint-enable react-you-might-not-need-an-effect/no-event-handler */
-  }, [states, bucketSize, height, width, colors])
+  }, [states, bucketSize, height, width, colors, near])
 
   return (
     <div ref={ref} className='w-full'>
-      <canvas ref={canvasRef} className='block w-full' />
+      <canvas ref={canvasRef} className='block w-full' style={{ height }} />
     </div>
   )
 }
