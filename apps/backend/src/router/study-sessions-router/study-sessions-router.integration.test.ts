@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import {
@@ -131,6 +132,58 @@ describe('study-sessions-router', () => {
       .set({ Authorization: 'Bearer wrong-token' })
       .send({ segmentIndex: 1 })
     expect(unauthenticated.status).toBe(401)
+  })
+
+  test('create is find-or-create: same (track, target language) returns the existing session', async () => {
+    const { token } = await onboardedUser()
+
+    const source = await request(testApp)
+      .post('/api/v1/content-sources/text')
+      .set(buildAuthorizationHeaders(token))
+      .send({ title: 'Wiederholung', language: 'de' })
+    expect(source.status).toBe(201)
+    const contentSourceId = source.body.data.id
+
+    const imported = await request(testApp)
+      .post('/api/v1/text-tracks/paste')
+      .set(buildAuthorizationHeaders(token))
+      .send({
+        contentSourceId,
+        language: 'de',
+        text: 'Der Tisch ist groß und die Katze schläft auf dem Sofa im Wohnzimmer.',
+      })
+    expect(imported.status).toBe(201)
+    const textTrackId = imported.body.data.track.id
+
+    const createPayload = {
+      contentSourceId,
+      textTrackId,
+      nativeLanguage: 'en',
+      targetLanguage: 'de',
+      cefrLevel: 'B1',
+    }
+    const first = await request(testApp)
+      .post('/api/v1/study-sessions')
+      .set(buildAuthorizationHeaders(token))
+      .send(createPayload)
+    expect(first.status).toBe(201)
+    expect(first.body.alreadyExisted).toBe(false)
+
+    const second = await request(testApp)
+      .post('/api/v1/study-sessions')
+      .set(buildAuthorizationHeaders(token))
+      .send(createPayload)
+    expect(second.status).toBe(201)
+    expect(second.body.alreadyExisted).toBe(true)
+    expect(second.body.data.id).toBe(first.body.data.id)
+
+    // A track that doesn't belong to the content source is still the domain
+    // failure, not a silent find.
+    const bad = await request(testApp)
+      .post('/api/v1/study-sessions')
+      .set(buildAuthorizationHeaders(token))
+      .send({ ...createPayload, textTrackId: randomUUID() })
+    expect(bad.status).toBe(400)
   })
 
   test('returns 422 MISSING_CEFR when the user has no level for the detected language', async () => {

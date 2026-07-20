@@ -58,7 +58,10 @@ export const studySessionsContract = {
         cefrLevel: z.string(),
       })
     )
-    .output(z.object({ data: StudySessionSchema })),
+    // Find-or-create: re-creating over the same (track, target language)
+    // returns the existing session with alreadyExisted=true so the wizard can
+    // tell the user they're resuming rather than starting fresh.
+    .output(z.object({ data: StudySessionSchema, alreadyExisted: z.boolean() })),
 
   process: oc
     .route({ method: 'POST', path: '/study-sessions/{sessionId}/process', successStatus: 202 })

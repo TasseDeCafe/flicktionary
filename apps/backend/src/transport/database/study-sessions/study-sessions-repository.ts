@@ -17,6 +17,10 @@ export type DbStudySessionWithSource = DbStudySession & {
   content_source_metadata: Record<string, unknown> | null
 }
 
+// Find-or-create: one study_session per (user, text_track, target_language) —
+// the same identity model as the extension ingest flows. Re-adding the same
+// content with byte-identical subtitles resolves to the same track, so the
+// wizard lands the user back in their existing session instead of erroring.
 const insertStudySession = async (params: {
   userId: string
   contentSourceId: string
@@ -24,8 +28,8 @@ const insertStudySession = async (params: {
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
-}): Promise<DbStudySession | null> => {
-  const result = (await sql`
+}): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
+  const inserted = (await sql`
     INSERT INTO public.study_sessions (
       user_id, content_source_id, text_track_id,
       native_language, target_language, cefr_level
@@ -43,9 +47,26 @@ const insertStudySession = async (params: {
       WHERE id = ${params.textTrackId}
         AND content_source_id = ${params.contentSourceId}
     )
+    ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
+      DO NOTHING
     RETURNING *
   `) as DbStudySession[]
-  return result[0] ?? null
+  const insertedSession = inserted[0]
+  if (insertedSession) return { session: insertedSession, alreadyExisted: false }
+
+  // No row back means either the unique index fired or the track doesn't
+  // belong to the content source — the re-select disambiguates. The existing
+  // session keeps its stored native language / CEFR level.
+  const existing = (await sql`
+    SELECT *
+    FROM public.study_sessions
+    WHERE user_id = ${params.userId}
+      AND text_track_id = ${params.textTrackId}
+      AND target_language = ${params.targetLanguage}
+      AND deleted_at IS NULL
+  `) as DbStudySession[]
+  const existingSession = existing[0]
+  return existingSession ? { session: existingSession, alreadyExisted: true } : null
 }
 
 const getOrCreateAdhocStudySession = async (params: {
@@ -739,7 +760,7 @@ export interface StudySessionsRepositoryInterface {
     nativeLanguage: string
     targetLanguage: string
     cefrLevel: string
-  }) => Promise<DbStudySession | null>
+  }) => Promise<{ session: DbStudySession; alreadyExisted: boolean } | null>
   getOrCreateAdhocStudySession: (params: {
     userId: string
     targetLanguage: string

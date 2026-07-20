@@ -200,7 +200,7 @@ export const StudySessionsRouter = (
       }
       // Re-fetch via the joined query so the returned DTO carries the source title
       // and poster — the wizard navigates straight to the session view.
-      const enriched = await studySessionsRepository.findByIdForUserWithSource(inserted.id, userId)
+      const enriched = await studySessionsRepository.findByIdForUserWithSource(inserted.session.id, userId)
       if (!enriched) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to load created study session' }] },
@@ -214,7 +214,7 @@ export const StudySessionsRouter = (
           error,
         })
       })
-      return { data: toStudySessionDto(enriched) }
+      return { data: toStudySessionDto(enriched), alreadyExisted: inserted.alreadyExisted }
     }),
 
     process: implementer.process.handler(async ({ input, context, errors }) => {
