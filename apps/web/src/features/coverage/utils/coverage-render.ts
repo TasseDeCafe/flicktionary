@@ -85,6 +85,23 @@ export const hitTest = (params: {
   return params.startRank + index
 }
 
+// One tiny pre-rasterized dot per state, blitted with drawImage per cell.
+// Filling a single path holding tens of thousands of roundRect subpaths
+// freezes mobile Safari for seconds; blits stay linear and cheap.
+const makeDotStamp = (cell: number, radius: number, color: string, dpr: number): HTMLCanvasElement => {
+  const stamp = document.createElement('canvas')
+  stamp.width = Math.max(1, Math.round(cell * dpr))
+  stamp.height = stamp.width
+  const ctx = stamp.getContext('2d')
+  if (!ctx) return stamp
+  ctx.scale(dpr, dpr)
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.roundRect(0, 0, cell, cell, radius)
+  ctx.fill()
+  return stamp
+}
+
 export const renderDotGrid = (
   canvas: HTMLCanvasElement,
   params: {
@@ -115,22 +132,16 @@ export const renderDotGrid = (
   if (!ctx) return layout
   ctx.scale(dpr, dpr)
   const radius = Math.min(2, params.cell / 2)
-  const fills: Array<[number, string]> = [
-    [STATE_UNKNOWN, params.colors.unknown],
-    [STATE_KNOWN, params.colors.known],
-    [STATE_STUDIED, params.colors.studied],
+  // Indexed by state value: 0 unknown / 1 known / 2 studied.
+  const stamps = [
+    makeDotStamp(params.cell, radius, params.colors.unknown, dpr),
+    makeDotStamp(params.cell, radius, params.colors.known, dpr),
+    makeDotStamp(params.cell, radius, params.colors.studied, dpr),
   ]
-  // One path per state keeps this at three fill calls even for 60k dots.
-  for (const [state, color] of fills) {
-    ctx.fillStyle = color
-    ctx.beginPath()
-    for (let i = 0; i < count; i++) {
-      if (params.states[params.startRank - 1 + i] !== state) continue
-      const x = (i % layout.cols) * layout.pitch
-      const y = Math.floor(i / layout.cols) * layout.pitch
-      ctx.roundRect(x, y, params.cell, params.cell, radius)
-    }
-    ctx.fill()
+  for (let i = 0; i < count; i++) {
+    const x = (i % layout.cols) * layout.pitch
+    const y = Math.floor(i / layout.cols) * layout.pitch
+    ctx.drawImage(stamps[params.states[params.startRank - 1 + i]], x, y, params.cell, params.cell)
   }
   return layout
 }
