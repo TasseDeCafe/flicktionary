@@ -102,8 +102,10 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
     zero-review close-out can still surface backlog claims, the discovery path
     the count-gated footer button can't provide. After everything is
     collected it flips to a passive "Reviews collected" state, keeping a
-    claims re-entry while candidates from the last collect are held in
-    memory.
+    claims re-entry whenever candidates remain — the batch from this mount's
+    collect, or, when no local collect/assert has happened yet (reload,
+    navigation back), the server-rehydrated copy from `getCheckpointClaims`
+    (see `docs/SRS.md` §6c), so a reload can't strand unclaimed candidates.
 - When `LLM-suggested terms` is enabled, the reader also shows **ghost candidates**: passive underlined spans nominated by the LLM for the reading window around the user's current scroll position. Ghosts never use `data-highlight-id`, never intercept pointer events, and have no click handler; the user still selects text normally. If a fresh selection overlaps a ghost, the floating gloss sheet shows an understated **lightbulb icon button** in the sheet header (a `Use suggested term` tooltip on desktop hover). Tapping it atomically swaps the provisional user-selected highlight for the ghost's exact segment/offset span, expands the sky-wash paint to cover the full suggested span, dismisses the ghost, and sends the adopted span through the same background enrichment path as any manual highlight. Because nomination is an LLM call that can take several seconds, the reader's sticky footer shows a `Finding suggestions…` loader (beside the highlight-count hint, left of `Session vocabulary`) whenever a nomination request is in flight or a window's job is still `pending`, so the delay does not read as broken. Turning the pref off disables nomination, ghost fetching/rendering, the adoption action, and the loader.
 
 ## Processing pipeline
