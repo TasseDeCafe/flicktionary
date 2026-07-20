@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { BookmarkCheck, CheckCircle2, Loader2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { CheckpointInfoPopover } from './checkpoint-info-popover'
 
 type Props = {
   pendingCount: number
@@ -31,7 +32,8 @@ export const CheckpointCloseoutCard = ({
   const { t } = useLingui()
 
   return (
-    <div className='mx-auto my-6 max-w-md rounded-xl border p-4 text-center'>
+    <div className='relative mx-auto my-6 max-w-md rounded-xl border p-4 text-center'>
+      {!isCollected && <CheckpointInfoPopover className='absolute top-2 right-2' />}
       {isCollected ? (
         <>
           <CheckCircle2 className='text-muted-foreground mx-auto size-6' />
@@ -45,10 +47,10 @@ export const CheckpointCloseoutCard = ({
           <p className='text-muted-foreground mt-1 text-sm'>
             {pendingCount > 0
               ? plural(pendingCount, {
-                  one: 'Confirm you followed along to collect # review.',
-                  other: 'Confirm you followed along to collect # reviews.',
+                  one: 'Confirm you understood what you read to collect # review.',
+                  other: 'Confirm you understood what you read to collect # reviews.',
                 })
-              : t`Confirm you followed along — words you already know may be waiting.`}
+              : t`Confirm you understood what you read — words you already know may be waiting.`}
           </p>
           <Button size='xl' className='mt-3 w-full' disabled={isCollecting} onClick={onCollect}>
             {isCollecting ? (
@@ -57,7 +59,7 @@ export const CheckpointCloseoutCard = ({
                 {t`Collecting…`}
               </>
             ) : (
-              t`I've followed to the end`
+              t`I understood everything`
             )}
           </Button>
         </>

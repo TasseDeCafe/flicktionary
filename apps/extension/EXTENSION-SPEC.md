@@ -831,8 +831,8 @@ whose click writes the global flag back on.
 
 ### Checkpoint press (collect reviews)
 
-The controls bar hosts the video counterpart of the web reader's "I've
-followed up to here" (scheduling semantics: the web app's `docs/SRS.md` §6b) —
+The controls bar hosts the video counterpart of the web reader's "I
+understood up to here" (scheduling semantics: the web app's `docs/SRS.md` §6b) —
 a BookmarkCheck button beside the power button. It deliberately lives on the
 pause-state controls: the press happens while paused, a deliberate act; the
 evidence is the explicit press, not playback position.

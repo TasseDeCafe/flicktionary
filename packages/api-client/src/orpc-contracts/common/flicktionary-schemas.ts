@@ -428,7 +428,7 @@ export const StudySessionSchema = z.object({
   // until the reader scrolls in a normal session view. Track-relative index.
   furthestReadSegmentIndex: z.number().int().nullable(),
   // Monotonic checkpoint-review pointer: the deepest segment index the user has
-  // explicitly collected reviews up to ("I've followed up to here"). NULL until
+  // explicitly collected reviews up to ("I understood up to here"). NULL until
   // the first checkpoint press. Parallel to furthestReadSegmentIndex, which
   // stays a pure scroll tracker.
   reviewedUntilSegmentIndex: z.number().int().nullable(),

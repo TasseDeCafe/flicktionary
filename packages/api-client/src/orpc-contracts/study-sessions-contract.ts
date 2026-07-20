@@ -82,7 +82,7 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 
-  // Checkpoint reviews ("I've followed up to here") — see docs/SRS.md
+  // Checkpoint reviews ("I understood up to here") — see docs/SRS.md
   // "Checkpoint reviews". Counts what a collect up to `toSegmentIndex` would
   // credit. Read-only and body-less, so it cannot see the client's ephemeral
   // previewed-gloss spans — a slight overcount vs the collect result is

@@ -172,10 +172,10 @@ export const UserGuideView = () => {
         <div className='mt-3 space-y-3 text-sm leading-6'>
           <p>
             <Trans>
-              While you read a session, a button labeled <b>I've followed up to here</b> appears (at the end of the
-              text: <b>I've followed to the end</b>). Pressing it tells Flicktionary you read and understood everything
-              up to that point. Words you saved earlier that appeared in that stretch of text and were due for review
-              are credited as successful reviews automatically — reading counts as practice, so they won't come up as
+              While you read a session, a button labeled <b>I understood up to here</b> appears (at the end of the text:{' '}
+              <b>I understood everything</b>). Pressing it tells Flicktionary you read and understood everything up to
+              that point. Words you saved earlier that appeared in that stretch of text and were due for review are
+              credited as successful reviews automatically — reading counts as practice, so they won't come up as
               flashcards that day. Words you looked up or saved while reading are simply left out; looking something up
               never counts against you.
             </Trans>
