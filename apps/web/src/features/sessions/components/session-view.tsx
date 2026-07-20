@@ -24,9 +24,12 @@ import {
   useSearchSegments,
   useListHighlightsBySession,
   useListGhostsBySession,
+  useMarkKnownPreview,
+  useMarkRemainingKnown,
   useSessionDifficulties,
   useSetReadingPosition,
   useUndoCheckpoint,
+  useUnmarkKnownBySession,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
 import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -47,6 +50,11 @@ import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
+
+// Unprompted sweep offers (the footer dock now, the welcome-back card later)
+// hold back until this many unswept read words exist — no greeting the reader
+// over a handful of words.
+const MARK_KNOWN_OFFER_FLOOR = 20
 
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
   const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
@@ -339,6 +347,69 @@ export const SessionView = () => {
   // claims batch for a dead checkpoint (its re-assert would 404), and the
   // server-rehydrated claims may still name it until the refetch lands.
   const revertedCheckpointIdsRef = useRef<Set<string>>(new Set())
+
+  // --- Mark-known sweep surfaces (dock line + close-out rider) -----------------
+  // Counts only ever cover words actually read: the read span mid-text, the
+  // whole text once the reader reached the end, nothing on a never-scrolled
+  // session. Keyed on the checkpoint preview's debounced pointer (a raw index
+  // would mint a new preview query key per scrolled segment), with a raw
+  // fallback so the first fetch doesn't wait out the debounce window on open.
+  // Gated on an available profile: these are passive offers and must never be
+  // the thing that polls a pending build.
+  const markKnownSupported = sessionDifficulty?.status === 'available'
+  const markKnownSpanIndex = debouncedFurthestIndex ?? furthestReadIndex
+  const hasPartialRead = markKnownSpanIndex != null && maxSegmentIndex != null && markKnownSpanIndex < maxSegmentIndex
+  const isReadToEnd = furthestReadIndex != null && maxSegmentIndex != null && furthestReadIndex >= maxSegmentIndex
+  const spanMarkKnownQuery = useMarkKnownPreview(sessionId, markKnownSupported && hasPartialRead, markKnownSpanIndex)
+  const wholeMarkKnownQuery = useMarkKnownPreview(sessionId, markKnownSupported && isReadToEnd)
+  const spanMarkKnownCount =
+    spanMarkKnownQuery.data?.status === 'ready' ? spanMarkKnownQuery.data.markableLemmaCount : 0
+  const wholeMarkKnownCount =
+    wholeMarkKnownQuery.data?.status === 'ready' ? wholeMarkKnownQuery.data.markableLemmaCount : 0
+  // The dock is an unprompted offer, so it holds back until the count clears
+  // the floor; the close-out rider is a surface the reader deliberately
+  // reached and shows any non-zero count. Read-to-end sessions get no dock —
+  // the close-out card owns the offer there.
+  const markKnownDockCount = hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
+
+  const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
+  const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
+  // Post-sweep feedback lives in the footer slot (not a toast): the count plus
+  // a sweep-scoped Undo, cleared after a few seconds. The difficulty sheet
+  // keeps its own toast — this strip only serves the reader-surface sweeps.
+  const [sweepConfirmation, setSweepConfirmation] = useState<{ count: number; sweepBatchId: string | null } | null>(
+    null
+  )
+  const sweepConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => (sweepConfirmationTimerRef.current ? clearTimeout(sweepConfirmationTimerRef.current) : undefined),
+    []
+  )
+  const handleMarkKnown = (toSegmentIndex: number | null) => {
+    if (isMarkingKnown) return
+    markRemainingKnown(
+      { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
+      {
+        onSuccess: (response) => {
+          setSweepConfirmation({ count: response.data.markedCount, sweepBatchId: response.data.sweepBatchId })
+          if (sweepConfirmationTimerRef.current) clearTimeout(sweepConfirmationTimerRef.current)
+          sweepConfirmationTimerRef.current = setTimeout(() => {
+            sweepConfirmationTimerRef.current = null
+            setSweepConfirmation(null)
+          }, 8000)
+        },
+      }
+    )
+  }
+  const handleUndoSweep = () => {
+    // Sweep-exact: the batch id scopes the delete to exactly the confirmed
+    // press, so undoing sweep 2 never takes sweep 1's marks with it.
+    const sweepBatchId = sweepConfirmation?.sweepBatchId
+    if (sweepBatchId) unmarkKnownBySession({ sessionId, sweepBatchId })
+    if (sweepConfirmationTimerRef.current) clearTimeout(sweepConfirmationTimerRef.current)
+    sweepConfirmationTimerRef.current = null
+    setSweepConfirmation(null)
+  }
 
   const claims = localClaims
     ? localClaims.value
@@ -737,6 +808,18 @@ export const SessionView = () => {
         ) : undefined
       }
     >
+      {/* Coverage meter: solid fill = current expected coverage, animating on
+          sweeps as the payoff. The read-but-unclaimed striped tail needs a
+          projected-coverage number from the backend — shelved, see
+          docs/proposals/mark-known-projected-coverage.md. */}
+      {sessionDifficulty?.status === 'available' && sessionDifficulty.expectedCoveragePercent != null && (
+        <div className='bg-muted h-[3px] shrink-0'>
+          <div
+            className='bg-primary/60 h-full transition-[width] duration-700'
+            style={{ width: `${sessionDifficulty.expectedCoveragePercent}%` }}
+          />
+        </div>
+      )}
       <div className='bg-background border-b px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <TrackSearchBar value={search} onChange={setSearch} />
@@ -787,6 +870,9 @@ export const SessionView = () => {
                       onCollect={handleCollectCheckpoint}
                       claimsCount={claims?.candidates.length ?? 0}
                       onOpenClaims={() => setClaimsOpen(true)}
+                      markKnownCount={wholeMarkKnownCount}
+                      isMarkingKnown={isMarkingKnown}
+                      onMarkKnown={() => handleMarkKnown(null)}
                     />
                   )}
               </>
@@ -839,6 +925,14 @@ export const SessionView = () => {
           checkpointBacklogCount={checkpointBacklogCount}
           onCollectCheckpoint={checkpointSupported ? handleCollectCheckpoint : undefined}
           isCollectingCheckpoint={isCollectingCheckpoint}
+          markKnownDockCount={markKnownDockCount}
+          onMarkKnown={() => handleMarkKnown(markKnownSpanIndex)}
+          isMarkingKnown={isMarkingKnown}
+          sweepConfirmation={
+            sweepConfirmation
+              ? { count: sweepConfirmation.count, onUndo: sweepConfirmation.sweepBatchId ? handleUndoSweep : null }
+              : null
+          }
         />
       )}
 

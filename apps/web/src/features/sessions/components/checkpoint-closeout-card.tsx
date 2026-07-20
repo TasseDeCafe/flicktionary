@@ -14,6 +14,12 @@ type Props = {
   // re-entry after the toast is gone. 0 hides the affordance.
   claimsCount: number
   onOpenClaims: () => void
+  // Mark-known sweep rider (docs/READER-SPEC.md): the whole-text sweep offered
+  // at the natural "finished the text" moment. 0 hides the section — including
+  // while the preview loads or the lemma profile is unavailable.
+  markKnownCount: number
+  isMarkingKnown: boolean
+  onMarkKnown: () => void
 }
 
 // End-of-content close-out (docs/READER-SPEC.md): the common case is finishing
@@ -28,6 +34,9 @@ export const CheckpointCloseoutCard = ({
   onCollect,
   claimsCount,
   onOpenClaims,
+  markKnownCount,
+  isMarkingKnown,
+  onMarkKnown,
 }: Props) => {
   const { t } = useLingui()
 
@@ -71,6 +80,20 @@ export const CheckpointCloseoutCard = ({
             other: '# words you may already know',
           })}
         </Button>
+      )}
+      {markKnownCount > 0 && (
+        <div className='mt-4 border-t pt-3'>
+          <p className='text-sm'>
+            {plural(markKnownCount, {
+              one: 'Already know the # remaining word?',
+              other: 'Already know the # remaining words?',
+            })}
+          </p>
+          <Button variant='outline' size='xl' className='mt-2 w-full' disabled={isMarkingKnown} onClick={onMarkKnown}>
+            {isMarkingKnown ? t`Marking…` : t`Mark as known`}
+          </Button>
+          <p className='text-muted-foreground mt-2 text-xs'>{t`You can un-mark any word later.`}</p>
+        </div>
       )}
     </div>
   )
