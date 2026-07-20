@@ -1,10 +1,11 @@
-import { BookmarkCheck, Check, ChevronUp, Loader2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { BookmarkCheck, Check, ChevronUp, Loader2, WholeWord } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { useProcessStudySession } from '../api/sessions-hooks'
-import { CheckpointInfoPopover } from './checkpoint-info-popover'
+import type { DeclarationPillState } from './declaration-pill-state'
 
 type Props = {
   sessionId: string
@@ -12,42 +13,118 @@ type Props = {
   // Shown as a subtle loader so the multi-second wait doesn't look broken.
   isGeneratingCandidates?: boolean
   onOpenSessionVocabulary?: () => void
-  // Checkpoint reviews (docs/READER-SPEC.md). The button renders when
-  // pending + backlog > 0 — not pending alone, or backlog-only spans would
-  // stay undiscoverable. Omitted entirely (undefined handler) for unsupported
-  // languages.
-  checkpointPendingCount?: number
-  checkpointBacklogCount?: number
-  onCollectCheckpoint?: () => void
-  isCollectingCheckpoint?: boolean
-  // Mark-known dock (docs/READER-SPEC.md): the quiet mid-text entry to the
-  // sweep. The resting line deliberately carries no number — the count appears
-  // only inside the opened panel, next to the deliberate button. 0 hides it.
-  // Open state is controlled by the caller, which collapses it on scroll.
-  markKnownDockCount?: number
-  dockOpen?: boolean
-  onDockOpenChange?: (open: boolean) => void
-  onMarkKnown?: () => void
-  isMarkingKnown?: boolean
-  // Post-sweep confirmation: takes the dock line's slot for a few seconds with
-  // a sweep-scoped Undo, then the footer returns to resting. onUndo is null
-  // when the sweep produced no batch to revert.
+  // The declaration pill (docs/READER-SPEC.md): the single ambient entry to
+  // the merged checkpoint + mark-known sheet. Derived in session-view via
+  // deriveDeclarationPillState.
+  pillState: DeclarationPillState
+  onOpenDeclarationSheet?: () => void
+  // Post-sweep confirmation for the welcome-back card and close-out sweeps
+  // (the sheet's own sweeps confirm in-sheet): takes the pill's slot for a few
+  // seconds with a sweep-scoped Undo. onUndo is null when the sweep produced
+  // no batch to revert.
   sweepConfirmation?: { count: number; onUndo: (() => void) | null } | null
+}
+
+// Rolls the pill's count to a new value: the old number slides up and out
+// while the new one slides in from below (keyframes in app/index.css). The
+// outgoing value needs its own state — the prop alone can't render both
+// numbers during the crossfade. Width is reserved via min-w so counts under
+// four digits never jitter the pill.
+const AnimatedCount = ({ value }: { value: number }) => {
+  const { i18n } = useLingui()
+  const [display, setDisplay] = useState<{ current: number; previous: number | null }>({
+    current: value,
+    previous: null,
+  })
+  // Render-phase adjustment (the "storing information from previous renders"
+  // pattern): the outgoing value must survive one animation's worth of time
+  // after the prop already moved on.
+  if (display.current !== value) {
+    setDisplay({ current: value, previous: display.current })
+  }
+  // Timeout fallback for when animationend never fires (reduced motion).
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (display.previous == null) return
+    clearTimerRef.current = setTimeout(() => setDisplay((prev) => ({ ...prev, previous: null })), 600)
+    return () => (clearTimerRef.current ? clearTimeout(clearTimerRef.current) : undefined)
+  }, [display])
+
+  return (
+    <span className='relative inline-block min-w-[2.125rem] overflow-hidden text-center tabular-nums'>
+      {display.previous != null && (
+        <span key={`out-${display.previous}`} aria-hidden className='count-tick-out absolute inset-0'>
+          {i18n.number(display.previous)}
+        </span>
+      )}
+      <span
+        key={`in-${display.current}`}
+        className={cn('inline-block', display.previous != null && 'count-tick-in')}
+        onAnimationEnd={() => setDisplay((prev) => ({ ...prev, previous: null }))}
+      >
+        {i18n.number(display.current)}
+      </span>
+    </span>
+  )
+}
+
+const pillClasses = 'flex h-10 items-center gap-1.5 rounded-full border bg-muted/50 px-3.5 text-sm font-semibold'
+
+const DeclarationPill = ({ state, onOpen }: { state: DeclarationPillState; onOpen?: () => void }) => {
+  const { t } = useLingui()
+
+  if (state.kind === 'hidden') return null
+
+  if (state.kind === 'allKnown') {
+    return (
+      <span className='text-muted-foreground flex h-10 items-center gap-1.5 text-sm font-medium'>
+        <Check className='size-4' />
+        {t`All known`}
+      </span>
+    )
+  }
+
+  if (state.kind === 'dimmed') {
+    return (
+      <span aria-hidden className={cn(pillClasses, 'opacity-45')}>
+        <WholeWord className='text-muted-foreground size-4' />
+        <span className='min-w-[2.125rem] text-center tabular-nums'>0</span>
+        <ChevronUp className='text-muted-foreground size-3' />
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type='button'
+      aria-label={state.kind === 'sweep' ? t`Words you've read` : t`I understood up to here`}
+      className={cn(pillClasses, 'hover:bg-muted/80 active:bg-muted cursor-pointer transition-colors')}
+      onClick={onOpen}
+    >
+      {state.kind === 'sweep' ? (
+        <>
+          <WholeWord className='text-muted-foreground size-4' />
+          <AnimatedCount value={state.count} />
+        </>
+      ) : (
+        <>
+          <BookmarkCheck className='text-muted-foreground size-4' />
+          {state.pendingCount > 0 && (
+            <span className='min-w-[1.25rem] text-center tabular-nums'>{state.pendingCount}</span>
+          )}
+        </>
+      )}
+      <ChevronUp className='text-muted-foreground size-3' />
+    </button>
+  )
 }
 
 export const SessionVocabularyFooter = ({
   sessionId,
   isGeneratingCandidates = false,
   onOpenSessionVocabulary,
-  checkpointPendingCount = 0,
-  checkpointBacklogCount = 0,
-  onCollectCheckpoint,
-  isCollectingCheckpoint = false,
-  markKnownDockCount = 0,
-  dockOpen = false,
-  onDockOpenChange,
-  onMarkKnown,
-  isMarkingKnown = false,
+  pillState,
+  onOpenDeclarationSheet,
   sweepConfirmation = null,
 }: Props) => {
   const { t } = useLingui()
@@ -62,119 +139,42 @@ export const SessionVocabularyFooter = ({
     mutate({ sessionId }, { onSuccess: () => onOpenSessionVocabulary?.() })
   }
 
-  // The label is the comprehension assertion, not the reward — the pending
-  // count rides along as a passive badge and "N reviews collected" is the
-  // result toast, so the button never invites pressing without the assertion
-  // being true. The (i) popover explains what the press actually does.
-  const showCheckpoint = !!onCollectCheckpoint && checkpointPendingCount + checkpointBacklogCount > 0
-
-  // The confirmation strip owns the slot while present, so the offer and its
-  // outcome never show at once.
-  const showDock = !sweepConfirmation && markKnownDockCount > 0 && !!onMarkKnown
-  const isDockExpanded = showDock && dockOpen
-
+  // One fixed-height row: the reading surface must never shift because of the
+  // footer, so nothing here expands in place — the pill opens an overlay. The
+  // left slot shows exactly one thing at a time (confirmation > generating >
+  // pill) to keep the row stable.
   return (
     <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
-      <div className='mx-auto flex max-w-4xl flex-col gap-2'>
-        {/* Expanded dock panel: the bar is bottom-anchored so it grows upward
-            in place — the exercise layout's feedback-slot pattern
-            (practice/components/exercise-layout.tsx) — instead of floating a
-            popover over the text. */}
-        {isDockExpanded && (
-          <div className='w-full pb-1 sm:max-w-sm'>
-            <div className='text-muted-foreground text-[10px] font-semibold tracking-[0.08em] uppercase'>
-              {t`Words you've read`}
-            </div>
-            <p className='mt-2 text-sm'>
-              {plural(markKnownDockCount, {
-                one: "You've read # word that isn't marked as known yet.",
-                other: "You've read # words that aren't marked as known yet.",
-              })}
-            </p>
-            <Button
-              className='mt-3 w-full'
-              disabled={isMarkingKnown}
-              onClick={() => {
-                onDockOpenChange?.(false)
-                onMarkKnown?.()
-              }}
-            >
-              {isMarkingKnown
-                ? t`Marking…`
-                : plural(markKnownDockCount, { one: 'Mark the # word as known', other: 'Mark all # as known' })}
-            </Button>
-            <p className='text-muted-foreground mt-2 text-xs'>{t`You can un-mark any word later.`}</p>
-          </div>
-        )}
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
-          {/* Kept even when empty so justify-between keeps the buttons on the
-              right. The highlight count lives in the reader header. */}
-          <span className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
-            {sweepConfirmation && (
-              <span className='flex items-center gap-2'>
-                <span className='flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300'>
-                  <Check className='size-4' />
-                  {plural(sweepConfirmation.count, { one: '# word marked as known', other: '# words marked as known' })}
-                </span>
-                {sweepConfirmation.onUndo && (
-                  <button
-                    type='button'
-                    className='hover:text-foreground active:text-foreground cursor-pointer font-medium underline underline-offset-2 transition-colors'
-                    onClick={sweepConfirmation.onUndo}
-                  >
-                    {t`Undo`}
-                  </button>
-                )}
+      <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
+        <span className='text-muted-foreground flex min-w-0 items-center text-sm'>
+          {sweepConfirmation ? (
+            <span className='flex items-center gap-2'>
+              <span className='flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300'>
+                <Check className='size-4 shrink-0' />
+                {plural(sweepConfirmation.count, { one: '# word marked as known', other: '# words marked as known' })}
               </span>
-            )}
-            {showDock && (
-              <button
-                type='button'
-                aria-expanded={dockOpen}
-                className='hover:text-foreground active:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors'
-                onClick={() => onDockOpenChange?.(!dockOpen)}
-              >
-                {t`Already know the words you've read?`}
-                <ChevronUp className={cn('size-3.5 transition-transform', dockOpen && 'rotate-180')} />
-              </button>
-            )}
-            {isGeneratingCandidates && (
-              <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
-                <Loader2 className='size-3.5 animate-spin' />
-                {t`Finding suggestions…`}
-              </span>
-            )}
-          </span>
-          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-            {showCheckpoint && (
-              <div className='flex w-full items-center gap-1 sm:w-auto'>
-                <Button
-                  size='xl'
-                  variant='secondary'
-                  disabled={isCollectingCheckpoint}
-                  onClick={onCollectCheckpoint}
-                  className='flex-1'
+              {sweepConfirmation.onUndo && (
+                <button
+                  type='button'
+                  className='hover:text-foreground active:text-foreground cursor-pointer font-medium underline underline-offset-2 transition-colors'
+                  onClick={sweepConfirmation.onUndo}
                 >
-                  {isCollectingCheckpoint ? (
-                    <Loader2 className='size-4 animate-spin' />
-                  ) : (
-                    <BookmarkCheck className='size-4' />
-                  )}
-                  {t`I understood up to here`}
-                  {checkpointPendingCount > 0 && (
-                    <span className='bg-foreground/10 ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums'>
-                      {checkpointPendingCount}
-                    </span>
-                  )}
-                </Button>
-                <CheckpointInfoPopover />
-              </div>
-            )}
-            <Button size='xl' disabled={isPending} onClick={handleClick} className='w-full sm:w-auto'>
-              {label}
-            </Button>
-          </div>
-        </div>
+                  {t`Undo`}
+                </button>
+              )}
+            </span>
+          ) : isGeneratingCandidates ? (
+            <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
+              <Loader2 className='size-3.5 animate-spin' />
+              {t`Finding suggestions…`}
+            </span>
+          ) : (
+            <DeclarationPill state={pillState} onOpen={onOpenDeclarationSheet} />
+          )}
+        </span>
+        <Button size='xl' disabled={isPending} onClick={handleClick} className='shrink-0'>
+          {label}
+        </Button>
       </div>
     </div>
   )

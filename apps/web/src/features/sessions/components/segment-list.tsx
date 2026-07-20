@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { SegmentGhostRange, SegmentHighlightRange } from '../utils/word-highlight-spans'
 import { SegmentRow } from './segment-row'
@@ -47,11 +46,13 @@ type Props = {
   ghostRangesBySegmentId?: Map<string, SegmentGhostRange[]>
   targetLanguage: string
   flashSegmentId?: string | null
-  // The "read up to here" bookmark divider, rendered below this row (only when
-  // the row is in the visible list). `placing` styles the pending position the
-  // placement mode is previewing in the sky tone of the selection paint.
+  // The reading-position divider, rendered below this row (only when the row
+  // is in the visible list). `placing` styles the pending position the
+  // placement mode is previewing in the sky tone of the selection paint;
+  // `resumed` is the sitting-open resting boundary ("Resumed here"); `manual`
+  // is a bookmark the reader placed this sitting ("Read up to here").
   readPositionSegmentId?: string | null
-  readPositionVariant?: 'set' | 'placing'
+  readPositionVariant?: 'resumed' | 'manual' | 'placing'
   // The welcome-back offer, rendered below this row (after the divider when
   // both anchor to the same line).
   welcomeCardSegmentId?: string | null
@@ -65,7 +66,7 @@ export const SegmentList = ({
   targetLanguage,
   flashSegmentId,
   readPositionSegmentId,
-  readPositionVariant = 'set',
+  readPositionVariant = 'resumed',
   welcomeCardSegmentId,
   welcomeCard,
 }: Props) => {
@@ -83,18 +84,26 @@ export const SegmentList = ({
             targetLanguage={targetLanguage}
             flash={flashSegmentId === s.id}
           />
-          {readPositionSegmentId === s.id && (
-            <div
-              className={cn(
-                'border-t px-3 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase',
-                readPositionVariant === 'placing'
-                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
-                  : 'bg-muted/40 text-muted-foreground'
-              )}
-            >
-              {t`Read up to here`}
-            </div>
-          )}
+          {readPositionSegmentId === s.id &&
+            (readPositionVariant === 'placing' ? (
+              <div className='border-t bg-sky-50 px-3 py-1.5 text-[10px] font-semibold tracking-[0.08em] text-sky-700 uppercase dark:bg-sky-950 dark:text-sky-300'>
+                {t`Read up to here`}
+              </div>
+            ) : (
+              // The resting divider stays mounted for the whole sitting
+              // (WhatsApp's unread-messages bar), so its copy must stay true
+              // after the reader passes it: "Resumed here" for the
+              // sitting-open boundary, "Read up to here" for a manual set
+              // (nothing was resumed there). Quiet hairline treatment:
+              // findable when scrolling back, invisible while reading past.
+              <div className='flex items-center gap-2.5 py-1.5'>
+                <span className='bg-border h-px flex-1' />
+                <span className='text-muted-foreground text-[10px] font-semibold tracking-[0.09em] uppercase'>
+                  {readPositionVariant === 'manual' ? t`Read up to here` : t`Resumed here`}
+                </span>
+                <span className='bg-border h-px flex-1' />
+              </div>
+            ))}
           {welcomeCardSegmentId === s.id && welcomeCard}
         </div>
       ))}
