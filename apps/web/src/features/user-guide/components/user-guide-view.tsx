@@ -166,6 +166,31 @@ export const UserGuideView = () => {
           </ul>
         </div>
 
+        <SectionTitle id='checkpoint-reviews'>
+          <Trans>Collecting reviews while you read</Trans>
+        </SectionTitle>
+        <div className='mt-3 space-y-3 text-sm leading-6'>
+          <p>
+            <Trans>
+              While you read a session, a button labeled <b>I've followed up to here</b> appears (at the end of the
+              text: <b>I've followed to the end</b>). Pressing it tells Flicktionary you read and understood everything
+              up to that point. Words you saved earlier that appeared in that stretch of text and were due for review
+              are credited as successful reviews automatically — reading counts as practice, so they won't come up as
+              flashcards that day. Words you looked up or saved while reading are simply left out; looking something up
+              never counts against you.
+            </Trans>
+          </p>
+          <p>
+            <Trans>
+              Afterwards you may be offered a second, optional step: <b>words you may already know</b>. These are words
+              you saved but never practiced that appeared in what you just read. Confirming marks them as known, so they
+              skip the beginner learning steps — each one gets a first check-in about three weeks later to make sure.
+              You can always dismiss this, and there's an undo right after confirming; declining costs nothing, the
+              words just enter practice the normal way later.
+            </Trans>
+          </p>
+        </div>
+
         <SectionTitle id='settings'>
           <Trans>Settings and keyboard shortcuts</Trans>
         </SectionTitle>

@@ -468,6 +468,10 @@ msgstr "Avancé — utilisation flexible et efficace dans des contextes complexe
 msgid "Adverb"
 msgstr "Adverbe"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx
+msgid "Afterwards you may be offered a second, optional step: <0>words you may already know</0>. These are words you saved but never practiced that appeared in what you just read. Confirming marks them as known, so they skip the beginner learning steps — each one gets a first check-in about three weeks later to make sure. You can always dismiss this, and there's an undo right after confirming; declining costs nothing, the words just enter practice the normal way later."
+msgstr "Par la suite, une deuxième étape facultative peut vous être proposée : <0>mots que vous connaissez peut-être déjà</0>. Il s'agit de mots que vous avez enregistrés mais jamais pratiqués qui sont apparus dans ce que vous venez de lire. La confirmation les marque comme connus, ils sautent donc les étapes d'apprentissage débutant — chacun reçoit un premier contrôle environ trois semaines plus tard pour s'en assurer. Vous pouvez toujours ignorer cette étape, et il y a une annulation juste après la confirmation ; refuser ne coûte rien, les mots entreront simplement en pratique de manière normale plus tard."
+
 #: packages/ui/src/components/rate-buttons.tsx
 msgid "Again"
 msgstr "Encore"
@@ -933,6 +937,10 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Close"
 msgstr "Fermer"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx
+msgid "Collecting reviews while you read"
+msgstr "Collecter des révisions en lisant"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "Collecting…"
@@ -5350,6 +5358,10 @@ msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Quelle prononciation afficher pour les cartes de vocabulaire anglais."
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx
+msgid "While you read a session, a button labeled <0>I've followed up to here</0> appears (at the end of the text: <1>I've followed to the end</1>). Pressing it tells Flicktionary you read and understood everything up to that point. Words you saved earlier that appeared in that stretch of text and were due for review are credited as successful reviews automatically — reading counts as practice, so they won't come up as flashcards that day. Words you looked up or saved while reading are simply left out; looking something up never counts against you."
+msgstr "Pendant que vous lisez une session, un bouton intitulé <0>J'ai suivi jusqu'ici</0> apparaît (à la fin du texte : <1>J'ai suivi jusqu'à la fin</1>). En appuyant dessus, vous indiquez à Flicktionary que vous avez lu et compris tout jusqu'à ce point. Les mots que vous avez sauvegardés précédemment qui sont apparus dans cette portion de texte et qui devaient être révisés sont automatiquement comptabilisés comme des révisions réussies — la lecture compte comme de la pratique, donc ils n'apparaîtront pas en cartes mémoire ce jour-là. Les mots que vous avez recherchés ou sauvegardés pendant la lecture sont simplement exclus ; rechercher quelque chose ne compte jamais contre vous."
 
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Why does it appear in this particular form here?"
