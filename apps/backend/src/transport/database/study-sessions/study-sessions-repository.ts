@@ -608,6 +608,18 @@ const updateReadingProgress = async (sessionId: string, userId: string, segmentI
   return result.count === 1
 }
 
+// The manual bookmark ("set reading position"): a plain SET, deliberately
+// non-monotonic — the explicit press may pull the pointer backwards to correct
+// scroll inflation, or push it forwards to assert previously-read content.
+const setReadingPosition = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.study_sessions
+    SET furthest_read_segment_index = ${segmentIndex}
+    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
+  `
+  return result.count === 1
+}
+
 // Checkpoint-review pointer methods (docs/SRS.md "Checkpoint reviews").
 // reviewed_until_segment_index is monotonic like furthest_read but only the
 // explicit checkpoint press advances it; restore (undo) is the sole
@@ -808,6 +820,7 @@ export interface StudySessionsRepositoryInterface {
   hasVisibleSession: (userId: string) => Promise<boolean>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
   updateReadingProgress: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
+  setReadingPosition: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
   lockReviewedUntilForUpdate: (
     sessionId: string,
     userId: string,
@@ -847,6 +860,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     hasVisibleSession,
     updateContextBlob,
     updateReadingProgress,
+    setReadingPosition,
     lockReviewedUntilForUpdate,
     advanceReviewedUntil,
     restoreReviewedUntil,

@@ -79,6 +79,60 @@ describe('study-sessions-router', () => {
     expect(listed.body.data.map((s: { id: string }) => s.id)).toContain(sessionId)
   })
 
+  test('reading position: advance is monotonic, the explicit set is not', async () => {
+    const { token } = await onboardedUser()
+    const imported = await request(testApp)
+      .post('/api/v1/study-sessions/import-text')
+      .set(buildAuthorizationHeaders(token))
+      .send({ title: 'Position', text: 'Der Tisch ist groß.\nDie Katze schläft.\nDer Hund bellt laut.' })
+    expect(imported.status).toBe(200)
+    const { sessionId } = imported.body.data
+
+    const furthestReadIndex = async (): Promise<number | null> => {
+      const fetched = await request(testApp)
+        .get(`/api/v1/study-sessions/${sessionId}`)
+        .set(buildAuthorizationHeaders(token))
+      expect(fetched.status).toBe(200)
+      return fetched.body.data.furthestReadSegmentIndex
+    }
+
+    // The throttled advance path keeps the pointer monotonic: a late lower
+    // write can't walk it backwards.
+    const advanced = await request(testApp)
+      .post(`/api/v1/study-sessions/${sessionId}/reading-progress`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ segmentIndex: 2 })
+    expect(advanced.status).toBe(200)
+    await request(testApp)
+      .post(`/api/v1/study-sessions/${sessionId}/reading-progress`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ segmentIndex: 1 })
+    expect(await furthestReadIndex()).toBe(2)
+
+    // The explicit bookmark set may move it backwards.
+    const set = await request(testApp)
+      .put(`/api/v1/study-sessions/${sessionId}/reading-position`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ segmentIndex: 0 })
+    expect(set.status).toBe(200)
+    expect(await furthestReadIndex()).toBe(0)
+
+    // Another user's session is invisible to the set.
+    const stranger = await onboardedUser()
+    const foreign = await request(testApp)
+      .put(`/api/v1/study-sessions/${sessionId}/reading-position`)
+      .set(buildAuthorizationHeaders(stranger.token))
+      .send({ segmentIndex: 1 })
+    expect(foreign.status).toBe(404)
+    expect(await furthestReadIndex()).toBe(0)
+
+    const unauthenticated = await request(testApp)
+      .put(`/api/v1/study-sessions/${sessionId}/reading-position`)
+      .set({ Authorization: 'Bearer wrong-token' })
+      .send({ segmentIndex: 1 })
+    expect(unauthenticated.status).toBe(401)
+  })
+
   test('returns 422 MISSING_CEFR when the user has no level for the detected language', async () => {
     const { id, token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })

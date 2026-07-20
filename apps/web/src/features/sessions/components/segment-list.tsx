@@ -1,3 +1,5 @@
+import { useLingui } from '@lingui/react/macro'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { SegmentGhostRange, SegmentHighlightRange } from '../utils/word-highlight-spans'
 import { SegmentRow } from './segment-row'
@@ -44,6 +46,11 @@ type Props = {
   ghostRangesBySegmentId?: Map<string, SegmentGhostRange[]>
   targetLanguage: string
   flashSegmentId?: string | null
+  // The "read up to here" bookmark divider, rendered below this row (only when
+  // the row is in the visible list). `placing` styles the pending position the
+  // placement mode is previewing in the sky tone of the selection paint.
+  readPositionSegmentId?: string | null
+  readPositionVariant?: 'set' | 'placing'
 }
 
 export const SegmentList = ({
@@ -52,20 +59,36 @@ export const SegmentList = ({
   ghostRangesBySegmentId,
   targetLanguage,
   flashSegmentId,
+  readPositionSegmentId,
+  readPositionVariant = 'set',
 }: Props) => {
+  const { t } = useLingui()
   return (
     <div className='flex flex-col divide-y'>
       {segments.map((s) => (
-        <SegmentRow
-          key={s.id}
-          id={s.id}
-          text={s.text}
-          startMs={s.startMs}
-          ranges={rangesBySegmentId?.get(s.id)}
-          ghostRanges={ghostRangesBySegmentId?.get(s.id)}
-          targetLanguage={targetLanguage}
-          flash={flashSegmentId === s.id}
-        />
+        <div key={s.id} className='flex flex-col'>
+          <SegmentRow
+            id={s.id}
+            text={s.text}
+            startMs={s.startMs}
+            ranges={rangesBySegmentId?.get(s.id)}
+            ghostRanges={ghostRangesBySegmentId?.get(s.id)}
+            targetLanguage={targetLanguage}
+            flash={flashSegmentId === s.id}
+          />
+          {readPositionSegmentId === s.id && (
+            <div
+              className={cn(
+                'border-t px-3 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase',
+                readPositionVariant === 'placing'
+                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
+                  : 'bg-muted/40 text-muted-foreground'
+              )}
+            >
+              {t`Read up to here`}
+            </div>
+          )}
+        </div>
       ))}
     </div>
   )
