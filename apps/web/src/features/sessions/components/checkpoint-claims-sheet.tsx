@@ -92,7 +92,11 @@ export const CheckpointClaimsSheet = ({
 
   return (
     <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
-      <OverlayContent>
+      {/* Desktop (Dialog): the centered dialog has no intrinsic height cap, so
+          an expanded candidate list would overflow the viewport with no way to
+          scroll — cap at 80vh and let the dialog itself scroll. The mobile
+          Drawer already scrolls its own body. */}
+      <OverlayContent className='sm:max-h-[80vh] sm:overflow-y-auto'>
         <OverlayHeader>
           <OverlayTitle>
             {plural(count, {
