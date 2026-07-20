@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -50,8 +51,14 @@ export const SessionDifficultySheet = ({
 
   const hasPartialRead =
     furthestReadSegmentIndex != null && maxSegmentIndex != null && furthestReadSegmentIndex < maxSegmentIndex
-  const { data: wholePreview } = useMarkKnownPreview(sessionId, open)
-  const { data: spanPreview } = useMarkKnownPreview(sessionId, open && hasPartialRead, furthestReadSegmentIndex)
+  const wholePreviewQuery = useMarkKnownPreview(sessionId, open)
+  const spanPreviewQuery = useMarkKnownPreview(sessionId, open && hasPartialRead, furthestReadSegmentIndex)
+  const wholePreview = wholePreviewQuery.data
+  const spanPreview = spanPreviewQuery.data
+  // First open only (reopens render instantly from the query cache): until the
+  // preview lands we can't know which sweep CTAs exist, so hold their space
+  // with skeletons instead of letting the footer reflow around a late button.
+  const isPreviewLoading = wholePreviewQuery.isLoading || (hasPartialRead && spanPreviewQuery.isLoading)
   const { mutate: markRemainingKnown, isPending: isMarking } = useMarkRemainingKnown(sessionId)
   const { mutate: unmarkBySession, isPending: isUnmarking } = useUnmarkKnownBySession(sessionId)
 
@@ -140,6 +147,13 @@ export const SessionDifficultySheet = ({
           {difficulty?.status === 'pending' && (
             <p className='text-muted-foreground text-sm'>{t`Still analyzing this text — check back in a moment.`}</p>
           )}
+          {isPreviewLoading && (
+            <div className='flex flex-col gap-2 py-0.5'>
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-11/12' />
+              <Skeleton className='h-4 w-2/5' />
+            </div>
+          )}
           {(spanCount > 0 || wholeCount > 0) && (
             <p className='text-muted-foreground text-sm'>
               {hasPartialRead
@@ -189,27 +203,31 @@ export const SessionDifficultySheet = ({
               would silently promote "assert the words I have NOT read" to the
               primary action. The whole-text sweep remains the demoted text
               action above. */}
-          {hasPartialRead
-            ? spanCount > 0 && (
-                <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isBusy}>
-                  {isMarking
-                    ? t`Marking…`
-                    : plural(spanCount, {
-                        one: 'Mark the # word read so far as known',
-                        other: 'Mark the # words read so far as known',
-                      })}
-                </Button>
-              )
-            : wholeCount > 0 && (
-                <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isBusy}>
-                  {isMarking
-                    ? t`Marking…`
-                    : plural(wholeCount, {
-                        one: 'Mark the remaining # word as known',
-                        other: 'Mark the remaining # words as known',
-                      })}
-                </Button>
-              )}
+          {isPreviewLoading ? (
+            <Skeleton className='h-12 w-full sm:flex-1' />
+          ) : hasPartialRead ? (
+            spanCount > 0 && (
+              <Button size='xl' onClick={() => handleMarkKnown(furthestReadSegmentIndex)} disabled={isBusy}>
+                {isMarking
+                  ? t`Marking…`
+                  : plural(spanCount, {
+                      one: 'Mark the # word read so far as known',
+                      other: 'Mark the # words read so far as known',
+                    })}
+              </Button>
+            )
+          ) : (
+            wholeCount > 0 && (
+              <Button size='xl' onClick={() => handleMarkKnown(null)} disabled={isBusy}>
+                {isMarking
+                  ? t`Marking…`
+                  : plural(wholeCount, {
+                      one: 'Mark the remaining # word as known',
+                      other: 'Mark the remaining # words as known',
+                    })}
+              </Button>
+            )
+          )}
         </OverlayFooter>
       </OverlayContent>
     </ResponsiveOverlay>
