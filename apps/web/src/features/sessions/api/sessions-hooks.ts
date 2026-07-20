@@ -369,6 +369,9 @@ const checkpointInvalidates = (sessionId: string) => [
   ...difficultyInvalidates(),
   orpcQuery.studySessions.get.key({ input: { sessionId } }),
   orpcQuery.studySessions.getCheckpointPreview.key(),
+  // Collect mints a checkpoint, assert/undo change which candidates are still
+  // assertable — the claims rehydration query must track all of them.
+  orpcQuery.studySessions.getCheckpointClaims.key({ input: { sessionId } }),
 ]
 
 // Footer badge counts. The CALLER debounces `toSegmentIndex` (a raw
@@ -381,6 +384,22 @@ export const useCheckpointPreview = (sessionId: string, toSegmentIndex: number |
       enabled: toSegmentIndex != null,
       select: (response) => response.data,
       // Passive badge data — never toast for it.
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+// The latest live checkpoint's still-assertable backlog candidates — the
+// claims sheet's data source across remounts (the collect response only feeds
+// the mount that pressed the button; a reload would otherwise lose the
+// re-entry forever).
+export const useCheckpointClaims = (sessionId: string, enabled: boolean) => {
+  return useQuery(
+    orpcQuery.studySessions.getCheckpointClaims.queryOptions({
+      input: { sessionId },
+      enabled,
+      select: (response) => response.data,
+      // Passive rehydration data — never toast for it.
       meta: { showErrorToast: false },
     })
   )
