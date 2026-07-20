@@ -378,6 +378,18 @@ export const SessionView = () => {
     welcomeAnchorIndexRef.current = session.furthestReadSegmentIndex ?? null
   }
   const welcomeAnchorIndex = welcomeAnchorIndexRef.current ?? null
+  // The divider marks a RESTING boundary only: where this sitting opened, or
+  // where a manual set placed it. Once the reader reads past it the pointer
+  // advances beyond the anchor and the divider disappears for the rest of the
+  // sitting — a marker chasing the live reading edge would shift content under
+  // the thumb on every throttled progress write. Next mount it rests at the
+  // new frontier.
+  const restingDividerIndexRef = useRef<number | null | undefined>(undefined)
+  if (restingDividerIndexRef.current === undefined && session) {
+    restingDividerIndexRef.current = session.furthestReadSegmentIndex ?? null
+  }
+  const showRestingDivider =
+    restingDividerIndexRef.current != null && furthestReadIndex === restingDividerIndexRef.current
   const [welcomeDismissed, setWelcomeDismissed] = useState(false)
   // Suppressed on deep-link opens: following a word into the text isn't
   // "returning to read".
@@ -740,6 +752,9 @@ export const SessionView = () => {
     setIsPlacingBookmark(false)
     isPlacingBookmarkRef.current = false
     autoTrackPinRef.current = placementIndex
+    // A manual set is the new resting boundary — the divider stays put there
+    // until the reader reads past it.
+    restingDividerIndexRef.current = placementIndex
   }
 
   const closeToSessions = () => {
@@ -786,9 +801,13 @@ export const SessionView = () => {
   }
 
   // Where the divider renders: the pending preview while placing (visible even
-  // in the search-filtered list, if its row is), else the persisted pointer on
-  // a normal (unfiltered) read.
-  const readPositionSegmentId = isPlacingBookmark ? placementSegmentId : isSearching ? null : furthestReadSegmentId
+  // in the search-filtered list, if its row is), else the resting boundary on
+  // a normal (unfiltered) read — never the live, advancing pointer.
+  const readPositionSegmentId = isPlacingBookmark
+    ? placementSegmentId
+    : isSearching || !showRestingDivider
+      ? null
+      : furthestReadSegmentId
 
   const sourceTitle = session.contentSourceTitle ?? t`Untitled`
   const titleNode = (
