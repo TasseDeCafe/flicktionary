@@ -438,13 +438,31 @@ export const SessionView = () => {
     restoredScrollTopRef.current = scrollEl.scrollTop
   }, [showWelcomeCard, scrollEl])
 
+  // The card stays mounted (undismissed, scrolled away) for the whole sitting,
+  // so "the offer never appears twice at once" must key on it being ON SCREEN
+  // — suppressing the dock for as long as the card merely exists would hide
+  // the dock for the rest of the sitting. Starts true: when the card first
+  // renders it's at the revealed resume frame, in view.
+  const [welcomeCardInView, setWelcomeCardInView] = useState(true)
+  useEffect(() => {
+    if (!showWelcomeCard || !scrollEl || isSearching) return
+    const card = scrollEl.querySelector('[data-welcome-card]')
+    if (!card) return
+    const observer = new IntersectionObserver(([entry]) => setWelcomeCardInView(entry?.isIntersecting ?? false), {
+      root: scrollEl,
+    })
+    observer.observe(card)
+    return () => observer.disconnect()
+  }, [showWelcomeCard, scrollEl, isSearching])
+  const welcomeCardBlocksDock = showWelcomeCard && welcomeCardInView
+
   // The dock is an unprompted offer, so it holds back until the count clears
   // the floor, and stands down while the welcome-back card is on screen (the
   // offer never appears twice at once); the close-out rider is a surface the
   // reader deliberately reached and shows any non-zero count. Read-to-end
   // sessions get no dock — the close-out card owns the offer there.
   const markKnownDockCount =
-    !showWelcomeCard && hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
+    !welcomeCardBlocksDock && hasPartialRead && spanMarkKnownCount >= MARK_KNOWN_OFFER_FLOOR ? spanMarkKnownCount : 0
 
   const { mutate: markRemainingKnown, isPending: isMarkingKnown } = useMarkRemainingKnown(sessionId)
   const { mutate: unmarkKnownBySession } = useUnmarkKnownBySession(sessionId)
