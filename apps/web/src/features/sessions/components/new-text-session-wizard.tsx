@@ -81,6 +81,11 @@ export const NewTextSessionWizard = () => {
       },
       {
         onSuccess: (response) => {
+          // Find-or-create: same track + target language resolves to the
+          // existing session, with all its highlights intact.
+          if (response.alreadyExisted) {
+            toast.info(t`You already had a session for this — picking up where you left off.`)
+          }
           void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
         },
       }

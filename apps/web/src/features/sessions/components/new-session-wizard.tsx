@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { toast } from 'sonner'
 import { Clapperboard, Search, Tv, Upload } from 'lucide-react'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
@@ -148,6 +149,11 @@ export const NewSessionWizard = () => {
       },
       {
         onSuccess: (response) => {
+          // Find-or-create: same track + target language resolves to the
+          // existing session, with all its highlights intact.
+          if (response.alreadyExisted) {
+            toast.info(t`You already had a session for this — picking up where you left off.`)
+          }
           void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
         },
       }

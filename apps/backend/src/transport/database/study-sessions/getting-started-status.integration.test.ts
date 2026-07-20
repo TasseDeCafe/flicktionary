@@ -27,7 +27,7 @@ describe('study-sessions getting-started predicate', () => {
         externalId: null,
         hash: unique,
       })
-      const session = await studySessionsRepository.insertStudySession({
+      const inserted = await studySessionsRepository.insertStudySession({
         userId,
         contentSourceId: source.id,
         textTrackId: track.id,
@@ -35,8 +35,8 @@ describe('study-sessions getting-started predicate', () => {
         targetLanguage: 'es',
         cefrLevel: 'B1',
       })
-      expect(session).not.toBeNull()
-      return session!
+      expect(inserted).not.toBeNull()
+      return inserted!.session
     }
 
     expect(await studySessionsRepository.hasVisibleSession(userId)).toBe(false)
