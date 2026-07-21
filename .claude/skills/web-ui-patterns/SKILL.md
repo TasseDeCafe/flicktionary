@@ -61,6 +61,10 @@ Never use the popover-based `LanguagePicker` for new flows — iOS Safari opens 
 
 Use `text-base` (16px+) on `<input>` / `<textarea>` to prevent iOS Safari from zooming on focus. `text-sm` triggers the zoom. The shared `LanguageOptionList` search input already does this — follow the pattern.
 
+## Transitions: no `transition-all` on elements whose content swaps
+
+Never use `transition-all` on an element whose text/children change together with a state-driven class change — the classic case is a CTA doing `{busy ? t`Saving…` : t`Confirm`}` while `disabled` flips `opacity`. `transition-all` includes opacity, and animating opacity makes iOS Safari promote the element to a compositing layer built from a stale snapshot of its contents; when the label swapped in the same frame, old and new text render blended on top of each other for the transition's duration. Use `transition-colors` (or an explicit property list) instead. The shared `Button` (`packages/ui/src/components/button.tsx`) deliberately transitions only `color,background-color,border-color,box-shadow` for this reason — don't "simplify" it back to `transition-all`.
+
 ## Sticky search/header inside an overlay
 
 When a search bar must stay visible while the list scrolls (e.g. in `LanguageOptionList`), wrap the input in a sticky `bg-background` container — don't put the bg on the input wrapper directly:
