@@ -1163,8 +1163,12 @@ One dashboard CTA that clears every language's practice queue in sequence.
   CLAIMED introductions**, since the daily slot is spent the moment the gate is
   reached, so a claimed-then-skipped generating/failed exercise still counts; warmed
   up = answered non-introduction onboarding gates), chain progress chips
-  (done ✓ / next highlighted / upcoming), an "Up next" card with the next language's
-  due-summary counts, primary **Continue** (`Enter`), a secondary **Strengthen first**
+  (done ✓ / next highlighted / upcoming), an "Up next" block in the sticky footer
+  (above the buttons, under the border) naming the next language plus its planned
+  total from `previewPracticeQueue` — the same query (and cache entry) the Daily Mix
+  banner and language landing use, so the promise matches what the next compose
+  serves; raw due-summary counts would overpromise (warm-up backlog ≠ gates served) —
+  primary **Continue** (`Enter`), a secondary **Strengthen first**
   when the session produced again/hard terms, and a ghost **Done for now** → the
   language landing (progress keeps — ratings are per-card; the banner re-derives the
   remaining chain next time). The final mix language falls through to the normal
@@ -1179,12 +1183,15 @@ One dashboard CTA that clears every language's practice queue in sequence.
 ### Landing + language action screen
 
 `/practice` is a per-language selector. Each row shows the full language name plus a
-compact status summary (follow-up timing / unseen / total) and opens
-`/practice/language/$targetLanguage`. When the language has any active-pool terms the
-summary appends `· N active`; when any terms are warming up it appends `· N warming up`
-(recognition + production onboarding combined, `warmupCount + productionWarmupCount`);
-when any terms are leech-parked it appends `· N parked` (both pools' leeches — warm-up
-terms are counted separately under "warming up").
+status line and opens `/practice/language/$targetLanguage`. The line leads with the
+session-plan preview's planned total (`N cards ready`, via `previewPracticeQueues` —
+the same per-language cache entries as the Daily Mix banner and the language landing's
+plan card, so no surface promises cards the compose won't serve); at zero it reads
+"All caught up", or "Daily new limit reached" when the spent introduction budget is
+what zeroes it. Deck descriptors follow: `· N in production` (production study
+enabled) and `· N parked` (both pools' leeches). The skeleton waits for the previews
+too, and a failed preview renders "Couldn't load your session preview" rather than
+reading as caught up — the language landing behind the row owns retry.
 
 Above the language list, first-time users see a one-time **"How practice works"
 explainer card** (spaced repetition, session composition + daily limits, warm-up,
