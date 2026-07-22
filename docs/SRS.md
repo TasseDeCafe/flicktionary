@@ -939,7 +939,9 @@ sets from the same column. Everything below "park" is shared.
 
 Routes: `/practice/strengthen/$targetLanguage` (leeches + bonus; Zod search: `pool`,
 optional `sessionHard` userLookupId array — carried in the URL so the list survives
-refresh) and `/practice/warmup/$targetLanguage` (session-scoped warm-up; search
+refresh — and optional `mix`, the Daily Mix chain: when present, closing the session
+continues to the next mix language instead of the language landing) and
+`/practice/warmup/$targetLanguage` (session-scoped warm-up; search
 `studySessionId`) render the shared `ExerciseSessionView`, differing only in fetch source
 and copy (`copyVariant: 'rehab' | 'warmup'`); day-to-day gate serving happens inside the
 composed Practice queue itself. Strengthen's remaining entry point is the post-session CTA
@@ -1000,7 +1002,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 - **Interrupted sessions resume** (`composed-session-snapshot.ts`, a module-level stash
   like the Vocabulary tab's saved-search): unmounting mid-session — the Edit-term
   focus-view detour, a back gesture — saves the full session (queue, position, rating
-  records, exercise outcomes, Strengthen set, cap flags), and the next mount of the
+  records, exercise outcomes, claimed introductions, Strengthen set, cap flags), and the next mount of the
   composed route resumes it instead of re-composing, so a detour keeps the same planned
   batch instead of refilling an almost-finished session with new
   introductions. Resume requires the same language + filter and the same local calendar
@@ -1070,6 +1072,16 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   by `indexRef` so an already-consumed copy is never removed.
 - `sessionHardRef` collects this session's again/hard terms → offered to Strengthen
   afterwards.
+- **Completion settling barrier**: `handleRate` advances optimistically and records the
+  rating only in `onSuccess` (a failed mutation re-appends the card), so the completion
+  screen can render while the last rating is still in flight. A reactive pending counter
+  (incremented per `rateTerm`, decremented `onSettled`; re-rates count too) gates every
+  completion-screen exit while anything settles: a "Saving your ratings…" line replaces
+  the recap/actions state, Strengthen / Back / Learn-extra (and the mix interstitial's
+  Continue / Strengthen-first / Done-for-now) are disabled, the completion `Enter`
+  hotkey is inert, and the header X is a no-op on the completion screen (mid-session it
+  stays a live deliberate quit). Leaving early would clear the exhausted snapshot, lose
+  a failed rating's requeue, and undercount the mix recap.
 - **Peek + re-rate**: the back-chevron (`peekBack`) shows previous items. A peeked
   **flashcard** whose rating durably applied (rating record keyed by queue-item identity,
   holding the response's `eventId` + its redrill copy) re-shows the rating buttons with the
@@ -1087,7 +1099,9 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   carries its own `userLookupId`/`pool`); `Edit term` deep-links to the focus view via
   `chunks.get`'s representative-card pointer (`firstCardId`/`firstCardSessionId`, fetched
   lazily on menu open) with `from=practice&practiceMode=flashcards&practiceFilter=…`
-  (the composed route's search), so the focus view's close re-enters the composed route
+  (the composed route's search) — plus `practiceMix` when a Daily Mix chain is running,
+  restored on close so the detour never drops the run (the strengthen re-entry restores
+  it as its `mix` search param the same way) — so the focus view's close re-enters the composed route
   under the same filter and the stashed session snapshot resumes where it stood
   (`practiceMode=read` returns to the reading route). The dedicated
   Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
@@ -1118,6 +1132,49 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 - The per-language landing derives servable work from the `previewPracticeQueue` response
   (§4b) — no client-side budget math; the `/practice` selector rows still compute their
   one-line summaries client-side from the due summary + `getPracticeLimitsForLanguage`.
+
+### Daily Mix (the dashboard's cross-language chain)
+
+One dashboard CTA that clears every language's practice queue in sequence.
+
+- **Banner** (`daily-mix-banner.tsx` on `/dashboard`): languages ordered
+  most-recently-practiced first (`dueSummary.lastPracticedAt` desc, never-practiced
+  last, ties alphabetical — `orderMixLanguages`). Per-language numbers are the SAME
+  session-plan previews the practice landing shows: `usePreviewPracticeQueues` is a
+  `useQueries` batch over the single-language `previewPracticeQueue` query options
+  (shared cache keys → parity by construction), each chip summing
+  `new + warmup + learning + review`. Zero-planned languages are skipped; past ~6
+  chips the row folds into `+N more`; exactly one qualifying language degrades to a
+  plain default session (no `mix` param, no interstitials); a zero planned total keeps
+  the slot as a quiet "All caught up for today" card (location learnable, no layout
+  jump). A failed preview never renders as zero — the banner swaps to a retry state
+  that refetches the failed queries.
+- **The chain is the URL**: Start opens `/practice/composed/$first?mix=<chain>` with
+  the default filter. `mix` carries the FULL ordered chain (done + current + upcoming);
+  position derives from the route's language param (`splitMixChain`), so the value is
+  stable across the run and a refresh keeps the chain (the current language recomposes
+  fresh, the rest survive). `mix` is stripped from the compose filter and excluded from
+  the remount key — which is `` `${targetLanguage}:${JSON.stringify(filter)}` ``, the
+  language part being what makes a mix hop remount a fresh one-shot session. A
+  hand-edited `mix` that omits the current language degrades to a plain session.
+- **Interstitial** (`mix-interstitial.tsx`, replacing the completion screen mid-chain):
+  recap of the finished language (`computeMixRecap`, unit-tested — cards done = rated
+  cards excluding `again`-redrill copies + answered exercises; **new introduced counts
+  CLAIMED introductions**, since the daily slot is spent the moment the gate is
+  reached, so a claimed-then-skipped generating/failed exercise still counts; warmed
+  up = answered non-introduction onboarding gates), chain progress chips
+  (done ✓ / next highlighted / upcoming), an "Up next" card with the next language's
+  due-summary counts, primary **Continue** (`Enter`), a secondary **Strengthen first**
+  when the session produced again/hard terms, and a ghost **Done for now** → the
+  language landing (progress keeps — ratings are per-card; the banner re-derives the
+  remaining chain next time). The final mix language falls through to the normal
+  completion screen plus a "Mix complete" line — Strengthen offer intact, while
+  **Learn extra is suppressed mid-mix** so the chain's pacing isn't derailed.
+- **Detours carry the chain**: the Edit-term kebab threads `practiceMix` through the
+  focus-view search from the composed queue AND from a mix-launched Strengthen session
+  (whose own route search carries `mix`); Strengthen's close — and the focus view's
+  strengthen re-entry — continue to the next mix language instead of the language
+  landing.
 
 ### Landing + language action screen
 
@@ -1175,7 +1232,10 @@ reading texts keep their per-pool resume chips on the card.
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
-(off the event log), `parkedCount`, `warmupCount`, the `production*` mirrors
+(off the event log), `lastPracticedAt` (the later of the last live — non-reverted,
+non-imported — rating and the last answered exercise's `used_at`, so exercise-only
+warm-up activity counts; null = never practiced; two grouped repo reads merged in the
+handler, ordering the Daily Mix), `parkedCount`, `warmupCount`, the `production*` mirrors
 (`productionParkedCount`, `productionWarmupCount`, …), and the recognition **stage
 populations** `upNextCount` / `learningCount` / `reviewCount` / `unseenCount`
 (`vocabStageClauseSql` — see SPEC.md's Vocabulary section for the partition semantics).
