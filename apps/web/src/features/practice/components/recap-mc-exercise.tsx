@@ -139,7 +139,7 @@ export const RecapMcExercise = ({
               disabled={answered}
               onClick={() => handleSelect(index)}
               className={cn(
-                'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors select-none',
                 !answered && 'hover:bg-accent active:bg-accent',
                 answered && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
                 answered && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',

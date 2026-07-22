@@ -1,11 +1,13 @@
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, Check, Dumbbell, Loader2 } from 'lucide-react'
+import { plural } from '@lingui/core/macro'
+import { Check, Dumbbell, Loader2 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { useDueSummary } from '../api/practice-hooks'
-import type { MixRecap } from '../utils/daily-mix'
+import { SuccessCheck } from '@/components/ui/success-check'
+import { usePreviewPracticeQueue } from '../api/practice-hooks'
+import { plannedTotal, type MixRecap } from '../utils/daily-mix'
 
 type MixInterstitialProps = {
   // The language whose session just finished.
@@ -43,18 +45,14 @@ export const MixInterstitial = ({
   const languageName = getLanguageName(targetLanguage)
   const nextLanguage = upcoming[0]
   const nextName = getLanguageName(nextLanguage)
-  const { data: summary } = useDueSummary()
-  const nextEntry = summary?.find((entry) => entry.targetLanguage === nextLanguage)
-  const nextDue =
-    (nextEntry?.reviewDueCount ?? 0) +
-    (nextEntry?.learningDueCount ?? 0) +
-    (nextEntry?.productionReviewDueCount ?? 0) +
-    (nextEntry?.productionLearningDueCount ?? 0)
-  const nextWarmup = (nextEntry?.warmupCount ?? 0) + (nextEntry?.productionWarmupCount ?? 0)
-  const nextLineParts = [
-    nextDue > 0 ? t`${nextDue} follow-ups due` : null,
-    nextWarmup > 0 ? t`${nextWarmup} warming up` : null,
-  ].filter((part): part is string => part !== null)
+  // The next language's session-plan preview — the same query (and cache
+  // entry) the Daily Mix banner and the practice landing use, so the number
+  // promised here is the number the next compose actually serves. The raw due
+  // summary would overpromise: its warm-up count is the whole ladder backlog,
+  // not the few gates a session serves.
+  const { data: nextPreview } = usePreviewPracticeQueue(nextLanguage ?? null)
+  const nextTotal = nextPreview ? plannedTotal(nextPreview.counts) : 0
+  const nextLine = nextPreview && nextTotal > 0 ? plural(nextTotal, { one: '# card', other: '# cards' }) : null
 
   const cardsDone = recap.cardsDone
   const newIntroduced = recap.newIntroduced
@@ -69,7 +67,7 @@ export const MixInterstitial = ({
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 text-center'>
         <div className='flex flex-col items-center gap-3'>
-          <CircleCheck className='h-10 w-10 text-emerald-600' />
+          <SuccessCheck />
           <p className='text-2xl font-bold'>{t`${languageName} — done`}</p>
           {isSettling ? (
             <p className='text-muted-foreground flex items-center gap-2 text-sm'>
@@ -105,18 +103,19 @@ export const MixInterstitial = ({
             </span>
           ))}
         </div>
-
-        <div className='bg-card w-full max-w-sm rounded-xl border p-4 text-left'>
-          <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{t`Up next`}</div>
-          <div className='mt-1 text-lg font-bold'>{nextName}</div>
-          {nextLineParts.length > 0 && (
-            <div className='text-muted-foreground mt-0.5 text-sm'>{nextLineParts.join(' · ')}</div>
-          )}
-        </div>
       </div>
 
-      <div className='bg-background border-t px-4 pt-2 pb-3'>
+      {/* "Up next" lives with the actions, not as a floating card mid-screen —
+          a bordered card there reads as pressable when only the buttons act. */}
+      <div className='bg-background border-t px-4 pt-3 pb-3'>
         <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>
+          <div className='pb-1'>
+            <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{t`Up next`}</div>
+            <div className='mt-1 text-lg font-bold'>
+              {nextName}
+              {nextLine != null && <span className='text-muted-foreground text-sm font-normal'> · {nextLine}</span>}
+            </div>
+          </div>
           <Button type='button' size='xl' className='w-full' disabled={isSettling} onClick={onContinue}>
             {t`Continue with ${nextName}`}
             {showKbd && <Kbd>↵</Kbd>}

@@ -21,6 +21,7 @@ import { Kbd } from '@flicktionary/ui/components/kbd'
 import { RATE_VALUES, RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import type {
   PracticeQueueFilter,
@@ -869,7 +870,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-          <CircleCheck className='h-10 w-10 text-emerald-600' />
+          <SuccessCheck />
           <p className='text-lg font-semibold'>{queue.length === 0 ? emptyQueueLabel : t`All done!`}</p>
           {/* Final language of a Daily Mix run. */}
           {mixChain != null && (

@@ -80,9 +80,3 @@ export const getReviewCounts = (
     review: entry.reviewDueCount,
   }
 }
-
-export const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {
-  if (maxNewTerms <= 0) return 0
-  const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
-  return Math.min(entry.newCount, remainingDailyNewTerms)
-}

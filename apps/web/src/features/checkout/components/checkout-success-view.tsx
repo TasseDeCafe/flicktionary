@@ -1,7 +1,7 @@
-import { CheckCircle } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { SuccessCheck } from '@/components/ui/success-check'
 import { Route as dashboardRoute } from '@/app/routes/_authenticated/_app/dashboard/index'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Button } from '@flicktionary/ui/components/button'
@@ -20,7 +20,7 @@ export const CheckoutSuccessView = () => {
       <Card className='w-full max-w-md text-center'>
         <CardHeader>
           <div className='mx-auto mb-4'>
-            <CheckCircle className='h-16 w-16 text-green-500' />
+            <SuccessCheck />
           </div>
           <CardTitle className='text-2xl'>{t`Subscription Successful!`}</CardTitle>
           <CardDescription>{t`You are now subscribed to Premium!`}</CardDescription>

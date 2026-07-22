@@ -244,7 +244,9 @@ export const McExercise = ({
                 aria-disabled={!!result}
                 onClick={() => handleSelect(index)}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                  // select-none: an impatient double-tap while the answer is
+                  // in flight natively selects the option word on iOS.
+                  'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors select-none',
                   !result && 'hover:bg-accent active:bg-accent',
                   result && 'cursor-default',
                   isSelected && !result && 'border-foreground',

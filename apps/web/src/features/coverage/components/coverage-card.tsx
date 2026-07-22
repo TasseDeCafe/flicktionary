@@ -63,10 +63,11 @@ export const CoverageCard = () => {
       >
         <CoverageWall coverage={active} />
       </Link>
-      <div className='mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2'>
-        <CoverageLegend studiedCount={studiedInWall} knownCount={knownInWall} />
-        <SeeMoreLink to='/stats'>{t`More stats`}</SeeMoreLink>
-      </div>
+      {/* "More stats" gets its own line so the card height doesn't depend on
+          how wide the legend counts are — sharing a wrap row made the chips
+          jump when switching languages changed the numbers. */}
+      <CoverageLegend studiedCount={studiedInWall} knownCount={knownInWall} className='mt-3' />
+      <SeeMoreLink to='/stats' className='mt-2 self-start'>{t`More stats`}</SeeMoreLink>
       {chips.length > 0 && (
         <div className='mt-auto flex flex-wrap justify-center gap-2 pt-3'>
           {chips.map((language) => (
@@ -147,5 +148,6 @@ const CoverageCardSkeleton = () => (
     </div>
     <Skeleton className='mt-3 h-48 w-full' />
     <Skeleton className='mt-3 h-4 w-64' />
+    <Skeleton className='mt-2 h-4 w-24' />
   </div>
 )

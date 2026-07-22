@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
+import { Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { mergePlaceholders } from './exercise-queue-merge'
@@ -214,7 +215,7 @@ const LoadedExerciseSessionView = ({
       <div className='flex flex-1 flex-col overflow-hidden'>
         {queue.length === 0 && (
           <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-            <CircleCheck className='h-10 w-10 text-emerald-600' />
+            <SuccessCheck />
             <p className='text-lg font-semibold'>
               {copyVariant === 'warmup' ? t`Nothing to warm up right now.` : t`Nothing to strengthen right now.`}
             </p>
@@ -229,7 +230,7 @@ const LoadedExerciseSessionView = ({
         {queue.length > 0 && !current && (
           <div className='flex flex-1 flex-col overflow-hidden'>
             <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-              <CircleCheck className='h-10 w-10 text-emerald-600' />
+              <SuccessCheck />
               <p className='text-lg font-semibold'>
                 {copyVariant === 'warmup' ? t`Warm-up done!` : t`Strengthening done!`}
               </p>
