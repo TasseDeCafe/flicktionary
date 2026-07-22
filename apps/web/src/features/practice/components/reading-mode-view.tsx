@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
@@ -11,6 +11,7 @@ import type {
   ReviewScope,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Button } from '@flicktionary/ui/components/button'
+import { SuccessCheck } from '@/components/ui/success-check'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useSetFacetEnabled } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
@@ -309,7 +310,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
     return (
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center'>
-          <CheckCircle2 className='h-10 w-10 text-yellow-600 dark:text-yellow-400' />
+          <SuccessCheck tone='reading' />
           <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
           <p className='text-muted-foreground text-sm'>
             {t`You've reviewed every due term for this language. Come back later when more are ready.`}
@@ -334,7 +335,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         <div className='mx-auto flex max-w-2xl flex-col gap-6'>
           {showDone ? (
             <div className='flex flex-col items-center gap-3 rounded-xl border bg-yellow-50 p-8 text-center dark:bg-yellow-400/10'>
-              <CheckCircle2 className='h-10 w-10 text-yellow-600 dark:text-yellow-400' />
+              <SuccessCheck tone='reading' />
               <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
               <p className='text-muted-foreground text-sm'>
                 {t`You've reviewed every due term for this language. Come back later when more are ready.`}

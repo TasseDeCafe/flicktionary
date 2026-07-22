@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, ListChecks } from 'lucide-react'
+import { ListChecks } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
@@ -114,7 +115,7 @@ const RecapQuiz = ({
   if (queue.length === 0) {
     return (
       <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-        <CircleCheck className='h-10 w-10 text-emerald-600' />
+        <SuccessCheck />
         <p className='text-lg font-semibold'>{t`Nothing to quiz yet.`}</p>
         <p className='text-muted-foreground text-sm'>
           {t`These terms don't have meanings saved yet — open a term to fill in its definition or translation.`}
@@ -131,7 +132,7 @@ const RecapQuiz = ({
     return (
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-          <CircleCheck className='h-10 w-10 text-emerald-600' />
+          <SuccessCheck />
           <p className='text-lg font-semibold'>{t`Recap done!`}</p>
           <p className='text-muted-foreground text-sm'>{t`${correctCount} of ${total} correct.`}</p>
         </div>
