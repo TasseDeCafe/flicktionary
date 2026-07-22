@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/compon
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { PillGrid, SectionLabel, Segmented } from '@/components/ui/filter-panel-controls'
+import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 
 // The Vocabulary tab's sort + filter state. `sort` always has a value;
 // everything else is a narrowing filter (absent/empty = no filter).
@@ -26,12 +27,18 @@ export type VocabFilters = {
 type Props = {
   filters: VocabFilters
   onChange: (next: VocabFilters) => void
+  // The vocabulary list is per-language, so unlike the sessions filter the
+  // language here is a required scope — single-select, no "All", and never
+  // counted as an active filter or touched by "Clear filters".
+  languages: string[]
+  language: string | null
+  onLanguageChange: (next: string) => void
 }
 
 // The shared panel body, rendered inside the desktop popover and the mobile
 // sheet alike.
-const FilterPanel = ({ filters, onChange }: Props) => {
-  const { t } = useLingui()
+const FilterPanel = ({ filters, onChange, languages, language, onLanguageChange }: Props) => {
+  const { t, i18n } = useLingui()
   const skillLabels: Record<VocabFilterSkill, string> = {
     recognition: t`Recognition`,
     production: t`Production`,
@@ -60,6 +67,20 @@ const FilterPanel = ({ filters, onChange }: Props) => {
           ]}
         />
       </section>
+
+      {languages.length > 1 && language !== null && (
+        <section className='flex flex-col gap-1.5'>
+          <SectionLabel>{t`Language`}</SectionLabel>
+          <PillGrid<string>
+            value={language}
+            onChange={onLanguageChange}
+            options={languages.map((code) => ({
+              value: code,
+              label: getLocalizedCoverageLanguageName(i18n, code),
+            }))}
+          />
+        </section>
+      )}
 
       <section className='flex flex-col gap-1.5'>
         <SectionLabel>{t`Status`}</SectionLabel>
@@ -121,7 +142,7 @@ const FilterPanel = ({ filters, onChange }: Props) => {
 
 // Single "Sort & filter" control: a Radix popover on desktop, a bottom sheet on
 // mobile. The trigger carries a dot when any narrowing filter is active.
-export const VocabularyFilterControl = ({ filters, onChange }: Props) => {
+export const VocabularyFilterControl = ({ filters, onChange, languages, language, onLanguageChange }: Props) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
@@ -145,7 +166,13 @@ export const VocabularyFilterControl = ({ filters, onChange }: Props) => {
             <DrawerTitle>{t`Sort & filter`}</DrawerTitle>
           </DrawerHeader>
           <div className='px-4 pb-8'>
-            <FilterPanel filters={filters} onChange={onChange} />
+            <FilterPanel
+              filters={filters}
+              onChange={onChange}
+              languages={languages}
+              language={language}
+              onLanguageChange={onLanguageChange}
+            />
           </div>
         </DrawerContent>
       </Drawer>
@@ -160,7 +187,13 @@ export const VocabularyFilterControl = ({ filters, onChange }: Props) => {
         collisionPadding={8}
         className='max-h-[var(--radix-popover-content-available-height)] w-80 overflow-y-auto p-4'
       >
-        <FilterPanel filters={filters} onChange={onChange} />
+        <FilterPanel
+          filters={filters}
+          onChange={onChange}
+          languages={languages}
+          language={language}
+          onLanguageChange={onLanguageChange}
+        />
       </PopoverContent>
     </Popover>
   )
