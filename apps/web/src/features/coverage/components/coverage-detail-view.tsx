@@ -36,13 +36,13 @@ export const CoverageDetailView = () => {
   const entry = languages?.find((language) => language.targetLanguage === lang)
   const usable = entry !== undefined && entry.supported && entry.denominator !== null
 
-  // A stale or unsupported deep link falls back to the sessions list instead
-  // of rendering an empty shell.
+  // A stale or unsupported deep link falls back to the dashboard (where the
+  // coverage card lives) instead of rendering an empty shell.
   useEffect(() => {
-    if (!isLoading && !isError && languages && !usable) void navigate({ to: '/sessions', replace: true })
+    if (!isLoading && !isError && languages && !usable) void navigate({ to: '/dashboard', replace: true })
   }, [isLoading, isError, languages, usable, navigate])
 
-  const close = () => void navigate({ to: '/sessions' })
+  const close = () => void navigate({ to: '/dashboard' })
   const languageName = getLocalizedCoverageLanguageName(i18n, lang)
 
   return (

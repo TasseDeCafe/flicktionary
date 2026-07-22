@@ -49,6 +49,7 @@ export const FocusView = () => {
     practiceStudySessionId,
     practiceSessionHard,
     practiceFilter,
+    practiceMix,
   } = useSearch({
     from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
   })
@@ -126,7 +127,16 @@ export const FocusView = () => {
   // language + pool so the back-route resolves to the sessionless review screen.
   const search = from
     ? fromPractice && practiceLang
-      ? { from, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard, practiceFilter }
+      ? {
+          from,
+          practiceLang,
+          practicePool,
+          practiceMode,
+          practiceStudySessionId,
+          practiceSessionHard,
+          practiceFilter,
+          practiceMix,
+        }
       : { from }
     : undefined
   const backToPractice = () => {
@@ -138,7 +148,7 @@ export const FocusView = () => {
       void navigate({
         to: '/practice/strengthen/$targetLanguage',
         params: { targetLanguage: practiceLang },
-        search: { pool: practicePool ?? 'recognition', sessionHard: practiceSessionHard },
+        search: { pool: practicePool ?? 'recognition', sessionHard: practiceSessionHard, mix: practiceMix },
       })
       return
     }
@@ -167,12 +177,15 @@ export const FocusView = () => {
       void navigate({
         to: '/practice/composed/$targetLanguage',
         params: { targetLanguage: practiceLang },
-        search: practiceFilter ?? {
-          pools: ['production', 'recognition'],
-          scope: 'both',
-          render: 'both',
-          autoWarmup: true,
-          includeOptInNew: false,
+        search: {
+          ...(practiceFilter ?? {
+            pools: ['production', 'recognition'],
+            scope: 'both',
+            render: 'both',
+            autoWarmup: true,
+            includeOptInNew: false,
+          }),
+          mix: practiceMix,
         },
       })
       return

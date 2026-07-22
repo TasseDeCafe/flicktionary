@@ -1,7 +1,18 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { AlertOctagon, Globe, Languages, LifeBuoy, LogOut, Palette, Sparkles, UserCircle, Wrench } from 'lucide-react'
+import {
+  AlertOctagon,
+  ChartColumn,
+  Globe,
+  Languages,
+  LifeBuoy,
+  LogOut,
+  Palette,
+  Sparkles,
+  UserCircle,
+  Wrench,
+} from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Switch } from '@flicktionary/ui/components/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
@@ -99,6 +110,12 @@ export const MoreTabView = () => {
           label={t`Account`}
           description={t`Profile, subscription, sign-in`}
           onPress={() => navigate({ to: '/more/account' })}
+        />
+        <MoreListRow
+          icon={ChartColumn}
+          label={t`Stats`}
+          description={t`Activity, streak, and coverage`}
+          onPress={() => navigate({ to: '/stats' })}
         />
       </MoreListSection>
 

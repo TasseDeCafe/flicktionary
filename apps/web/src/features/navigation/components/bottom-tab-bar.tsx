@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { BookOpen, Brain, Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
+import { BookOpen, Brain, Home, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
 import { MainActionOverlay } from './main-action-overlay'
 
 type TabConfig = {
-  to: '/sessions' | '/practice' | '/vocabulary' | '/more'
+  to: '/dashboard' | '/practice' | '/vocabulary' | '/more'
   label: string
   icon: LucideIcon
   matchPrefixes: string[]
@@ -34,7 +34,7 @@ export const BottomTabBar = () => {
   const [isActionOpen, setIsActionOpen] = useState(false)
 
   const tabs: TabConfig[] = [
-    { to: '/sessions', label: t`Sessions`, icon: Clapperboard, matchPrefixes: ['/sessions'] },
+    { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard'] },
     { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
     { to: '/vocabulary', label: t`Vocabulary`, icon: BookOpen, matchPrefixes: ['/vocabulary'] },
     { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more'] },

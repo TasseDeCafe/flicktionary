@@ -49,6 +49,7 @@ const snapshot = (over: Partial<ComposedSessionSnapshot> = {}): ComposedSessionS
   sessionHard: new Set(),
   ratingRecords: new Map(),
   exerciseOutcomes: new Map(),
+  claimedIntroductions: new Set(),
   dayKey: currentDayKey(),
   ...over,
 })

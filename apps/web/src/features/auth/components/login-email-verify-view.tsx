@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabaseClient } from '@/lib/transport/supabase-client.ts'
-import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
+import { Route as dashboardRoute } from '@/app/routes/_authenticated/_app/dashboard/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { useNavigate } from '@tanstack/react-router'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
@@ -61,7 +61,7 @@ export const LoginEmailVerifyView = () => {
         window.location.assign(redirectTo)
         return
       }
-      navigate({ to: sessionsRoute.to, replace: true })
+      navigate({ to: dashboardRoute.to, replace: true })
     },
     onError: () => {
       setIsError(true)

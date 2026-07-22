@@ -7,12 +7,12 @@ import {
   type VocabFilterSkill,
   type VocabStatus,
 } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
+import { PillGrid, SectionLabel, Segmented } from '@/components/ui/filter-panel-controls'
 
 // The Vocabulary tab's sort + filter state. `sort` always has a value;
 // everything else is a narrowing filter (absent/empty = no filter).
@@ -27,70 +27,6 @@ type Props = {
   filters: VocabFilters
   onChange: (next: VocabFilters) => void
 }
-
-// Pill segmented control, same visual language as the old sort/filter pills.
-const Segmented = <T extends string>({
-  value,
-  options,
-  onChange,
-}: {
-  value: T
-  options: Array<{ value: T; label: string }>
-  onChange: (next: T) => void
-}) => (
-  <div className='bg-muted flex gap-1 rounded-full p-1'>
-    {options.map((opt) => (
-      <button
-        key={opt.value}
-        type='button'
-        onClick={() => onChange(opt.value)}
-        className={cn(
-          'flex-1 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-          opt.value === value
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-        )}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-)
-
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <h3 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>{children}</h3>
-)
-
-// Wrapping single-select pill grid for option sets too wide for the segmented
-// row (the Status section's 8 stages). Same chip language as the language
-// switcher, sized up for comfortable tapping.
-const PillGrid = <T extends string>({
-  value,
-  options,
-  onChange,
-}: {
-  value: T
-  options: Array<{ value: T; label: string }>
-  onChange: (next: T) => void
-}) => (
-  <div className='flex flex-wrap gap-2'>
-    {options.map((opt) => (
-      <button
-        key={opt.value}
-        type='button'
-        onClick={() => onChange(opt.value)}
-        className={cn(
-          'rounded-full border px-3.5 py-2 text-sm font-medium transition-colors',
-          opt.value === value
-            ? 'border-yellow-500 bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'
-            : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent active:bg-accent'
-        )}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-)
 
 // The shared panel body, rendered inside the desktop popover and the mobile
 // sheet alike.
