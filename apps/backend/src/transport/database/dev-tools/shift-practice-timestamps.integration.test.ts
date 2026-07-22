@@ -31,10 +31,22 @@ describe('shiftPracticeTimestamps', () => {
     return rows[0]
   }
 
+  const readKnownMarkTime = async (userId: string): Promise<Date> => {
+    const rows = await sql<{ marked_at: Date }[]>`
+      SELECT marked_at FROM public.known_lemmas WHERE user_id = ${userId}
+    `
+    return rows[0].marked_at
+  }
+
   test('shifts timestamptz columns back by whole days and date columns to earlier dates', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const facetId = await createParkedFacet(userId, 'correr')
+    await sql`
+      INSERT INTO public.known_lemmas (user_id, target_language, lemma, source, source_id, sweep_batch_id)
+      VALUES (${userId}, 'es', 'sabido', 'bulk_text', NULL, NULL)
+    `
     const before = await readFacetTimes(facetId)
+    const knownBefore = await readKnownMarkTime(userId)
 
     const results = await shiftPracticeTimestamps(sql, { days: 2, userId })
 
@@ -42,6 +54,11 @@ describe('shiftPracticeTimestamps', () => {
     const dayMs = 24 * 60 * 60 * 1000
     expect(before.srs_due.getTime() - after.srs_due.getTime()).toBe(2 * dayMs)
     expect(before.introduced_at.getTime() - after.introduced_at.getTime()).toBe(2 * dayMs)
+
+    // known_lemmas.marked_at feeds the activity chart/streak — it must travel too.
+    const knownAfter = await readKnownMarkTime(userId)
+    expect(knownBefore.getTime() - knownAfter.getTime()).toBe(2 * dayMs)
+    expect(results.find((r) => r.table === 'known_lemmas')?.rowsShifted).toBe(1)
 
     // The rehab day-credit date (a DATE column) moves from today to two days
     // ago — exactly what lets `IS DISTINCT FROM CURRENT_DATE` grant a fresh

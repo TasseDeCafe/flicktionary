@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
+import { toIsoString } from '../router-utils'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { DEFAULT_PRACTICE_QUEUE_FILTER } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -297,14 +298,27 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       // query, merged per language. Open reading-mode texts ride along so the
       // landing can offer "continue reading" (they're otherwise invisible —
       // an abandoned reading is only reachable by re-entering Read mode).
-      const [summary, reviewedTodayByLanguage, currentReadings] = await Promise.all([
-        deps.userLookupsRepository.listDueSummary(userId),
-        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
-        deps.practiceTextsRepository.listCurrentReadings(userId),
-      ])
+      const [summary, reviewedTodayByLanguage, currentReadings, lastRatedByLanguage, lastUsedByLanguage] =
+        await Promise.all([
+          deps.userLookupsRepository.listDueSummary(userId),
+          deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
+          deps.practiceTextsRepository.listCurrentReadings(userId),
+          deps.practiceRatingEventsRepository.getLastRatedAtByLanguage(userId),
+          deps.practiceExercisesRepository.getLastUsedAtByLanguage(userId),
+        ])
+      // lastPracticedAt = the later of the last live rating and the last
+      // answered exercise (kept as two grouped reads — a join into the summary
+      // aggregate would fan out its counts).
+      const lastPracticedAt = (targetLanguage: string): string | null => {
+        const rated = lastRatedByLanguage.get(targetLanguage)
+        const used = lastUsedByLanguage.get(targetLanguage)
+        const latest = [rated, used].filter((d): d is Date => d != null).sort((a, b) => b.getTime() - a.getTime())[0]
+        return latest ? toIsoString(latest) : null
+      }
       const perLanguage = summary.map((entry) => ({
         ...entry,
         reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
+        lastPracticedAt: lastPracticedAt(entry.targetLanguage),
         currentReadings: currentReadings
           .filter((reading) => reading.targetLanguage === entry.targetLanguage)
           .map(({ pool, scope, termCount }) => ({ pool, scope, termCount })),

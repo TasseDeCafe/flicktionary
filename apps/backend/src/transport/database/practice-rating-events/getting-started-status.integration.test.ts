@@ -52,10 +52,14 @@ describe('practice-rating-events getting-started predicate', () => {
       })
 
     expect(await repository.hasLiveEvent(userId)).toBe(false)
+    expect(await repository.getLastRatedAtByLanguage(userId)).toEqual(new Map())
     await insertEvent(batch!.id)
     expect(await repository.hasLiveEvent(userId)).toBe(false)
+    // Import backfills don't count as practicing recency either.
+    expect((await repository.getLastRatedAtByLanguage(userId)).has('es')).toBe(false)
 
     await insertEvent(null)
     expect(await repository.hasLiveEvent(userId)).toBe(true)
+    expect((await repository.getLastRatedAtByLanguage(userId)).get('es')).toBeInstanceOf(Date)
   })
 })
