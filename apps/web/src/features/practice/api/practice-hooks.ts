@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { dropTermFromComposedSession } from '../components/composed-session-snapshot'
+import { dropTermFromExerciseSession } from '../components/exercise-session-snapshot'
 
 // The landing's two summary queries — the drifting due summary and the
 // session-plan preview — are ONE invalidation unit: anything that can change
@@ -283,9 +284,13 @@ export const useDeleteChunkFromPractice = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.deleteChunk.mutationOptions({
-      // An interrupted composed session stashed for resume must not re-serve
-      // the deleted term's cards/exercises.
-      onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
+      // An interrupted practice session stashed for resume (composed or
+      // strengthen/warm-up) must not re-serve the deleted term's
+      // cards/exercises.
+      onSuccess: (_data, { id }) => {
+        dropTermFromComposedSession(id)
+        dropTermFromExerciseSession(id)
+      },
       meta: {
         invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to delete term`,

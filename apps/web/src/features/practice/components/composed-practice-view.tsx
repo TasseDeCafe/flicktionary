@@ -2,19 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import {
-  ChevronLeft,
-  ChevronRight,
-  CircleAlert,
-  CircleCheck,
-  CircleX,
-  Dumbbell,
-  Flame,
-  Hourglass,
-  Lightbulb,
-  Loader2,
-  MoreVertical,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Dumbbell, Flame, Hourglass, Lightbulb, Loader2, MoreVertical } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
@@ -48,6 +36,7 @@ import {
 import { ReviewQueueStats } from './review-queue-stats'
 import { getRemainingCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
+import { AnsweredExercisePanel } from './answered-exercise-panel'
 import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
 import { FailedExercisePlaceholder } from './failed-exercise-placeholder'
@@ -110,19 +99,26 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   const resolveMeaning = useTermMeaning(targetLanguage)
   const navigate = useNavigate()
   const languageName = getLanguageName(targetLanguage)
+  // Daily Mix position in the chain; null outside a mix (or when a hand-edited
+  // URL doesn't contain this language — then the session behaves as plain).
+  const mixChain = splitMixChain(mix, targetLanguage)
+  const mixUpcoming = mixChain?.upcoming ?? []
   // Deliberate session end (X / Back buttons, error screen) — skips the
   // unmount save below, so the next Practice entry composes fresh instead of
   // resuming this session.
   const endedRef = useRef(false)
   const close = () => {
     endedRef.current = true
+    // A mix is dashboard-owned (its banner is the only entry point), so every
+    // mix exit — Finish, "Done for now", the header X — returns to the
+    // dashboard; a plain session returns to the language landing it started
+    // from.
+    if (mixChain) {
+      void navigate({ to: '/dashboard' })
+      return
+    }
     void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
   }
-
-  // Daily Mix position in the chain; null outside a mix (or when a hand-edited
-  // URL doesn't contain this language — then the session behaves as plain).
-  const mixChain = splitMixChain(mix, targetLanguage)
-  const mixUpcoming = mixChain?.upcoming ?? []
   const continueMix = () => {
     // A deliberate hop like close(): the finished session must not stash.
     endedRef.current = true
@@ -182,9 +178,19 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   // recap undercounts and a failed rating's requeue is lost.
   const [pendingRatings, setPendingRatings] = useState(0)
   const [actionsOpen, setActionsOpen] = useState(false)
+  // The resumed current item, when it was answered before the detour. The
+  // answer state lived inside the (unmounted) exercise component and the
+  // server consumed the exercise, so the render path swaps in the read-only
+  // answered panel for this one item instead of remounting the live component
+  // — whose re-submit would be rejected as no longer answerable.
+  const [restoredAnsweredItem] = useState<ComposedQueueItem | null>(() => {
+    if (!resumedSession) return null
+    const item = resumedSession.queue[resumedSession.index]
+    return item && item.type === 'exercise' && resumedSession.exerciseOutcomes.has(item) ? item : null
+  })
   // Whether the live-index exercise has been answered — gates the header kebab
   // on unanswered cloze exercises (see kebab derivation below).
-  const [currentAnswered, setCurrentAnswered] = useState(false)
+  const [currentAnswered, setCurrentAnswered] = useState(restoredAnsweredItem != null)
   // Flashcard hint: the MC exercise currently swapped in for the live card,
   // and the locked-in rating once it's answered (correct → hard, wrong →
   // again). Both are keyed to the queue item and cleared on advance.
@@ -621,6 +627,10 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     current?.type === 'exercise' &&
     current.entry.status !== 'failed' &&
     (current.entry.status === 'generating' || !current.entry.exerciseId || !current.entry.payload)
+  // The read-only panel a resume shows for an already-answered exercise — its
+  // single action is Next (the live exercise components own their hotkeys, but
+  // this panel is host-rendered).
+  const restoredAnsweredDisplayed = !isPeeking && current != null && current === restoredAnsweredItem
   const liveExerciseDisplayed = !isPeeking && (current?.type === 'exercise' || activeHintDisplayed)
   // Peek re-rate: offered when the displayed (peeked) item has a durably
   // applied rating AND its redrill copy wasn't itself rated yet — once the
@@ -690,6 +700,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
       { key: 'escape', enabled: exercisePlaceholderLive, onPress: advance },
       { key: 'enter', enabled: exercisePlaceholderLive, onPress: advance },
       { key: 'space', enabled: exercisePlaceholderLive, onPress: advance },
+      // Resumed already-answered exercise: the read-only panel's single Next.
+      { key: 'enter', enabled: restoredAnsweredDisplayed, onPress: advance },
+      { key: 'space', enabled: restoredAnsweredDisplayed, onPress: advance },
       // Peek navigation mirrors the status-row chevrons, same disabled rules.
       {
         key: 'arrowleft',
@@ -787,12 +800,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     </ModalScreen>
   )
 
+  // Every close-routed CTA shares this label: a mix exits to the dashboard, a
+  // plain session to its language landing (see close above).
+  const closeLabel = mixChain ? t`Back to dashboard` : t`Back to ${languageName}`
+
   if (composeError) {
     return wrap(
       <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
         <p className='text-lg font-semibold'>{t`Couldn't load your practice session.`}</p>
         <Button type='button' size='lg' onClick={close}>
-          {t`Back to ${languageName}`}
+          {closeLabel}
         </Button>
       </div>
     )
@@ -930,12 +947,12 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   disabled={isSettling}
                   onClick={close}
                 >
-                  {t`Back to ${languageName}`}
+                  {mixChain ? t`Finish` : t`Back to ${languageName}`}
                 </Button>
               </>
             ) : (
               <Button type='button' size='xl' className='w-full' disabled={isSettling} onClick={close}>
-                {t`Back to ${languageName}`}
+                {mixChain ? t`Finish` : t`Back to ${languageName}`}
                 {showKbd && <Kbd>↵</Kbd>}
               </Button>
             )}
@@ -1009,41 +1026,35 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     // row's chevrons keep the peek walk going past exercises to earlier
     // flashcards.
     if (isPeeking) {
-      const outcome = exerciseOutcomesRef.current.get(current)
       return wrap(
-        <ExerciseLayout
+        <AnsweredExercisePanel
+          outcome={exerciseOutcomesRef.current.get(current) ?? null}
+          headword={entry.headword}
+          targetLanguage={targetLanguage}
           header={header}
           statusBar={statusRow}
-          actions={
-            <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
-              {t`Back to current card`}
-              {showKbd && <Kbd>↵</Kbd>}
-            </Button>
-          }
-        >
-          <div className='flex flex-col items-center gap-4 py-10 text-center'>
-            {outcome ? (
-              outcome.correct ? (
-                <CircleCheck className='h-8 w-8 text-emerald-600' />
-              ) : (
-                <CircleX className='text-destructive h-8 w-8' />
-              )
-            ) : (
-              <CircleAlert className='text-muted-foreground h-8 w-8' />
-            )}
-            <p lang={targetLanguage} className='text-xl font-semibold'>
-              {entry.headword}
-            </p>
-            <p className='text-muted-foreground text-sm'>
-              {outcome
-                ? outcome.correct
-                  ? t`Answered correctly.`
-                  : t`Answered incorrectly.`
-                : t`Skipped — it re-serves next session.`}
-              &nbsp;{t`Exercise answers can't be changed.`}
-            </p>
-          </div>
-        </ExerciseLayout>
+          actionLabel={t`Back to current card`}
+          onAction={() => setPeekBack(0)}
+          showKbd={showKbd}
+        />
+      )
+    }
+
+    // Resumed onto an exercise answered before the detour: read-only outcome
+    // with a Next that advances (see restoredAnsweredItem above).
+    const restoredOutcome = current === restoredAnsweredItem ? exerciseOutcomesRef.current.get(current) : undefined
+    if (restoredOutcome) {
+      return wrap(
+        <AnsweredExercisePanel
+          outcome={restoredOutcome}
+          headword={entry.headword}
+          targetLanguage={targetLanguage}
+          header={header}
+          statusBar={statusRow}
+          actionLabel={t`Next`}
+          onAction={advance}
+          showKbd={showKbd}
+        />
       )
     }
 

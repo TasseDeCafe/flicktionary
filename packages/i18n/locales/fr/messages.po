@@ -660,11 +660,11 @@ msgstr "Animé"
 msgid "Another term already exists with that headword and sense."
 msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Answered correctly."
 msgstr "Répondu correctement."
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Answered incorrectly."
 msgstr "Répondu incorrectement."
 
@@ -803,6 +803,10 @@ msgstr "Retour à la carte actuelle"
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "Back to current text"
 msgstr "Retour au texte actuel"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Back to dashboard"
+msgstr "Retour au tableau de bord"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Back to forms"
@@ -1138,6 +1142,10 @@ msgstr "Contexte (facultatif)"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Continue"
 msgstr "Continuer"
+
+#: apps/web/src/features/practice/components/strengthen-view.tsx
+msgid "Continue with {nextLanguageName}"
+msgstr "Continuer avec {nextLanguageName}"
 
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
 msgid "Continue with {nextName}"
@@ -1713,7 +1721,7 @@ msgstr "Exemple"
 msgid "Examples"
 msgstr "Exemples"
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Exercise answers can't be changed."
 msgstr "Les réponses aux exercices ne peuvent pas être modifiées."
 
@@ -2166,6 +2174,11 @@ msgstr "Trouvez un film ou une série et chargez ses sous-titres"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/strengthen-view.tsx
+msgid "Finish"
+msgstr "Terminer"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setting up Flicktionary"
@@ -3086,6 +3099,8 @@ msgstr "Les nouveaux termes apparaissent en tant qu'exercices, il n'y a donc pas
 msgid "Newest first"
 msgstr "Plus récent d'abord"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
@@ -4535,7 +4550,7 @@ msgstr "Compétences pour {label}"
 msgid "Skip"
 msgstr "Passer"
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Skipped — it re-serves next session."
 msgstr "Ignoré — il sera représenté à la prochaine session."
 

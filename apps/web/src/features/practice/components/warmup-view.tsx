@@ -5,6 +5,7 @@ import { getLanguageName } from '@flicktionary/core/constants/supported-language
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useStartWarmupSession, useRefreshWarmupSession } from '../api/practice-hooks'
 import { ExerciseSessionView } from './exercise-session-view'
+import { exerciseSessionKey, takeExerciseSession } from './exercise-session-snapshot'
 
 // Exercise-first warm-up: launched from the session-vocabulary footer. Parks
 // this session's new terms into scaffolding and serves gate exercises; correct
@@ -17,11 +18,16 @@ export const WarmupView = () => {
   const { studySessionId } = useSearch({ from: '/_authenticated/_app/practice/warmup/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
 
+  // An interrupted same-scope session (edit-term detour, back gesture) resumes
+  // from its stashed snapshot instead of starting fresh — a restart would
+  // recompose the gate queue and re-serve every remaining exercise.
+  const sessionKey = exerciseSessionKey({ mode: 'warmup', targetLanguage, studySessionId })
+  const [resumedSession] = useState(() => takeExerciseSession(sessionKey))
   const { mutate: startSession, isError } = useStartWarmupSession()
   const { mutateAsync: refreshSession } = useRefreshWarmupSession()
-  const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(null)
-  const [dailyLimitReached, setDailyLimitReached] = useState(false)
-  const startedRef = useRef(false)
+  const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(resumedSession?.queue ?? null)
+  const [dailyLimitReached, setDailyLimitReached] = useState(resumedSession?.dailyLimitReached ?? false)
+  const startedRef = useRef(resumedSession != null)
 
   // Serve-only poll for the shared session view to swap 'generating'
   // placeholders in place as the background bank settles.
@@ -59,6 +65,8 @@ export const WarmupView = () => {
       targetLanguage={targetLanguage}
       practiceMode='warmup'
       practiceStudySessionId={studySessionId}
+      sessionKey={sessionKey}
+      resumedSession={resumedSession}
     />
   )
 }

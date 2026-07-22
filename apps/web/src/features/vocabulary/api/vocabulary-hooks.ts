@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
 import { dropTermFromComposedSession } from '@/features/practice/components/composed-session-snapshot'
+import { dropTermFromExerciseSession } from '@/features/practice/components/exercise-session-snapshot'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import {
   getStudyTargetsKey,
@@ -226,9 +227,13 @@ export const useDeleteChunk = () => {
           ),
         ]),
       onError: (_err, _vars, context) => context?.rollback(),
-      // An interrupted practice session stashed for resume must not re-serve
-      // the deleted term's cards/exercises.
-      onSuccess: (_data, { id }) => dropTermFromComposedSession(id),
+      // An interrupted practice session stashed for resume (composed or
+      // strengthen/warm-up) must not re-serve the deleted term's
+      // cards/exercises.
+      onSuccess: (_data, { id }) => {
+        dropTermFromComposedSession(id)
+        dropTermFromExerciseSession(id)
+      },
       meta: {
         invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Failed to delete term`,

@@ -7,8 +7,14 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
-import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  PracticePool,
+  StrengthenExerciseEntry,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { mergePlaceholders } from './exercise-queue-merge'
+import { currentDayKey } from './composed-session-snapshot'
+import { clearExerciseSession, saveExerciseSession, type ExerciseSessionSnapshot } from './exercise-session-snapshot'
+import { AnsweredExercisePanel } from './answered-exercise-panel'
 import { PracticeLoader } from './practice-loader'
 import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
@@ -35,13 +41,22 @@ type ExerciseSessionProps = {
   onClose: () => void
   targetLanguage: string
   // Threaded into the header kebab's Edit-term deep-link so the focus view's
-  // close re-enters THIS session (serving is resume-safe server-side).
+  // close re-enters THIS session, where the stashed snapshot resumes.
   practiceMode: 'strengthen' | 'warmup'
   practiceStudySessionId?: string
   practiceSessionHard?: string[]
   // The Daily Mix chain, when the strengthen session is part of one — carried
   // through the focus-view detour so returning doesn't drop the run.
   practiceMix?: string[]
+  // The session's route pool ('strengthen' only) — the Edit-term return trip
+  // must rebuild the SAME route (the queue can contain terms of either pool,
+  // and returning under a term's pool would mismatch the stashed snapshot).
+  sessionPool?: PracticePool
+  // Identity of this session's scope for the interrupted-session stash; the
+  // caller resumes a matching snapshot instead of starting fresh (see
+  // exercise-session-snapshot.ts).
+  sessionKey: string
+  resumedSession: ExerciseSessionSnapshot | null
 }
 
 // The shared exercise-queue session screen behind both Strengthen (leech rehab
@@ -91,6 +106,9 @@ const LoadedExerciseSessionView = ({
   practiceStudySessionId,
   practiceSessionHard,
   practiceMix,
+  sessionPool,
+  sessionKey,
+  resumedSession,
 }: ExerciseSessionProps & { initialEntries: StrengthenExerciseEntry[] }) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
@@ -100,12 +118,51 @@ const LoadedExerciseSessionView = ({
   // an exercise per answered attempt; abandoning before answering re-serves
   // it). Later polls mutate this local copy in place.
   const [queue, setQueue] = useState(initialEntries)
-  const [index, setIndex] = useState(0)
-  const [correctCount, setCorrectCount] = useState(0)
+  const [index, setIndex] = useState(resumedSession?.index ?? 0)
+  const [correctCount, setCorrectCount] = useState(resumedSession?.correctCount ?? 0)
   const [actionsOpen, setActionsOpen] = useState(false)
+  // Resumed onto an exercise answered before the detour: its answer state
+  // lived inside the (unmounted) exercise component and the server consumed
+  // the exercise, so it renders as the read-only answered panel instead of
+  // remounting the live component — whose re-submit would be rejected as no
+  // longer answerable.
+  const [restoredOutcome, setRestoredOutcome] = useState(resumedSession?.currentOutcome ?? null)
   // Whether the current exercise has been answered — gates the header kebab on
-  // unanswered cloze exercises (see kebab derivation below).
-  const [currentAnswered, setCurrentAnswered] = useState(false)
+  // unanswered cloze exercises (see kebab derivation below). Mirrored in a ref
+  // for the unmount stash: an answered-but-not-advanced outcome must survive
+  // the next detour too.
+  const [currentAnswered, setCurrentAnswered] = useState(resumedSession?.currentOutcome != null)
+  const currentOutcomeRef = useRef<ExerciseAnswerData | null>(resumedSession?.currentOutcome ?? null)
+
+  // Deliberate exits (X, the completion/empty-state buttons) never stash —
+  // only an interrupted session (edit-term detour, back gesture) is saved on
+  // unmount for the next matching mount to resume.
+  const endedRef = useRef(false)
+  const handleClose = () => {
+    endedRef.current = true
+    onClose()
+  }
+  const sessionStateRef = useRef({ queue, index, correctCount, dailyLimitReached })
+  sessionStateRef.current = { queue, index, correctCount, dailyLimitReached }
+  useEffect(
+    () => () => {
+      const state = sessionStateRef.current
+      if (endedRef.current || !state.queue[state.index]) {
+        clearExerciseSession()
+        return
+      }
+      saveExerciseSession({
+        key: sessionKey,
+        queue: state.queue,
+        index: state.index,
+        correctCount: state.correctCount,
+        currentOutcome: currentOutcomeRef.current,
+        dailyLimitReached: state.dailyLimitReached ?? false,
+        dayKey: currentDayKey(),
+      })
+    },
+    [sessionKey]
+  )
 
   // Poll for placeholder upgrades while a 'generating' entry is still ahead of
   // (or at) the current position. A ref guards against overlapping requests.
@@ -129,10 +186,13 @@ const LoadedExerciseSessionView = ({
   }, [pollExercises, hasPendingAhead, index])
 
   const handleAnswered = (data: ExerciseAnswerData) => {
+    currentOutcomeRef.current = data
     if (data.correct) setCorrectCount((n) => n + 1)
     setCurrentAnswered(true)
   }
   const handleNext = () => {
+    currentOutcomeRef.current = null
+    setRestoredOutcome(null)
     setCurrentAnswered(false)
     setIndex((i) => i + 1)
   }
@@ -148,14 +208,18 @@ const LoadedExerciseSessionView = ({
     !!current &&
     current.status !== 'failed' &&
     (current.status === 'generating' || !current.exerciseId || !current.payload)
+  const restoredAnsweredDisplayed = !!current && restoredOutcome != null
   useHotkeys(
     [
       { key: 's', enabled: placeholderDisplayed, onPress: handleNext },
       { key: 'escape', enabled: placeholderDisplayed, onPress: handleNext },
       { key: 'enter', enabled: placeholderDisplayed, onPress: handleNext },
       { key: 'space', enabled: placeholderDisplayed, onPress: handleNext },
+      // Resumed already-answered exercise: the read-only panel's single Next.
+      { key: 'enter', enabled: restoredAnsweredDisplayed, onPress: handleNext },
+      { key: 'space', enabled: restoredAnsweredDisplayed, onPress: handleNext },
       // Empty and all-done states: Enter closes back to the caller.
-      { key: 'enter', enabled: current == null, onPress: onClose },
+      { key: 'enter', enabled: current == null, onPress: handleClose },
     ],
     !actionsOpen
   )
@@ -182,7 +246,7 @@ const LoadedExerciseSessionView = ({
 
   return (
     <ModalScreen
-      onClose={onClose}
+      onClose={handleClose}
       closeIcon='x'
       title={title}
       rightSlot={
@@ -205,7 +269,7 @@ const LoadedExerciseSessionView = ({
           onOpenChange={setActionsOpen}
           term={actionsTerm}
           targetLanguage={targetLanguage}
-          pool={actionsTerm.pool}
+          pool={sessionPool ?? actionsTerm.pool}
           practiceMode={practiceMode}
           practiceStudySessionId={practiceStudySessionId}
           practiceSessionHard={practiceSessionHard}
@@ -220,7 +284,7 @@ const LoadedExerciseSessionView = ({
               {copyVariant === 'warmup' ? t`Nothing to warm up right now.` : t`Nothing to strengthen right now.`}
             </p>
             {dailyLimitNote}
-            <Button type='button' size='lg' onClick={onClose}>
+            <Button type='button' size='lg' onClick={handleClose}>
               {backLabel}
               {showKbd && <Kbd>↵</Kbd>}
             </Button>
@@ -239,7 +303,7 @@ const LoadedExerciseSessionView = ({
             </div>
             <div className='bg-background border-t px-4 pt-2 pb-3'>
               <div className='mx-auto w-full max-w-xl'>
-                <Button type='button' size='xl' className='w-full' onClick={onClose}>
+                <Button type='button' size='xl' className='w-full' onClick={handleClose}>
                   {backLabel}
                   {showKbd && <Kbd>↵</Kbd>}
                 </Button>
@@ -274,6 +338,22 @@ const LoadedExerciseSessionView = ({
                 counter={`${index + 1} / ${total}`}
               />
             )
+
+            // Resumed onto an exercise answered before the detour (see
+            // restoredOutcome above): read-only outcome with a Next.
+            if (restoredOutcome) {
+              return (
+                <AnsweredExercisePanel
+                  outcome={restoredOutcome}
+                  headword={current.headword}
+                  targetLanguage={targetLanguage}
+                  header={header}
+                  actionLabel={t`Next`}
+                  onAction={handleNext}
+                  showKbd={showKbd}
+                />
+              )
+            }
 
             // Terminal failure: generation is exhausted for this term — don't
             // make the user wait on an hourglass that will never resolve.

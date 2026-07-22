@@ -8,6 +8,7 @@ import {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useStartStrengthenSession } from '../api/practice-hooks'
 import { ExerciseSessionView } from './exercise-session-view'
+import { exerciseSessionKey, takeExerciseSession } from './exercise-session-snapshot'
 import { splitMixChain } from '../utils/daily-mix'
 
 // Strengthen session: leech-rehab gate exercises + this-session again/hard
@@ -20,9 +21,14 @@ export const StrengthenView = () => {
   const { pool, sessionHard, mix } = useSearch({ from: '/_authenticated/_app/practice/strengthen/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
 
+  // An interrupted same-scope session (edit-term detour, back gesture) resumes
+  // from its stashed snapshot instead of starting fresh — a restart would
+  // recompose the gate queue and re-serve every remaining exercise.
+  const sessionKey = exerciseSessionKey({ mode: 'strengthen', targetLanguage, pool, sessionHard, mix })
+  const [resumedSession] = useState(() => takeExerciseSession(sessionKey))
   const { mutate: startSession, isError } = useStartStrengthenSession()
-  const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(null)
-  const startedRef = useRef(false)
+  const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(resumedSession?.queue ?? null)
+  const startedRef = useRef(resumedSession != null)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -34,9 +40,12 @@ export const StrengthenView = () => {
   }, [startSession, targetLanguage, pool, sessionHard])
 
   // Mid-mix, closing continues the chain to the next language (the composed
-  // route's default filter — a mix always runs the everyday queue); otherwise
-  // back to the language landing as usual.
-  const mixUpcoming = splitMixChain(mix, targetLanguage)?.upcoming ?? []
+  // route's default filter — a mix always runs the everyday queue). A
+  // strengthen launched from the mix-final completion screen ends the mix, so
+  // it exits to the dashboard like every other mix exit; otherwise back to the
+  // language landing as usual.
+  const mixChain = splitMixChain(mix, targetLanguage)
+  const mixUpcoming = mixChain?.upcoming ?? []
   const close = () => {
     if (mixUpcoming.length > 0) {
       void navigate({
@@ -46,8 +55,20 @@ export const StrengthenView = () => {
       })
       return
     }
+    if (mixChain) {
+      void navigate({ to: '/dashboard' })
+      return
+    }
     void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
   }
+
+  // The completion CTA must say where close actually goes.
+  const nextLanguageName = mixUpcoming.length > 0 ? getLanguageName(mixUpcoming[0]) : null
+  const backLabel = nextLanguageName
+    ? t`Continue with ${nextLanguageName}`
+    : mixChain
+      ? t`Finish`
+      : t`Back to ${languageName}`
 
   return (
     <ExerciseSessionView
@@ -55,12 +76,15 @@ export const StrengthenView = () => {
       copyVariant='rehab'
       entries={entries}
       isError={isError}
-      backLabel={t`Back to ${languageName}`}
+      backLabel={backLabel}
       onClose={close}
       targetLanguage={targetLanguage}
       practiceMode='strengthen'
       practiceSessionHard={sessionHard}
       practiceMix={mix}
+      sessionPool={pool}
+      sessionKey={sessionKey}
+      resumedSession={resumedSession}
     />
   )
 }

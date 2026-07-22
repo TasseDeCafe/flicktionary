@@ -660,11 +660,11 @@ msgstr "Animate"
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Answered correctly."
 msgstr "Answered correctly."
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Answered incorrectly."
 msgstr "Answered incorrectly."
 
@@ -803,6 +803,10 @@ msgstr "Back to current card"
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "Back to current text"
 msgstr "Back to current text"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Back to dashboard"
+msgstr "Back to dashboard"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Back to forms"
@@ -1138,6 +1142,10 @@ msgstr "Context (optional)"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Continue"
 msgstr "Continue"
+
+#: apps/web/src/features/practice/components/strengthen-view.tsx
+msgid "Continue with {nextLanguageName}"
+msgstr "Continue with {nextLanguageName}"
 
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
 msgid "Continue with {nextName}"
@@ -1714,7 +1722,7 @@ msgstr "Example"
 msgid "Examples"
 msgstr "Examples"
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Exercise answers can't be changed."
 msgstr "Exercise answers can't be changed."
 
@@ -2167,6 +2175,11 @@ msgstr "Find a movie or show and load its subtitles"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/strengthen-view.tsx
+msgid "Finish"
+msgstr "Finish"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setting up Flicktionary"
@@ -3087,6 +3100,8 @@ msgstr "New terms enter as exercises, so there are no new flashcards — include
 msgid "Newest first"
 msgstr "Newest first"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
@@ -4536,7 +4551,7 @@ msgstr "Skills for {label}"
 msgid "Skip"
 msgstr "Skip"
 
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Skipped — it re-serves next session."
 msgstr "Skipped — it re-serves next session."
 
