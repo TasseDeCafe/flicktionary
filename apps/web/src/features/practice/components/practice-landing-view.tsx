@@ -1,15 +1,16 @@
+import { useMemo } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { plural } from '@lingui/core/macro'
 import { PageContainer } from '@/components/page-container'
 import { Brain, ChevronRight, X } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
-import { useDueSummary } from '../api/practice-hooks'
+import { usePreviewPracticeQueues, useDueSummary, type PracticeQueuePreview } from '../api/practice-hooks'
 import { useAddAccountFlag, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { getDailyNewAvailable } from './review-counts'
+import { plannedTotal } from '../utils/daily-mix'
 
 // One-time "How practice works" explainer; dismissing it records the
 // practice_explainer_dismissed account flag so it never returns on any device.
@@ -54,9 +55,13 @@ const HowPracticeWorksCard = ({ onDismiss }: { onDismiss: () => void }) => {
 export const PracticeLandingView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-  const { data: summary, isLoading } = useDueSummary()
+  const { data: summary, isLoading: isSummaryLoading } = useDueSummary()
   const { data: prefs } = useGetUserPrefs()
   const addFlag = useAddAccountFlag()
+
+  const languages = useMemo(() => (summary ?? []).map((entry) => entry.targetLanguage), [summary])
+  const previews = usePreviewPracticeQueues(languages)
+  const isLoading = isSummaryLoading || previews.some((query) => query.isLoading)
 
   // Render neither the explainer nor the intro line until prefs resolve —
   // returning users must not see the one-time card flash.
@@ -74,29 +79,24 @@ export const PracticeLandingView = () => {
     })
   }
 
-  const getRecognitionSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    // Daily limits are per language.
-    const { maxNewTerms, maxReviewTerms } = getPracticeLimitsForLanguage(prefs, entry.targetLanguage)
-    const dueTermCount = entry.reviewDueCount + entry.learningDueCount
-    if (dueTermCount > 0 && maxReviewTerms > 0) return t`${dueTermCount} follow-up(s) due`
-
-    const dailyNewAvailable = getDailyNewAvailable(entry, maxNewTerms)
-    if (dailyNewAvailable > 0) return t`${dailyNewAvailable} new available`
-
-    if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached`
-
-    return t`All caught up`
-  }
-
-  const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    const parts = [getRecognitionSummaryLine(entry)]
+  // The leading part is the session-plan preview's planned total — the same
+  // query the Daily Mix banner and language landing use, so a row never
+  // promises cards the next compose won't serve (raw due-summary counts
+  // overpromise: e.g. warmupCount is the whole ladder backlog, not the few
+  // gates a session serves). The trailing parts stay deck descriptors.
+  const getSummaryLine = (entry: PracticeDueSummaryEntry, preview: PracticeQueuePreview | undefined) => {
+    const total = preview ? plannedTotal(preview.counts) : 0
+    const introductionBudgetSpent = preview?.dailyBudget.remaining === 0 && preview.dailyLimitReached
+    const sessionPart =
+      total > 0
+        ? plural(total, { one: '# card ready', other: '# cards ready' })
+        : introductionBudgetSpent
+          ? t`Daily new limit reached`
+          : t`All caught up`
+    const parts = [sessionPart]
     if (entry.productionTotal > 0) {
       const productionCount = entry.productionTotal
       parts.push(t`${productionCount} in production`)
-    }
-    const warmingUp = entry.warmupCount + entry.productionWarmupCount
-    if (warmingUp > 0) {
-      parts.push(t`${warmingUp} warming up`)
     }
     const parkedTotal = entry.parkedCount + entry.productionParkedCount
     if (parkedTotal > 0) {
@@ -168,8 +168,13 @@ export const PracticeLandingView = () => {
             <section className='flex flex-col gap-2'>
               <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
               <div className='divide-border bg-card divide-y overflow-hidden rounded-xl border'>
-                {summary.map((entry) => {
-                  const summaryLine = getSummaryLine(entry)
+                {summary.map((entry, index) => {
+                  const preview = previews[index]
+                  // A failed preview must not read as "All caught up" — the
+                  // row still opens the language landing, which has retry.
+                  const summaryLine = preview?.isError
+                    ? t`Couldn't load your session preview`
+                    : getSummaryLine(entry, preview?.data)
                   return (
                     <button
                       key={entry.targetLanguage}
