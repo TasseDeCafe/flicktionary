@@ -32,7 +32,7 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  if (isLoading) return <ActivityCardSkeleton windowDays={windowDays} />
+  if (isLoading) return <ActivityCardSkeleton windowDays={windowDays} controlled={controlled} />
   if (!data) return null
 
   const languages = data.perLanguage.map((entry) => entry.targetLanguage)
@@ -163,8 +163,10 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
           <span className='size-2.5 shrink-0 rounded-full bg-teal-400' />
           {t`Marked known ${selectedMarkedKnownLabel}`}
         </span>
-        {!controlled && <SeeMoreLink to='/stats' className='ml-auto'>{t`More stats`}</SeeMoreLink>}
       </div>
+      {/* Own line, matching the coverage card: keeping it out of the stats
+          row means the card height never depends on the counts' width. */}
+      {!controlled && <SeeMoreLink to='/stats' className='mt-2 self-start'>{t`More stats`}</SeeMoreLink>}
 
       {!controlled && languages.length > 1 && (
         <div className='flex flex-wrap justify-center gap-2 pt-3'>
@@ -206,7 +208,14 @@ const ActivityChip = ({
 
 // Mirrors the card: header + bar area + stats row so data landing doesn't
 // shift the layout.
-export const ActivityCardSkeleton = ({ windowDays = DASHBOARD_DAYS }: { windowDays?: number }) => (
+export const ActivityCardSkeleton = ({
+  windowDays = DASHBOARD_DAYS,
+  controlled = false,
+}: {
+  windowDays?: number
+  // Controlled cards hide the "More stats" line, so the skeleton drops it too.
+  controlled?: boolean
+}) => (
   <div className='md:bg-card mt-4 flex flex-col md:rounded-xl md:border md:p-4'>
     <div className='flex items-start justify-between'>
       <div className='flex flex-col gap-2'>
@@ -221,5 +230,6 @@ export const ActivityCardSkeleton = ({ windowDays = DASHBOARD_DAYS }: { windowDa
       ))}
     </div>
     <Skeleton className='mt-3 h-4 w-56' />
+    {!controlled && <Skeleton className='mt-2 h-4 w-24' />}
   </div>
 )
