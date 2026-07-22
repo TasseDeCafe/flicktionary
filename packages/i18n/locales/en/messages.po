@@ -114,10 +114,6 @@ msgstr "{count, plural, one {Mark # word as known} other {Mark # words as known}
 msgid "{count} episodes"
 msgstr "{count} episodes"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-msgid "{dailyNewAvailable} new available"
-msgstr "{dailyNewAvailable} new available"
-
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "{discount}% off with your referral for {durationLimit} months!"
 msgstr "{discount}% off with your referral for {durationLimit} months!"
@@ -141,10 +137,6 @@ msgstr "{discount}% off with your referral forever!"
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "{discountPercentage}% off thanks to your past referral!"
 msgstr "{discountPercentage}% off thanks to your past referral!"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-msgid "{dueTermCount} follow-up(s) due"
-msgstr "{dueTermCount} follow-up(s) due"
 
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "{episodeCount} episodes"
@@ -207,12 +199,8 @@ msgid "{newIntroduced} new introduced"
 msgstr "{newIntroduced} new introduced"
 
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
-msgid "{nextDue} follow-ups due"
-msgstr "{nextDue} follow-ups due"
-
-#: apps/web/src/features/practice/components/mix-interstitial.tsx
-msgid "{nextWarmup} warming up"
-msgstr "{nextWarmup} warming up"
+msgid "{nextTotal, plural, one {# card} other {# cards}}"
+msgstr "{nextTotal, plural, one {# card} other {# cards}}"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
@@ -266,6 +254,10 @@ msgstr "{streakDays}-day streak"
 msgid "{studiedCount} studied · {knownCount} marked known"
 msgstr "{studiedCount} studied · {knownCount} marked known"
 
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "{total, plural, one {# card ready} other {# cards ready}}"
+msgstr "{total, plural, one {# card ready} other {# cards ready}}"
+
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 msgid "{total} cards across {languageCount} languages"
 msgstr "{total} cards across {languageCount} languages"
@@ -281,10 +273,6 @@ msgstr "{verifiedPct}% verified · rest claimed"
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
 msgid "{warmedUp} warmed up"
 msgstr "{warmedUp} warmed up"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-msgid "{warmingUp} warming up"
-msgstr "{warmingUp} warming up"
 
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{wholeCount, plural, one {Mark the remaining # word as known} other {Mark the remaining # words as known}}"
@@ -1284,6 +1272,10 @@ msgstr "Couldn't load your practice queue."
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Couldn't load your practice session."
 msgstr "Couldn't load your practice session."
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Couldn't load your session preview"
+msgstr "Couldn't load your session preview"
 
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Couldn't load your terms."
