@@ -141,9 +141,9 @@ export const FocusView = () => {
     : undefined
   const backToPractice = () => {
     if (!practiceLang) return
-    // Dedicated exercise sessions re-enter their own route: serving is
-    // resume-safe server-side (consume-on-answer + read-only serve), so the
-    // re-entered session picks up where the queue stood.
+    // Dedicated exercise sessions re-enter their own route under the SAME
+    // search params, so the session snapshot stashed on unmount matches and
+    // resumes where the queue stood (see exercise-session-snapshot.ts).
     if (practiceMode === 'strengthen') {
       void navigate({
         to: '/practice/strengthen/$targetLanguage',

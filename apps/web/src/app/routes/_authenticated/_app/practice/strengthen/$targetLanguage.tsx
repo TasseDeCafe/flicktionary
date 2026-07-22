@@ -8,8 +8,9 @@ import { StrengthenView } from '@/features/practice/components/strengthen-view'
 const strengthenSearchSchema = z.object({
   pool: z.enum(['recognition', 'production']).catch('recognition'),
   sessionHard: z.array(z.string().uuid()).optional(),
-  // Daily Mix chain: when present, closing the strengthen session continues to
-  // the next mix language instead of the language landing.
+  // Daily Mix chain: when present, closing the strengthen session continues
+  // the chain — next mix language, or the dashboard when this was the final
+  // one — instead of the language landing.
   mix: z.array(z.string()).optional().catch(undefined),
 })
 
