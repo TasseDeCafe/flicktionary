@@ -79,7 +79,7 @@ describe('practice-router', () => {
     const beforeEs = before.body.data.perLanguage.find(
       (entry: { targetLanguage: string }) => entry.targetLanguage === 'es'
     )
-    expect(beforeEs).toMatchObject({ totalKept: 1, newCount: 1, reviewDueCount: 0 })
+    expect(beforeEs).toMatchObject({ totalKept: 1, newCount: 1, reviewDueCount: 0, lastPracticedAt: null })
 
     // First 'good' rating introduces the term (daily-cap guard) and applies
     // FSRS + the rating-event log atomically; the eventId is the undo handle.
@@ -104,6 +104,7 @@ describe('practice-router', () => {
     )
     expect(afterEs.newCount).toBe(0)
     expect(afterEs.newIntroducedTodayCount).toBe(1)
+    expect(afterEs.lastPracticedAt).not.toBeNull()
 
     // Undo restores the pre-rating snapshot: the term is unseen again.
     const undone = await request(testApp)
@@ -117,7 +118,8 @@ describe('practice-router', () => {
     const restoredEs = restored.body.data.perLanguage.find(
       (entry: { targetLanguage: string }) => entry.targetLanguage === 'es'
     )
-    expect(restoredEs).toMatchObject({ newCount: 1, newIntroducedTodayCount: 0 })
+    // The undo reverted the only rating event, so recency is gone too.
+    expect(restoredEs).toMatchObject({ newCount: 1, newIntroducedTodayCount: 0, lastPracticedAt: null })
   })
 
   test('returns 400 for an illegal (pool, skill) pairing', async () => {

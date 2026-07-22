@@ -50,6 +50,8 @@ import { TextSegmentsRouter } from './router/text-segments-router/text-segments-
 import { StudySessionsRouter } from './router/study-sessions-router/study-sessions-router'
 import { CoverageRouter } from './router/coverage-router/coverage-router'
 import { CoverageSnapshotsRepository } from './transport/database/coverage-snapshots/coverage-snapshots-repository'
+import { StatsRouter } from './router/stats-router/stats-router'
+import { StatsRepository } from './transport/database/stats/stats-repository'
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
 import type { WithTransaction } from './service/highlights/create-note-only-highlight'
 import { GhostsRouter } from './router/ghosts-router/ghosts-router'
@@ -442,6 +444,7 @@ export const buildApp = ({
   }
 
   app.use(API_V1, CoverageRouter(coverageDependencies))
+  app.use(API_V1, StatsRouter({ statsRepository: StatsRepository() }))
   app.use(
     API_V1,
     StudySessionsRouter(

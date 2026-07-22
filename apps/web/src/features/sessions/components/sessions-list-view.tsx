@@ -1,52 +1,67 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Clapperboard, FileText, Puzzle } from 'lucide-react'
-import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
-import { deriveTvShows } from '../utils/derive-tv-shows'
+import { useDebouncedValue } from '../hooks/use-debounced-value'
+import { buildSessionListItems } from '../utils/session-list-items'
 import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
-import { GettingStartedChecklist } from './getting-started-checklist'
-import { CoverageCard } from '@/features/coverage/components/coverage-card'
+import { SessionsEmptyState } from './sessions-empty-state'
+import { SessionsFilterControl, type SessionsSort } from './sessions-filter-control'
 
-type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
+type TypeFilter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
 type RemoveTarget = { id: string; title: string }
 
 export const SessionsListView = () => {
   const { t } = useLingui()
   const { data, isLoading } = useListStudySessions()
-  const [filter, setFilter] = useState<Filter>('all')
+  const search = useSearch({ from: '/_authenticated/_app/sessions/' })
+  const navigate = useNavigate()
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
+
+  // Filter/sort state lives in the URL (see the route's search schema); search
+  // text is transient local state, debounced before it narrows the list.
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebouncedValue(searchInput.trim().toLowerCase(), 250)
+  const filter: TypeFilter = search.type ?? 'all'
+  const sort: SessionsSort = search.sort ?? 'newest'
+
+  const availableLanguages = useMemo(() => [...new Set((data ?? []).map((s) => s.targetLanguage))].sort(), [data])
+  // A stale ?lang= (language no longer in the list) degrades to "all" instead
+  // of rendering an unexplained empty list.
+  const lang = search.lang !== undefined && availableLanguages.includes(search.lang) ? search.lang : undefined
+
+  // Defaults are dropped when writing back so the URL stays clean.
+  const applySearch = (next: { type: TypeFilter; lang: string | undefined; sort: SessionsSort }) =>
+    void navigate({
+      to: '/sessions',
+      search: {
+        ...(next.type !== 'all' ? { type: next.type } : {}),
+        ...(next.lang !== undefined ? { lang: next.lang } : {}),
+        ...(next.sort !== 'newest' ? { sort: next.sort } : {}),
+      },
+    })
+  const setFilter = (type: TypeFilter) => applySearch({ type, lang, sort })
 
   const filtered = useMemo(() => {
     const all = data ?? []
-    if (filter === 'all') return all
-    return all.filter((s) => s.contentSourceType === filter)
-  }, [data, filter])
+    return all.filter((s) => {
+      if (filter !== 'all' && s.contentSourceType !== filter) return false
+      if (lang !== undefined && s.targetLanguage !== lang) return false
+      if (debouncedSearch !== '' && !(s.contentSourceTitle ?? '').toLowerCase().includes(debouncedSearch)) return false
+      return true
+    })
+  }, [data, filter, lang, debouncedSearch])
 
-  // TV sessions collapse into one expandable group per show; every other source
-  // type stays an individual row. Groups and rows interleave by recency so an
-  // active show bubbles up alongside recent movies/texts. The TV filter shows
-  // only groups; non-TV filters never produce a group.
   const items = useMemo(() => {
-    const groups = filter === 'all' || filter === 'tv' ? deriveTvShows(filtered) : []
-    const loose = filtered.filter((s) => s.contentSourceType !== 'tv')
-    const merged = [
-      ...groups.map((group) => ({
-        kind: 'group' as const,
-        key: `show-${group.tmdbShowId}`,
-        sortKey: group.latestCreatedAt,
-        group,
-      })),
-      ...loose.map((session) => ({ kind: 'session' as const, key: session.id, sortKey: session.createdAt, session })),
-    ]
-    merged.sort((a, b) => b.sortKey.localeCompare(a.sortKey))
-    return merged
-  }, [filtered, filter])
+    const merged = buildSessionListItems(filtered, { groupTvShows: filter === 'all' || filter === 'tv' })
+    // The util sorts newest-first; oldest-first is its exact reverse.
+    return sort === 'oldest' ? [...merged].reverse() : merged
+  }, [filtered, filter, sort])
 
   // One batched difficulty read for the visible loose cards. TV episodes get
   // theirs on the show detail screen; the show-group card shows no aggregate.
@@ -56,13 +71,27 @@ export const SessionsListView = () => {
   )
   const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(looseSessionIds)
 
+  const sessionCount = filtered.length
+
   return (
     <div className='mx-auto max-w-4xl px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
 
-      <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
-
-      <CoverageCard />
+      {(data?.length ?? 0) > 0 && (
+        <div className='mt-4 flex items-center gap-2'>
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder={t`Search sessions…`}
+            className='flex-1'
+          />
+          <SessionsFilterControl
+            filters={{ sort, lang }}
+            languages={availableLanguages}
+            onChange={(next) => applySearch({ type: filter, lang: next.lang, sort: next.sort })}
+          />
+        </div>
+      )}
 
       {isLoading && <FilterChipsSkeleton />}
 
@@ -98,7 +127,11 @@ export const SessionsListView = () => {
         </div>
       )}
 
-      <div className='mt-4 flex flex-col gap-2'>
+      {!isLoading && (data?.length ?? 0) > 0 && (
+        <div className='text-muted-foreground mt-3 text-xs tabular-nums'>{t`${sessionCount} sessions`}</div>
+      )}
+
+      <div className='mt-3 flex flex-col gap-2'>
         {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
         {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
         {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
@@ -127,46 +160,6 @@ export const SessionsListView = () => {
           if (!next) setRemoveTarget(null)
         }}
       />
-    </div>
-  )
-}
-
-// First-run replacement for the bare "no sessions" line: says what a session
-// is and mirrors the primary "+ New" actions so the empty screen is itself an
-// entry point. The extension row deep-links into the guide since watching on
-// YouTube/streaming starts outside the app.
-const SessionsEmptyState = () => {
-  const { t } = useLingui()
-  const navigate = useNavigate()
-  return (
-    <div className='bg-card rounded-xl border p-4'>
-      <h2 className='font-semibold'>{t`Start your first session`}</h2>
-      <p className='text-muted-foreground mt-1 text-sm'>
-        {t`A session is anything you study from: a movie or show with subtitles, a YouTube video, an article, or a pasted text. Terms you save while watching or reading become your vocabulary.`}
-      </p>
-      <div className='mt-3 flex flex-col gap-1'>
-        <OverlayActionRow
-          icon={Clapperboard}
-          label={t`Start a movie or TV session`}
-          description={t`Find a movie or show and load its subtitles`}
-          onClick={() => void navigate({ to: '/sessions/new' })}
-        />
-        <OverlayActionRow
-          icon={FileText}
-          label={t`Practice with a text`}
-          description={t`Paste an article, comment, or post`}
-          onClick={() => void navigate({ to: '/sessions/new-text' })}
-        />
-        <OverlayActionRow
-          icon={Puzzle}
-          label={t`Watch with the browser extension`}
-          description={t`YouTube and streaming sites, with instant subtitle lookups`}
-          onClick={() => void navigate({ to: '/user-guide', hash: 'extension' })}
-        />
-      </div>
-      <Link to='/user-guide' hash='sessions' className='mt-3 inline-block text-sm font-medium underline'>
-        {t`Read more in the guide`}
-      </Link>
     </div>
   )
 }

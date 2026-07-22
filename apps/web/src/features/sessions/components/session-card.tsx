@@ -27,7 +27,6 @@ export const SessionCardSkeleton = () => (
 type SessionRow = {
   id: string
   targetLanguage: string
-  cefrLevel: string
   createdAt: string
   contentSourceTitle: string | null
   contentSourceType: ContentSourceType | null
@@ -64,7 +63,10 @@ export const SessionCard = ({ session, onRemove, difficulty, difficultyLoading }
   const { t } = useLingui()
   const title = session.contentSourceTitle ?? t`Untitled`
   const placeholder = session.contentSourceType ? POSTER_PLACEHOLDERS[session.contentSourceType] : undefined
-  const metaParts = [session.contentSourceYear ?? null, session.targetLanguage.toUpperCase(), session.cefrLevel].filter(
+  // No CEFR here: the session's stored level is the USER's level, which reads
+  // as the content's difficulty in this position — the difficulty stat is the
+  // honest signal.
+  const metaParts = [session.contentSourceYear ?? null, session.targetLanguage.toUpperCase()].filter(
     (v): v is string | number => v !== null && v !== ''
   )
 

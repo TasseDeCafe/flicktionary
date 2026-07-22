@@ -269,8 +269,24 @@ const hasLiveEvent = async (userId: string): Promise<boolean> => {
   return result[0]?.exists ?? false
 }
 
+// Most recent live (non-reverted, non-imported) rating per language — half of
+// the due summary's lastPracticedAt (the other half is exercise use, which
+// never writes a rating event). Covered by the budget index.
+const getLastRatedAtByLanguage = async (userId: string): Promise<Map<string, Date>> => {
+  const rows = (await sql`
+    SELECT target_language, MAX(rated_at) AS last_rated_at
+    FROM public.practice_rating_events
+    WHERE user_id = ${userId}
+      AND reverted_at IS NULL
+      AND import_batch_id IS NULL
+    GROUP BY target_language
+  `) as Array<{ target_language: string; last_rated_at: Date }>
+  return new Map(rows.map((row) => [row.target_language, row.last_rated_at]))
+}
+
 export interface PracticeRatingEventsRepositoryInterface {
   insert: (params: InsertRatingEventInput, executor?: postgres.Sql) => Promise<string>
+  getLastRatedAtByLanguage: (userId: string) => Promise<Map<string, Date>>
   findLatestLiveEventForUndo: (
     params: { userId: string; userLookupId: string; skill: FacetSkill; targetForm: string },
     executor?: postgres.Sql
@@ -295,6 +311,7 @@ export interface PracticeRatingEventsRepositoryInterface {
 export const PracticeRatingEventsRepository = (): PracticeRatingEventsRepositoryInterface => {
   return {
     insert,
+    getLastRatedAtByLanguage,
     findLatestLiveEventForUndo,
     listLiveEventsForCheckpoint,
     markReverted,

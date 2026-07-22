@@ -58,6 +58,14 @@ export const CoverageCard = () => {
         notYetCount={(active.denominator ?? 0) - active.studiedRanks.length - active.knownRanks.length}
         mweCount={active.mweCount ?? 0}
       />
+      <div className='mt-2 text-right'>
+        <Link
+          to='/stats'
+          className='text-muted-foreground hover:text-foreground active:text-foreground text-sm font-medium transition-colors'
+        >
+          {t`More stats`}
+        </Link>
+      </div>
     </div>
   )
 }

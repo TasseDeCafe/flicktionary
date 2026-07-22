@@ -546,6 +546,10 @@ export const PracticeDueSummaryEntrySchema = z.object({
   // off the rating-event log). Lets the landing distinguish "limit reached"
   // from "all caught up" when due work exists beyond the budget.
   reviewedTodayCount: z.number().int(),
+  // Most recent practice touch in this language (live rating OR answered
+  // exercise — exercise-first warm-ups never write rating events). Orders the
+  // Daily Mix queue; null = never practiced.
+  lastPracticedAt: z.string().nullable(),
   // Parked recognition terms, split by origin (both excluded from every
   // practice queue until they leave the ladder; the due counts above already
   // exclude them). parkedCount = genuine leeches ("strengthen them");

@@ -33,6 +33,9 @@ interface TermActionsOverlayProps {
   // focus-view URL so its close re-enters the composed route under the same
   // filter, which is what lets the stashed session snapshot match and resume.
   practiceFilter?: PracticeQueueFilter
+  // The Daily Mix chain, when the session is part of one — rides the same
+  // detour so returning doesn't drop the run.
+  practiceMix?: string[]
 }
 
 // Header-kebab actions for the term behind the displayed composed-queue item.
@@ -54,6 +57,7 @@ export const TermActionsOverlay = ({
   practiceStudySessionId,
   practiceSessionHard,
   practiceFilter,
+  practiceMix,
 }: TermActionsOverlayProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -78,6 +82,7 @@ export const TermActionsOverlay = ({
         practiceStudySessionId,
         practiceSessionHard,
         practiceFilter,
+        practiceMix,
       },
     })
   }

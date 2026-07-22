@@ -69,6 +69,10 @@ msgstr "{bandPct}% of this band's text share"
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{cardsDone} cards"
+msgstr "{cardsDone} cards"
+
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
@@ -158,6 +162,10 @@ msgstr "{fieldLabel}: {title}"
 msgid "{frequentUnknownCount} frequent"
 msgstr "{frequentUnknownCount} frequent"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "{fullDate}: {newCount} new terms, {knownCount} marked known"
+msgstr "{fullDate}: {newCount} new terms, {knownCount} marked known"
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional."
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional."
@@ -174,6 +182,10 @@ msgstr "{intake} enter your next session"
 msgid "{introducedToday} of {budgetMax} new introductions used today"
 msgstr "{introducedToday} of {budgetMax} new introductions used today"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{languageName} — done"
+msgstr "{languageName} — done"
+
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{languageName} vocabulary"
 msgstr "{languageName} vocabulary"
@@ -189,6 +201,18 @@ msgstr "{markKnownCount, plural, one {Already know the # remaining word?} other 
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "{mweCount, plural, one {+ # expression} other {+ # expressions}}"
 msgstr "{mweCount, plural, one {+ # expression} other {+ # expressions}}"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{newIntroduced} new introduced"
+msgstr "{newIntroduced} new introduced"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{nextDue} follow-ups due"
+msgstr "{nextDue} follow-ups due"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{nextWarmup} warming up"
+msgstr "{nextWarmup} warming up"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
@@ -222,6 +246,10 @@ msgstr "{removedCount, plural, one {# known mark removed} other {# known marks r
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
 msgstr "{selectedSheetCount} of {sheetCount} sheets selected"
 
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "{sessionCount} sessions"
+msgstr "{sessionCount} sessions"
+
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{sessionMarkedCount, plural, one {Un-mark the # word marked known from this session} other {Un-mark the # words marked known from this session}}"
 msgstr "{sessionMarkedCount, plural, one {Un-mark the # word marked known from this session} other {Un-mark the # words marked known from this session}}"
@@ -230,14 +258,31 @@ msgstr "{sessionMarkedCount, plural, one {Un-mark the # word marked known from t
 msgid "{spanCount, plural, one {Mark the # word read so far as known} other {Mark the # words read so far as known}}"
 msgstr "{spanCount, plural, one {Mark the # word read so far as known} other {Mark the # words read so far as known}}"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "{streakDays}-day streak"
+msgstr "{streakDays}-day streak"
+
 #: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "{studiedCount} studied · {knownCount} marked known"
 msgstr "{studiedCount} studied · {knownCount} marked known"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "{total} cards across {languageCount} languages"
+msgstr "{total} cards across {languageCount} languages"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "{total} cards in {firstLanguageName}"
+msgstr "{total} cards in {firstLanguageName}"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{verifiedPct}% verified · rest claimed"
 msgstr "{verifiedPct}% verified · rest claimed"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{warmedUp} warmed up"
+msgstr "{warmedUp} warmed up"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{warmingUp} warming up"
@@ -250,6 +295,10 @@ msgstr "{wholeCount, plural, one {Mark the remaining # word as known} other {Mar
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{wholeCount, plural, one {Or mark the whole text (# word)} other {Or mark the whole text (# words)}}"
 msgstr "{wholeCount, plural, one {Or mark the whole text (# word)} other {Or mark the whole text (# words)}}"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "+{hiddenCount} more"
+msgstr "+{hiddenCount} more"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a longer phrase."
@@ -315,7 +364,7 @@ msgstr "A newer version of the app is required to continue. Please update to the
 msgid "A sentence using this term in its natural setting."
 msgstr "A sentence using this term in its natural setting."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "A session is anything you study from: a movie or show with subtitles, a YouTube video, an article, or a pasted text. Terms you save while watching or reading become your vocabulary."
 msgstr "A session is anything you study from: a movie or show with subtitles, a YouTube video, an article, or a pasted text. Terms you save while watching or reading become your vocabulary."
 
@@ -378,6 +427,14 @@ msgstr "Actions for this vocabulary term."
 #: apps/web/src/features/profile/components/danger-zone-view.tsx
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
+
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Activity"
+msgstr "Activity"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "Activity, streak, and coverage"
+msgstr "Activity, streak, and coverage"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
@@ -512,7 +569,10 @@ msgid "AI-generated and not verified against a dictionary — double-check befor
 msgstr "AI-generated and not verified against a dictionary — double-check before drilling it."
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "All"
 msgstr "All"
@@ -527,6 +587,10 @@ msgstr "All {denominatorLabel}"
 msgid "All caught up"
 msgstr "All caught up"
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "All caught up for today."
+msgstr "All caught up for today."
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "All done!"
 msgstr "All done!"
@@ -534,6 +598,10 @@ msgstr "All done!"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "All known"
 msgstr "All known"
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+msgid "All sessions"
+msgstr "All sessions"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Allow auto-loading of detected subtitles"
@@ -938,6 +1006,7 @@ msgstr "Choose what to study for this target."
 msgid "Choose your plan"
 msgstr "Choose your plan"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Clear filters"
 msgstr "Clear filters"
@@ -1080,6 +1149,10 @@ msgstr "Context (optional)"
 msgid "Continue"
 msgstr "Continue"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Continue with {nextName}"
+msgstr "Continue with {nextName}"
+
 #: apps/web/src/features/auth/components/login-view.tsx
 msgid "Continue with Apple"
 msgstr "Continue with Apple"
@@ -1202,6 +1275,10 @@ msgstr "Couldn't generate the form's data"
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "Couldn't load your practice queue."
+msgstr "Couldn't load your practice queue."
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Couldn't load your practice session."
 msgstr "Couldn't load your practice session."
@@ -1298,6 +1375,9 @@ msgstr "Dark"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 #: apps/native/src/features/navigation/components/tabs-layout.tsx
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
 msgid "Dashboard"
 msgstr "Dashboard"
 
@@ -1407,6 +1487,10 @@ msgstr "Display subtitles"
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Do your first practice"
 msgstr "Do your first practice"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Done for now"
+msgstr "Done for now"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
@@ -2082,7 +2166,7 @@ msgid "Feminine"
 msgstr "Feminine"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Find a movie or show and load its subtitles"
 msgstr "Find a movie or show and load its subtitles"
 
@@ -2277,8 +2361,8 @@ msgid "Go back to the source view to add or retry highlights."
 msgstr "Go back to the source view to add or retry highlights."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
-msgid "Go to Sessions"
-msgstr "Go to Sessions"
+msgid "Go to Dashboard"
+msgstr "Go to Dashboard"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Go to your sessions"
@@ -2639,6 +2723,7 @@ msgstr "Label (e.g. past.m)"
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/components/language-option-list.tsx
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 msgid "Language"
 msgstr "Language"
 
@@ -2659,6 +2744,10 @@ msgstr "Languages"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "lapse"
 msgstr "lapse"
+
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Last {windowDays} days"
+msgstr "Last {windowDays} days"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "Last day to cancel before first charge"
@@ -2803,6 +2892,10 @@ msgstr "Marked as known"
 msgid "marked known"
 msgstr "marked known"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Marked known"
+msgstr "Marked known"
+
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "Marked known {knownLabel}"
 msgstr "Marked known {knownLabel}"
@@ -2842,6 +2935,10 @@ msgstr "Message to the founders"
 msgid "Misc"
 msgstr "Misc"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Mix complete — every language is done."
+msgstr "Mix complete — every language is done."
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "Monthly"
 msgstr "Monthly"
@@ -2864,6 +2961,11 @@ msgstr "More frequent synonym"
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 msgid "More options"
 msgstr "More options"
+
+#: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "More stats"
+msgstr "More stats"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Most playback actions have editable keyboard shortcuts — seeking by subtitle, adjusting subtitle offset, toggling subtitles, changing playback rate, and more. Check the Keyboard Shortcuts tab in the settings."
@@ -2968,9 +3070,17 @@ msgstr "New pronunciation/form cards are introductions — not available in a du
 msgid "New session"
 msgstr "New session"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "New terms"
+msgstr "New terms"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include exercises or the new pronunciation/form cards."
 msgstr "New terms enter as exercises, so there are no new flashcards — include exercises or the new pronunciation/form cards."
+
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+msgid "Newest first"
+msgstr "Newest first"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
@@ -2997,6 +3107,10 @@ msgstr "No active tab to import from."
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "No active tab."
 msgstr "No active tab."
+
+#: apps/web/src/features/stats/components/stats-view.tsx
+msgid "No coverage data yet — save a few terms first."
+msgstr "No coverage data yet — save a few terms first."
 
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "No episodes found."
@@ -3182,6 +3296,7 @@ msgstr "Numeral"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "of typical text"
 msgstr "of typical text"
 
@@ -3192,6 +3307,10 @@ msgstr "of typical text"
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "OK"
 msgstr "OK"
+
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+msgid "Oldest first"
+msgstr "Oldest first"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "On any non-video page, open the extension popup and choose <0>Import this article</0>. Flicktionary extracts the article text and creates a reading session in the web app. To import only part of a page, select the text first."
@@ -3265,6 +3384,7 @@ msgid "Open the focus view to edit fields, forms, and skills."
 msgstr "Open the focus view to edit fields, forms, and skills."
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "Open the full coverage view"
 msgstr "Open the full coverage view"
 
@@ -3351,7 +3471,7 @@ msgid "Paste a text"
 msgstr "Paste a text"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Paste an article, comment, or post"
 msgstr "Paste an article, comment, or post"
 
@@ -3538,7 +3658,7 @@ msgstr "Practice limits"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
@@ -3702,7 +3822,7 @@ msgid "Read"
 msgstr "Read"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Read more in the guide"
 msgstr "Read more in the guide"
 
@@ -3754,6 +3874,10 @@ msgstr "Recap"
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Recap done!"
 msgstr "Recap done!"
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+msgid "Recent"
+msgstr "Recent"
 
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3917,6 +4041,7 @@ msgstr "Restoring…"
 msgid "Resumed here"
 msgstr "Resumed here"
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Retry"
@@ -4055,6 +4180,11 @@ msgstr "Saved to your vocabulary"
 msgid "Saves a checkpoint at your current reading position. Saved words that appeared in what you read and were due for review count as successful reviews — words you looked up along the way are never penalized."
 msgstr "Saves a checkpoint at your current reading position. Saved words that appeared in what you read and were due for review count as successful reviews — words you looked up along the way are never penalized."
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Saving your ratings…"
+msgstr "Saving your ratings…"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
@@ -4088,6 +4218,10 @@ msgstr "Search movies…"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Search sessions…"
+msgstr "Search sessions…"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Search shadow roots for video elements"
@@ -4231,7 +4365,6 @@ msgstr "Session removed"
 msgid "Session vocabulary"
 msgstr "Session vocabulary"
 
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Sessions"
@@ -4423,14 +4556,17 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort"
 msgstr "Sort"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort & filter"
 msgstr "Sort & filter"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort and filter"
 msgstr "Sort and filter"
@@ -4444,6 +4580,7 @@ msgid "Standalone"
 msgstr "Standalone"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Start"
@@ -4455,7 +4592,7 @@ msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
 
@@ -4468,7 +4605,7 @@ msgid "Start something new"
 msgstr "Start something new"
 
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start your first session"
 msgstr "Start your first session"
 
@@ -4480,6 +4617,12 @@ msgstr "Starting session…"
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Starting…"
 msgstr "Starting…"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
+msgid "Stats"
+msgstr "Stats"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Status"
@@ -4510,6 +4653,10 @@ msgstr "Strengthen"
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Strengthen · {languageName}"
 msgstr "Strengthen · {languageName}"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Strengthen {languageName} first"
+msgstr "Strengthen {languageName} first"
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Strengthening done!"
@@ -4923,6 +5070,10 @@ msgstr "This value differs from what Wiktionary provided."
 msgid "This value was taken from Wiktionary's dictionary data during processing."
 msgstr "This value was taken from Wiktionary's dictionary data during processing."
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "This week"
+msgstr "This week"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Title"
@@ -4938,6 +5089,7 @@ msgid "To change your current plan type, please click on \"Manage Subscription\"
 msgstr "To change your current plan type, please click on \"Manage Subscription\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
 msgid "Today"
 msgstr "Today"
 
@@ -5181,6 +5333,7 @@ msgstr "Unlock Premium"
 msgid "Unseen"
 msgstr "Unseen"
 
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
@@ -5191,6 +5344,7 @@ msgstr "Untitled"
 msgid "Unverified"
 msgstr "Unverified"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Up next"
@@ -5328,6 +5482,7 @@ msgstr "Vocabulary"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "Vocabulary coverage"
 msgstr "Vocabulary coverage"
 
@@ -5392,7 +5547,7 @@ msgstr "Warnings"
 msgid "Watch and look up"
 msgstr "Watch and look up"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Watch with the browser extension"
 msgstr "Watch with the browser extension"
 
@@ -5641,6 +5796,7 @@ msgstr "Your name"
 msgid "Your next exercise is still being prepared — it'll appear here automatically."
 msgstr "Your next exercise is still being prepared — it'll appear here automatically."
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Your next session"
 msgstr "Your next session"
@@ -5666,6 +5822,6 @@ msgstr "your@email.com"
 msgid "YouTube"
 msgstr "YouTube"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "YouTube and streaming sites, with instant subtitle lookups"
 msgstr "YouTube and streaming sites, with instant subtitle lookups"

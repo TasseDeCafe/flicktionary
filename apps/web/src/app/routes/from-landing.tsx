@@ -16,6 +16,6 @@ export const Route = createFileRoute('/from-landing')({
         params: { planInterval: search.planInterval },
       })
     }
-    throw redirect({ to: '/sessions' })
+    throw redirect({ to: '/dashboard' })
   },
 })

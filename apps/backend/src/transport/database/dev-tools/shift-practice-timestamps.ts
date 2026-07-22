@@ -16,10 +16,18 @@ import type postgres from 'postgres'
 
 // The practice-time closure: SRS facets + the rating audit log (its prev_srs_*
 // snapshots must move too, or an undo after a shift would restore a schedule
-// from the "future"), the exercise bank, reading texts, and user_lookups
-// (recently-added ordering only, shifted for consistency). Every table carries
+// from the "future"), the exercise bank, reading texts, user_lookups
+// (recently-added ordering only, shifted for consistency), and known_lemmas
+// (marked_at feeds the per-day activity chart + streak). Every table carries
 // its own user_id column.
-const SHIFT_TABLES = ['study_facets', 'user_lookups', 'practice_rating_events', 'practice_exercises', 'practice_texts']
+const SHIFT_TABLES = [
+  'study_facets',
+  'user_lookups',
+  'practice_rating_events',
+  'practice_exercises',
+  'practice_texts',
+  'known_lemmas',
+]
 
 const TIME_COLUMN_TYPES = ['timestamp with time zone', 'timestamp without time zone', 'date']
 

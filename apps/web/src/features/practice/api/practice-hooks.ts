@@ -1,5 +1,5 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { dropTermFromComposedSession } from '../components/composed-session-snapshot'
@@ -22,11 +22,13 @@ export const practiceSummaryKeys = () => [
 // would drift. The mark-known preview rides along: it derives from the same
 // state (profile minus studied minus known). The whole-language coverage
 // read rides along too — its studied/known/verified inputs change on exactly
-// the same writes.
+// the same writes. So does the per-day activity/streak read: introductions,
+// ratings and known marks are precisely its day-count sources.
 export const difficultyInvalidates = () => [
   orpcQuery.studySessions.getDifficulties.key(),
   orpcQuery.studySessions.getMarkKnownPreview.key(),
   orpcQuery.coverage.getCoverage.key(),
+  orpcQuery.stats.getActivity.key(),
 ]
 
 export const useDueSummary = () => {
@@ -55,6 +57,23 @@ export const usePreviewPracticeQueue = (targetLanguage: string | null) => {
       meta: { errorMessage: t`Failed to load session preview` },
     })
   )
+}
+
+// Session-plan previews for a set of languages at once (the Daily Mix banner).
+// Same query options — and therefore the same cache entries — as the
+// single-language hook, so the banner's numbers equal the practice landing's
+// by construction. useQueries keeps the hook count fixed while the language
+// list varies. Errors surface in the banner itself, never as toasts.
+export const usePreviewPracticeQueues = (targetLanguages: string[]) => {
+  return useQueries({
+    queries: targetLanguages.map((targetLanguage) =>
+      orpcQuery.practice.previewPracticeQueue.queryOptions({
+        input: { targetLanguage },
+        select: (response) => response.data,
+        meta: { showErrorToast: false },
+      })
+    ),
+  })
 }
 
 // Single-term rating. Invalidates the landing's drifting counts

@@ -38,6 +38,9 @@ type ExerciseSessionProps = {
   practiceMode: 'strengthen' | 'warmup'
   practiceStudySessionId?: string
   practiceSessionHard?: string[]
+  // The Daily Mix chain, when the strengthen session is part of one — carried
+  // through the focus-view detour so returning doesn't drop the run.
+  practiceMix?: string[]
 }
 
 // The shared exercise-queue session screen behind both Strengthen (leech rehab
@@ -86,6 +89,7 @@ const LoadedExerciseSessionView = ({
   practiceMode,
   practiceStudySessionId,
   practiceSessionHard,
+  practiceMix,
 }: ExerciseSessionProps & { initialEntries: StrengthenExerciseEntry[] }) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
@@ -204,6 +208,7 @@ const LoadedExerciseSessionView = ({
           practiceMode={practiceMode}
           practiceStudySessionId={practiceStudySessionId}
           practiceSessionHard={practiceSessionHard}
+          practiceMix={practiceMix}
         />
       )}
       <div className='flex flex-1 flex-col overflow-hidden'>

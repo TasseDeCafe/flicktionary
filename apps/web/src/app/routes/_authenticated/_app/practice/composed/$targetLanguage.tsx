@@ -18,15 +18,30 @@ const composedSearchSchema = z.object({
   render: z.enum(['flashcards_only', 'exercises_only', 'both']).catch('both'),
   autoWarmup: z.boolean().catch(true),
   includeOptInNew: z.boolean().catch(false),
+  // Daily Mix: the FULL ordered language chain (done + current + upcoming) —
+  // position derives from the route's language param, so the value is stable
+  // across the whole run and survives a refresh. Never part of the compose
+  // filter.
+  mix: z.array(z.string()).optional().catch(undefined),
 })
 
 const ComposedPracticeRoute = () => {
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/composed/$targetLanguage' })
   const search = useSearch({ from: '/_authenticated/_app/practice/composed/$targetLanguage' })
-  const filter: PracticeQueueFilter = search
-  // Key on the filter so switching presets remounts a fresh session (the view
-  // composes once per mount — one-shot snapshot semantics).
-  return <ComposedPracticeView key={JSON.stringify(filter)} targetLanguage={targetLanguage} filter={filter} />
+  const { mix, ...filter } = search satisfies PracticeQueueFilter & { mix?: string[] }
+  // Key on language + filter so both a preset switch AND a mix hop to the next
+  // language remount a fresh session (the view composes once per mount —
+  // one-shot snapshot semantics; TanStack reuses the route component across
+  // param changes). `mix` stays out of the key: the chain annotates the
+  // session, it doesn't define it.
+  return (
+    <ComposedPracticeView
+      key={`${targetLanguage}:${JSON.stringify(filter)}`}
+      targetLanguage={targetLanguage}
+      filter={filter}
+      mix={mix}
+    />
+  )
 }
 
 export const Route = createFileRoute('/_authenticated/_app/practice/composed/$targetLanguage')({

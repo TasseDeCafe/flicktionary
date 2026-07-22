@@ -278,6 +278,19 @@ const countSlotsByTermForType = async (params: {
 // "Has ever answered an exercise" for the getting-started checklist —
 // exercise-first warm-up gates stamp used_at while the facet's srs_reps can
 // still be 0, so this catches first practices that rating events miss.
+// Most recent answered exercise per language — the exercise half of the due
+// summary's lastPracticedAt (exercise-first warm-ups never write rating
+// events, so rating recency alone would miss them).
+const getLastUsedAtByLanguage = async (userId: string): Promise<Map<string, Date>> => {
+  const rows = (await sql`
+    SELECT target_language, MAX(used_at) AS last_used_at
+    FROM public.practice_exercises
+    WHERE user_id = ${userId} AND used_at IS NOT NULL
+    GROUP BY target_language
+  `) as Array<{ target_language: string; last_used_at: Date }>
+  return new Map(rows.map((row) => [row.target_language, row.last_used_at]))
+}
+
 const hasUsedExercise = async (userId: string): Promise<boolean> => {
   const result = (await sql`
     SELECT EXISTS(
@@ -333,6 +346,7 @@ export interface PracticeExercisesRepositoryInterface {
     userLookupIds: string[]
   }) => Promise<Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>>
   hasUsedExercise: (userId: string) => Promise<boolean>
+  getLastUsedAtByLanguage: (userId: string) => Promise<Map<string, Date>>
 }
 
 export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterface => {
@@ -350,5 +364,6 @@ export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterf
     deleteFailedForLookup,
     countSlotsByTermForType,
     hasUsedExercise,
+    getLastUsedAtByLanguage,
   }
 }

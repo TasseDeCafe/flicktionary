@@ -32,6 +32,9 @@ const focusViewSearchSchema = z.object({
     })
     .optional()
     .catch(undefined),
+  // The Daily Mix chain ('flashcards' mode only) — restored on close so an
+  // edit-term detour doesn't drop the run.
+  practiceMix: z.array(z.string()).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/sessions/$sessionId/review/$cardId')({

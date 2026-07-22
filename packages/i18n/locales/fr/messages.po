@@ -69,6 +69,10 @@ msgstr "{bandPct}% de la part de texte de cette bande"
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} carte(s) — dont {keptCardCount} conservée(s)"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{cardsDone} cards"
+msgstr "{cardsDone} cartes"
+
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
@@ -158,6 +162,10 @@ msgstr "{fieldLabel} : {title}"
 msgid "{frequentUnknownCount} frequent"
 msgstr "{frequentUnknownCount} fréquents"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "{fullDate}: {newCount} new terms, {knownCount} marked known"
+msgstr "{fullDate} : {newCount} nouveaux termes, {knownCount} marqués comme connus"
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional."
 msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices rapide peut les consolider — facultatif."
@@ -174,6 +182,10 @@ msgstr "{intake} entrent dans votre prochaine session"
 msgid "{introducedToday} of {budgetMax} new introductions used today"
 msgstr "{introducedToday} nouvelles introductions sur {budgetMax} utilisées aujourd'hui"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{languageName} — done"
+msgstr "{languageName} — terminé"
+
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{languageName} vocabulary"
 msgstr "Vocabulaire {languageName}"
@@ -189,6 +201,18 @@ msgstr "{markKnownCount, plural, one {Vous connaissez déjà le # mot restant ?}
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "{mweCount, plural, one {+ # expression} other {+ # expressions}}"
 msgstr "{mweCount, plural, one {+ # expression} other {+ # expressions}}"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{newIntroduced} new introduced"
+msgstr "{newIntroduced} nouveaux introduits"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{nextDue} follow-ups due"
+msgstr "{nextDue} révisions en attente"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{nextWarmup} warming up"
+msgstr "{nextWarmup} en préparation"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
@@ -222,6 +246,10 @@ msgstr "{removedCount, plural, one {# marque connue supprimée} other {# marques
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
 msgstr "{selectedSheetCount} feuille(s) sur {sheetCount} sélectionnée(s)"
 
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "{sessionCount} sessions"
+msgstr "{sessionCount} sessions"
+
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{sessionMarkedCount, plural, one {Un-mark the # word marked known from this session} other {Un-mark the # words marked known from this session}}"
 msgstr "{sessionMarkedCount, plural, one {Démarquer le # mot marqué comme connu de cette session} other {Démarquer les # mots marqués comme connus de cette session}}"
@@ -230,14 +258,31 @@ msgstr "{sessionMarkedCount, plural, one {Démarquer le # mot marqué comme conn
 msgid "{spanCount, plural, one {Mark the # word read so far as known} other {Mark the # words read so far as known}}"
 msgstr "{spanCount, plural, one {Marquer le # mot lu jusqu'ici comme connu} other {Marquer les # mots lus jusqu'ici comme connus}}"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "{streakDays}-day streak"
+msgstr "{streakDays} jours d'affilée"
+
 #: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "{studiedCount} studied · {knownCount} marked known"
 msgstr "{studiedCount} étudiés · {knownCount} marqués comme connus"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "{total} cards across {languageCount} languages"
+msgstr "{total} cartes dans {languageCount} langues"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "{total} cards in {firstLanguageName}"
+msgstr "{total} cartes en {firstLanguageName}"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{verifiedPct}% verified · rest claimed"
 msgstr "{verifiedPct} % vérifié · reste revendiqué"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "{warmedUp} warmed up"
+msgstr "{warmedUp} échauffés"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{warmingUp} warming up"
@@ -250,6 +295,10 @@ msgstr "{wholeCount, plural, one {Marquer le # mot restant comme connu} other {M
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{wholeCount, plural, one {Or mark the whole text (# word)} other {Or mark the whole text (# words)}}"
 msgstr "{wholeCount, plural, one {Ou marquer le texte entier (# mot)} other {Ou marquer le texte entier (# mots)}}"
+
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "+{hiddenCount} more"
+msgstr "+{hiddenCount} de plus"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a longer phrase."
@@ -315,7 +364,7 @@ msgstr "Une version plus récente de l'application est requise pour continuer. V
 msgid "A sentence using this term in its natural setting."
 msgstr "Une phrase utilisant ce terme dans son contexte naturel."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "A session is anything you study from: a movie or show with subtitles, a YouTube video, an article, or a pasted text. Terms you save while watching or reading become your vocabulary."
 msgstr "Une session est tout ce que vous étudiez : un film ou une série avec sous-titres, une vidéo YouTube, un article ou un texte collé. Les termes que vous enregistrez en regardant ou en lisant deviennent votre vocabulaire."
 
@@ -378,6 +427,14 @@ msgstr "Actions pour ce terme de vocabulaire."
 #: apps/web/src/features/profile/components/danger-zone-view.tsx
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
+
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Activity"
+msgstr "Activité"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "Activity, streak, and coverage"
+msgstr "Activité, série et couverture"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
@@ -512,7 +569,10 @@ msgid "AI-generated and not verified against a dictionary — double-check befor
 msgstr "Généré par IA et non vérifié dans un dictionnaire — à vérifier avant de le réviser."
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "All"
 msgstr "Tout"
@@ -527,6 +587,10 @@ msgstr "Tous les {denominatorLabel}"
 msgid "All caught up"
 msgstr "Tout est à jour"
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "All caught up for today."
+msgstr "Tout est à jour pour aujourd'hui."
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "All done!"
 msgstr "Terminé !"
@@ -534,6 +598,10 @@ msgstr "Terminé !"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "All known"
 msgstr "Tout connu"
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+msgid "All sessions"
+msgstr "Toutes les sessions"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Allow auto-loading of detected subtitles"
@@ -938,6 +1006,7 @@ msgstr "Choisissez ce que vous voulez étudier pour cette cible."
 msgid "Choose your plan"
 msgstr "Choisissez votre forfait"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Clear filters"
 msgstr "Effacer les filtres"
@@ -1080,6 +1149,10 @@ msgstr "Contexte (facultatif)"
 msgid "Continue"
 msgstr "Continuer"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Continue with {nextName}"
+msgstr "Continuer avec {nextName}"
+
 #: apps/web/src/features/auth/components/login-view.tsx
 msgid "Continue with Apple"
 msgstr "Continuer avec Apple"
@@ -1202,6 +1275,10 @@ msgstr "Impossible de générer les données de la forme"
 msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
+msgid "Couldn't load your practice queue."
+msgstr "Impossible de charger votre file d'attente de pratique."
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Couldn't load your practice session."
 msgstr "Impossible de charger votre session d'entraînement."
@@ -1297,6 +1374,9 @@ msgstr "Sombre"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 #: apps/native/src/features/navigation/components/tabs-layout.tsx
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
@@ -1406,6 +1486,10 @@ msgstr "Afficher les sous-titres"
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Do your first practice"
 msgstr "Faites votre premier exercice"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Done for now"
+msgstr "Terminé pour le moment"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
@@ -2081,7 +2165,7 @@ msgid "Feminine"
 msgstr "Féminin"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Find a movie or show and load its subtitles"
 msgstr "Trouvez un film ou une série et chargez ses sous-titres"
 
@@ -2276,8 +2360,8 @@ msgid "Go back to the source view to add or retry highlights."
 msgstr "Retournez à la vue source pour ajouter ou réessayer des surlignages."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
-msgid "Go to Sessions"
-msgstr "Aller aux Sessions"
+msgid "Go to Dashboard"
+msgstr "Aller au tableau de bord"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Go to your sessions"
@@ -2638,6 +2722,7 @@ msgstr "Libellé (par ex. passé.m)"
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/components/language-option-list.tsx
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 msgid "Language"
 msgstr "Langue"
 
@@ -2658,6 +2743,10 @@ msgstr "Langues"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "lapse"
 msgstr "lapsus"
+
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Last {windowDays} days"
+msgstr "Derniers {windowDays} jours"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "Last day to cancel before first charge"
@@ -2802,6 +2891,10 @@ msgstr "Marqué comme connu"
 msgid "marked known"
 msgstr "marqué comme connu"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Marked known"
+msgstr "Marqués connus"
+
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "Marked known {knownLabel}"
 msgstr "Marqué comme connu {knownLabel}"
@@ -2841,6 +2934,10 @@ msgstr "Message pour les fondateurs"
 msgid "Misc"
 msgstr "Divers"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Mix complete — every language is done."
+msgstr "Mix terminé — toutes les langues sont complétées."
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "Monthly"
 msgstr "Mensuel"
@@ -2863,6 +2960,11 @@ msgstr "Synonyme plus fréquent"
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 msgid "More options"
 msgstr "Plus d'options"
+
+#: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "More stats"
+msgstr "Plus de statistiques"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Most playback actions have editable keyboard shortcuts — seeking by subtitle, adjusting subtitle offset, toggling subtitles, changing playback rate, and more. Check the Keyboard Shortcuts tab in the settings."
@@ -2967,9 +3069,17 @@ msgstr "Les nouvelles cartes de prononciation/forme sont des introductions — n
 msgid "New session"
 msgstr "Nouvelle session"
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "New terms"
+msgstr "Nouveaux termes"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include exercises or the new pronunciation/form cards."
 msgstr "Les nouveaux termes apparaissent en tant qu'exercices, il n'y a donc pas de nouvelles cartes — incluez les exercices ou les nouvelles cartes de prononciation/forme."
+
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+msgid "Newest first"
+msgstr "Plus récent d'abord"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
@@ -2996,6 +3106,10 @@ msgstr "Aucun onglet actif à importer."
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "No active tab."
 msgstr "Aucun onglet actif."
+
+#: apps/web/src/features/stats/components/stats-view.tsx
+msgid "No coverage data yet — save a few terms first."
+msgstr "Aucune donnée de couverture pour le moment — enregistrez quelques termes d'abord."
 
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "No episodes found."
@@ -3181,6 +3295,7 @@ msgstr "Numéral"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "of typical text"
 msgstr "de texte typique"
 
@@ -3191,6 +3306,10 @@ msgstr "de texte typique"
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "OK"
 msgstr "OK"
+
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+msgid "Oldest first"
+msgstr "Plus anciens d'abord"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "On any non-video page, open the extension popup and choose <0>Import this article</0>. Flicktionary extracts the article text and creates a reading session in the web app. To import only part of a page, select the text first."
@@ -3264,6 +3383,7 @@ msgid "Open the focus view to edit fields, forms, and skills."
 msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les compétences."
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "Open the full coverage view"
 msgstr "Ouvrir la vue de couverture complète"
 
@@ -3350,7 +3470,7 @@ msgid "Paste a text"
 msgstr "Coller un texte"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Paste an article, comment, or post"
 msgstr "Collez un article, un commentaire ou une publication"
 
@@ -3537,7 +3657,7 @@ msgstr "Limites de pratique"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
@@ -3701,7 +3821,7 @@ msgid "Read"
 msgstr "Lire"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Read more in the guide"
 msgstr "En savoir plus dans le guide"
 
@@ -3753,6 +3873,10 @@ msgstr "Récapitulatif"
 #: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "Recap done!"
 msgstr "Récapitulatif terminé !"
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+msgid "Recent"
+msgstr "Récent"
 
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3916,6 +4040,7 @@ msgstr "Restauration…"
 msgid "Resumed here"
 msgstr "Repris ici"
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Retry"
@@ -4054,6 +4179,11 @@ msgstr "Enregistré dans votre vocabulaire"
 msgid "Saves a checkpoint at your current reading position. Saved words that appeared in what you read and were due for review count as successful reviews — words you looked up along the way are never penalized."
 msgstr "Enregistre un point de contrôle à votre position de lecture actuelle. Les mots enregistrés qui sont apparus dans ce que vous avez lu et qui étaient prêts pour révision comptent comme des révisions réussies — les mots que vous avez recherchés en cours de route ne sont jamais pénalisés."
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Saving your ratings…"
+msgstr "Enregistrement de vos évaluations…"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
@@ -4087,6 +4217,10 @@ msgstr "Rechercher des films…"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Search sessions…"
+msgstr "Rechercher des sessions…"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Search shadow roots for video elements"
@@ -4230,7 +4364,6 @@ msgstr "Session supprimée"
 msgid "Session vocabulary"
 msgstr "Vocabulaire de la session"
 
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Sessions"
@@ -4422,14 +4555,17 @@ msgstr "Une erreur s'est produite."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort"
 msgstr "Trier"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort & filter"
 msgstr "Trier et filtrer"
 
+#: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort and filter"
 msgstr "Trier et filtrer"
@@ -4443,6 +4579,7 @@ msgid "Standalone"
 msgstr "Autonome"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Start"
@@ -4454,7 +4591,7 @@ msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Démarrer une session film ou série"
 
@@ -4467,7 +4604,7 @@ msgid "Start something new"
 msgstr "Commencer quelque chose de nouveau"
 
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start your first session"
 msgstr "Commencez votre première session"
 
@@ -4479,6 +4616,12 @@ msgstr "Démarrage de la session…"
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Starting…"
 msgstr "Démarrage…"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
+msgid "Stats"
+msgstr "Statistiques"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Status"
@@ -4509,6 +4652,10 @@ msgstr "Renforcer"
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Strengthen · {languageName}"
 msgstr "Renforcer · {languageName}"
+
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
+msgid "Strengthen {languageName} first"
+msgstr "Renforcer {languageName} d'abord"
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Strengthening done!"
@@ -4922,6 +5069,10 @@ msgstr "Cette valeur diffère de celle fournie par le Wiktionnaire."
 msgid "This value was taken from Wiktionary's dictionary data during processing."
 msgstr "Cette valeur provient des données du Wiktionnaire, intégrées lors du traitement."
 
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "This week"
+msgstr "Cette semaine"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Title"
@@ -4937,6 +5088,7 @@ msgid "To change your current plan type, please click on \"Manage Subscription\"
 msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
+#: apps/web/src/features/dashboard/components/activity-card.tsx
 msgid "Today"
 msgstr "Aujourd'hui"
 
@@ -5180,6 +5332,7 @@ msgstr "Débloquer Premium"
 msgid "Unseen"
 msgstr "Non vus"
 
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
@@ -5190,6 +5343,7 @@ msgstr "Sans titre"
 msgid "Unverified"
 msgstr "Non vérifié"
 
+#: apps/web/src/features/practice/components/mix-interstitial.tsx
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Up next"
@@ -5327,6 +5481,7 @@ msgstr "Vocabulaire"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
+#: apps/web/src/features/stats/components/stats-view.tsx
 msgid "Vocabulary coverage"
 msgstr "Couverture du vocabulaire"
 
@@ -5391,7 +5546,7 @@ msgstr "Avertissements"
 msgid "Watch and look up"
 msgstr "Regarder et rechercher"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Watch with the browser extension"
 msgstr "Regarder avec l'extension de navigateur"
 
@@ -5640,6 +5795,7 @@ msgstr "Votre nom"
 msgid "Your next exercise is still being prepared — it'll appear here automatically."
 msgstr "Votre prochain exercice est encore en cours de préparation — il apparaîtra ici automatiquement."
 
+#: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Your next session"
 msgstr "Votre prochaine session"
@@ -5665,6 +5821,6 @@ msgstr "votre@email.com"
 msgid "YouTube"
 msgstr "YouTube"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+#: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "YouTube and streaming sites, with instant subtitle lookups"
 msgstr "YouTube et sites de streaming, avec recherche instantanée dans les sous-titres"

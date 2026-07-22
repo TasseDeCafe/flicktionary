@@ -12,6 +12,7 @@ import {
   Flame,
   Hourglass,
   Lightbulb,
+  Loader2,
   MoreVertical,
 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
@@ -54,6 +55,8 @@ import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
 import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types'
 import { useTermMeaning } from '../utils/use-term-meaning'
+import { computeMixRecap, splitMixChain } from '../utils/daily-mix'
+import { MixInterstitial } from './mix-interstitial'
 
 const POLL_INTERVAL_MS = 4000
 
@@ -86,6 +89,9 @@ const copyVariantFor = (origin: 'onboarding' | 'leech' | null): ExerciseCopyVari
 type ComposedPracticeViewProps = {
   targetLanguage: string
   filter: PracticeQueueFilter
+  // Daily Mix: the full ordered language chain (see daily-mix.ts). Undefined
+  // outside a mix run.
+  mix?: string[]
 }
 
 // The unified Practice session: ONE local queue mixing gate exercises (parked
@@ -96,7 +102,7 @@ type ComposedPracticeViewProps = {
 // stashed on unmount and resumed on the next matching mount (see
 // composed-session-snapshot.ts), so an edit-term detour or back gesture never
 // re-composes an in-progress session.
-export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPracticeViewProps) => {
+export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPracticeViewProps) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
   const showKbd = !isMobile
@@ -110,6 +116,20 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   const close = () => {
     endedRef.current = true
     void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
+  }
+
+  // Daily Mix position in the chain; null outside a mix (or when a hand-edited
+  // URL doesn't contain this language — then the session behaves as plain).
+  const mixChain = splitMixChain(mix, targetLanguage)
+  const mixUpcoming = mixChain?.upcoming ?? []
+  const continueMix = () => {
+    // A deliberate hop like close(): the finished session must not stash.
+    endedRef.current = true
+    void navigate({
+      to: '/practice/composed/$targetLanguage',
+      params: { targetLanguage: mixUpcoming[0] },
+      search: { ...filter, mix },
+    })
   }
 
   const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
@@ -155,6 +175,11 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // The peeked item whose undo→re-rate chain is in flight (disables the peek
   // rate buttons until the chain settles).
   const [pendingRerate, setPendingRerate] = useState<ComposedQueueItem | null>(null)
+  // In-flight rateTerm mutations. handleRate advances optimistically and
+  // records the rating only on success, so the completion screen can render
+  // before the last rating lands — a mix Continue must wait for zero or the
+  // recap undercounts and a failed rating's requeue is lost.
+  const [pendingRatings, setPendingRatings] = useState(0)
   const [actionsOpen, setActionsOpen] = useState(false)
   // Whether the live-index exercise has been answered — gates the header kebab
   // on unanswered cloze exercises (see kebab derivation below).
@@ -164,7 +189,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // again). Both are keyed to the queue item and cleared on advance.
   const [activeHint, setActiveHint] = useState<ActiveHint | null>(null)
   const [hintOutcome, setHintOutcome] = useState<HintOutcome | null>(null)
-  const claimedIntroductionsRef = useRef(new Set<string>())
+  const claimedIntroductionsRef = useRef<Set<string>>(resumedSession?.claimedIntroductions ?? new Set())
   const [claimIntroductionErrorKey, setClaimIntroductionErrorKey] = useState<string | null>(null)
   const [claimRetry, setClaimRetry] = useState(0)
 
@@ -210,6 +235,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         sessionHard: sessionHardRef.current,
         ratingRecords: ratingRecordsRef.current,
         exerciseOutcomes: exerciseOutcomesRef.current,
+        claimedIntroductions: claimedIntroductionsRef.current,
         dayKey: currentDayKey(),
       })
     },
@@ -365,6 +391,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       })
     }
 
+    setPendingRatings((count) => count + 1)
     rateTerm(
       {
         userLookupId: card.userLookupId,
@@ -376,6 +403,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         targetForm: card.targetForm,
       },
       {
+        onSettled: () => setPendingRatings((count) => count - 1),
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
             // Nothing applied (no event) — no record, nothing to re-rate.
@@ -606,11 +634,23 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // launch a Strengthen session by accident; Enter needs a second, deliberate
   // press since the rating keydown was consumed by the previous card.
   const sessionComplete = queue != null && !isPeeking && !queue[index]
+  // Ratings/rerates still in flight after the queue exhausted: leaving now
+  // would clear the exhausted snapshot and orphan a failed rating's requeue,
+  // and the recap would tally short — every completion-screen exit waits.
+  const isSettling = pendingRatings > 0 || pendingRerate != null
+  // The header X is inert on the completion screen while ratings settle; it
+  // stays a deliberate quit everywhere else.
+  const guardedClose = () => {
+    if (sessionComplete && isSettling) return
+    close()
+  }
+  // In a mix, the chain rides along so Strengthen's close continues to the
+  // next language instead of stranding the run on the language landing.
   const openStrengthen = () =>
     void navigate({
       to: '/practice/strengthen/$targetLanguage',
       params: { targetLanguage },
-      search: { pool: 'recognition', sessionHard: [...sessionHardRef.current] },
+      search: { pool: 'recognition', sessionHard: [...sessionHardRef.current], mix },
     })
   useHotkeys(
     [
@@ -668,7 +708,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       {
         key: 'enter',
         enabled: sessionComplete,
-        onPress: () => (sessionHardRef.current.size > 0 ? openStrengthen() : close()),
+        onPress: () => {
+          // Every completion action is blocked while ratings settle.
+          if (isSettling) return
+          if (mixUpcoming.length > 0) {
+            continueMix()
+            return
+          }
+          if (sessionHardRef.current.size > 0) openStrengthen()
+          else close()
+        },
       },
     ],
     !actionsOpen
@@ -704,7 +753,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   const wrap = (children: React.ReactNode) => (
     <ModalScreen
-      onClose={close}
+      onClose={guardedClose}
       closeIcon='x'
       title={languageName}
       rightSlot={
@@ -731,6 +780,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           pool={actionsPool}
           practiceMode='flashcards'
           practiceFilter={filter}
+          practiceMix={mix}
         />
       )}
     </ModalScreen>
@@ -776,6 +826,30 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   if (!queue[index] && !isPeeking) {
     const sessionHard = [...sessionHardRef.current]
     const hardCount = sessionHard.length
+
+    // Mid-mix: the interstitial replaces the completion screen — recap of this
+    // language, chain progress, and the hand-off to the next language.
+    if (mixChain && mixUpcoming.length > 0) {
+      return wrap(
+        <MixInterstitial
+          targetLanguage={targetLanguage}
+          done={mixChain.done}
+          upcoming={mixUpcoming}
+          recap={computeMixRecap({
+            ratedItems: [...ratingRecordsRef.current.keys()],
+            answeredExercises: [...exerciseOutcomesRef.current.keys()],
+            claimedIntroductionCount: claimedIntroductionsRef.current.size,
+          })}
+          hardCount={hardCount}
+          isSettling={isSettling}
+          onStrengthen={openStrengthen}
+          onContinue={continueMix}
+          onExit={close}
+          showKbd={showKbd}
+        />
+      )
+    }
+
     const emptyQueueLabel =
       filter.scope === 'new_only'
         ? t`Nothing new to learn right now.`
@@ -783,14 +857,30 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           ? t`No reviews are due right now.`
           : t`Nothing to practice right now.`
     // canLearnExtra gates on actual candidates: with the budget exhausted but
-    // nothing left to introduce, the offer would compose an empty batch.
+    // nothing left to introduce, the offer would compose an empty batch. In a
+    // mix the offer is suppressed — extra learning stays on the per-language
+    // landing so the chain's pacing isn't derailed.
     const showLearnExtra =
-      canLearnExtra && (dailyLimitReached || capNoticeShown) && filter.autoWarmup && filter.scope !== 'due_only'
+      canLearnExtra &&
+      (dailyLimitReached || capNoticeShown) &&
+      filter.autoWarmup &&
+      filter.scope !== 'due_only' &&
+      mixChain == null
     return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <CircleCheck className='h-10 w-10 text-emerald-600' />
           <p className='text-lg font-semibold'>{queue.length === 0 ? emptyQueueLabel : t`All done!`}</p>
+          {/* Final language of a Daily Mix run. */}
+          {mixChain != null && (
+            <p className='text-muted-foreground text-sm'>{t`Mix complete — every language is done.`}</p>
+          )}
+          {isSettling && (
+            <p className='text-muted-foreground flex items-center gap-2 text-sm'>
+              <Loader2 className='h-4 w-4 animate-spin' />
+              {t`Saving your ratings…`}
+            </p>
+          )}
           {(dailyLimitReached || capNoticeShown) && (
             <div className='flex items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800'>
               <Flame className='h-4 w-4 shrink-0' />
@@ -802,7 +892,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
               <p className='text-muted-foreground text-sm'>{t`Want to keep going anyway?`}</p>
               <div className='flex gap-2'>
                 {[5, 10, 20].map((n) => (
-                  <Button key={n} type='button' variant='outline' size='sm' onClick={() => handleLearnExtra(n)}>
+                  <Button
+                    key={n}
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={isSettling}
+                    onClick={() => handleLearnExtra(n)}
+                  >
                     {t`Learn ${n} extra`}
                   </Button>
                 ))}
@@ -819,17 +916,24 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>
             {hardCount > 0 ? (
               <>
-                <Button type='button' size='xl' className='w-full' onClick={openStrengthen}>
+                <Button type='button' size='xl' className='w-full' disabled={isSettling} onClick={openStrengthen}>
                   <Dumbbell className='h-4 w-4' />
                   {t`Strengthen`}
                   {showKbd && <Kbd>↵</Kbd>}
                 </Button>
-                <Button type='button' variant='outline' size='xl' className='w-full' onClick={close}>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xl'
+                  className='w-full'
+                  disabled={isSettling}
+                  onClick={close}
+                >
                   {t`Back to ${languageName}`}
                 </Button>
               </>
             ) : (
-              <Button type='button' size='xl' className='w-full' onClick={close}>
+              <Button type='button' size='xl' className='w-full' disabled={isSettling} onClick={close}>
                 {t`Back to ${languageName}`}
                 {showKbd && <Kbd>↵</Kbd>}
               </Button>

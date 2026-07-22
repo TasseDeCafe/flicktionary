@@ -27,6 +27,9 @@ export type ComposedSessionSnapshot = {
   sessionHard: Set<string>
   ratingRecords: Map<ComposedQueueItem, RatingRecord>
   exerciseOutcomes: Map<ComposedQueueItem, ExerciseAnswerData>
+  // `${pool}:${userLookupId}` keys of introductions claimed this session — the
+  // mix recap counts these, so a detour must not reset the tally.
+  claimedIntroductions: Set<string>
   // Local calendar day the snapshot was taken — a session never resumes across
   // a day boundary (due-ness and the daily-new budgets reset server-side).
   dayKey: string

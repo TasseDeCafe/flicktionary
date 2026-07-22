@@ -56,7 +56,7 @@ export const OnboardingView = ({ variant = 'web', onFinish }: OnboardingViewProp
       onFinish?.()
       return
     }
-    void navigate({ to: '/sessions' })
+    void navigate({ to: '/dashboard' })
   }
 
   if (step === 'pick') {
