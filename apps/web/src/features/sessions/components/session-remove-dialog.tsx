@@ -15,9 +15,12 @@ type Props = {
   sessionId: string | null
   sessionTitle: string
   onOpenChange: (next: boolean) => void
+  // Fires after a successful removal — the session view uses it to navigate
+  // away from the now-gone session; list hosts don't need it.
+  onRemoved?: () => void
 }
 
-export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChange }: Props) => {
+export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChange, onRemoved }: Props) => {
   const { t } = useLingui()
   const { data: preview, isLoading } = useGetSessionDeletePreview(open ? sessionId : null)
   const { mutate: removeSession, isPending } = useRemoveStudySession()
@@ -31,7 +34,10 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
     removeSession(
       { sessionId },
       {
-        onSuccess: () => onOpenChange(false),
+        onSuccess: () => {
+          onOpenChange(false)
+          onRemoved?.()
+        },
       }
     )
   }

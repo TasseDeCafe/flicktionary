@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { ORPCError } from '@orpc/contract'
-import { Bookmark, ChevronDown } from 'lucide-react'
+import { Bookmark, ChevronDown, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
@@ -56,8 +56,10 @@ import {
 } from './checkpoint-sweep-sheet'
 import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkpoint-claims-sheet'
 import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
+import { SessionActionsOverlay } from './session-actions-overlay'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
 import { SessionDifficultyStat } from './session-difficulty-stat'
+import { SessionRemoveDialog } from './session-remove-dialog'
 import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
 // The welcome-back card holds back until this many unswept read words exist —
@@ -435,6 +437,9 @@ export const SessionView = () => {
   const { data: serverClaims } = useCheckpointClaims(sessionId, checkpointSupported)
   // The header's difficulty stat + its detail sheet (breakdown, mark-known CTA).
   const [difficultyOpen, setDifficultyOpen] = useState(false)
+  // The header ⋮ menu and the remove-confirmation it can open.
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [removeOpen, setRemoveOpen] = useState(false)
   const { difficulties } = useSessionDifficulties(useMemo(() => [sessionId], [sessionId]))
   const sessionDifficulty = difficulties[sessionId]
   // Checkpoints reverted this mount: an assertion-undo must not restore a
@@ -1112,17 +1117,22 @@ export const SessionView = () => {
       onClose={closeToSessions}
       title={titleNode}
       rightSlot={
-        allSegments && allSegments.length > 0 ? (
-          <Button
-            variant={isPlacingBookmark ? 'secondary' : 'ghost'}
-            size='icon'
-            aria-label={t`Set reading position`}
-            aria-pressed={isPlacingBookmark}
-            onClick={() => (isPlacingBookmark ? cancelBookmarkPlacement() : enterBookmarkPlacement())}
-          >
-            <Bookmark className='size-5' />
+        <>
+          {allSegments && allSegments.length > 0 && (
+            <Button
+              variant={isPlacingBookmark ? 'secondary' : 'ghost'}
+              size='icon'
+              aria-label={t`Set reading position`}
+              aria-pressed={isPlacingBookmark}
+              onClick={() => (isPlacingBookmark ? cancelBookmarkPlacement() : enterBookmarkPlacement())}
+            >
+              <Bookmark className='size-5' />
+            </Button>
+          )}
+          <Button variant='ghost' size='icon' aria-label={t`More options`} onClick={() => setActionsOpen(true)}>
+            <MoreVertical className='size-5' />
           </Button>
-        ) : undefined
+        </>
       }
     >
       {/* Coverage meter: solid fill = current expected coverage, animating on
@@ -1321,6 +1331,23 @@ export const SessionView = () => {
           // Drop any sky paint so a back-navigation doesn't strand it.
           clearPaint()
         }}
+      />
+
+      <SessionActionsOverlay
+        open={actionsOpen}
+        onOpenChange={setActionsOpen}
+        sessionTitle={sourceTitle}
+        onRequestRemove={() => {
+          setActionsOpen(false)
+          setRemoveOpen(true)
+        }}
+      />
+      <SessionRemoveDialog
+        open={removeOpen}
+        sessionId={sessionId}
+        sessionTitle={sourceTitle}
+        onOpenChange={setRemoveOpen}
+        onRemoved={closeToSessions}
       />
     </ModalScreen>
   )

@@ -16,19 +16,19 @@ export const ShowGroupCard = ({ group }: Props) => {
   const count = group.episodes.length
 
   return (
-    <Card className='hover:bg-accent active:bg-accent transition-colors'>
+    <Card className='hover:bg-accent active:bg-accent py-0 transition-colors'>
       <Link to='/sessions/show/$tmdbShowId' params={{ tmdbShowId: String(group.tmdbShowId) }} className='block'>
-        <CardContent className='flex items-center gap-4 p-4'>
+        <CardContent className='flex items-center gap-3 p-3'>
           {group.posterUrl ? (
             <img
               src={group.posterUrl}
               alt={group.showTitle}
-              className='h-20 w-14 shrink-0 rounded object-cover'
+              className='h-14 w-10 shrink-0 rounded object-cover'
               loading='lazy'
             />
           ) : (
-            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'>
-              <Tv className='h-6 w-6' />
+            <div className='flex h-14 w-10 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'>
+              <Tv className='h-5 w-5' />
             </div>
           )}
           <div className='min-w-0 flex-1'>
