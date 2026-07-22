@@ -25,6 +25,8 @@ export const DashboardCarousel = ({ slides }: { slides: React.ReactNode[] }) => 
         )}
       >
         {slides.map((slide, i) => (
+          // Grid items stretch by default, so each slide's card can take
+          // md:h-full and the two cards always end at the same edge.
           <div key={i} className='w-full shrink-0 snap-center px-4 md:w-auto md:px-0'>
             {slide}
           </div>

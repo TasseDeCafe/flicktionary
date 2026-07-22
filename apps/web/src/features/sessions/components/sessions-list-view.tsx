@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { PageContainer } from '@/components/page-container'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
@@ -74,7 +75,7 @@ export const SessionsListView = () => {
   const sessionCount = filtered.length
 
   return (
-    <div className='mx-auto max-w-4xl px-4 py-6'>
+    <PageContainer width='wide'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
 
       {(data?.length ?? 0) > 0 && (
@@ -160,7 +161,7 @@ export const SessionsListView = () => {
           if (!next) setRemoveTarget(null)
         }}
       />
-    </div>
+    </PageContainer>
   )
 }
 

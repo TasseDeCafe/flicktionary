@@ -1,7 +1,17 @@
 import { createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 
-export const router = createRouter({ routeTree })
+// The app shell's <main> is a persistent scroll container shared by every tab
+// view, so without this a scroll position on one tab carries over when
+// navigating to another. scrollRestoration resets tracked containers to top on
+// fresh navigations and restores their per-location position on back/forward.
+// Views with their own restore logic (vocabulary list, session reader) run
+// after data loads, so they win over the router's immediate best-effort pass.
+export const router = createRouter({
+  routeTree,
+  scrollRestoration: true,
+  scrollToTopSelectors: ['main'],
+})
 
 declare module '@tanstack/react-router' {
   interface Register {
