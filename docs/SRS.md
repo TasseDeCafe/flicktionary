@@ -940,7 +940,8 @@ sets from the same column. Everything below "park" is shared.
 Routes: `/practice/strengthen/$targetLanguage` (leeches + bonus; Zod search: `pool`,
 optional `sessionHard` userLookupId array — carried in the URL so the list survives
 refresh — and optional `mix`, the Daily Mix chain: when present, closing the session
-continues to the next mix language instead of the language landing) and
+continues the chain — next mix language, or the dashboard when this was the final
+one — instead of the language landing) and
 `/practice/warmup/$targetLanguage` (session-scoped warm-up; search
 `studySessionId`) render the shared `ExerciseSessionView`, differing only in fetch source
 and copy (`copyVariant: 'rehab' | 'warmup'`); day-to-day gate serving happens inside the
@@ -957,6 +958,23 @@ language, `count > 0`, not deleted, an enabled `(meaning_production, '')` facet 
 the rest) and returns one tier-typed gate exercise per parked term plus one bonus exercise
 per validated hard term. A term with nothing ready gets a **`generating` placeholder**
 (skippable) and a background bank top-up — the session never blocks on LLM work.
+
+**Interrupted sessions resume** (`exercise-session-snapshot.ts`, the composed queue's
+stash pattern): unmounting mid-session — the Edit-term focus-view detour, a back
+gesture — saves the queue, position, correct tally, and the answered-but-not-advanced
+outcome; the next mount of the same session scope (mode + language + `pool` + sorted
+`sessionHard` + `mix` / `studySessionId`, same local calendar day, consumed on read)
+seeds from the snapshot instead of re-running the start mutation — a restart would
+recompose and re-serve every remaining gate. A resumed already-answered current
+exercise renders as the read-only `AnsweredExercisePanel` (outcome + **Next**): the
+server consumed it on answer, so remounting the live component would invite a
+re-submit the server rejects. Deliberate exits (the X, completion/empty-state buttons)
+never stash. The chunk soft-delete mutations splice a deleted term's not-yet-reached
+entries out of the stash (`dropTermFromExerciseSession`); a correctly answered current
+entry leaves the correct tally with it (its slot leaves the completion total). The
+completion CTA names where close goes: `Back to ⟨language⟩` (plain session, to the
+language landing), `Continue with ⟨next language⟩` (mid-mix), `Finish` (final mix
+language, to the dashboard).
 
 Exercise screens share an `ExerciseLayout`: scrollable content + a pinned bottom action
 bar (the flashcard-view pattern), with an optional status-row slot above the actions
@@ -1007,6 +1025,10 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   batch instead of refilling an almost-finished session with new
   introductions. Resume requires the same language + filter and the same local calendar
   day (due-ness and daily budgets shift overnight); the snapshot is consumed on read.
+  Resuming onto an already-answered exercise renders the read-only
+  `AnsweredExercisePanel` (outcome + **Next**, the same panel the peek path uses)
+  instead of remounting the live component — the server consumed the exercise on
+  answer, and a re-submit would be rejected as no longer answerable.
   **Deliberate exits never resume**: the X/Back buttons and reaching the completion
   screen skip the save, so re-entering Practice from the language screen composes fresh.
   Unreached planned terms remain unintroduced. The chunk soft-delete mutations
@@ -1106,8 +1128,10 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   (`practiceMode=read` returns to the reading route). The dedicated
   Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
   the same kebab, passing `practiceMode: 'strengthen' | 'warmup'` + their route's re-entry
-  state (`practiceSessionHard` / `practiceStudySessionId`) so close re-enters the same
-  session (serving is read-only + consume-on-answer, so it re-serves the remaining work).
+  state (`practiceSessionHard` / `practiceStudySessionId`, and the session's route `pool`
+  — not the displayed term's, whose pool can differ on bonus terms) so close re-enters
+  the same route and the stashed session snapshot resumes there
+  (`exercise-session-snapshot.ts`).
   The kebab is **withheld while it could spoil an answer**: an unanswered cloze exercise
   (the headword IS the cloze answer) or a live `generating` placeholder, which can swap in
   place to a cloze on the next poll — the generating placeholder's body copy and exercise
@@ -1170,15 +1194,20 @@ One dashboard CTA that clears every language's practice queue in sequence.
   serves; raw due-summary counts would overpromise (warm-up backlog ≠ gates served) —
   primary **Continue** (`Enter`), a secondary **Strengthen first**
   when the session produced again/hard terms, and a ghost **Done for now** → the
-  language landing (progress keeps — ratings are per-card; the banner re-derives the
+  dashboard (progress keeps — ratings are per-card; the banner re-derives the
   remaining chain next time). The final mix language falls through to the normal
   completion screen plus a "Mix complete" line — Strengthen offer intact, while
-  **Learn extra is suppressed mid-mix** so the chain's pacing isn't derailed.
+  **Learn extra is suppressed mid-mix** so the chain's pacing isn't derailed; its
+  close CTA reads **Finish**. Every mix exit — Finish, Done for now, the header X —
+  returns to the dashboard (the mix is dashboard-owned: its banner is the entry
+  point, and the dashboard shows the progress the run just moved); plain
+  single-language sessions keep `Back to ⟨language⟩` → the language landing.
 - **Detours carry the chain**: the Edit-term kebab threads `practiceMix` through the
   focus-view search from the composed queue AND from a mix-launched Strengthen session
   (whose own route search carries `mix`); Strengthen's close — and the focus view's
-  strengthen re-entry — continue to the next mix language instead of the language
-  landing.
+  strengthen re-entry — continue to the next mix language (or the dashboard from the
+  final one) instead of the language landing, and its completion CTA names the
+  destination (`Continue with ⟨next language⟩` / `Finish`).
 
 ### Landing + language action screen
 
