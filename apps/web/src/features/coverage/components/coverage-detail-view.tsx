@@ -133,6 +133,7 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
           <CoverageDotGrid states={states} endRank={wallEndRank} cell={showAll ? 3 : 4} gap={1} onDotHover={setHover} />
         </div>
         <CoverageLegend
+          className='mt-3'
           studiedCount={coverage.studiedRanks.length}
           knownCount={coverage.knownRanks.length}
           notYetCount={denominator - coverage.studiedRanks.length - coverage.knownRanks.length}

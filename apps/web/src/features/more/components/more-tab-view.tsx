@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import {
   AlertOctagon,
   ChartColumn,
+  CircleHelp,
   Globe,
   Languages,
   LifeBuoy,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Switch } from '@flicktionary/ui/components/switch'
+import { PageContainer } from '@/components/page-container'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { i18nConfig } from '@flicktionary/i18n/i18n-config'
 import { findSupportedLanguage } from '@flicktionary/core/constants/supported-languages'
@@ -82,7 +84,7 @@ export const MoreTabView = () => {
   }
 
   return (
-    <div className='mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6'>
+    <PageContainer width='narrow' className='flex flex-col gap-6'>
       <h1 className='text-2xl font-bold'>{t`More`}</h1>
 
       {/* Re-entry into onboarding for a user who left it via the X. The gate keeps
@@ -180,6 +182,12 @@ export const MoreTabView = () => {
       </MoreListSection>
 
       <MoreListSection title={t`About`}>
+        <MoreListRow
+          icon={CircleHelp}
+          label={t`User guide`}
+          description={t`How sessions, saving words, and practice work`}
+          onPress={() => navigate({ to: '/user-guide' })}
+        />
         <MoreListRow icon={LifeBuoy} label={t`Contact us`} onPress={handleContactUs} />
         {isTestUser && (
           <MoreListRow
@@ -197,6 +205,6 @@ export const MoreTabView = () => {
         />
         <MoreListRow icon={LogOut} label={t`Sign out`} onPress={handleSignOut} />
       </MoreListSection>
-    </div>
+    </PageContainer>
   )
 }

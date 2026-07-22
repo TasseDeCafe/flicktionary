@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { SkeletonList } from '@flicktionary/ui/components/skeleton'
+import { PageContainer } from '@/components/page-container'
+import { SeeMoreLink } from '@/components/ui/see-more-link'
 import { useListStudySessions, useSessionDifficulties } from '@/features/sessions/api/sessions-hooks'
 import { buildSessionListItems } from '@/features/sessions/utils/session-list-items'
 import { SessionCard, SessionCardSkeleton } from '@/features/sessions/components/session-card'
@@ -40,7 +41,7 @@ export const DashboardView = () => {
   const dateLabel = i18n.date(new Date(), { weekday: 'long', month: 'short', day: 'numeric' })
 
   return (
-    <div className='mx-auto max-w-4xl px-4 py-6'>
+    <PageContainer width='wide'>
       <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{dateLabel}</div>
       <h1 className='text-2xl font-bold'>{t`Dashboard`}</h1>
 
@@ -53,16 +54,15 @@ export const DashboardView = () => {
 
       <div className='mt-6 flex items-baseline justify-between'>
         <h2 className='text-base font-semibold'>{t`Recent`}</h2>
-        <Link
-          to='/sessions'
-          className='text-muted-foreground hover:text-foreground active:text-foreground text-sm font-medium transition-colors'
-        >
-          {t`All sessions`}
-        </Link>
+        <SeeMoreLink to='/sessions'>{t`All sessions`}</SeeMoreLink>
       </div>
-      <div className='mt-2 flex flex-col gap-2'>
-        {isLoading && <SkeletonList count={3} renderItem={() => <SessionCardSkeleton />} />}
-        {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
+      <div className='mt-2 grid grid-cols-1 gap-3 md:grid-cols-2'>
+        {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
+        {!isLoading && (data?.length ?? 0) === 0 && (
+          <div className='md:col-span-2'>
+            <SessionsEmptyState />
+          </div>
+        )}
         {recentItems.map((item) =>
           item.kind === 'group' ? (
             <ShowGroupCard key={item.key} group={item.group} />
@@ -86,6 +86,6 @@ export const DashboardView = () => {
           if (!next) setRemoveTarget(null)
         }}
       />
-    </div>
+    </PageContainer>
   )
 }

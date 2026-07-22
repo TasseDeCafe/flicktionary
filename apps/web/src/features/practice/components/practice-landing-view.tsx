@@ -1,5 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { PageContainer } from '@/components/page-container'
 import { Brain, ChevronRight, X } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
@@ -107,7 +108,7 @@ export const PracticeLandingView = () => {
   return (
     <div className='flex h-full flex-col'>
       <div className='flex-1 overflow-y-auto'>
-        <div className='mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6'>
+        <PageContainer width='narrow' className='flex flex-col gap-6'>
           <header className='flex items-center gap-3'>
             <Brain className='h-7 w-7 text-yellow-500' />
             <h1 className='text-2xl font-bold'>{t`Practice`}</h1>
@@ -187,7 +188,7 @@ export const PracticeLandingView = () => {
               </div>
             </section>
           )}
-        </div>
+        </PageContainer>
       </div>
     </div>
   )

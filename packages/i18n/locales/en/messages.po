@@ -262,7 +262,6 @@ msgstr "{spanCount, plural, one {Mark the # word read so far as known} other {Ma
 msgid "{streakDays}-day streak"
 msgstr "{streakDays}-day streak"
 
-#: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/stats/components/stats-view.tsx
 msgid "{studiedCount} studied · {knownCount} marked known"
 msgstr "{studiedCount} studied · {knownCount} marked known"
@@ -275,7 +274,6 @@ msgstr "{total} cards across {languageCount} languages"
 msgid "{total} cards in {firstLanguageName}"
 msgstr "{total} cards in {firstLanguageName}"
 
-#: apps/web/src/features/coverage/components/coverage-card.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{verifiedPct}% verified · rest claimed"
 msgstr "{verifiedPct}% verified · rest claimed"
@@ -414,6 +412,10 @@ msgstr "Account Removed"
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Actions for the selected vocabulary list."
 msgstr "Actions for the selected vocabulary list."
+
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Actions for this session."
+msgstr "Actions for this session."
 
 #: apps/web/src/features/practice/components/term-actions-overlay.tsx
 msgid "Actions for this term."
@@ -2442,6 +2444,10 @@ msgstr "HI"
 msgid "Hide from vocabulary and Practice"
 msgstr "Hide from vocabulary and Practice"
 
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Hide it from your list — kept vocabulary stays"
+msgstr "Hide it from your list — kept vocabulary stays"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
@@ -2509,6 +2515,10 @@ msgstr "How it works"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "How practice works"
 msgstr "How practice works"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "How sessions, saving words, and practice work"
+msgstr "How sessions, saving words, and practice work"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "How your free trial works"
@@ -2724,6 +2734,7 @@ msgstr "Label (e.g. past.m)"
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/components/language-option-list.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Language"
 msgstr "Language"
 
@@ -2892,13 +2903,13 @@ msgstr "Marked as known"
 msgid "marked known"
 msgstr "marked known"
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "Marked known"
-msgstr "Marked known"
-
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "Marked known {knownLabel}"
 msgstr "Marked known {knownLabel}"
+
+#: apps/web/src/features/dashboard/components/activity-card.tsx
+msgid "Marked known {selectedMarkedKnownLabel}"
+msgstr "Marked known {selectedMarkedKnownLabel}"
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
@@ -2958,6 +2969,8 @@ msgid "More frequent synonym"
 msgstr "More frequent synonym"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx
+#: apps/web/src/features/sessions/components/session-card.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 msgid "More options"
 msgstr "More options"
@@ -3071,8 +3084,8 @@ msgid "New session"
 msgstr "New session"
 
 #: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "New terms"
-msgstr "New terms"
+msgid "New terms {selectedNewTermsLabel}"
+msgstr "New terms {selectedNewTermsLabel}"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include exercises or the new pronunciation/form cards."
@@ -3223,6 +3236,7 @@ msgstr "Not now"
 msgid "Not quite."
 msgstr "Not quite."
 
+#: apps/web/src/features/coverage/components/coverage-legend.tsx
 #: apps/web/src/features/sessions/components/welcome-back-card.tsx
 msgid "Not yet"
 msgstr "Not yet"
@@ -3978,7 +3992,7 @@ msgstr "Remove form"
 msgid "Remove from session"
 msgstr "Remove from session"
 
-#: apps/web/src/features/sessions/components/session-card.tsx
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "Remove session"
 msgstr "Remove session"
@@ -5090,6 +5104,7 @@ msgstr "To change your current plan type, please click on \"Manage Subscription\
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 #: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/sessions/components/session-card.tsx
 msgid "Today"
 msgstr "Today"
 
@@ -5169,6 +5184,10 @@ msgstr "Top {toLabel}"
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "Top {topRangeLabel}"
 msgstr "Top {topRangeLabel}"
+
+#: apps/web/src/features/coverage/components/coverage-card.tsx
+msgid "Top {wallSizeLabel} words"
+msgstr "Top {wallSizeLabel} words"
 
 #. placeholder {0}: i + 1
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
@@ -5418,6 +5437,11 @@ msgstr "Used as your L1 in the LLM prompts."
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "User"
 msgstr "User"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
+msgid "User guide"
+msgstr "User guide"
 
 #: apps/extension/src/ui/components/popup-header.tsx
 msgid "User Guide"
@@ -5696,6 +5720,10 @@ msgstr "Write your sentence…"
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "Yearly"
 msgstr "Yearly"
+
+#: apps/web/src/features/sessions/components/session-card.tsx
+msgid "Yesterday"
+msgstr "Yesterday"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx

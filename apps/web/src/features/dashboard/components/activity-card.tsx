@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { SeeMoreLink } from '@/components/ui/see-more-link'
 import { useActivity } from '@/features/stats/api/stats-hooks'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 
@@ -19,9 +19,11 @@ type Props = {
 }
 
 // Per-day study activity: stacked bars (new terms on top of marked known),
-// pressable to inspect a single day — the side column always describes the
-// selected day, which defaults to today (outlined). Language chips filter the
-// bars; the streak is user-level and ignores the chip.
+// pressable to inspect a single day — the stats row under the bars always
+// describes the selected day, which defaults to today (outlined). Language
+// chips filter the bars; the streak is user-level and ignores the chip. On
+// mobile the card chrome drops, matching the coverage card. On desktop the
+// card stretches to the coverage card's height and the bars absorb the slack.
 export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) => {
   const { t, i18n } = useLingui()
   const { data, isLoading } = useActivity()
@@ -47,6 +49,7 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
     : data.perLanguage
 
   const days = data.days.slice(-windowDays)
+  const isLongWindow = days.length > DASHBOARD_DAYS
   const offset = data.days.length - days.length
   const newTerms = days.map((_, i) => scoped.reduce((sum, entry) => sum + (entry.newTerms[offset + i] ?? 0), 0))
   const markedKnown = days.map((_, i) => scoped.reduce((sum, entry) => sum + (entry.markedKnown[offset + i] ?? 0), 0))
@@ -62,9 +65,13 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
     i18n.date(new Date(`${day}T00:00:00Z`), { ...options, timeZone: 'UTC' })
 
   const streakDays = data.streakDays
+  // Label-first with localized counts, matching the coverage legend's wording
+  // style ("Studied 1,124").
+  const selectedNewTermsLabel = newTerms[activeIndex].toLocaleString()
+  const selectedMarkedKnownLabel = markedKnown[activeIndex].toLocaleString()
 
   return (
-    <div className='bg-card mt-4 rounded-xl border p-4'>
+    <div className='md:bg-card mt-4 flex flex-col md:h-full md:rounded-xl md:border md:p-4'>
       <div className='flex flex-wrap items-start justify-between gap-x-4 gap-y-2'>
         <div>
           <h2 className='font-semibold'>{t`Activity`}</h2>
@@ -79,70 +86,88 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
         )}
       </div>
 
-      <div className='mt-3 flex items-stretch gap-4'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex h-36 items-stretch gap-1.5'>
-            {days.map((day, i) => {
-              const newCount = newTerms[i]
-              const knownCount = markedKnown[i]
-              const fullDate = dayLabel(day, { weekday: 'long', month: 'short', day: 'numeric' })
-              const barLabel = t`${fullDate}: ${newCount} new terms, ${knownCount} marked known`
-              return (
-                <button
-                  key={day}
-                  type='button'
-                  onClick={() => setSelectedDay(day)}
-                  aria-label={barLabel}
-                  aria-pressed={day === activeDay}
+      <div className='mt-3 flex flex-1 flex-col'>
+        {/* Heights flow through flex stretch (row min-height → buttons →
+            ring → track), never h-full percentages: a percentage chain needs
+            a definite ancestor height and collapses on pages where the card
+            isn't grid-stretched (the stats view). */}
+        <div className='flex min-h-52 flex-1 items-stretch'>
+          {days.map((day, i) => {
+            const newCount = newTerms[i]
+            const knownCount = markedKnown[i]
+            const total = newCount + knownCount
+            const fullDate = dayLabel(day, { weekday: 'long', month: 'short', day: 'numeric' })
+            const barLabel = t`${fullDate}: ${newCount} new terms, ${knownCount} marked known`
+            return (
+              <button
+                key={day}
+                type='button'
+                onClick={() => setSelectedDay(day)}
+                aria-label={barLabel}
+                aria-pressed={day === activeDay}
+                className='flex min-w-0 flex-1 justify-center'
+              >
+                {/* The selection ring hugs the bar (not the hit area) with a
+                    ring of whitespace between border and track. */}
+                {/* Windows longer than a week compact their ring/track below
+                    md: the ring's fixed chrome (padding+border) must fit a
+                    14-column phone layout or it overlaps the neighboring
+                    bars. A 7-day week always has room for the full ring. */}
+                <span
                   className={cn(
-                    'flex h-full min-w-0 flex-1 rounded-full border-2 p-0.5 transition-colors',
+                    'flex border-2 transition-colors',
+                    isLongWindow ? 'rounded-lg p-1 md:rounded-md md:p-2' : 'rounded-md p-2',
                     day === activeDay ? 'border-foreground' : 'border-transparent'
                   )}
                 >
-                  <span className='bg-muted relative flex w-full flex-col justify-end overflow-hidden rounded-full'>
-                    {newCount > 0 && (
-                      <span className='w-full bg-teal-700' style={{ height: `${(newCount / maxTotal) * 100}%` }} />
-                    )}
-                    {knownCount > 0 && (
-                      <span className='w-full bg-teal-400' style={{ height: `${(knownCount / maxTotal) * 100}%` }} />
+                  <span
+                    className={cn('bg-muted relative self-stretch rounded-sm', isLongWindow ? 'w-3.5 md:w-5' : 'w-5')}
+                  >
+                    {/* The filled stack is one pill riding the flatter track,
+                        so its rounding survives regardless of segment split. */}
+                    {total > 0 && (
+                      <span
+                        className='absolute inset-x-0 bottom-0 flex min-h-3 flex-col overflow-hidden rounded-sm'
+                        style={{ height: `${(total / maxTotal) * 100}%` }}
+                      >
+                        {newCount > 0 && <span className='w-full bg-teal-700' style={{ flexGrow: newCount }} />}
+                        {knownCount > 0 && <span className='w-full bg-teal-400' style={{ flexGrow: knownCount }} />}
+                      </span>
                     )}
                   </span>
-                </button>
-              )
-            })}
-          </div>
-          <div className='mt-1 flex gap-1.5'>
-            {days.map((day) => (
-              <div key={day} className='text-muted-foreground min-w-0 flex-1 text-center text-xs font-medium'>
-                {dayLabel(day, { weekday: 'narrow' })}
-              </div>
-            ))}
-          </div>
+                </span>
+              </button>
+            )
+          })}
         </div>
-
-        <div className='flex w-24 shrink-0 flex-col justify-center gap-3'>
-          <div className='text-muted-foreground text-xs font-medium'>
-            {activeDay === today ? t`Today` : dayLabel(activeDay, { weekday: 'short', day: 'numeric' })}
-          </div>
-          <div>
-            <div className='text-lg leading-tight font-bold tabular-nums'>{newTerms[activeIndex]}</div>
-            <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-              <span className='size-2 shrink-0 rounded-full bg-teal-700' />
-              {t`New terms`}
+        <div className='mt-1 flex'>
+          {days.map((day) => (
+            <div key={day} className='text-muted-foreground min-w-0 flex-1 text-center text-xs font-medium'>
+              {dayLabel(day, { weekday: 'narrow' })}
             </div>
-          </div>
-          <div>
-            <div className='text-lg leading-tight font-bold tabular-nums'>{markedKnown[activeIndex]}</div>
-            <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-              <span className='size-2 shrink-0 rounded-full bg-teal-400' />
-              {t`Marked known`}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
+      {/* Selected-day stats, styled exactly like the coverage card's legend
+          row so the two cards read as one system. */}
+      <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs tabular-nums'>
+        <span className='font-medium'>
+          {activeDay === today ? t`Today` : dayLabel(activeDay, { weekday: 'short', day: 'numeric' })}
+        </span>
+        <span className='flex items-center gap-1.5'>
+          <span className='size-2.5 shrink-0 rounded-full bg-teal-700' />
+          {t`New terms ${selectedNewTermsLabel}`}
+        </span>
+        <span className='flex items-center gap-1.5'>
+          <span className='size-2.5 shrink-0 rounded-full bg-teal-400' />
+          {t`Marked known ${selectedMarkedKnownLabel}`}
+        </span>
+        {!controlled && <SeeMoreLink to='/stats' className='ml-auto'>{t`More stats`}</SeeMoreLink>}
+      </div>
+
       {!controlled && languages.length > 1 && (
-        <div className='mt-3 flex flex-wrap gap-2'>
+        <div className='flex flex-wrap justify-center gap-2 pt-3'>
           <ActivityChip active={activeLanguage === null} onClick={() => setSelectedLanguage(null)}>
             {t`All`}
           </ActivityChip>
@@ -151,17 +176,6 @@ export const ActivityCard = ({ windowDays = DASHBOARD_DAYS, language }: Props) =
               {getLocalizedCoverageLanguageName(i18n, code)}
             </ActivityChip>
           ))}
-        </div>
-      )}
-
-      {!controlled && (
-        <div className='mt-3 text-right'>
-          <Link
-            to='/stats'
-            className='text-muted-foreground hover:text-foreground active:text-foreground text-sm font-medium transition-colors'
-          >
-            {t`More stats`}
-          </Link>
         </div>
       )}
     </div>
@@ -190,10 +204,10 @@ const ActivityChip = ({
   </button>
 )
 
-// Mirrors the card: header + bar area + labels so data landing doesn't shift
-// the layout.
+// Mirrors the card: header + bar area + stats row so data landing doesn't
+// shift the layout.
 export const ActivityCardSkeleton = ({ windowDays = DASHBOARD_DAYS }: { windowDays?: number }) => (
-  <div className='bg-card mt-4 rounded-xl border p-4'>
+  <div className='md:bg-card mt-4 flex flex-col md:rounded-xl md:border md:p-4'>
     <div className='flex items-start justify-between'>
       <div className='flex flex-col gap-2'>
         <Skeleton className='h-5 w-24' />
@@ -201,17 +215,11 @@ export const ActivityCardSkeleton = ({ windowDays = DASHBOARD_DAYS }: { windowDa
       </div>
       <Skeleton className='h-6 w-24 rounded-full' />
     </div>
-    <div className='mt-3 flex items-stretch gap-4'>
-      <div className='flex h-36 flex-1 items-stretch gap-1.5'>
-        {Array.from({ length: windowDays }, (_, i) => (
-          <Skeleton key={i} className='h-full min-w-0 flex-1 rounded-full' />
-        ))}
-      </div>
-      <div className='flex w-24 shrink-0 flex-col justify-center gap-3'>
-        <Skeleton className='h-4 w-12' />
-        <Skeleton className='h-10 w-16' />
-        <Skeleton className='h-10 w-16' />
-      </div>
+    <div className='mt-3 flex h-56 items-stretch justify-around'>
+      {Array.from({ length: windowDays }, (_, i) => (
+        <Skeleton key={i} className='h-full w-5 rounded-full' />
+      ))}
     </div>
+    <Skeleton className='mt-3 h-4 w-56' />
   </div>
 )

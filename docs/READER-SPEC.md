@@ -61,7 +61,9 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (Two f
   saved position. An explicit `?segment=` target also wins over resume on open.
   - **Manual bookmark ("read up to here").** The auto-tracker stays the
     default writer, but the pointer is user-correctable: a bookmark button in
-    the reader header enters a **placement mode** — word-gloss taps,
+    the reader header (which also carries a ⋮ options menu — the shared
+    session actions overlay whose `Remove session` opens the confirmation
+    and, on success, navigates back to the list) enters a **placement mode** — word-gloss taps,
     right-click saves, and the gloss sheet are suspended; pressing any line
     moves a sky-tinted preview divider below it (word presses place via the
     selection callback, since the gesture pointer-captures them and desktop

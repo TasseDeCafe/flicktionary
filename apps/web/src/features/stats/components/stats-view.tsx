@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { PageContainer } from '@/components/page-container'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { useCoverage, type LanguageCoverage } from '@/features/coverage/api/coverage-hooks'
 import { CoverageDotGrid } from '@/features/coverage/components/coverage-canvas'
@@ -41,7 +42,7 @@ export const StatsView = () => {
     : coverageLanguages
 
   return (
-    <div className='mx-auto max-w-4xl px-4 py-6'>
+    <PageContainer width='wide'>
       <h1 className='text-2xl font-bold'>{t`Stats`}</h1>
 
       {languages.length > 1 && (
@@ -69,7 +70,7 @@ export const StatsView = () => {
           <StatsCoverageBlock key={entry.targetLanguage} coverage={entry} />
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }
 

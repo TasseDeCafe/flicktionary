@@ -2,7 +2,17 @@ import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { BookOpen, Brain, ChartColumn, Clapperboard, Home, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
+import {
+  BookOpen,
+  Brain,
+  ChartColumn,
+  CircleHelp,
+  Clapperboard,
+  Home,
+  MoreHorizontal,
+  Plus,
+  type LucideIcon,
+} from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { MainActionOverlay } from './main-action-overlay'
 
@@ -64,6 +74,15 @@ export const SidebarNav = () => {
           <NavLink key={item.to} item={item} isActive={isItemActive(item)} />
         ))}
       </nav>
+      <div className='border-t p-3'>
+        <Link
+          to='/user-guide'
+          className='text-muted-foreground hover:bg-accent hover:text-foreground active:bg-accent flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors'
+        >
+          <CircleHelp className='h-5 w-5' strokeWidth={2} />
+          <span>{t`User guide`}</span>
+        </Link>
+      </div>
       <MainActionOverlay open={isActionOpen} onOpenChange={setIsActionOpen} />
     </div>
   )

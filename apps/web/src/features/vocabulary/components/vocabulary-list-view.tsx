@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { PageContainer } from '@/components/page-container'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { BookOpen, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,7 +14,6 @@ import { setSavedVocabularySearch } from '../saved-search'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
-import { VocabularyLanguageSwitcher, VocabularyLanguageSwitcherSkeleton } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
 import { VocabularyRow, VocabularyRowSkeleton } from './vocabulary-row'
 import { Button } from '@flicktionary/ui/components/button'
@@ -224,7 +224,7 @@ export const VocabularyListView = () => {
   const showLanguageEmpty = !chunksLoading && !languagesLoading && rows.length === 0 && (languages?.length ?? 0) > 0
 
   return (
-    <div className='mx-auto flex h-full w-full max-w-2xl flex-col gap-4 px-4 py-6'>
+    <PageContainer width='narrow' className='flex h-full flex-col gap-4'>
       <header className='flex items-center gap-3'>
         <BookOpen className='h-7 w-7 text-yellow-500' />
         <h1 className='text-2xl font-bold'>{t`Vocabulary`}</h1>
@@ -240,15 +240,15 @@ export const VocabularyListView = () => {
         </Button>
       </header>
 
-      {languagesLoading && <VocabularyLanguageSwitcherSkeleton />}
-
-      {languages && languages.length > 1 && selectedLanguage && (
-        <VocabularyLanguageSwitcher languages={languages} value={selectedLanguage} onChange={handleLanguageSwitch} />
-      )}
-
       <div className='flex items-center gap-2'>
         <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='flex-1' />
-        <VocabularyFilterControl filters={filters} onChange={setFilters} />
+        <VocabularyFilterControl
+          filters={filters}
+          onChange={setFilters}
+          languages={languages ?? []}
+          language={selectedLanguage}
+          onLanguageChange={handleLanguageSwitch}
+        />
       </div>
 
       {/* Deep-links (the practice landing's stage rows) drop users straight
@@ -340,6 +340,6 @@ export const VocabularyListView = () => {
       />
 
       <VocabularyOptionsOverlay open={optionsOpen} onOpenChange={setOptionsOpen} targetLanguage={selectedLanguage} />
-    </div>
+    </PageContainer>
   )
 }
