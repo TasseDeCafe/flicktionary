@@ -416,8 +416,10 @@ stat is always a live query — never pre-aggregated or snapshotted.
   `pending`, nothing for `unsupported`/`failed`. TV **episode rows** on the
   show detail screen carry the same stat (they don't render through
   SessionCard); the show-group card itself has no aggregate. The list makes
-  one batched `getDifficulties` call for the visible loose cards (chunked at
-  the 100-id cap) and polls gently while any profile is still building.
+  one batched `getDifficulties` read keyed by the **full** session list — not
+  the filtered view, so filter/search changes reuse the cached chunks
+  (chunked at the 100-id cap) — and polls gently while any profile is still
+  building.
 - **Session header**: the stat sits next to the `LANG · CEFR` subtitle; tapping
   it opens the **difficulty detail sheet** — headline percent + label, the
   breakdown (unknown words with the frequent split, "in your vocabulary, not
