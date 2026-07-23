@@ -11,6 +11,7 @@ import { SessionRemoveDialog } from '@/features/sessions/components/session-remo
 import { SessionsEmptyState } from '@/features/sessions/components/sessions-empty-state'
 import { GettingStartedChecklist } from '@/features/sessions/components/getting-started-checklist'
 import { CoverageCard } from '@/features/coverage/components/coverage-card'
+import { useQualifyingCoverage } from '@/features/coverage/api/coverage-hooks'
 import { ActivityCalendarCard } from './activity-calendar-card'
 import { DailyMixBanner } from './daily-mix-banner'
 import { DashboardCarousel } from './dashboard-carousel'
@@ -23,6 +24,7 @@ type RemoveTarget = { id: string; title: string }
 export const DashboardView = () => {
   const { t, i18n } = useLingui()
   const { data, isLoading } = useListStudySessions()
+  const { qualifying: qualifyingCoverage, isLoading: isCoverageLoading } = useQualifyingCoverage()
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
 
   const recentItems = useMemo(
@@ -49,8 +51,17 @@ export const DashboardView = () => {
 
       <DailyMixBanner />
 
-      {/* Both cards carry their own top margin, so the carousel needs none. */}
-      <DashboardCarousel slides={[<CoverageCard key='coverage' />, <ActivityCalendarCard key='activity' />]} />
+      {/* Both cards carry their own top margin, so the carousel needs none.
+          The coverage slide exists only while its data might qualify —
+          during load the card shows its own skeleton; once resolved, a user
+          with no qualifying language (fresh account, or a language without a
+          lemma_ranks build) gets no blank slide and no stray page dot. */}
+      <DashboardCarousel
+        slides={[
+          ...(isCoverageLoading || qualifyingCoverage.length > 0 ? [<CoverageCard key='coverage' />] : []),
+          <ActivityCalendarCard key='activity' />,
+        ]}
+      />
 
       <div className='mt-6 flex items-baseline justify-between'>
         <h2 className='text-base font-semibold'>{t`Recent`}</h2>

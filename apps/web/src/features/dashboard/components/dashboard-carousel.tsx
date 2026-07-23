@@ -4,7 +4,9 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 // Mobile: horizontally snap-scrolling slides with page dots, bleeding to the
 // screen edges like the sessions filter-chip row. Desktop (md+): the same
 // children laid out as a side-by-side grid — no scroll, no dots. With a single
-// slide the scroller is inert and the dots are omitted on both.
+// slide the scroller is inert, the dots are omitted on both, and the desktop
+// slide is capped near one two-column-grid column and centered — the calendar
+// card's fixed-size day circles look scattered at full page width.
 export const DashboardCarousel = ({ slides }: { slides: React.ReactNode[] }) => {
   const [active, setActive] = useState(0)
 
@@ -27,7 +29,13 @@ export const DashboardCarousel = ({ slides }: { slides: React.ReactNode[] }) => 
         {slides.map((slide, i) => (
           // Grid items stretch by default, so each slide's card can take
           // md:h-full and the two cards always end at the same edge.
-          <div key={i} className='w-full shrink-0 snap-center px-4 md:w-auto md:px-0'>
+          <div
+            key={i}
+            className={cn(
+              'w-full shrink-0 snap-center px-4 md:w-auto md:px-0',
+              slides.length === 1 && 'md:mx-auto md:w-full md:max-w-lg'
+            )}
+          >
             {slide}
           </div>
         ))}

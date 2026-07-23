@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import type { LanguageCoverage } from '@flicktionary/api-client/orpc-contracts/coverage-contract'
@@ -17,6 +18,27 @@ export const useCoverage = () => {
       meta: { showErrorToast: false },
     })
   )
+}
+
+// Splits the practiced languages by what the coverage UI can draw.
+// `qualifying` = supported (a lemma_ranks build exists) AND non-empty — an
+// all-gray wall for a brand-new user is demotivating, and the getting-started
+// checklist owns that moment. `unsupported` = practiced languages that will
+// never produce a wall no matter how many terms get saved; the stats view
+// uses it for an honest empty state. The dashboard and the coverage card must
+// share this filter: the dashboard decides whether the carousel gets a
+// coverage slide at all, and a disagreement renders as a blank slide.
+export const useQualifyingCoverage = () => {
+  const { data: languages, isLoading } = useCoverage()
+  const qualifying = useMemo(
+    () =>
+      (languages ?? []).filter(
+        (language) => language.supported && language.studiedRanks.length + language.knownRanks.length > 0
+      ),
+    [languages]
+  )
+  const unsupported = useMemo(() => (languages ?? []).filter((language) => !language.supported), [languages])
+  return { qualifying, unsupported, isLoading }
 }
 
 const TOP_LEMMAS_STALE_MS = 24 * 60 * 60 * 1000

@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { SeeMoreLink } from '@/components/ui/see-more-link'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { useCoverage, type LanguageCoverage } from '../api/coverage-hooks'
+import { useQualifyingCoverage, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, CARD_COMPACT_RULE } from '../utils/coverage-render'
 import { CoverageDotGrid } from './coverage-canvas'
 import { CoverageLegend } from './coverage-legend'
@@ -17,24 +17,17 @@ import { getLocalizedCoverageLanguageName } from '../utils/coverage-language-nam
 const CARD_END_RANK = 5000
 
 // The dashboard coverage card: ONE card showing the last-used practiced
-// language with chips to flip between them. Languages are shown only when
-// supported (a lemma_rank_builds row exists) AND non-empty — an all-gray wall
-// for a brand-new user is demotivating, and the checklist owns that moment;
-// the card appears from the first saved word. On mobile the card chrome
-// drops so the wall spans the same width as the session cards below.
+// language with chips to flip between them. Only qualifying languages (see
+// useQualifyingCoverage) are shown; the card appears from the first saved
+// word. The dashboard uses the same hook to keep this card out of the
+// carousel entirely when nothing qualifies — the null return here is only a
+// safety net. On mobile the card chrome drops so the wall spans the same
+// width as the session cards below.
 export const CoverageCard = () => {
   const { t } = useLingui()
-  const { data: languages, isLoading } = useCoverage()
+  const { qualifying, isLoading } = useQualifyingCoverage()
   const { data: prefs } = useGetUserPrefs()
   const [selected, setSelected] = useState<string | null>(null)
-
-  const qualifying = useMemo(
-    () =>
-      (languages ?? []).filter(
-        (language) => language.supported && language.studiedRanks.length + language.knownRanks.length > 0
-      ),
-    [languages]
-  )
 
   const active =
     qualifying.find((language) => language.targetLanguage === selected) ??
