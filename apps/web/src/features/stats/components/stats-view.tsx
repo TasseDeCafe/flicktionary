@@ -9,6 +9,7 @@ import { buildStateArray, CARD_COMPACT_RULE } from '@/features/coverage/utils/co
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 import { useActivity } from '../api/stats-hooks'
 import { ActivityCard } from '@/features/dashboard/components/activity-card'
+import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab-header'
 
 // The data-nerd view: the dashboard cards' graphs at full width/range, one
 // page-level language filter driving them all. Coverage has no cross-language
@@ -42,35 +43,38 @@ export const StatsView = () => {
     : coverageLanguages
 
   return (
-    <PageContainer width='wide'>
-      <h1 className='text-2xl font-bold'>{t`Stats`}</h1>
+    <>
+      <OverflowTabHeader backTo='/more' title={t`Stats`} />
+      <PageContainer width='wide'>
+        <h1 className='hidden text-2xl font-bold md:block'>{t`Stats`}</h1>
 
-      {languages.length > 1 && (
-        <div className='mt-4 flex flex-wrap gap-2'>
-          <StatsChip active={active === null} onClick={() => setSelected(null)}>
-            {t`All`}
-          </StatsChip>
-          {languages.map((code) => (
-            <StatsChip key={code} active={code === active} onClick={() => setSelected(code)}>
-              {getLocalizedCoverageLanguageName(i18n, code)}
+        {languages.length > 1 && (
+          <div className='mt-4 flex flex-wrap gap-2'>
+            <StatsChip active={active === null} onClick={() => setSelected(null)}>
+              {t`All`}
             </StatsChip>
+            {languages.map((code) => (
+              <StatsChip key={code} active={code === active} onClick={() => setSelected(code)}>
+                {getLocalizedCoverageLanguageName(i18n, code)}
+              </StatsChip>
+            ))}
+          </div>
+        )}
+
+        <ActivityCard windowDays={14} language={active} />
+
+        <h2 className='mt-6 text-base font-semibold'>{t`Vocabulary coverage`}</h2>
+        <div className='mt-2 flex flex-col gap-4'>
+          {isCoverageLoading && <Skeleton className='h-64 w-full rounded-xl' />}
+          {!isCoverageLoading && visibleCoverage.length === 0 && (
+            <p className='text-muted-foreground text-sm'>{t`No coverage data yet — save a few terms first.`}</p>
+          )}
+          {visibleCoverage.map((entry) => (
+            <StatsCoverageBlock key={entry.targetLanguage} coverage={entry} />
           ))}
         </div>
-      )}
-
-      <ActivityCard windowDays={14} language={active} />
-
-      <h2 className='mt-6 text-base font-semibold'>{t`Vocabulary coverage`}</h2>
-      <div className='mt-2 flex flex-col gap-4'>
-        {isCoverageLoading && <Skeleton className='h-64 w-full rounded-xl' />}
-        {!isCoverageLoading && visibleCoverage.length === 0 && (
-          <p className='text-muted-foreground text-sm'>{t`No coverage data yet — save a few terms first.`}</p>
-        )}
-        {visibleCoverage.map((entry) => (
-          <StatsCoverageBlock key={entry.targetLanguage} coverage={entry} />
-        ))}
-      </div>
-    </PageContainer>
+      </PageContainer>
+    </>
   )
 }
 
