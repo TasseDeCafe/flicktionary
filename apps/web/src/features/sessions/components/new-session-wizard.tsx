@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Clapperboard, Search, Tv, Upload } from 'lucide-react'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { LanguageOptionList } from '@/components/language-option-list'
 import {
   useCreateContentSourceFromTmdb,
@@ -130,7 +131,7 @@ export const NewSessionWizard = () => {
   const currentStep = Math.max(activeSteps.indexOf(step), 0) + 1
   const prevStep = (): Step => activeSteps[Math.max(activeSteps.indexOf(step) - 1, 0)]!
 
-  const closeWizard = () => navigate({ to: '/sessions' })
+  const closeWizard = useModalScreenClose({ to: '/sessions' })
 
   const startSession = (track: ImportedTrack) => {
     if (!contentSourceId || !prefs || !targetLanguage) return
@@ -154,7 +155,7 @@ export const NewSessionWizard = () => {
           if (response.alreadyExisted) {
             toast.info(t`You already had a session for this — picking up where you left off.`)
           }
-          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
+          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id }, replace: true })
         },
       }
     )

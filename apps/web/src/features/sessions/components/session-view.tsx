@@ -9,6 +9,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
@@ -1032,15 +1033,17 @@ export const SessionView = () => {
     suppressScrollGate()
   }
 
-  const closeToSessions = () => {
+  // Deep-link fallback only — with in-app history the hook returns to the
+  // actual opener (sessions list, dashboard card, vocabulary detour, ...).
+  const closeToSessions = useModalScreenClose(() => {
     if (from === 'vocabulary') {
       // Restore the sort/filter state the user was browsing under (same as the
       // focus view's back), so an Open-source detour doesn't reset the list.
-      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch() })
+      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch(), replace: true })
       return
     }
-    void navigate({ to: '/sessions' })
-  }
+    void navigate({ to: '/sessions', replace: true })
+  })
 
   if (isSessionLoading) {
     // Mirror the loaded reader (title + search bar + segment list) with

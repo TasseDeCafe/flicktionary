@@ -6,6 +6,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { KBD_CORNER_CLASS, Kbd } from '@flicktionary/ui/components/kbd'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2 } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
@@ -149,6 +150,7 @@ export const FocusView = () => {
         to: '/practice/strengthen/$targetLanguage',
         params: { targetLanguage: practiceLang },
         search: { pool: practicePool ?? 'recognition', sessionHard: practiceSessionHard, mix: practiceMix },
+        replace: true,
       })
       return
     }
@@ -158,11 +160,16 @@ export const FocusView = () => {
           to: '/practice/warmup/$targetLanguage',
           params: { targetLanguage: practiceLang },
           search: { studySessionId: practiceStudySessionId },
+          replace: true,
         })
       } else {
         // Warm-up can't re-enter without its session scope (hand-edited URL) —
         // degrade to the language action screen.
-        void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage: practiceLang } })
+        void navigate({
+          to: '/practice/language/$targetLanguage',
+          params: { targetLanguage: practiceLang },
+          replace: true,
+        })
       }
       return
     }
@@ -187,6 +194,7 @@ export const FocusView = () => {
           }),
           mix: practiceMix,
         },
+        replace: true,
       })
       return
     }
@@ -194,14 +202,19 @@ export const FocusView = () => {
       to: '/practice/review/$targetLanguage',
       params: { targetLanguage: practiceLang },
       search: { pool: practicePool ?? 'recognition', scope: 'mixed' },
+      replace: true,
     })
   }
   const goPrev = () => {
     if (cursor.prev) {
+      // Replace, don't push: paging through cards is flow-internal stepping
+      // (like wizard steps), so the back affordance always exits to the
+      // opener instead of walking every visited card.
       void navigate({
         to: '/sessions/$sessionId/review/$cardId',
         params: { sessionId, cardId: cursor.prev.id },
         search,
+        replace: true,
       })
     }
   }
@@ -211,6 +224,7 @@ export const FocusView = () => {
         to: '/sessions/$sessionId/review/$cardId',
         params: { sessionId, cardId: cursor.next.id },
         search,
+        replace: true,
       })
     }
   }
@@ -278,19 +292,22 @@ export const FocusView = () => {
     setAutoSetup(null)
   }, [cardId])
 
-  const closeToSessionVocabulary = () => {
+  // Deep-link fallback only — with in-app history the hook returns to the
+  // actual opener (review list, vocabulary with live search state, or the
+  // practice route whose stashed session snapshot then resumes).
+  const closeToSessionVocabulary = useModalScreenClose(() => {
     if (from === 'vocabulary') {
       // Restore the sort/filter state the user was browsing under (the close
       // nav would otherwise rebuild /vocabulary with an empty search).
-      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch() })
+      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch(), replace: true })
       return
     }
     if (from === 'practice' && practiceLang) {
       backToPractice()
       return
     }
-    void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
-  }
+    void navigate({ to: '/sessions/$sessionId/review', params: { sessionId }, replace: true })
+  })
 
   if (isLoading) {
     return (

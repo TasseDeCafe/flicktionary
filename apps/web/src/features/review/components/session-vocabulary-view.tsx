@@ -7,6 +7,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { difficultyInvalidates } from '@/features/practice/api/practice-hooks'
 import {
@@ -31,6 +32,10 @@ export const SessionVocabularyView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/' })
+  // Back to the opener (usually the session view; a lesson import lands here
+  // with its wizard entry replaced, so back skips the wizard); the parent
+  // session is the deep-link fallback.
+  const closeReview = useModalScreenClose({ to: '/sessions/$sessionId', params: { sessionId } })
   const queryClient = useQueryClient()
   const { data: session } = useGetStudySession(sessionId)
   const { data: highlights } = useListHighlightsBySession(sessionId)
@@ -130,7 +135,7 @@ export const SessionVocabularyView = () => {
   // Back follows the screen hierarchy: sessions → source → session vocabulary → focus.
   return (
     <ModalScreen
-      onClose={() => navigate({ to: '/sessions/$sessionId', params: { sessionId } })}
+      onClose={closeReview}
       closeIcon='chevron'
       title={t`Session vocabulary`}
       rightSlot={
