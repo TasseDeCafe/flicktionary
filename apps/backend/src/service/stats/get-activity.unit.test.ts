@@ -31,32 +31,51 @@ describe('computeStreakDays', () => {
 })
 
 describe('getActivity', () => {
-  test('zero-fills the window per language and drops rows outside it', async () => {
+  const buildDeps = (overrides?: { joinedDay?: string | null }) => {
     const statsRepository: StatsRepositoryInterface = {
       getCurrentDay: async () => '2026-07-21',
       countIntroducedByDay: async () => [
         { day: '2026-07-21', targetLanguage: 'ru', count: 2 },
         { day: '2026-07-20', targetLanguage: 'de', count: 5 },
         // A row the SQL window would normally exclude — assembly must not throw.
-        { day: '2026-01-01', targetLanguage: 'ru', count: 9 },
+        { day: '2020-01-01', targetLanguage: 'ru', count: 9 },
       ],
       countMarkedKnownByDay: async () => [{ day: '2026-07-21', targetLanguage: 'ru', count: 40 }],
+      countPracticedByDay: async () => [{ day: '2026-07-19', targetLanguage: 'ru', count: 12 }],
       listActiveDays: async () => ['2026-07-21', '2026-07-20'],
     }
+    const authUsersRepository = {
+      removeUserFromAuthUsers: async () => true,
+      findUserById: async () => null,
+      getJoinedDay: async () => (overrides && 'joinedDay' in overrides ? overrides.joinedDay! : '2026-06-01'),
+    }
+    return { statsRepository, authUsersRepository }
+  }
 
-    const activity = await getActivity({ userId: 'user' }, { statsRepository })
+  test('zero-fills the window per language and drops rows outside it', async () => {
+    const activity = await getActivity({ userId: 'user' }, buildDeps())
 
     expect(activity.days).toHaveLength(ACTIVITY_WINDOW_DAYS)
     expect(activity.days.at(-1)).toBe('2026-07-21')
     expect(activity.streakDays).toBe(2)
+    expect(activity.activeDays).toEqual(['2026-07-21', '2026-07-20'])
+    expect(activity.joinedDay).toBe('2026-06-01')
     // Sorted by language; arrays aligned to days with zeros elsewhere.
     expect(activity.perLanguage.map((l) => l.targetLanguage)).toEqual(['de', 'ru'])
     const ru = activity.perLanguage[1]
     expect(ru.newTerms.at(-1)).toBe(2)
     expect(ru.markedKnown.at(-1)).toBe(40)
     expect(ru.newTerms.reduce((a, b) => a + b, 0)).toBe(2)
+    expect(ru.practiced.at(-3)).toBe(12)
+    expect(ru.practiced.reduce((a, b) => a + b, 0)).toBe(12)
     const de = activity.perLanguage[0]
     expect(de.newTerms.at(-2)).toBe(5)
     expect(de.markedKnown.every((n) => n === 0)).toBe(true)
+    expect(de.practiced.every((n) => n === 0)).toBe(true)
+  })
+
+  test('a missing auth row falls back to today as the joined day', async () => {
+    const activity = await getActivity({ userId: 'user' }, buildDeps({ joinedDay: null }))
+    expect(activity.joinedDay).toBe('2026-07-21')
   })
 })

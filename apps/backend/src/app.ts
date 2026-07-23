@@ -444,7 +444,7 @@ export const buildApp = ({
   }
 
   app.use(API_V1, CoverageRouter(coverageDependencies))
-  app.use(API_V1, StatsRouter({ statsRepository: StatsRepository() }))
+  app.use(API_V1, StatsRouter({ statsRepository: StatsRepository(), authUsersRepository }))
   app.use(
     API_V1,
     StudySessionsRouter(
