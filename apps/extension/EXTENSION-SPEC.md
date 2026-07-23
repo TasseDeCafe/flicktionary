@@ -829,45 +829,89 @@ since the pill is the only on-video way back — and the bar renders as a single
 dimmed logo pill (`VideoOverlayDisabled`, same shell and pause/grace behavior)
 whose click writes the global flag back on.
 
-### Checkpoint press (collect reviews)
+### Declaration flow (collect reviews + mark words known)
 
-The controls bar hosts the video counterpart of the web reader's "I
-understood up to here" (scheduling semantics: the web app's `docs/SRS.md` §6b) —
-a BookmarkCheck button beside the power button. It deliberately lives on the
-pause-state controls: the press happens while paused, a deliberate act; the
-evidence is the explicit press, not playback position.
+The controls bar hosts the video counterpart of the web reader's declaration
+pill (web behavior: `docs/READER-SPEC.md`; scheduling semantics: `docs/SRS.md`
+§6b) — one button beside the power button whose tap opens a two-step sheet
+over the video: confirm "I understood up to here" (collect checkpoint
+reviews) → optional "Mark N words as known?" (bulk `known_lemmas` sweep) →
+done step with a combined Undo. It deliberately lives on the pause-state
+controls: the press happens while paused, a deliberate act; the evidence is
+the explicit press, not playback position.
 
+- **Button faces** (`VideoOverlay.tsx`, same priority ladder as the web
+  pill): with a markable-word count > 0 the button wears the web pill's sweep
+  face — WholeWord icon + count — so the affordance is recognizably the same
+  across apps; otherwise it falls back to the BookmarkCheck face (collect
+  stays reachable when there's nothing to mark).
+- **Passive badge probe**: the count is fetched when the paused bar shows
+  (and re-fetched on seek-while-paused and after the sheet closes), via
+  `flicktionary-declaration-preview` with `readOnly: true`. Read-only
+  resolution (`resolveExistingFlicktionarySession`: cache → `lookupForVideo`
+  probe, NEVER find-or-create — pausing is not an explicit act and must not
+  create a session). All passive failures are silent (no session → no badge);
+  a `checkpointSupported: false` response latches the unsupported hide before
+  any press. Probes are keyed by segment index and guarded by a request id.
 - **Playback→segment mapping is CONTENT-SIDE**: the background session cache
   stores no timings. The controller picks the last
   `subtitleController.subtitles[]` cue with `startMs <= currentTimeMs`
   (between cues → the last ended one); its `index` IS the ingested segment
-  index. The `flicktionary-collect-checkpoint` message carries that index plus
-  the same self-contained video-context payload the save flow ships, so a cold
-  cache can find-or-create the session (the press is an explicit user act).
-- **Background handler** (`collect-checkpoint-handler.ts`): resolves the
-  session via `session-resolver.ts` (session cache → `lookupForVideo` probe
-  (SELECT-only) → find-or-create), then calls
-  `studySessions.collectCheckpoint` with an empty `previewedSpans` (the
-  extension popover has no stateless preview lane to track; saved highlights
-  are suppressed server-side).
+  index — the run's frontier, snapshotted at tap.
+- **Sheet** (`declaration-sheet.tsx`, rendered by `ShadowVideoOverlayApp`
+  OUTSIDE the pause-visibility gate so it survives play/pause; centered dark
+  panel + scrim in the controls shadow host, remounted per open via a bumped
+  `runKey`): step state lives in the shared pure reducer
+  `@flicktionary/core/utils/checkpoint-sweep-sheet-state` (extracted from the
+  web sheet — both apps share transition/undo semantics). Both steps open
+  included: the tap IS the checkpoint act; the sweep learns its inclusion
+  from the async preview and auto-skips when the exact count resolves to 0 or
+  the profile isn't `ready`. Dismissal is blocked while a mutation is in
+  flight; the done step auto-closes after ~4s. Because the extension can't
+  know `reviewed_until` client-side, an empty-span collect (success with
+  `checkpointId: null`) gets honest "all caught up" done copy keyed on the id,
+  never on the result object.
+- **Messages/handlers**: on open, `flicktionary-declaration-preview`
+  (`declaration-preview-handler.ts`) resolves the session (find-or-create —
+  the tap is an explicit act) and fetches `getCheckpointPreview` +
+  `getMarkKnownPreview` in one round trip; lanes degrade independently
+  (failed checkpoint preview → collect proceeds blind without a count; failed
+  mark-known preview → the optional sweep silently drops for this run). A
+  NOT_FOUND from either preview (session deleted in the web app) evicts the
+  cache entry and re-resolves once. Confirm sends the existing
+  `flicktionary-collect-checkpoint` (empty `previewedSpans`; saved highlights
+  are suppressed server-side); the sweep sends `flicktionary-mark-known`
+  (`markRemainingKnown`), its undo `flicktionary-unmark-known`
+  (`unmarkKnownBySession` with the press's `sweepBatchId`), checkpoint undo
+  the existing `flicktionary-undo-checkpoint`. Every response tolerates
+  `undefined` AND rejection (background mid-reload; Firefox promise-only
+  API) — command callbacks never throw into the sheet.
+- **Conflict**: a concurrent pointer advance (another tab / the web reader)
+  rejects the collect with 409; the handler detects it via
+  `ORPCError.code === 'CONFLICT'` (the payload carries no domain code) and
+  the sheet shows an inline "reading position changed" retry that re-snapshots
+  the frontier from playback AND re-fires the preview so both counts re-key
+  (request-id-guarded; a failed re-fetch degrades to countless-but-usable
+  rather than tearing down a mid-flight run).
 - **Visibility**: shown whenever a subtitle track is loaded and a video
   context is prepared. The target language is unknown before first
   registration (the backend detects it), so pre-emptive hiding is impossible —
   except via the cache: a one-shot `flicktionary-checkpoint-availability`
   probe (cache-only, no network) hides the button when the CACHED session's
-  language has no wiktionary data, and an UNSUPPORTED_LANGUAGE response to a
-  press latches the same hide. Cold-start outcomes mirror the save flow —
-  UNSUPPORTED_LANGUAGE / NEEDS_ONBOARDING / MISSING_CEFR — reported through
-  the feedback chip.
-- **Undo chip** (`CheckpointFeedbackChip`, rendered by
-  `ShadowVideoOverlayApp` OUTSIDE the pause-visibility gate): "N reviews
-  collected" + Undo, with its own ~8s lifetime owned by the controller — the
-  controls disappear when playback resumes, the chip must not. Undo sends
-  `flicktionary-undo-checkpoint`; a stale undo (`undone: false`) reports "may
-  have changed since", never an error. All message responses tolerate
-  `undefined` (background mid-reload).
+  language has no wiktionary data; an UNSUPPORTED_LANGUAGE outcome (coded
+  error, `checkpointSupported: false` preview, or a press) latches the same
+  hide. Cold-start outcomes mirror the save flow — UNSUPPORTED_LANGUAGE /
+  NEEDS_ONBOARDING / MISSING_CEFR — reported through the feedback chip.
+- **Feedback chip** (`CheckpointFeedbackChip`, also outside the
+  pause-visibility gate, ~8s lifetime owned by the controller): info/error
+  only — "Nothing to collect yet.", unsupported notice, coded errors. The
+  success/undo affordance lives in the sheet's done step (combined Undo:
+  sweep then checkpoint, partial failures kept on screen with per-part
+  retry; a stale checkpoint undo (`undone: false`) reports the credits as
+  kept, never an error).
 - **No claims sheet** in the extension (phase-1 scope): backlog
-  known-assertions are web-only.
+  known-assertions are web-only; `backlogCandidates` from the collect
+  response are discarded.
 
 ### Native caption control (YouTube CC button)
 
@@ -1209,8 +1253,14 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
 | `studySessions.findOrCreateForYoutubeVideo` | session registration on a video's first save (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration on a video's first save (all other platforms) |
-| `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
+| `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading and the passive badge probe (never creates rows; `data: null` = no session) |
 | `studySessions.importText` | article/selection import |
+| `studySessions.getCheckpointPreview` | declaration preview: pending review count + `supported` flag |
+| `studySessions.getMarkKnownPreview` | declaration preview + paused-bar badge: markable-word count for the span |
+| `studySessions.collectCheckpoint` | declaration sheet confirm (implicit review credits up to the frontier) |
+| `studySessions.undoCheckpoint` | combined Undo, checkpoint part |
+| `studySessions.markRemainingKnown` | declaration sheet sweep step (bulk `known_lemmas` marks) |
+| `studySessions.unmarkKnownBySession` | combined Undo, sweep part (batch-scoped) |
 | `highlights.create` | saving a word/chunk, optionally with the preview `{gloss, pos, register}` persisted as `fastGloss` |
 | `highlights.listBySession` | loading saved highlights for the persistent spans |
 | `highlights.fastGloss` | saved-mode popover gloss for direct/older saved-highlight opens (server-cached, IPA-enriched) |
@@ -1237,8 +1287,9 @@ No learning data is stored locally; highlights live in the backend. The
 session/segment-id cache (`flicktionary.session-cache.v3` in
 `chrome.storage.local`; entries also carry the detected `targetLanguage`) is
 evictable per video (`removeFlicktionarySession`):
-the saved-highlights loader evicts an entry whose session no longer lists
-(deleted in the web app) and re-resolves via `lookupForVideo`.
+the saved-highlights loader and the declaration-preview handler evict an
+entry whose session no longer resolves (deleted in the web app) and
+re-resolve via `lookupForVideo`.
 
 ## Verification golden path
 
