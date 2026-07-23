@@ -1,9 +1,24 @@
 ---
 name: web-ui-patterns
-description: Opinionated UI idioms for apps/web — hover/press states, WizardShell, sticky CTAs, OptionCard, language pickers, mobile inputs, overlay sizing, and loading-state skeletons. Use whenever you add or edit a view, card, row, modal, form, or loading state in the web app.
+description: Opinionated UI idioms for apps/web — navigation patterns (tab view vs modal screen vs overflow tab), hover/press states, WizardShell, sticky CTAs, OptionCard, language pickers, mobile inputs, overlay sizing, and loading-state skeletons. Use whenever you add or edit a view, card, row, modal, form, or loading state in the web app.
 ---
 
 The web app follows a few opinionated UI idioms. When adding a new view, mirror the existing canonical example rather than reinventing chrome — the design is intentionally close to a future Expo native app, so layouts should translate without rework.
+
+## Navigation patterns (which chrome a view gets)
+
+Every authenticated view is exactly one of three presentations. Pick one; don't invent a fourth (a view with no highlighted tab and no back affordance is an orphan — that's a bug, not a pattern):
+
+1. **Tab view** — a top-level destination. Renders inside the app shell (`PageContainer` body, sidebar on desktop, `BottomTabBar` on mobile) with its tab/sidebar item highlighted. No back button; the nav itself is the way out. Canonical: `dashboard-view.tsx`, `practice-landing-view.tsx`.
+2. **Full-view modal screen** — a task the user enters and leaves (wizards, the reader, focus/review, settings drill-ins like Account/Languages). The route sets `staticData: { hideAppChrome: true }` (no sidebar, no tab bar) and the view wraps itself in `ModalScreen` (`features/navigation/components/modal-screen.tsx`): top-left X (dismiss a task) or chevron (return to a parent). `onClose` always navigates to a **fixed, known parent route** — never `history.back()`, because deep links have no history to pop. Canonical: `account-page.tsx` (chevron → `/more`), `new-session-wizard.tsx`.
+3. **Overflow tab view** (the iOS More-tab convention) — a desktop sidebar destination with no slot in the 4-tab mobile bar (Stats, Sessions). It stays a tab view, but on mobile its **parent tab stays highlighted** and it gets the same header bar as a modal screen. Three pieces, always together:
+   - add the route prefix to the parent tab's `matchPrefixes` in `bottom-tab-bar.tsx` (the sidebar config in `sidebar-nav.tsx` is separate and keeps the view's own item);
+   - render `<OverflowTabHeader backTo='/parent' title={t`Page title`} />` (`features/navigation/components/overflow-tab-header.tsx`) as a sibling **above** `PageContainer` (fragment-wrap the view). It reuses `ModalScreenHeader`, so the mobile chrome is pixel-identical to a modal screen's chevron header; it's `md:hidden`, sticky, and points at the fixed parent — never `history.back()`;
+   - hide the in-page title on mobile (`<h1 className='hidden ... md:block'>`) — on mobile the title lives in the header bar, on desktop in the page body.
+
+   Canonical: `stats-view.tsx` (parent = More), `sessions-list-view.tsx` (parent = Dashboard). If a view has several mobile entry points, the parent is still the single tab that owns it (Stats is reachable from Dashboard cards, but its home is More).
+
+Special case: `/user-guide` is public (the extension links to it). Signed-in users get it wrapped in a chevron `ModalScreen` back to `/more`; signed-out visitors get the bare page — no back affordance into the sign-in wall.
 
 ## Hover and press (active) states on tappable surfaces
 
