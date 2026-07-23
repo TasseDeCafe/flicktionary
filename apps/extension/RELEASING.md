@@ -7,9 +7,12 @@ rejected.
 
 ## Normal release flow
 
-The `/release-extension X.Y.Z` skill drives this end to end (bump → PR → tag →
-watch the run). The manual steps below are what it automates — follow them by
-hand if you're not using the skill.
+`pnpm release:extension X.Y.Z` (an interactive script, `scripts/release-extension.mjs`)
+drives this end to end (bump → PR → tag → watch the run), detecting on its own which
+phase you're in; it prompts before the tag push and maps known run failures to the
+troubleshooting notes below. The `/release-extension X.Y.Z` skill is a thin agent
+wrapper around the same script. The manual steps below are what it automates —
+follow them by hand if you're not using either.
 
 1. Bump `version` in `apps/extension/package.json` (Chrome requires strictly increasing versions).
 2. Tag and push — the tag (minus `v`) must match the package version:

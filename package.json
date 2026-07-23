@@ -35,7 +35,8 @@
     "db:migrate": "pnpm --filter @flicktionary/backend db:dev:tunnel:migrate",
     "prepare": "husky",
     "generate:logos": "scripts/generate-logos.sh",
-    "test-users": "node scripts/test-users.mjs"
+    "test-users": "node scripts/test-users.mjs",
+    "release:extension": "node scripts/release-extension.mjs"
   },
   "devDependencies": {
     "@lingui/cli": "catalog:",
