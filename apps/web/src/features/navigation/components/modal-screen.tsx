@@ -5,8 +5,10 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 
 interface ModalScreenHeaderProps {
-  // Always navigate to a known parent route — never `history.back()`. Deep-linked
-  // tabs have no history to pop, and we want X to land somewhere predictable.
+  // Single-entry screens navigate to their fixed parent route. Screens with
+  // several entry points use useModalScreenClose, which returns to the actual
+  // opener and falls back to the fixed parent on deep links (which have no
+  // in-app history to pop). Never call raw `history.back()` here.
   onClose: () => void
   closeIcon?: 'x' | 'chevron'
   title?: ReactNode

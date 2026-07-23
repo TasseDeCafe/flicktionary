@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import {
   useCreateContentSourceFromText,
   useCreateStudySession,
@@ -86,7 +87,7 @@ export const NewTextSessionWizard = () => {
           if (response.alreadyExisted) {
             toast.info(t`You already had a session for this — picking up where you left off.`)
           }
-          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
+          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id }, replace: true })
         },
       }
     )
@@ -149,7 +150,7 @@ export const NewTextSessionWizard = () => {
     )
   }
 
-  const closeWizard = () => navigate({ to: '/sessions' })
+  const closeWizard = useModalScreenClose({ to: '/sessions' })
 
   if (step === 'cefr' && importedTrack) {
     return (

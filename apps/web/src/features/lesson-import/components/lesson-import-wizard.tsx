@@ -11,6 +11,7 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
@@ -174,10 +175,14 @@ export const LessonImportWizard = () => {
           // A re-upload of an already-confirmed batch goes straight to its
           // session — there is no draft left to confirm.
           if (batch.status === 'confirmed' && batch.studySessionId) {
-            void navigate({ to: '/sessions/$sessionId/review', params: { sessionId: batch.studySessionId } })
+            void navigate({
+              to: '/sessions/$sessionId/review',
+              params: { sessionId: batch.studySessionId },
+              replace: true,
+            })
             return
           }
-          void navigate({ to: '/lessons/import/$batchId', params: { batchId: batch.id } })
+          void navigate({ to: '/lessons/import/$batchId', params: { batchId: batch.id }, replace: true })
         },
       }
     )
@@ -198,7 +203,7 @@ export const LessonImportWizard = () => {
     setCefr({ targetLanguage: lang, cefrLevel: cefrChoice }, { onSuccess: () => submitImport(lang) })
   }
 
-  const closeWizard = () => void navigate({ to: '/sessions' })
+  const closeWizard = useModalScreenClose({ to: '/sessions' })
 
   if (step === 'cefr' && effectiveTarget) {
     return (

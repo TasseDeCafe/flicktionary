@@ -1,7 +1,8 @@
 import { Trans } from '@lingui/react/macro'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
 
 // Stable anchor ids — the in-app checklist/explainer cards deep-link to them
@@ -20,7 +21,7 @@ const StepList = ({ children }: { children: React.ReactNode }) => (
 // Public user guide. Linked from the extension (FTUE page + popup) — keep the
 // /user-guide path stable.
 export const UserGuideView = () => {
-  const navigate = useNavigate()
+  const closeGuide = useModalScreenClose({ to: '/more' })
   const isSignedIn = useAuthStore(getIsSignedIn)
 
   const content = (
@@ -249,7 +250,7 @@ export const UserGuideView = () => {
   if (!isSignedIn) return content
 
   return (
-    <ModalScreen onClose={() => void navigate({ to: '/more' })} closeIcon='chevron'>
+    <ModalScreen onClose={closeGuide} closeIcon='chevron'>
       {content}
     </ModalScreen>
   )

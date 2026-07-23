@@ -28,7 +28,9 @@ export const GettingStartedChecklist = ({ hasSessionsInList }: { hasSessionsInLi
     },
     {
       key: 'session',
-      label: t`Start your first session`,
+      // Grounds the app's "session" vocabulary for someone who hasn't seen it
+      // yet — the linked wizard creates a movie/TV session specifically.
+      label: t`Start a movie or TV session`,
       done: (status?.hasSession ?? false) || hasSessionsInList,
       linkProps: { to: '/sessions/new' } satisfies Pick<LinkProps, 'to' | 'hash'>,
     },

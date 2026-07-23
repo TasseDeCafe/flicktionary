@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { useParams, useSearch } from '@tanstack/react-router'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useLingui } from '@lingui/react/macro'
 import { ListChecks } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
@@ -26,7 +27,6 @@ import { RecapTypedExercise } from './recap-typed-exercise'
 // the composed Practice queue's own pace.
 export const SessionRecapView = () => {
   const { t } = useLingui()
-  const navigate = useNavigate()
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/recap/$targetLanguage' })
   const { studySessionId } = useSearch({ from: '/_authenticated/_app/practice/recap/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
@@ -34,7 +34,7 @@ export const SessionRecapView = () => {
   const { data: cards, isError } = useListCardsBySession(studySessionId)
   const { data: userPrefs } = useGetUserPrefs()
 
-  const close = () => void navigate({ to: '/sessions/$sessionId/review', params: { sessionId: studySessionId } })
+  const close = useModalScreenClose({ to: '/sessions/$sessionId/review', params: { sessionId: studySessionId } })
 
   return (
     <ModalScreen onClose={close} closeIcon='x' title={t`Session recap · ${languageName}`}>

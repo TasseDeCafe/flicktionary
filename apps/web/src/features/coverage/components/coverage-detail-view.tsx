@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useCoverage, useCoverageTopLemmas, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, STATE_KNOWN, STATE_STUDIED } from '../utils/coverage-render'
 import { CoverageDotGrid, CoverageSkyline, type DotHover } from './coverage-canvas'
@@ -42,7 +43,7 @@ export const CoverageDetailView = () => {
     if (!isLoading && !isError && languages && !usable) void navigate({ to: '/dashboard', replace: true })
   }, [isLoading, isError, languages, usable, navigate])
 
-  const close = () => void navigate({ to: '/dashboard' })
+  const close = useModalScreenClose({ to: '/dashboard' })
   const languageName = getLocalizedCoverageLanguageName(i18n, lang)
 
   return (

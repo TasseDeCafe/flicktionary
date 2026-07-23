@@ -4683,6 +4683,7 @@ msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
+#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
@@ -4695,7 +4696,6 @@ msgstr "Start session"
 msgid "Start something new"
 msgstr "Start something new"
 
-#: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start your first session"
 msgstr "Start your first session"
@@ -5596,6 +5596,10 @@ msgstr "Vocabulary"
 #: apps/web/src/features/stats/components/stats-view.tsx
 msgid "Vocabulary coverage"
 msgstr "Vocabulary coverage"
+
+#: apps/web/src/features/stats/components/stats-view.tsx
+msgid "Vocabulary coverage isn't available for {unsupportedNames} yet."
+msgstr "Vocabulary coverage isn't available for {unsupportedNames} yet."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx

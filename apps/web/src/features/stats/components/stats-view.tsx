@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { PageContainer } from '@/components/page-container'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
-import { useCoverage, type LanguageCoverage } from '@/features/coverage/api/coverage-hooks'
+import { useQualifyingCoverage, type LanguageCoverage } from '@/features/coverage/api/coverage-hooks'
 import { CoverageDotGrid } from '@/features/coverage/components/coverage-canvas'
 import { buildStateArray, CARD_COMPACT_RULE } from '@/features/coverage/utils/coverage-render'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
@@ -18,15 +18,10 @@ import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab
 // language while the activity chart sums the languages.
 export const StatsView = () => {
   const { t, i18n } = useLingui()
-  const { data: coverage, isLoading: isCoverageLoading } = useCoverage()
+  const { qualifying: coverageLanguages, unsupported, isLoading: isCoverageLoading } = useQualifyingCoverage()
   const { data: activity } = useActivity()
   const [selected, setSelected] = useState<string | null>(null)
 
-  const coverageLanguages = useMemo(
-    () =>
-      (coverage ?? []).filter((entry) => entry.supported && entry.studiedRanks.length + entry.knownRanks.length > 0),
-    [coverage]
-  )
   const languages = useMemo(
     () =>
       [
@@ -42,6 +37,14 @@ export const StatsView = () => {
   const visibleCoverage = active
     ? coverageLanguages.filter((entry) => entry.targetLanguage === active)
     : coverageLanguages
+
+  // When the filter (or the whole account) lands on languages without a
+  // lemma_ranks build, "save a few terms first" would be a false promise —
+  // no amount of saving produces a wall. Name the languages instead.
+  const unsupportedForView = active ? unsupported.filter((entry) => entry.targetLanguage === active) : unsupported
+  const unsupportedNames = unsupportedForView
+    .map((entry) => getLocalizedCoverageLanguageName(i18n, entry.targetLanguage))
+    .join(', ')
 
   return (
     <>
@@ -73,7 +76,11 @@ export const StatsView = () => {
         <div className='mt-2 flex flex-col gap-4'>
           {isCoverageLoading && <Skeleton className='h-64 w-full rounded-xl' />}
           {!isCoverageLoading && visibleCoverage.length === 0 && (
-            <p className='text-muted-foreground text-sm'>{t`No coverage data yet — save a few terms first.`}</p>
+            <p className='text-muted-foreground text-sm'>
+              {unsupportedForView.length > 0
+                ? t`Vocabulary coverage isn't available for ${unsupportedNames} yet.`
+                : t`No coverage data yet — save a few terms first.`}
+            </p>
           )}
           {visibleCoverage.map((entry) => (
             <StatsCoverageBlock key={entry.targetLanguage} coverage={entry} />

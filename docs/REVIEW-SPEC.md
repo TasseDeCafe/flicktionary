@@ -104,13 +104,16 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
 
 ## Layer 2 — Focus view (modal screen pushed above the tab navigator)
 
-- Modal header: chevron-back to the session-vocabulary list, position counter
+- Modal header: chevron-back to the opener via router history (the
+  session-vocabulary list as the deep-link fallback), position counter
   (`Card N of M`), and a chat toggle button carrying the unread indicator (see
   the per-card chat bullet below). There is **no keep/reject bottom bar** — cards
   auto-keep on basic data; removal is a single scope-aware affordance inline in
   the card body (see the next-to-last bullet in this section).
 - Prev/next navigation uses two fixed, viewport-mid-height circular buttons
-  pinned to the left and right edges so they stay reachable on long cards;
+  pinned to the left and right edges so they stay reachable on long cards.
+  Paging **replaces** the history entry rather than pushing, so close/back
+  exits to the opener instead of walking every visited card;
   the `Open in subtitles` deep-link still lives inside the collapsible
   `Context` block.
 - Card section: each basic column gets its own labeled input — `Headword`,
@@ -237,11 +240,13 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
     the lemma's for citation), with an "Open source" deep-link; hidden when the
     target has no kept occurrence / source. The selector + editor read facet
     state + readiness + source lazily via `chunks.getStudyTargets`. Edits keep the
-    user on the focus view; the chevron closes back to the originating surface
-    (`?from=practice` carries `practiceLang` + `practicePool` + `practiceMode` —
-    `read` (default) for a reading text, `flashcards` for the flashcard reviewer's
-    actions menu — so close lands on the right review screen, scope reset to
-    `mixed`).
+    user on the focus view; the chevron pops history back to the originating
+    surface (re-entering the identical route+search entry, which is what the
+    stashed practice-session snapshot needs to resume). The `?from=practice`
+    params (`practiceLang` + `practicePool` + `practiceMode` — `read` (default)
+    for a reading text, `flashcards` for the flashcard reviewer's actions menu)
+    remain as the deep-link fallback so a fresh tab still lands on the right
+    review screen, scope reset to `mixed`.
 - Keyboard: `←`/`→` (and `j`/`k`, with OS key-repeat so holding scans) drive
   prev/next, `C` toggles the chat panel. All three header buttons carry a small
   corner keycap badge on desktop (`←` / `→` / `C`, the shared `Kbd` component's

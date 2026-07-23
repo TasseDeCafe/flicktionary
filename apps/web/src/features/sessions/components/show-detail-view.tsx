@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card } from '@flicktionary/ui/components/card'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
 import { deriveTvShows, latestEpisode } from '../utils/derive-tv-shows'
 import { SessionRemoveDialog } from './session-remove-dialog'
@@ -17,7 +18,8 @@ const pad2 = (n: number): string => String(n).padStart(2, '0')
 type RemoveTarget = { id: string; title: string }
 
 // Drill-in screen for one TV show: a full-width Add-episode button on top, then
-// the list of added episodes. Reached by tapping a show row in the Sessions list.
+// the list of added episodes. Reached by tapping a show card in the Sessions
+// list or the dashboard's recent list.
 export const ShowDetailView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -35,7 +37,7 @@ export const ShowDetailView = () => {
   const episodeSessionIds = useMemo(() => (group?.episodes ?? []).map((ep) => ep.sessionId), [group])
   const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(episodeSessionIds)
 
-  const close = () => navigate({ to: '/sessions' })
+  const close = useModalScreenClose({ to: '/sessions' })
 
   // The group disappears once its last episode is removed — fall back to the
   // Sessions list rather than render an empty shell.

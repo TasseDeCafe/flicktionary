@@ -9,6 +9,7 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
@@ -141,7 +142,7 @@ export const NewAdhocCardWizard = () => {
     )
   }
 
-  const closeWizard = () => navigate({ to: '/vocabulary' })
+  const closeWizard = useModalScreenClose({ to: '/vocabulary' })
   const requiresCefrStep =
     !!effectiveTarget && !prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === effectiveTarget)?.cefrLevel
   const totalSteps = requiresCefrStep ? 2 : 1

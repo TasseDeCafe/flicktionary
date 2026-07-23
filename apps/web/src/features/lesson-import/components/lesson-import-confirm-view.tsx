@@ -9,6 +9,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Checkbox } from '@flicktionary/ui/components/checkbox'
 import { SkeletonList, Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
@@ -134,7 +135,7 @@ export const LessonImportConfirmView = () => {
     )
   }
 
-  const close = () => void navigate({ to: '/sessions' })
+  const close = useModalScreenClose({ to: '/sessions' })
 
   // An already-confirmed batch (re-opened link, double navigation) has nothing
   // left to confirm — its session is the destination.

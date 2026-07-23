@@ -1,19 +1,20 @@
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { Link, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetStudySessionStatus } from '@/features/sessions/api/sessions-hooks'
 
 export const ProcessingView = () => {
   const { t } = useLingui()
-  const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/processing' })
+  const closeProcessing = useModalScreenClose({ to: '/sessions' })
 
   const { data: status } = useGetStudySessionStatus(sessionId, 2000)
   const warnings = status?.processingWarnings ?? []
 
   return (
-    <ModalScreen onClose={() => navigate({ to: '/sessions' })} title={t`Processing`}>
+    <ModalScreen onClose={closeProcessing} title={t`Processing`}>
       <div className='mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-y-auto px-4 py-8'>
         <div className='bg-card flex flex-col gap-3 rounded-md border p-6'>
           <div className='font-medium'>{t`Processing has moved to the background`}</div>
