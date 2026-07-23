@@ -154,9 +154,13 @@ msgstr "{fieldLabel} : {title}"
 msgid "{frequentUnknownCount} frequent"
 msgstr "{frequentUnknownCount} fréquents"
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "{fullDate}: {newCount} new terms, {knownCount} marked known"
-msgstr "{fullDate} : {newCount} nouveaux termes, {knownCount} marqués comme connus"
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "{fullDate} — active"
+msgstr "{fullDate} — actif"
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "{fullDate} — no activity"
+msgstr "{fullDate} — aucune activité"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional."
@@ -206,6 +210,10 @@ msgstr "{nextTotal, plural, one {# carte} other {# cartes}}"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "{option} days"
+msgstr "{option} jours"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{parkedTotal} parked"
 msgstr "{parkedTotal} en pause"
@@ -246,7 +254,7 @@ msgstr "{sessionMarkedCount, plural, one {Démarquer le # mot marqué comme conn
 msgid "{spanCount, plural, one {Mark the # word read so far as known} other {Mark the # words read so far as known}}"
 msgstr "{spanCount, plural, one {Marquer le # mot lu jusqu'ici comme connu} other {Marquer les # mots lus jusqu'ici comme connus}}"
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
 msgid "{streakDays}-day streak"
 msgstr "{streakDays} jours d'affilée"
 
@@ -418,7 +426,7 @@ msgstr "Actions pour ce terme de vocabulaire."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
 msgid "Activity"
 msgstr "Activité"
 
@@ -559,7 +567,6 @@ msgid "AI-generated and not verified against a dictionary — double-check befor
 msgstr "Généré par IA et non vérifié dans un dictionnaire — à vérifier avant de le réviser."
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
-#: apps/web/src/features/dashboard/components/activity-card.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 #: apps/web/src/features/stats/components/stats-view.tsx
@@ -588,6 +595,10 @@ msgstr "Terminé !"
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "All known"
 msgstr "Tout connu"
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "All languages"
+msgstr "Toutes les langues"
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx
 msgid "All sessions"
@@ -667,6 +678,10 @@ msgstr "Répondu correctement."
 #: apps/web/src/features/practice/components/answered-exercise-panel.tsx
 msgid "Answered incorrectly."
 msgstr "Répondu incorrectement."
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Any activity counts — new terms, practice, exercises, or marking words known. The streak ignores the language filter."
+msgstr "Toute activité compte — nouveaux termes, pratique, exercices ou marquage de mots connus. La série ignore le filtre de langue."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Appearance"
@@ -913,6 +928,10 @@ msgstr "Carte {cardPosition} sur {cardTotal}"
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Card not found."
 msgstr "Carte introuvable."
+
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "cards & exercises"
+msgstr "cartes et exercices"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Cards + exercises"
@@ -1340,6 +1359,10 @@ msgstr "Pratique personnalisée"
 msgid "Customer Center"
 msgstr "Centre Client"
 
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "Daily activity"
+msgstr "Activité quotidienne"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Daily introduction limit reached"
 msgstr "Limite quotidienne d'introduction atteinte"
@@ -1485,6 +1508,10 @@ msgstr "Forme d'affichage (par ex. accentuée)"
 msgid "Display subtitles"
 msgstr "Afficher les sous-titres"
 
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Do a practice, or mark words you know while reading, to fill it in — that starts your streak."
+msgstr "Faites un exercice ou marquez des mots que vous connaissez en lisant pour le remplir — cela démarre votre série."
+
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Do your first practice"
 msgstr "Faites votre premier exercice"
@@ -1548,6 +1575,10 @@ msgstr "p. ex. подоконник, ran out of, à propos"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "e.g. увидеть"
 msgstr "p. ex. увидеть"
+
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "Each chart has its own scale"
+msgstr "Chaque graphique a sa propre échelle"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "Each column is 100 words; the filled share is how many of them you know."
@@ -2760,10 +2791,6 @@ msgstr "Langues"
 msgid "lapse"
 msgstr "lapsus"
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "Last {windowDays} days"
-msgstr "Derniers {windowDays} jours"
-
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "Last day to cancel before first charge"
 msgstr "Dernier jour pour annuler avant le premier prélèvement"
@@ -2907,13 +2934,13 @@ msgstr "Marqué comme connu"
 msgid "marked known"
 msgstr "marqué comme connu"
 
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "Marked known"
+msgstr "Marqués comme connus"
+
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 msgid "Marked known {knownLabel}"
 msgstr "Marqué comme connu {knownLabel}"
-
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "Marked known {selectedMarkedKnownLabel}"
-msgstr "Marqués comme connus {selectedMarkedKnownLabel}"
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
@@ -2980,7 +3007,7 @@ msgid "More options"
 msgstr "Plus d'options"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
-#: apps/web/src/features/dashboard/components/activity-card.tsx
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
 msgid "More stats"
 msgstr "Plus de statistiques"
 
@@ -3087,9 +3114,9 @@ msgstr "Les nouvelles cartes de prononciation/forme sont des introductions — n
 msgid "New session"
 msgstr "Nouvelle session"
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "New terms {selectedNewTermsLabel}"
-msgstr "Nouveaux termes {selectedNewTermsLabel}"
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "New terms"
+msgstr "Nouveaux termes"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "New terms enter as exercises, so there are no new flashcards — include exercises or the new pronunciation/form cards."
@@ -3114,6 +3141,10 @@ msgstr "Suivant"
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Next card"
 msgstr "Carte suivante"
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Next month"
+msgstr "Mois suivant"
 
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Nice!"
@@ -3515,6 +3546,10 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "peak {peakLabel}/day"
+msgstr "pic {peakLabel}/jour"
+
 #: apps/web/src/features/review/components/grammar-chips.tsx
 msgid "Perfect auxiliary"
 msgstr "Auxiliaire du parfait"
@@ -3682,6 +3717,10 @@ msgstr "Limites de pratique"
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "Practiced"
+msgstr "Pratiqué"
+
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Practise saying it"
 msgstr "S'entraîner à le prononcer"
@@ -3731,6 +3770,10 @@ msgstr "Appuyer ici indique à Flicktionary que vous avez lu et compris le texte
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Previous card"
 msgstr "Carte précédente"
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Previous month"
+msgstr "Mois précédent"
 
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "Previous text"
@@ -4168,6 +4211,10 @@ msgstr "Enregistrer dans le vocabulaire"
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Save your first terms"
 msgstr "Enregistrez vos premiers termes"
+
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "saved"
+msgstr "enregistrés"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
@@ -4656,6 +4703,10 @@ msgstr "Étape {stepCurrent} sur {stepTotal}"
 msgid "Still analyzing this text — check back in a moment."
 msgstr "Analyse de ce texte en cours — revenez dans un instant."
 
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Streak"
+msgstr "Série"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Streaming"
 msgstr "Streaming"
@@ -5090,10 +5141,6 @@ msgstr "Cette valeur diffère de celle fournie par le Wiktionnaire."
 msgid "This value was taken from Wiktionary's dictionary data during processing."
 msgstr "Cette valeur provient des données du Wiktionnaire, intégrées lors du traitement."
 
-#: apps/web/src/features/dashboard/components/activity-card.tsx
-msgid "This week"
-msgstr "Cette semaine"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Title"
@@ -5109,10 +5156,13 @@ msgid "To change your current plan type, please click on \"Manage Subscription\"
 msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
-#: apps/web/src/features/dashboard/components/activity-card.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
 msgid "Today"
 msgstr "Aujourd'hui"
+
+#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+msgid "Today's circle is open."
+msgstr "Le cercle d'aujourd'hui est ouvert."
 
 #: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "Today's new-term budget is spent."
@@ -5714,6 +5764,10 @@ msgstr "Réussites"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Word or expression"
 msgstr "Mot ou expression"
+
+#: apps/web/src/features/stats/components/daily-activity-charts.tsx
+msgid "words"
+msgstr "mots"
 
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Words you've read"
