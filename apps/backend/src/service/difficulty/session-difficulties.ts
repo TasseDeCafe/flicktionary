@@ -166,47 +166,54 @@ export const getSessionDifficulties = async (
   // language's track groups.
   const knowledgeByLanguage = new Map<string, Map<string, LemmaKnowledge>>()
   const languages = [...new Set([...groups.values()].map((g) => g.targetLanguage))]
-  for (const language of languages) {
-    const [vocab, knownLemmas] = await Promise.all([
-      deps.userLookupsRepository.listDifficultyVocab({ userId: params.userId, targetLanguage: language }),
-      deps.knownLemmasRepository.listLemmas(params.userId, language),
-    ])
-    knowledgeByLanguage.set(language, buildKnowledgeMap({ vocab, knownLemmas, targetLanguage: language, now }))
-  }
+  await Promise.all(
+    languages.map(async (language) => {
+      const [vocab, knownLemmas] = await Promise.all([
+        deps.userLookupsRepository.listDifficultyVocab({ userId: params.userId, targetLanguage: language }),
+        deps.knownLemmasRepository.listLemmas(params.userId, language),
+      ])
+      knowledgeByLanguage.set(language, buildKnowledgeMap({ vocab, knownLemmas, targetLanguage: language, now }))
+    })
+  )
 
-  for (const group of groups.values()) {
-    const status = await resolveTrackStatus(group, params.userId, deps)
-    let dto: SessionDifficultyDto
-    if (status.kind === 'terminal') {
-      dto = status.dto
-    } else {
-      const profileRows = await deps.textTrackLemmaProfilesRepository.listRowsByTrackId(group.textTrackId)
-      const candidateLemmas = new Set<string>()
-      for (const row of profileRows) {
-        for (const lemma of row.candidate_lemmas) candidateLemmas.add(lemma)
+  // Groups compute concurrently — each writes disjoint session ids, and the
+  // DB pool caps how many profile reads are actually in flight, so a batch
+  // of ~100 distinct tracks doesn't pay ~100 sequential round-trip chains.
+  await Promise.all(
+    [...groups.values()].map(async (group) => {
+      const status = await resolveTrackStatus(group, params.userId, deps)
+      let dto: SessionDifficultyDto
+      if (status.kind === 'terminal') {
+        dto = status.dto
+      } else {
+        const profileRows = await deps.textTrackLemmaProfilesRepository.listRowsByTrackId(group.textTrackId)
+        const candidateLemmas = new Set<string>()
+        for (const row of profileRows) {
+          for (const lemma of row.candidate_lemmas) candidateLemmas.add(lemma)
+        }
+        const ranksByLemma = await deps.lemmaRanksRepository.listRanksForLemmas({
+          targetLanguage: group.targetLanguage,
+          lemmas: [...candidateLemmas],
+        })
+        const computation = computeDifficulty({
+          groups: profileRows.map((row) => ({ tokenCount: row.token_count, candidateLemmas: row.candidate_lemmas })),
+          knowledgeByLemma: knowledgeByLanguage.get(group.targetLanguage) ?? new Map(),
+          ranksByLemma,
+        })
+        dto = {
+          status: 'available',
+          expectedCoveragePercent:
+            computation.expectedCoverage === null ? null : flooredCoveragePercent(computation.expectedCoverage),
+          label: computation.expectedCoverage === null ? null : labelForCoverage(computation.expectedCoverage),
+          unknownLemmaCount: computation.unknownLemmas.length,
+          frequentUnknownCount: computation.frequentUnknownLemmas.length,
+          savedNotStartedCount: computation.savedNotStartedLemmas.length,
+          knownLemmaCount: computation.knownLemmas.length,
+        }
       }
-      const ranksByLemma = await deps.lemmaRanksRepository.listRanksForLemmas({
-        targetLanguage: group.targetLanguage,
-        lemmas: [...candidateLemmas],
-      })
-      const computation = computeDifficulty({
-        groups: profileRows.map((row) => ({ tokenCount: row.token_count, candidateLemmas: row.candidate_lemmas })),
-        knowledgeByLemma: knowledgeByLanguage.get(group.targetLanguage) ?? new Map(),
-        ranksByLemma,
-      })
-      dto = {
-        status: 'available',
-        expectedCoveragePercent:
-          computation.expectedCoverage === null ? null : flooredCoveragePercent(computation.expectedCoverage),
-        label: computation.expectedCoverage === null ? null : labelForCoverage(computation.expectedCoverage),
-        unknownLemmaCount: computation.unknownLemmas.length,
-        frequentUnknownCount: computation.frequentUnknownLemmas.length,
-        savedNotStartedCount: computation.savedNotStartedLemmas.length,
-        knownLemmaCount: computation.knownLemmas.length,
-      }
-    }
-    for (const sessionId of group.sessionIds) result[sessionId] = dto
-  }
+      for (const sessionId of group.sessionIds) result[sessionId] = dto
+    })
+  )
 
   return result
 }

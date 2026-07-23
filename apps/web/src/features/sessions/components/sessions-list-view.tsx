@@ -64,13 +64,14 @@ export const SessionsListView = () => {
     return sort === 'oldest' ? [...merged].reverse() : merged
   }, [filtered, filter, sort])
 
-  // One batched difficulty read for the visible loose cards. TV episodes get
-  // theirs on the show detail screen; the show-group card shows no aggregate.
-  const looseSessionIds = useMemo(
-    () => items.filter((item) => item.kind === 'session').map((item) => item.session.id),
-    [items]
-  )
-  const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(looseSessionIds)
+  // One batched difficulty read keyed by the FULL session list, not the
+  // filtered view — filter/search changes then hit the same cached chunks
+  // instead of minting new query keys and recomputing server-side. The
+  // extra ids are cheap: the backend collapses sessions sharing a track
+  // (TV seasons) into one computation, and cards that don't render the
+  // stat simply ignore their entry.
+  const sessionIds = useMemo(() => (data ?? []).map((s) => s.id), [data])
+  const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(sessionIds)
 
   const sessionCount = filtered.length
 
