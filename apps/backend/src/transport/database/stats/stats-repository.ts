@@ -34,6 +34,38 @@ const countMarkedKnownByDay = async (userId: string, windowDays: number): Promis
   return rows.map((r) => ({ day: r.day, targetLanguage: r.target_language, count: r.count }))
 }
 
+// Practice interactions per day per language: live ratings + answered
+// exercises. Introductions are counted here AND in countIntroducedByDay on
+// purpose — new terms arrive via gate exercises as well as intro ratings, and
+// exercises carry no introduction-origin column, so a rating-side filter would
+// be inconsistent; the two series render as separate charts, never a stack.
+// Checkpoint provenance: the two lanes share checkpoint_id, discriminated by
+// was_explicit. Implicit bulk reading credits (was_explicit = false) are
+// excluded — they'd re-import the marked-known spikiness this chart exists to
+// avoid — while deliberate per-term "I know this" assertions count. Both lanes
+// remain streak-qualifying via listActiveDays below.
+const countPracticedByDay = async (userId: string, windowDays: number): Promise<DailyLanguageCount[]> => {
+  const rows = (await sql`
+    SELECT day::text AS day, target_language, COUNT(*)::int AS count
+    FROM (
+      SELECT rated_at::date AS day, target_language
+      FROM public.practice_rating_events
+      WHERE user_id = ${userId}
+        AND rated_at >= CURRENT_DATE - ${windowDays - 1}::int
+        AND reverted_at IS NULL
+        AND import_batch_id IS NULL
+        AND NOT (checkpoint_id IS NOT NULL AND was_explicit = false)
+      UNION ALL
+      SELECT used_at::date, target_language
+      FROM public.practice_exercises
+      WHERE user_id = ${userId}
+        AND used_at >= CURRENT_DATE - ${windowDays - 1}::int
+    ) AS events
+    GROUP BY 1, 2
+  `) as Array<{ day: string; target_language: string; count: number }>
+  return rows.map((r) => ({ day: r.day, targetLanguage: r.target_language, count: r.count }))
+}
+
 // Every calendar day with any streak-qualifying activity, newest first,
 // unbounded (a cap would silently break long streaks). Rating events exclude
 // undone ratings and lesson-import backfills; checkpoint reading credits are
@@ -73,6 +105,7 @@ const getCurrentDay = async (): Promise<string> => {
 export const StatsRepository = () => ({
   countIntroducedByDay,
   countMarkedKnownByDay,
+  countPracticedByDay,
   listActiveDays,
   getCurrentDay,
 })

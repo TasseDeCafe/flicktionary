@@ -8,7 +8,8 @@ import { CoverageDotGrid } from '@/features/coverage/components/coverage-canvas'
 import { buildStateArray, CARD_COMPACT_RULE } from '@/features/coverage/utils/coverage-render'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 import { useActivity } from '../api/stats-hooks'
-import { ActivityCard } from '@/features/dashboard/components/activity-card'
+import { DailyActivityCharts } from './daily-activity-charts'
+import { ActivityCalendarCard } from '@/features/dashboard/components/activity-calendar-card'
 import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab-header'
 
 // The data-nerd view: the dashboard cards' graphs at full width/range, one
@@ -61,7 +62,12 @@ export const StatsView = () => {
           </div>
         )}
 
-        <ActivityCard windowDays={14} language={active} />
+        {/* The charts respect the language filter; the streak calendar is
+            user-level by definition and says so in its caption. */}
+        <div className='grid items-stretch gap-x-4 lg:grid-cols-[1.6fr_1fr]'>
+          <DailyActivityCharts language={active} />
+          <ActivityCalendarCard variant='stats' />
+        </div>
 
         <h2 className='mt-6 text-base font-semibold'>{t`Vocabulary coverage`}</h2>
         <div className='mt-2 flex flex-col gap-4'>
