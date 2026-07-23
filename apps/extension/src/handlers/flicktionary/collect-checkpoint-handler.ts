@@ -1,4 +1,5 @@
 import type { Browser } from 'wxt/browser'
+import { ORPCError } from '@orpc/contract'
 import type {
   Command,
   FlicktionaryCollectCheckpointMessage,
@@ -59,6 +60,13 @@ export default class CollectCheckpointHandler {
           creditedCount: data.creditedCount,
         })
       } catch (error) {
+        // The 409 carries no domain code in its payload, so the generic
+        // extractor can't see it — the declaration sheet needs the code to
+        // offer its inline re-snapshot retry.
+        if (error instanceof ORPCError && error.code === 'CONFLICT') {
+          sendResponse({ success: false, code: 'CONFLICT' })
+          return
+        }
         const {
           code,
           message: errorMessage,

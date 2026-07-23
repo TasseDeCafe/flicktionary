@@ -6,8 +6,14 @@ import {
   type FlicktionaryCheckpointAvailabilityResponse,
   type FlicktionaryCollectCheckpointMessage,
   type FlicktionaryCollectCheckpointResponse,
+  type FlicktionaryDeclarationPreviewMessage,
+  type FlicktionaryDeclarationPreviewResponse,
+  type FlicktionaryMarkKnownMessage,
+  type FlicktionaryMarkKnownResponse,
   type FlicktionaryUndoCheckpointMessage,
   type FlicktionaryUndoCheckpointResponse,
+  type FlicktionaryUnmarkKnownMessage,
+  type FlicktionaryUnmarkKnownResponse,
   type SaveWordFlicktionaryVideoContext,
   type TabToExtensionCommand,
 } from '@asbplayer-fork/common'
@@ -27,6 +33,7 @@ import {
   type VideoOverlayState,
   type VideoOverlayStore,
 } from '../ui/video-overlay/shadow-video-overlay-app'
+import type { CollectOutcome, SweepOutcome } from '../ui/video-overlay/declaration-sheet'
 
 const smallScreenVideoHeightThreshold = 300
 
@@ -65,7 +72,14 @@ export class VideoOverlayController {
   private _checkpointUnsupported = false
   private _availabilityProbedKey?: string
   private _checkpointFeedbackTimeout?: ReturnType<typeof setTimeout>
-  private _collectingCheckpoint = false
+  // A conflict re-snapshot re-fires the preview without changing the run — the
+  // monotonic id drops a slower earlier response landing after a fresher one.
+  private _declarationPreviewRequestId = 0
+  // Passive mark-known badge on the paused controls: read-only probe, keyed by
+  // the segment index it was fetched for so repeated pauses at the same spot
+  // don't refetch.
+  private _badgeRequestId = 0
+  private _badgeProbedSegmentIndex?: number
 
   constructor(context: Binding, offsetAnchor: OffsetAnchor) {
     this._context = context
@@ -153,6 +167,8 @@ export class VideoOverlayController {
       tooltipsEnabled: true,
       disabled: this._disabledMode,
       checkpointFeedback: null,
+      declaration: null,
+      markKnownBadge: null,
     }))
     this._mountShadow()
 
@@ -184,8 +200,13 @@ export class VideoOverlayController {
       // change out to every binding in every tab, including this one.
       onEnableExtension: () => void setExtensionEnabled(true),
       onDisableExtension: () => void setExtensionEnabled(false),
-      onCheckpoint: () => void this._collectCheckpoint(),
-      onUndoCheckpoint: (sessionId, checkpointId) => void this._undoCheckpoint(sessionId, checkpointId),
+      onCheckpoint: () => this._openDeclarationSheet(),
+      onDeclarationCollect: () => this._collectCheckpoint(),
+      onDeclarationRefreshSnapshot: () => this._refreshDeclarationSnapshot(),
+      onDeclarationSweep: () => this._sweepDeclaration(),
+      onDeclarationUndoSweep: (sweepBatchId) => this._undoSweep(sweepBatchId),
+      onDeclarationUndoCheckpoint: (checkpointId) => this._undoCheckpoint(checkpointId),
+      onDeclarationClose: () => this._closeDeclarationSheet(),
     }
   }
 
@@ -219,12 +240,35 @@ export class VideoOverlayController {
     }
   }
 
-  private async _collectCheckpoint() {
-    if (this._collectingCheckpoint) {
-      return
+  // Every declaration round trip goes through here: the promise NEVER rejects
+  // (a rejection reaching the sheet's finally would clear its busy flag with
+  // no failure state) — worker teardown, Firefox rejections and missing
+  // handlers all collapse to `undefined`, which callers map to soft failures.
+  private async _sendDeclarationMessage<TResponse>(
+    message: TabToExtensionCommand<
+      | FlicktionaryDeclarationPreviewMessage
+      | FlicktionaryCollectCheckpointMessage
+      | FlicktionaryMarkKnownMessage
+      | FlicktionaryUnmarkKnownMessage
+      | FlicktionaryUndoCheckpointMessage
+    >['message']
+  ): Promise<TResponse | undefined> {
+    const command = { sender: 'asbplayer-video-tab' as const, message }
+    try {
+      return await browser.runtime.sendMessage(command)
+    } catch {
+      return undefined
     }
+  }
+
+  private _declaration() {
+    return this._store?.getState().declaration ?? null
+  }
+
+  private _openDeclarationSheet() {
+    const store = this._store
     const videoCtx = this._context.flicktionaryVideoContext
-    if (!videoCtx) {
+    if (!store || !videoCtx) {
       return
     }
     const segmentIndex = this._currentSegmentIndex()
@@ -232,87 +276,253 @@ export class VideoOverlayController {
       this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`Nothing to collect yet.`) })
       return
     }
+    const runKey = (this._declaration()?.runKey ?? 0) + 1
+    store.setState({ declaration: { runKey, segmentIndex, preview: { status: 'loading' } } })
+    void this._fetchDeclarationPreview(runKey, segmentIndex, videoCtx)
+  }
 
-    this._collectingCheckpoint = true
-    try {
-      const command: TabToExtensionCommand<FlicktionaryCollectCheckpointMessage> = {
-        sender: 'asbplayer-video-tab',
-        message: {
-          command: 'flicktionary-collect-checkpoint',
-          messageId: uuidv4(),
-          segmentIndex,
-          flicktionaryVideo: videoCtx,
-        },
-      }
-      // `response` is undefined if no background handler answered (service
-      // worker mid-reload) — treat as a retryable failure, never crash.
-      const response: FlicktionaryCollectCheckpointResponse | undefined = await browser.runtime.sendMessage(command)
-      if (response?.success) {
-        if (response.checkpointId && response.sessionId && (response.creditedCount ?? 0) > 0) {
-          this._setCheckpointFeedback({
-            kind: 'success',
-            creditedCount: response.creditedCount ?? 0,
-            sessionId: response.sessionId,
-            checkpointId: response.checkpointId,
-          })
-        } else {
-          this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`No new reviews to collect.`) })
-        }
-        return
-      }
-      if (response?.code === 'UNSUPPORTED_LANGUAGE') {
-        // Latch + hide the button: the language won't become supported
-        // mid-video.
-        this._checkpointUnsupported = true
-        void this._pushModel()
-        this._setCheckpointFeedback({
-          kind: 'info',
-          text: i18n._(msg`Review collection isn't available for this language yet.`),
-        })
-        return
-      }
-      if (response?.code === 'NEEDS_ONBOARDING') {
-        this._setCheckpointFeedback({
-          kind: 'error',
-          text: i18n._(msg`Finish setting up Flicktionary on flicktionary.app first.`),
-        })
-        return
-      }
-      if (response?.code === 'MISSING_CEFR') {
-        this._setCheckpointFeedback({
-          kind: 'error',
-          text: i18n._(msg`Set your level for this language on flicktionary.app first.`),
-        })
-        return
-      }
-      this._setCheckpointFeedback({
-        kind: 'error',
-        text: response?.error || i18n._(msg`Could not collect reviews. Try again.`),
-      })
-    } finally {
-      this._collectingCheckpoint = false
+  private _closeDeclarationSheet() {
+    this._store?.setState({ declaration: null })
+    // A sweep (or its undo) changes the markable count — re-key the paused
+    // controls' badge to fresh numbers.
+    this._badgeProbedSegmentIndex = undefined
+    void this._probeMarkKnownBadge()
+  }
+
+  // The web pill's ambient sweep count, scoped to pause: a READ-ONLY probe
+  // (pausing is not an explicit act — it must never create a session) that
+  // feeds the controls-bar mark-known badge. All failures are silent: no
+  // session yet, signed out, or a non-ready profile simply mean no badge.
+  private async _probeMarkKnownBadge() {
+    const store = this._store
+    const videoCtx = this._context.flicktionaryVideoContext
+    if (!store || !videoCtx || !this._showing || this._checkpointUnsupported) {
+      return
+    }
+    const segmentIndex = this._currentSegmentIndex()
+    if (segmentIndex === undefined) {
+      store.setState({ markKnownBadge: null })
+      return
+    }
+    if (this._badgeProbedSegmentIndex === segmentIndex) {
+      return
+    }
+    this._badgeProbedSegmentIndex = segmentIndex
+    const requestId = ++this._badgeRequestId
+    const response = await this._sendDeclarationMessage<FlicktionaryDeclarationPreviewResponse>({
+      command: 'flicktionary-declaration-preview',
+      messageId: uuidv4(),
+      segmentIndex,
+      flicktionaryVideo: videoCtx,
+      readOnly: true,
+    })
+    if (!this._store || requestId !== this._badgeRequestId) {
+      return
+    }
+    if (response?.success && response.checkpointSupported === false) {
+      // The passive probe learns the unsupported language before any press —
+      // hide the button right away (no chip: nothing was asked for).
+      this._checkpointUnsupported = true
+      this._store.setState({ markKnownBadge: null })
+      void this._pushModel()
+      return
+    }
+    const count = response?.success && response.markKnownStatus === 'ready' ? (response.markableLemmaCount ?? 0) : null
+    this._store.setState({ markKnownBadge: count })
+    if (!response?.success) {
+      // Let a later pause retry (transient failure or a session created in
+      // the meantime by a save on another surface).
+      this._badgeProbedSegmentIndex = undefined
     }
   }
 
-  private async _undoCheckpoint(sessionId: string, checkpointId: string) {
-    const command: TabToExtensionCommand<FlicktionaryUndoCheckpointMessage> = {
-      sender: 'asbplayer-video-tab',
-      message: {
-        command: 'flicktionary-undo-checkpoint',
-        messageId: uuidv4(),
-        sessionId,
-        checkpointId,
-      },
+  // After a collect CONFLICT: move the frontier to the current playback
+  // position and re-key both preview counts to it — without this the sheet
+  // would show the old sweep count but sweep the new span. The run itself
+  // survives (same runKey, no remount).
+  private _refreshDeclarationSnapshot() {
+    const store = this._store
+    const videoCtx = this._context.flicktionaryVideoContext
+    const declaration = this._declaration()
+    if (!store || !videoCtx || !declaration) {
+      return
     }
-    const response: FlicktionaryUndoCheckpointResponse | undefined = await browser.runtime.sendMessage(command)
-    if (response?.success && response.undone) {
-      this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`Reviews restored.`) }, 4000)
-    } else {
+    // Playback can sit before the first cue after a backwards seek — keep the
+    // old frontier rather than corrupting the run.
+    const segmentIndex = this._currentSegmentIndex() ?? declaration.segmentIndex
+    store.setState({ declaration: { ...declaration, segmentIndex, preview: { status: 'loading' } } })
+    void this._fetchDeclarationPreview(declaration.runKey, segmentIndex, videoCtx)
+  }
+
+  private async _fetchDeclarationPreview(
+    runKey: number,
+    segmentIndex: number,
+    videoCtx: SaveWordFlicktionaryVideoContext
+  ) {
+    const requestId = ++this._declarationPreviewRequestId
+    const response = await this._sendDeclarationMessage<FlicktionaryDeclarationPreviewResponse>({
+      command: 'flicktionary-declaration-preview',
+      messageId: uuidv4(),
+      segmentIndex,
+      flicktionaryVideo: videoCtx,
+    })
+    const store = this._store
+    const declaration = this._declaration()
+    if (!store || !declaration || declaration.runKey !== runKey || requestId !== this._declarationPreviewRequestId) {
+      return
+    }
+    if (response?.success && response.sessionId) {
+      if (response.checkpointSupported === false) {
+        // An EXISTING session in an unsupported language previews fine and
+        // reports unsupported as a success — same latch as the error code.
+        this._closeDeclarationSheet()
+        this._showCheckpointErrorChip({ code: 'UNSUPPORTED_LANGUAGE' })
+        return
+      }
+      store.setState({
+        declaration: {
+          ...declaration,
+          sessionId: response.sessionId,
+          preview: {
+            status: 'ready',
+            pendingCount: response.pendingCount ?? null,
+            markKnownStatus: response.markKnownStatus ?? 'failed',
+            markableLemmaCount: response.markableLemmaCount ?? 0,
+          },
+        },
+      })
+      return
+    }
+    if (declaration.sessionId) {
+      // A failed conflict re-fetch mustn't tear down a mid-flight run (the
+      // collect may have just succeeded) — degrade to countless-but-usable:
+      // collect stays possible, the sweep offer auto-skips.
+      store.setState({
+        declaration: {
+          ...declaration,
+          preview: { status: 'ready', pendingCount: null, markKnownStatus: 'failed', markableLemmaCount: 0 },
+        },
+      })
+      return
+    }
+    // The initial preview never produced a session — the sheet has nothing to
+    // act on; close it and fall back to the chip error paths.
+    this._closeDeclarationSheet()
+    this._showCheckpointErrorChip(response)
+  }
+
+  private async _collectCheckpoint(): Promise<CollectOutcome> {
+    const videoCtx = this._context.flicktionaryVideoContext
+    const declaration = this._declaration()
+    if (!videoCtx || !declaration) {
+      return { ok: false, reason: 'error' }
+    }
+    const response = await this._sendDeclarationMessage<FlicktionaryCollectCheckpointResponse>({
+      command: 'flicktionary-collect-checkpoint',
+      messageId: uuidv4(),
+      segmentIndex: declaration.segmentIndex,
+      flicktionaryVideo: videoCtx,
+    })
+    if (response?.success) {
+      // The collect resolves the session itself, so it can supply the id the
+      // preview failed to (keeps the sweep/undo lanes usable).
+      const current = this._declaration()
+      if (response.sessionId && current && current.runKey === declaration.runKey && !current.sessionId) {
+        this._store?.setState({ declaration: { ...current, sessionId: response.sessionId } })
+      }
+      return { ok: true, checkpointId: response.checkpointId ?? null, creditedCount: response.creditedCount ?? 0 }
+    }
+    if (response?.code === 'CONFLICT') {
+      return { ok: false, reason: 'conflict' }
+    }
+    // Coded collect failures are near-impossible after a successful preview
+    // resolve, but keep the chip routing as the fallback (incl. the
+    // unsupported latch).
+    if (response?.code) {
+      this._closeDeclarationSheet()
+      this._showCheckpointErrorChip(response)
+    }
+    return { ok: false, reason: 'error' }
+  }
+
+  private async _sweepDeclaration(): Promise<SweepOutcome> {
+    const declaration = this._declaration()
+    if (!declaration?.sessionId) {
+      return { ok: false }
+    }
+    const response = await this._sendDeclarationMessage<FlicktionaryMarkKnownResponse>({
+      command: 'flicktionary-mark-known',
+      messageId: uuidv4(),
+      sessionId: declaration.sessionId,
+      toSegmentIndex: declaration.segmentIndex,
+    })
+    if (response?.success) {
+      return { ok: true, markedCount: response.markedCount ?? 0, sweepBatchId: response.sweepBatchId ?? null }
+    }
+    return { ok: false }
+  }
+
+  private async _undoSweep(sweepBatchId: string): Promise<boolean> {
+    const declaration = this._declaration()
+    if (!declaration?.sessionId) {
+      return false
+    }
+    const response = await this._sendDeclarationMessage<FlicktionaryUnmarkKnownResponse>({
+      command: 'flicktionary-unmark-known',
+      messageId: uuidv4(),
+      sessionId: declaration.sessionId,
+      sweepBatchId,
+    })
+    return response?.success === true
+  }
+
+  private async _undoCheckpoint(checkpointId: string): Promise<{ ok: boolean; undone: boolean }> {
+    const declaration = this._declaration()
+    if (!declaration?.sessionId) {
+      return { ok: false, undone: false }
+    }
+    const response = await this._sendDeclarationMessage<FlicktionaryUndoCheckpointResponse>({
+      command: 'flicktionary-undo-checkpoint',
+      messageId: uuidv4(),
+      sessionId: declaration.sessionId,
+      checkpointId,
+    })
+    if (!response?.success) {
+      return { ok: false, undone: false }
+    }
+    return { ok: true, undone: response.undone === true }
+  }
+
+  private _showCheckpointErrorChip(response: { code?: string; error?: string } | undefined) {
+    if (response?.code === 'UNSUPPORTED_LANGUAGE') {
+      // Latch + hide the button: the language won't become supported
+      // mid-video.
+      this._checkpointUnsupported = true
+      void this._pushModel()
+      this._setCheckpointFeedback({
+        kind: 'info',
+        text: i18n._(msg`Review collection isn't available for this language yet.`),
+      })
+      return
+    }
+    if (response?.code === 'NEEDS_ONBOARDING') {
       this._setCheckpointFeedback({
         kind: 'error',
-        text: response?.error || i18n._(msg`Could not undo. The reviews may have changed since.`),
+        text: i18n._(msg`Finish setting up Flicktionary on flicktionary.app first.`),
       })
+      return
     }
+    if (response?.code === 'MISSING_CEFR') {
+      this._setCheckpointFeedback({
+        kind: 'error',
+        text: i18n._(msg`Set your level for this language on flicktionary.app first.`),
+      })
+      return
+    }
+    this._setCheckpointFeedback({
+      kind: 'error',
+      text: response?.error || i18n._(msg`Could not collect reviews. Try again.`),
+    })
   }
 
   // One cache-only probe per video context: if the CACHED session's language is
@@ -406,6 +616,9 @@ export class VideoOverlayController {
     }
 
     await this._pushModel()
+    // A seek while paused moves the frontier — the badge count follows it
+    // (no-op while playing or at an unchanged segment index).
+    void this._probeMarkKnownBadge()
   }
 
   private async _model() {
@@ -455,7 +668,16 @@ export class VideoOverlayController {
     this._cancelScheduledShow()
     this._showing = false
     this._setCheckpointFeedback(null)
-    this._store?.setState({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
+    // A subtitle reset invalidates the run's segment indexes — never strand an
+    // open declaration sheet (or a stale badge count) over a re-syncing video.
+    this._badgeProbedSegmentIndex = undefined
+    this._store?.setState({
+      model: undefined,
+      visible: false,
+      tooltipsEnabled: this._tooltipsEnabled(),
+      declaration: null,
+      markKnownBadge: null,
+    })
   }
 
   // Defer the show until the video has stayed paused for the grace period —
@@ -506,6 +728,7 @@ export class VideoOverlayController {
     }
     this._showing = true
     void this._pushModel()
+    void this._probeMarkKnownBadge()
   }
 
   hide() {
