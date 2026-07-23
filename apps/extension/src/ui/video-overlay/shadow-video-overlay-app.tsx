@@ -8,6 +8,8 @@ import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
+import { DeclarationSheet, type CollectOutcome, type SweepOutcome } from './declaration-sheet'
+import type { DeclarationState } from './declaration-preview'
 
 // The in-realm replacement for the iframe model transport. The controller pushes
 // snapshots into the zustand store (formerly the request/update-video-overlay-model
@@ -21,10 +23,17 @@ export interface VideoOverlayState {
   // Global extension switch off: render the minimal re-enable pill instead of
   // the full controls bar.
   disabled: boolean
-  // Post-checkpoint feedback (undo chip / outcome text). Rendered OUTSIDE the
-  // `visible` gate: the controls hide on play, the chip must not — its ~8s
-  // lifetime belongs to the controller.
+  // Checkpoint info/error feedback. Rendered OUTSIDE the `visible` gate: the
+  // controls hide on play, the chip must not — its ~8s lifetime belongs to
+  // the controller.
   checkpointFeedback: CheckpointFeedback | null
+  // The declaration (checkpoint + mark-known) sheet's run state; null =
+  // closed. Also outside the `visible` gate — the flow survives play/pause.
+  declaration: DeclarationState | null
+  // Markable-word count at the paused position (read-only probe) — the web
+  // pill's ambient sweep count. Null = unknown/none: the checkpoint button
+  // falls back to its bookmark face.
+  markKnownBadge: number | null
 }
 
 export type VideoOverlayStore = StoreApi<VideoOverlayState>
@@ -41,7 +50,12 @@ export interface VideoOverlayCommands {
   onEnableExtension: () => void
   onDisableExtension: () => void
   onCheckpoint: () => void
-  onUndoCheckpoint: (sessionId: string, checkpointId: string) => void
+  onDeclarationCollect: () => Promise<CollectOutcome>
+  onDeclarationRefreshSnapshot: () => void
+  onDeclarationSweep: () => Promise<SweepOutcome>
+  onDeclarationUndoSweep: (sweepBatchId: string) => Promise<boolean>
+  onDeclarationUndoCheckpoint: (checkpointId: string) => Promise<{ ok: boolean; undone: boolean }>
+  onDeclarationClose: () => void
 }
 
 export interface ShadowVideoOverlayAppProps {
@@ -66,7 +80,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 }
 
 export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands }: ShadowVideoOverlayAppProps) {
-  const { model, visible, tooltipsEnabled, disabled, checkpointFeedback } = useStore(store)
+  const { model, visible, tooltipsEnabled, disabled, checkpointFeedback, declaration, markKnownBadge } = useStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
     saveLastControlType,
     fetchLastControlType,
@@ -109,15 +123,30 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
             onToggleSubtitles={commands.onToggleSubtitles}
             onDisableExtension={commands.onDisableExtension}
             onCheckpoint={commands.onCheckpoint}
+            markKnownCount={markKnownBadge}
           />
         </div>
       )}
       {/* Deliberately NOT behind `visible`: pressing play hides the controls
-          bar, but the undo chip must survive the resume. */}
+          bar, but the feedback chip must survive the resume. */}
       {!disabled && checkpointFeedback && (
         <div style={{ pointerEvents: 'auto' }} className='mt-2 flex justify-center'>
-          <CheckpointFeedbackChip feedback={checkpointFeedback} onUndo={commands.onUndoCheckpoint} />
+          <CheckpointFeedbackChip feedback={checkpointFeedback} />
         </div>
+      )}
+      {/* Also outside `visible`: the declaration flow spans play/pause and
+          owns its own dismissal. */}
+      {!disabled && declaration && (
+        <DeclarationSheet
+          key={declaration.runKey}
+          declaration={declaration}
+          onCollect={commands.onDeclarationCollect}
+          onRefreshSnapshot={commands.onDeclarationRefreshSnapshot}
+          onSweep={commands.onDeclarationSweep}
+          onUndoSweep={commands.onDeclarationUndoSweep}
+          onUndoCheckpoint={commands.onDeclarationUndoCheckpoint}
+          onClose={commands.onDeclarationClose}
+        />
       )}
     </ShadowUiProvider>
   )

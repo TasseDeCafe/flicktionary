@@ -45,6 +45,9 @@ import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-h
 import CollectCheckpointHandler from '@/handlers/flicktionary/collect-checkpoint-handler'
 import UndoCheckpointHandler from '@/handlers/flicktionary/undo-checkpoint-handler'
 import CheckpointAvailabilityHandler from '@/handlers/flicktionary/checkpoint-availability-handler'
+import DeclarationPreviewHandler from '@/handlers/flicktionary/declaration-preview-handler'
+import MarkKnownHandler from '@/handlers/flicktionary/mark-known-handler'
+import UnmarkKnownHandler from '@/handlers/flicktionary/unmark-known-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import { isVideoPlatformUrl } from '@/services/pages'
@@ -128,6 +131,9 @@ export default defineBackground(() => {
     new CollectCheckpointHandler(),
     new UndoCheckpointHandler(),
     new CheckpointAvailabilityHandler(),
+    new DeclarationPreviewHandler(),
+    new MarkKnownHandler(),
+    new UnmarkKnownHandler(),
     new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),

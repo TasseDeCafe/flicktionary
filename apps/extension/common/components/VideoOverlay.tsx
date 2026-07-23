@@ -6,6 +6,7 @@ import {
   PowerIcon,
   SlidersHorizontalIcon,
   CaptionsIcon,
+  WholeWordIcon,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
@@ -73,6 +74,10 @@ interface Props {
   // Checkpoint reviews: collect implicit recognition credits up to the current
   // playback position. Absent = surface not wired (asbplayerv2 web app).
   onCheckpoint?: () => void
+  // Markable-word count at the paused position. When > 0 the checkpoint button
+  // shows the web declaration pill's sweep face (WholeWord icon + count) so
+  // the affordance is recognizably the same across apps.
+  markKnownCount?: number | null
 }
 
 const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverlay(
@@ -91,6 +96,7 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
     onToggleSubtitles,
     onDisableExtension,
     onCheckpoint,
+    markKnownCount,
   }: Props,
   ref
 ) {
@@ -435,16 +441,45 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
       )}
       {/* Checkpoint press ("I understood up to here") — mirrors the Power
           button block. Lives on the pause-state controls on purpose: the
-          press happens while paused, a deliberate act (docs/SRS.md §6b). */}
+          press happens while paused, a deliberate act (docs/SRS.md §6b).
+          With a markable-word count it wears the web declaration pill's sweep
+          face (WholeWord + count) so the affordance reads as the same one;
+          without a count it stays the bookmark face (collect stays
+          reachable, same priority ladder as the web pill). */}
       {onCheckpoint && !model.emptySubtitleTrack && model.checkpointAvailable && (
         <OverlayTooltip
           enabled={tooltipsEnabled}
           side={tooltipSide}
-          title={t`I understood up to here — collect reviews`}
+          title={
+            markKnownCount != null && markKnownCount > 0
+              ? t`I understood up to here — collect reviews & mark words as known`
+              : t`I understood up to here — collect reviews`
+          }
         >
           <span>
-            <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onCheckpoint}>
-              <BookmarkCheckIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+            <button
+              type='button'
+              className={cn(iconButtonClassName, markKnownCount != null && markKnownCount > 0 && 'w-auto gap-1.5 px-3')}
+              disabled={model.recording}
+              onClick={onCheckpoint}
+            >
+              {markKnownCount != null && markKnownCount > 0 ? (
+                <>
+                  <WholeWordIcon
+                    className={cn('!size-5', model.recording ? inactiveIconClassName : activeIconClassName)}
+                  />
+                  <span
+                    className={cn(
+                      'text-sm font-semibold tabular-nums',
+                      model.recording ? inactiveIconClassName : activeIconClassName
+                    )}
+                  >
+                    {markKnownCount}
+                  </span>
+                </>
+              ) : (
+                <BookmarkCheckIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+              )}
             </button>
           </span>
         </OverlayTooltip>

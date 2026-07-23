@@ -28,13 +28,12 @@ const toCacheEntry = (data: SessionResponseData): FlicktionaryYoutubeSessionCach
   }
 }
 
-// Resolve the Flicktionary session for a video: session cache → lookupForVideo
-// probe (SELECT-only) → find-or-create from the shipped video context. The
-// creating step is only reached from explicit user acts (a save, a checkpoint
-// press) — merely loading subtitles never creates anything server-side.
-export const resolveOrCreateFlicktionarySession = async (
+// Read-only resolution: session cache → lookupForVideo probe (SELECT-only),
+// never find-or-create. For passive surfaces (the paused controls' mark-known
+// badge) that must not create a session as a side effect of merely pausing.
+export const resolveExistingFlicktionarySession = async (
   videoCtx: SaveWordFlicktionaryVideoContext
-): Promise<FlicktionaryYoutubeSessionCacheEntry> => {
+): Promise<FlicktionaryYoutubeSessionCacheEntry | undefined> => {
   const cached = await lookupFlicktionarySession(videoCtx.source, videoCtx.contentHash)
   if (cached) {
     return cached
@@ -46,12 +45,27 @@ export const resolveOrCreateFlicktionarySession = async (
     youtubeVideoId: videoCtx.youtubeVideoId,
     contentHash: videoCtx.contentHash,
   })
-  if (found) {
-    const entry = toCacheEntry(found)
-    await storeFlicktionarySession(videoCtx.source, videoCtx.contentHash, entry)
-    return entry
+  if (!found) {
+    return undefined
+  }
+  const entry = toCacheEntry(found)
+  await storeFlicktionarySession(videoCtx.source, videoCtx.contentHash, entry)
+  return entry
+}
+
+// Resolve the Flicktionary session for a video: session cache → lookupForVideo
+// probe (SELECT-only) → find-or-create from the shipped video context. The
+// creating step is only reached from explicit user acts (a save, a checkpoint
+// press) — merely loading subtitles never creates anything server-side.
+export const resolveOrCreateFlicktionarySession = async (
+  videoCtx: SaveWordFlicktionaryVideoContext
+): Promise<FlicktionaryYoutubeSessionCacheEntry> => {
+  const existing = await resolveExistingFlicktionarySession(videoCtx)
+  if (existing) {
+    return existing
   }
 
+  const client = getFlicktionaryApiClient()
   const subtitles = {
     contentHash: videoCtx.contentHash,
     segments: videoCtx.segments.map((s) => ({ ...s })),

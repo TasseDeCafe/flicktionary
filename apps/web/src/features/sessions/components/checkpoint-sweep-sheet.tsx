@@ -19,7 +19,7 @@ import {
   reduceDeclarationSheet,
   reduceUndoOutcome,
   type DeclarationSheetEvent,
-} from './checkpoint-sweep-sheet-state'
+} from '@flicktionary/core/utils/checkpoint-sweep-sheet-state'
 
 // One frontier per run: captured by session-view when the pill is pressed, so
 // the collect and the sweep commit exactly the range the sheet displays — the

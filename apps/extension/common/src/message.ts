@@ -473,6 +473,9 @@ export interface FlicktionaryCollectCheckpointResponse {
   readonly success: boolean
   // Backend error code (e.g. 'UNSUPPORTED_LANGUAGE', 'NEEDS_ONBOARDING',
   // 'MISSING_CEFR') so the overlay can show the matching feedback chip.
+  // 'CONFLICT' = a concurrent press (another tab / the web reader) advanced
+  // the reviewed-until pointer first — the declaration sheet re-snapshots its
+  // frontier and retries inline.
   readonly code?: string
   readonly error?: string
   readonly targetLanguage?: string
@@ -506,6 +509,71 @@ export interface FlicktionaryCheckpointAvailabilityMessage extends MessageWithId
 
 export interface FlicktionaryCheckpointAvailabilityResponse {
   readonly cachedTargetLanguage: string | null
+}
+
+// Fuels the declaration sheet on open: resolves the session (find-or-create —
+// the tap is an explicit user act, exactly like a collect press) and returns
+// both preview lanes in one round trip.
+export interface FlicktionaryDeclarationPreviewMessage extends MessageWithId {
+  readonly command: 'flicktionary-declaration-preview'
+  readonly segmentIndex: number
+  readonly flicktionaryVideo: SaveWordFlicktionaryVideoContext
+  // Passive callers (the paused controls' mark-known badge) resolve the
+  // session READ-ONLY: pausing is not an explicit act, so it must never
+  // find-or-create. No session yet → success:false with code 'NO_SESSION'.
+  readonly readOnly?: boolean
+}
+
+export interface FlicktionaryDeclarationPreviewResponse {
+  readonly success: boolean
+  // Session-resolution error code ('UNSUPPORTED_LANGUAGE', 'NEEDS_ONBOARDING',
+  // 'MISSING_CEFR') for the overlay's feedback chips; 'NO_SESSION' on a
+  // read-only probe of a video without a session (quietly no badge).
+  readonly code?: string
+  readonly error?: string
+  readonly targetLanguage?: string
+  readonly sessionId?: string
+  // Mirrors the checkpoint preview's `supported` flag. An EXISTING session in
+  // an unsupported language resolves fine and reports unsupported as a
+  // SUCCESS, so the overlay must read this field (not just error codes) to
+  // hide the affordance. Absent when the checkpoint preview itself failed.
+  readonly checkpointSupported?: boolean
+  // Absent when the checkpoint preview failed — the sheet then collects blind.
+  readonly pendingCount?: number
+  // 'failed' also stands in for a transport failure of the preview call: the
+  // sweep is an optional offer, so it silently drops for this run (a re-tap
+  // retries) instead of blocking the checkpoint lane.
+  readonly markKnownStatus?: 'ready' | 'pending' | 'failed' | 'unsupported'
+  readonly markableLemmaCount?: number
+}
+
+// The declaration sheet's optional second step: bulk-mark every word up to
+// (and including) the segment as known, minus saved terms. Only ids travel —
+// the session was already resolved by the preview handler. The fresh sweep
+// batch id lets the sheet's combined Undo revert exactly this press.
+export interface FlicktionaryMarkKnownMessage extends MessageWithId {
+  readonly command: 'flicktionary-mark-known'
+  readonly sessionId: string
+  readonly toSegmentIndex: number
+}
+
+export interface FlicktionaryMarkKnownResponse {
+  readonly success: boolean
+  readonly error?: string
+  readonly markedCount?: number
+  readonly sweepBatchId?: string | null
+}
+
+export interface FlicktionaryUnmarkKnownMessage extends MessageWithId {
+  readonly command: 'flicktionary-unmark-known'
+  readonly sessionId: string
+  readonly sweepBatchId: string
+}
+
+export interface FlicktionaryUnmarkKnownResponse {
+  readonly success: boolean
+  readonly error?: string
+  readonly removedCount?: number
 }
 
 // Structurally identical to the backend contract's StudyIntentSchema —
