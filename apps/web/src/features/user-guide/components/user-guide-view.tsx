@@ -1,6 +1,8 @@
 import { Trans } from '@lingui/react/macro'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '@flicktionary/ui/components/button'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
 
 // Stable anchor ids — the in-app checklist/explainer cards deep-link to them
 // (e.g. /user-guide#practice). scroll-mt keeps the heading clear of the page
@@ -18,7 +20,10 @@ const StepList = ({ children }: { children: React.ReactNode }) => (
 // Public user guide. Linked from the extension (FTUE page + popup) — keep the
 // /user-guide path stable.
 export const UserGuideView = () => {
-  return (
+  const navigate = useNavigate()
+  const isSignedIn = useAuthStore(getIsSignedIn)
+
+  const content = (
     <main className='flex flex-1 justify-center overflow-y-auto p-4'>
       <div className='w-full max-w-3xl pb-16'>
         <h1 className='mt-6 text-3xl font-bold'>
@@ -237,5 +242,15 @@ export const UserGuideView = () => {
         </div>
       </div>
     </main>
+  )
+
+  // Signed-out visitors (extension links land here without an account) get the
+  // plain page — a back chevron would only lead them into the sign-in wall.
+  if (!isSignedIn) return content
+
+  return (
+    <ModalScreen onClose={() => void navigate({ to: '/more' })} closeIcon='chevron'>
+      {content}
+    </ModalScreen>
   )
 }

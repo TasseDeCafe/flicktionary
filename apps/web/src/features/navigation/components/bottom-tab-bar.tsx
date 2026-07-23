@@ -33,11 +33,14 @@ export const BottomTabBar = () => {
   const location = useLocation()
   const [isActionOpen, setIsActionOpen] = useState(false)
 
+  // Destinations without a tab of their own keep their parent tab highlighted
+  // (the iOS More-tab convention): Sessions is Dashboard's drill-in, Stats is
+  // reached from More. The views render a MobileBackLink to the same parent.
   const tabs: TabConfig[] = [
-    { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard'] },
+    { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard', '/sessions'] },
     { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
     { to: '/vocabulary', label: t`Vocabulary`, icon: BookOpen, matchPrefixes: ['/vocabulary'] },
-    { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more'] },
+    { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more', '/stats'] },
   ]
 
   const isTabActive = (tab: TabConfig) =>

@@ -12,6 +12,7 @@ import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { SessionsEmptyState } from './sessions-empty-state'
 import { SessionsFilterControl, type SessionsSort } from './sessions-filter-control'
+import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab-header'
 
 type TypeFilter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
@@ -76,93 +77,96 @@ export const SessionsListView = () => {
   const sessionCount = filtered.length
 
   return (
-    <PageContainer width='wide'>
-      <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
+    <>
+      <OverflowTabHeader backTo='/dashboard' title={t`Sessions`} />
+      <PageContainer width='wide'>
+        <h1 className='hidden text-2xl font-bold md:block'>{t`Sessions`}</h1>
 
-      {(data?.length ?? 0) > 0 && (
-        <div className='mt-4 flex items-center gap-2'>
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder={t`Search sessions…`}
-            className='flex-1'
-          />
-          <SessionsFilterControl
-            filters={{ sort, lang }}
-            languages={availableLanguages}
-            onChange={(next) => applySearch({ type: filter, lang: next.lang, sort: next.sort })}
-          />
-        </div>
-      )}
+        {(data?.length ?? 0) > 0 && (
+          <div className='mt-4 flex items-center gap-2'>
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder={t`Search sessions…`}
+              className='flex-1'
+            />
+            <SessionsFilterControl
+              filters={{ sort, lang }}
+              languages={availableLanguages}
+              onChange={(next) => applySearch({ type: filter, lang: next.lang, sort: next.sort })}
+            />
+          </div>
+        )}
 
-      {isLoading && <FilterChipsSkeleton />}
+        {isLoading && <FilterChipsSkeleton />}
 
-      {/* Horizontally scrollable on narrow viewports: the chips never wrap or shrink,
+        {/* Horizontally scrollable on narrow viewports: the chips never wrap or shrink,
           and the row bleeds to the screen edges (-mx-4 px-4) so it scrolls cleanly past
           the page padding. Scrollbar hidden for a native feel. */}
-      {(data?.length ?? 0) > 0 && (
-        <div className='-mx-4 mt-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'>
-          <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
-            {t`All`}
-          </FilterChip>
-          <FilterChip active={filter === 'movie'} onClick={() => setFilter('movie')}>
-            {t`Movies`}
-          </FilterChip>
-          <FilterChip active={filter === 'tv'} onClick={() => setFilter('tv')}>
-            {t`TV`}
-          </FilterChip>
-          <FilterChip active={filter === 'text'} onClick={() => setFilter('text')}>
-            {t`Texts`}
-          </FilterChip>
-          <FilterChip active={filter === 'article'} onClick={() => setFilter('article')}>
-            {t`Articles`}
-          </FilterChip>
-          <FilterChip active={filter === 'youtube'} onClick={() => setFilter('youtube')}>
-            {t`YouTube`}
-          </FilterChip>
-          <FilterChip active={filter === 'streaming'} onClick={() => setFilter('streaming')}>
-            {t`Streaming`}
-          </FilterChip>
-          <FilterChip active={filter === 'lesson'} onClick={() => setFilter('lesson')}>
-            {t`Lessons`}
-          </FilterChip>
+        {(data?.length ?? 0) > 0 && (
+          <div className='-mx-4 mt-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'>
+            <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
+              {t`All`}
+            </FilterChip>
+            <FilterChip active={filter === 'movie'} onClick={() => setFilter('movie')}>
+              {t`Movies`}
+            </FilterChip>
+            <FilterChip active={filter === 'tv'} onClick={() => setFilter('tv')}>
+              {t`TV`}
+            </FilterChip>
+            <FilterChip active={filter === 'text'} onClick={() => setFilter('text')}>
+              {t`Texts`}
+            </FilterChip>
+            <FilterChip active={filter === 'article'} onClick={() => setFilter('article')}>
+              {t`Articles`}
+            </FilterChip>
+            <FilterChip active={filter === 'youtube'} onClick={() => setFilter('youtube')}>
+              {t`YouTube`}
+            </FilterChip>
+            <FilterChip active={filter === 'streaming'} onClick={() => setFilter('streaming')}>
+              {t`Streaming`}
+            </FilterChip>
+            <FilterChip active={filter === 'lesson'} onClick={() => setFilter('lesson')}>
+              {t`Lessons`}
+            </FilterChip>
+          </div>
+        )}
+
+        {!isLoading && (data?.length ?? 0) > 0 && (
+          <div className='text-muted-foreground mt-3 text-xs tabular-nums'>{t`${sessionCount} sessions`}</div>
+        )}
+
+        <div className='mt-3 flex flex-col gap-2'>
+          {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
+          {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
+          {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
+            <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
+          )}
+          {items.map((item) =>
+            item.kind === 'group' ? (
+              <ShowGroupCard key={item.key} group={item.group} />
+            ) : (
+              <SessionCard
+                key={item.key}
+                session={item.session}
+                difficulty={difficulties[item.session.id]}
+                difficultyLoading={isDifficultiesLoading}
+                onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
+              />
+            )
+          )}
         </div>
-      )}
 
-      {!isLoading && (data?.length ?? 0) > 0 && (
-        <div className='text-muted-foreground mt-3 text-xs tabular-nums'>{t`${sessionCount} sessions`}</div>
-      )}
-
-      <div className='mt-3 flex flex-col gap-2'>
-        {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
-        {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
-        {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
-          <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
-        )}
-        {items.map((item) =>
-          item.kind === 'group' ? (
-            <ShowGroupCard key={item.key} group={item.group} />
-          ) : (
-            <SessionCard
-              key={item.key}
-              session={item.session}
-              difficulty={difficulties[item.session.id]}
-              difficultyLoading={isDifficultiesLoading}
-              onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
-            />
-          )
-        )}
-      </div>
-
-      <SessionRemoveDialog
-        open={removeTarget !== null}
-        sessionId={removeTarget?.id ?? null}
-        sessionTitle={removeTarget?.title ?? ''}
-        onOpenChange={(next) => {
-          if (!next) setRemoveTarget(null)
-        }}
-      />
-    </PageContainer>
+        <SessionRemoveDialog
+          open={removeTarget !== null}
+          sessionId={removeTarget?.id ?? null}
+          sessionTitle={removeTarget?.title ?? ''}
+          onOpenChange={(next) => {
+            if (!next) setRemoveTarget(null)
+          }}
+        />
+      </PageContainer>
+    </>
   )
 }
 
