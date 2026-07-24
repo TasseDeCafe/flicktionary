@@ -687,15 +687,22 @@ known_lemmas
 
 Write paths: the per-session "mark the rest as known" sweep
 (`studySessions.markRemainingKnown`, preview via `getMarkKnownPreview`) —
-profile candidate lemmas minus studied headword-lemmas minus already-known;
-ambiguous tokens mark ALL candidates (over-crediting a rare homograph is
-invisible noise); refused for adhoc/lesson sessions and unsupported
-languages, `pending` while the track profile builds. Un-mark is a bare
-DELETE behind the gloss-sheet "Marked as known" chip
-(`studySessions.unmarkKnownLemma`) — both gloss endpoints return
-`knownLemmaCandidates` (the selection's resolved lemmas ∩ known_lemmas), and
-un-marking removes ALL candidates the token represents, symmetric with the
-sweep. Bulk correction for sweep-created rows is
+per-token candidate lemmas (profile rows for the whole-text scope, live
+resolution for the span scope) filtered to the CREDITABLE candidates
+(`filter-creditable-candidates.ts`, membership read fresh against
+`lemma_ranks`), minus studied headword-lemmas, minus already-known. Per
+token: if any candidate is ranked, its unranked homograph siblings are
+dropped ("because" never marks becuz); if none are ranked, all stay
+creditable (sole-owner rare words, languages without a build); multi-word
+candidates are always dropped. Refused for adhoc/lesson sessions and for
+languages without BOTH kaikki data and a `lemma_rank_builds` manifest row
+(the same supported gate as the difficulty stat), `pending` while the track
+profile builds. Un-mark is a bare DELETE behind the gloss-sheet "Marked as
+known" chip (`studySessions.unmarkKnownLemma`) — both gloss endpoints return
+`knownLemmaCandidates` (the selection's resolved lemmas ∩ known_lemmas,
+deliberately UNFILTERED: the intersection is self-limiting for new writes,
+and rows marked before candidate filtering existed must stay reachable for
+correction), and un-marking removes every candidate the chip reported. Bulk correction for sweep-created rows is
 `studySessions.unmarkKnownBySession`: with the `sweepBatchId` the sweep
 response returned it reverts exactly that press (the toast Undo — progressive
 sweeps share `source_id` but never a batch id); without it, it clears every
@@ -707,7 +714,11 @@ tells the sheet when to offer it.
 Correction is read-time precedence, never deletion: any live saved lookup
 beats a known mark in the difficulty/coverage math (saving a marked-known
 word is the signal the user does NOT know it); soft-deleting the lookup
-falls back to known. Consumers are the difficulty/coverage reads and the
+falls back to known. The difficulty blend additionally ignores a known mark
+on an UNRANKED candidate when its token group has a ranked one — marks
+written before candidate filtering existed credited junk homographs, and
+such a mark must not count a token fully covered while its real lemma is
+still being studied. Consumers are the difficulty/coverage reads and the
 gloss chip ONLY — ghost nominations must never read this table (suppressed
 suggestions are invisible errors; coverage miscounts are visible ones).
 
