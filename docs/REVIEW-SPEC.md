@@ -189,8 +189,8 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
     unkeep). Non-destructive (survives in Vocabulary if kept elsewhere; no
     `deleted_at`, no confirm). After removing, it advances to the next card via
     the cursor, or closes back to the session-vocabulary list if it was the last.
-  - **From vocabulary / practice** (`?from=vocabulary` / `?from=practice` over
-    already-kept chunks, i.e. `isLanguageWideEntry`): **Delete term** →
+  - **From vocabulary / practice** (`?scope=language` over already-kept
+    chunks, i.e. `isLanguageWideEntry`): **Delete term** →
     `chunks.deleteChunk` (term-level soft-delete, behind a confirm). Unchanged.
   - A data-less `needs_data` note-only stub opened from a session has no keep
     button — generating its data auto-keeps it, and **Remove from session**
@@ -242,11 +242,12 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
     state + readiness + source lazily via `chunks.getStudyTargets`. Edits keep the
     user on the focus view; the chevron pops history back to the originating
     surface (re-entering the identical route+search entry, which is what the
-    stashed practice-session snapshot needs to resume). The `?from=practice`
-    params (`practiceLang` + `practicePool` + `practiceMode` — `read` (default)
-    for a reading text, `flashcards` for the flashcard reviewer's actions menu)
-    remain as the deep-link fallback so a fresh tab still lands on the right
-    review screen, scope reset to `mixed`.
+    stashed practice-session snapshot needs to resume). The URL carries no
+    origin params — history owns origin; the only search params are the
+    editing scope (`?scope=language`, plus `source=available` when the source
+    session still exists). On a deep link (no history to pop) close falls back
+    to `/vocabulary` for a language-wide entry, the session's review list
+    otherwise.
 - Keyboard: `←`/`→` (and `j`/`k`, with OS key-repeat so holding scans) drive
   prev/next, `C` toggles the chat panel. All three header buttons carry a small
   corner keycap badge on desktop (`←` / `→` / `C`, the shared `Kbd` component's

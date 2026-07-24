@@ -519,8 +519,8 @@ allowance there.
 The body renders each annotation as a clickable yellow span (rated → muted gray;
 soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet`
 (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. Its 3-dots overflow has `Edit term`
-(navigates to the focus view of the chunk's representative card with `?from=practice` so
-chevron-back returns to the same text), `Switch to active vocabulary` / `Switch to
+(navigates to the focus view of the chunk's representative card with `?scope=language`;
+chevron-back pops history to the same text), `Switch to active vocabulary` / `Switch to
 passive vocabulary` (label follows the term's derived `learningMode`; calls
 `chunks.setFacetEnabled` with `skill=meaning_production`, `targetForm=''`; hidden when
 the annotation has no canonical `user_lookups` row), and `Delete from vocabulary`
@@ -1017,8 +1017,8 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   upgrades placeholders in place (`mergeComposedPlaceholders`, keyed
   `(pool, userLookupId)`) — it never appends, so a term graduating mid-session becomes
   a flashcard on the NEXT session, not this one.
-- **Interrupted sessions resume** (`composed-session-snapshot.ts`, a module-level stash
-  like the Vocabulary tab's saved-search): unmounting mid-session — the Edit-term
+- **Interrupted sessions resume** (`composed-session-snapshot.ts`, a module-level
+  stash): unmounting mid-session — the Edit-term
   focus-view detour, a back gesture — saves the full session (queue, position, rating
   records, exercise outcomes, claimed introductions, Strengthen set, cap flags), and the next mount of the
   composed route resumes it instead of re-composing, so a detour keeps the same planned
@@ -1118,20 +1118,12 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   un-answered.
 - **Edit during practice**: a header kebab opens an actions menu (`TermActionsOverlay`) for
   the term behind the displayed item — flashcard or exercise alike (an exercise entry
-  carries its own `userLookupId`/`pool`); `Edit term` deep-links to the focus view via
+  carries its own `userLookupId`); `Edit term` deep-links to the focus view via
   `chunks.get`'s representative-card pointer (`firstCardId`/`firstCardSessionId`, fetched
-  lazily on menu open) with `from=practice&practiceMode=flashcards&practiceFilter=…`
-  (the composed route's search) — plus `practiceMix` when a Daily Mix chain is running,
-  restored on close so the detour never drops the run (the strengthen re-entry restores
-  it as its `mix` search param the same way) — so the focus view's close re-enters the composed route
-  under the same filter and the stashed session snapshot resumes where it stood
-  (`practiceMode=read` returns to the reading route). The dedicated
-  Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
-  the same kebab, passing `practiceMode: 'strengthen' | 'warmup'` + their route's re-entry
-  state (`practiceSessionHard` / `practiceStudySessionId`, and the session's route `pool`
-  — not the displayed term's, whose pool can differ on bonus terms) so close re-enters
-  the same route and the stashed session snapshot resumes there
-  (`exercise-session-snapshot.ts`).
+  lazily on menu open) with `?scope=language` — no origin params. The focus view's close
+  pops history back to the serving route's identical route+search entry — composed queue,
+  Strengthen, and Warm-up alike — where the stashed session snapshot resumes where it
+  stood (`composed-session-snapshot.ts` / `exercise-session-snapshot.ts`).
   The kebab is **withheld while it could spoil an answer**: an unanswered cloze exercise
   (the headword IS the cloze answer) or a live `generating` placeholder, which can swap in
   place to a cloze on the next poll — the generating placeholder's body copy and exercise
@@ -1202,12 +1194,12 @@ One dashboard CTA that clears every language's practice queue in sequence.
   returns to the dashboard (the mix is dashboard-owned: its banner is the entry
   point, and the dashboard shows the progress the run just moved); plain
   single-language sessions keep `Back to ⟨language⟩` → the language landing.
-- **Detours carry the chain**: the Edit-term kebab threads `practiceMix` through the
-  focus-view search from the composed queue AND from a mix-launched Strengthen session
-  (whose own route search carries `mix`); Strengthen's close — and the focus view's
-  strengthen re-entry — continue to the next mix language (or the dashboard from the
-  final one) instead of the language landing, and its completion CTA names the
-  destination (`Continue with ⟨next language⟩` / `Finish`).
+- **Detours carry the chain**: an Edit-term detour pops history back to the serving
+  route — the composed queue or a mix-launched Strengthen session — whose own search
+  carries `mix`, so the chain survives without any focus-view threading; Strengthen's
+  close continues to the next mix language (or the dashboard from the final one)
+  instead of the language landing, and its completion CTA names the destination
+  (`Continue with ⟨next language⟩` / `Finish`).
 
 ### Landing + language action screen
 
