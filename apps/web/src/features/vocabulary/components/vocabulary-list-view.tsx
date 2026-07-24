@@ -10,7 +10,6 @@ import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyFilterControl, type VocabFilters } from './vocabulary-filter-control'
-import { setSavedVocabularySearch } from '../saved-search'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
@@ -63,12 +62,6 @@ export const VocabularyListView = () => {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [deleteConfirmChunk, setDeleteConfirmChunk] = useState<ChunkRow | null>(null)
-
-  // Mirror the URL filters into the module stash so the focus view's
-  // chevron-back can restore them when returning from a card.
-  useEffect(() => {
-    setSavedVocabularySearch(search)
-  }, [search])
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
@@ -139,12 +132,12 @@ export const VocabularyListView = () => {
   const handleEdit = (chunk: ChunkRow) => {
     if (!chunk.studySessionId || !chunk.firstCardId) return
     setDrawerOpen(false)
-    // `from: 'vocabulary'` tells the focus view to close back to /vocabulary
-    // instead of the session vocabulary list (its default parent).
+    // `scope: 'language'` renders the card as a language-wide entry (kept by
+    // definition, no session position counter or paging).
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId: chunk.studySessionId, cardId: chunk.firstCardId },
-      search: { from: 'vocabulary' as const, ...(chunk.sourceAvailable ? { source: 'available' as const } : {}) },
+      search: { scope: 'language' as const, ...(chunk.sourceAvailable ? { source: 'available' as const } : {}) },
     })
   }
 
@@ -172,12 +165,8 @@ export const VocabularyListView = () => {
     void navigate({
       to: '/sessions/$sessionId',
       params: { sessionId: chunk.studySessionId },
-      // `from: 'vocabulary'` makes the X-close in session view land back here.
       // The segment is optional — chunks pre-dating the field land without flash.
-      search: {
-        ...(chunk.firstCardSegmentId ? { segment: chunk.firstCardSegmentId } : {}),
-        from: 'vocabulary' as const,
-      },
+      search: chunk.firstCardSegmentId ? { segment: chunk.firstCardSegmentId } : {},
     })
   }
 

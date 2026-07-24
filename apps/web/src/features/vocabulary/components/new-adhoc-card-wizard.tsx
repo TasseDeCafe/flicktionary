@@ -102,7 +102,7 @@ export const NewAdhocCardWizard = () => {
           void navigate({
             to: '/sessions/$sessionId/review/$cardId',
             params: { sessionId: response.data.sessionId, cardId: response.data.cardId },
-            search: { from: 'vocabulary' as const },
+            search: { scope: 'language' as const },
           })
         },
         onError: (err) => {

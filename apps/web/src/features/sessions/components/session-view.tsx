@@ -61,7 +61,6 @@ import { SessionActionsOverlay } from './session-actions-overlay'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { SessionRemoveDialog } from './session-remove-dialog'
-import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
 // The welcome-back card holds back until this many unswept read words exist —
 // no greeting the reader over a handful of words. (The footer pill has no
@@ -89,7 +88,7 @@ export const SessionView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/' })
-  const { segment: targetSegmentId, from } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/' })
+  const { segment: targetSegmentId } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/' })
 
   const { data: session, isLoading: isSessionLoading } = useGetStudySession(sessionId)
   const trackId = session?.textTrackId ?? null
@@ -1035,15 +1034,7 @@ export const SessionView = () => {
 
   // Deep-link fallback only — with in-app history the hook returns to the
   // actual opener (sessions list, dashboard card, vocabulary detour, ...).
-  const closeToSessions = useModalScreenClose(() => {
-    if (from === 'vocabulary') {
-      // Restore the sort/filter state the user was browsing under (same as the
-      // focus view's back), so an Open-source detour doesn't reset the list.
-      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch(), replace: true })
-      return
-    }
-    void navigate({ to: '/sessions', replace: true })
-  })
+  const closeToSessions = useModalScreenClose({ to: '/sessions' })
 
   if (isSessionLoading) {
     // Mirror the loaded reader (title + search bar + segment list) with

@@ -37,7 +37,6 @@ type Props = {
   // Session scope for the citation content mutations' cache invalidation (the
   // sibling-card refetch). Undefined for language-wide entries.
   sourceSessionId?: string
-  fromVocabulary: boolean
   // One-shot: a form just added via the "Add a form" sheet, with the chosen fill
   // action to run here (so its loading shows on the main view). Cleared once run.
   autoSetup?: FormAutoSetup | null
@@ -56,7 +55,6 @@ export const PerFormCardEditor = ({
   facets,
   translationFieldsMode,
   sourceSessionId,
-  fromVocabulary,
   autoSetup,
   onAutoSetupConsumed,
 }: Props) => {
@@ -103,7 +101,7 @@ export const PerFormCardEditor = ({
             })
           }
         />
-        <SourceContextBlock source={citationFacet?.source ?? null} fromVocabulary={fromVocabulary} />
+        <SourceContextBlock source={citationFacet?.source ?? null} />
       </div>
     )
   }
@@ -114,7 +112,6 @@ export const PerFormCardEditor = ({
       targetForm={selectedTarget.targetForm}
       facets={facets}
       translationFieldsMode={translationFieldsMode}
-      fromVocabulary={fromVocabulary}
       setFacetPayload={setFacetPayload}
       generateFacetData={generateFacetData}
       autoSetup={autoSetup}
@@ -128,7 +125,6 @@ export const FormEditor = ({
   targetForm,
   facets,
   translationFieldsMode,
-  fromVocabulary,
   setFacetPayload,
   generateFacetData,
   autoSetup,
@@ -138,7 +134,6 @@ export const FormEditor = ({
   targetForm: string
   facets: StudyFacetSummary[]
   translationFieldsMode: TranslationFieldsMode
-  fromVocabulary: boolean
   setFacetPayload: ReturnType<typeof useSetFacetPayload>
   generateFacetData: ReturnType<typeof useGenerateFacetData>
   autoSetup?: FormAutoSetup | null
@@ -229,7 +224,7 @@ export const FormEditor = ({
             </Button>
           </div>
         </div>
-        <SourceContextBlock source={source} fromVocabulary={fromVocabulary} />
+        <SourceContextBlock source={source} />
       </div>
     )
   }
@@ -293,7 +288,7 @@ export const FormEditor = ({
           generatedFieldProvenance({ key, currentValue, generated: generatedGrammar })
         }
       />
-      <SourceContextBlock source={source} fromVocabulary={fromVocabulary} />
+      <SourceContextBlock source={source} />
     </div>
   )
 }
@@ -301,13 +296,7 @@ export const FormEditor = ({
 // The encountered-context block for the selected target, driven by its facet
 // source (the most-recent kept occurrence). Renders nothing when the target has
 // no source (no kept occurrence, adhoc session, or no text track).
-const SourceContextBlock = ({
-  source,
-  fromVocabulary,
-}: {
-  source: StudyFacetSource | null
-  fromVocabulary: boolean
-}) => {
+const SourceContextBlock = ({ source }: { source: StudyFacetSource | null }) => {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)
   const { data } = useTextSegmentsWindow(
@@ -331,7 +320,7 @@ const SourceContextBlock = ({
           <Link
             to='/sessions/$sessionId'
             params={{ sessionId: source.sessionId }}
-            search={{ segment: source.segmentId, ...(fromVocabulary ? { from: 'vocabulary' as const } : {}) }}
+            search={{ segment: source.segmentId }}
           >
             <ExternalLink className='mr-1 h-4 w-4' />
             {t`Open source`}
