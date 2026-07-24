@@ -414,6 +414,7 @@ export const buildApp = ({
     withTransaction,
   }
   const textTrackLemmaProfilesRepository = TextTrackLemmaProfilesRepository()
+  const lemmaRanksRepository = LemmaRanksRepository()
   const markKnownDependencies = {
     studySessionsRepository,
     textTracksRepository,
@@ -422,9 +423,9 @@ export const buildApp = ({
     userLookupsRepository,
     knownLemmasRepository,
     wiktionaryMatchRepository,
+    lemmaRanksRepository,
     processingJobsRepository,
   }
-  const lemmaRanksRepository = LemmaRanksRepository()
   const difficultyDependencies = {
     studySessionsRepository,
     textTracksRepository,

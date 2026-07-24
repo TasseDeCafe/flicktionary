@@ -375,7 +375,11 @@ stat is always a live query — never pre-aggregated or snapshotted.
     pending data) is **0** — and is counted in the "in your vocabulary, not
     started" bucket, never as "unknown". Saving a marked-known word is the
     correction signal that the user does NOT know it.
-  - A `known_lemmas` mark (with no live saved lookup) is **1**.
+  - A `known_lemmas` mark (with no live saved lookup) is **1** — unless the
+    marked lemma is UNRANKED while its token group has a ranked candidate:
+    such marks are pre-candidate-filtering junk-homograph credits ("musth"
+    next to "must") and are ignored so they can't count a token fully
+    covered while its real lemma is still being studied.
   - Everything else is 0.
 - **Ambiguity conserves mass**: the track profile stores token-level
   candidate groups, and each token contributes `token_count ×

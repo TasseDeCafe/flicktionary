@@ -5,9 +5,11 @@ import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthr
 import { TextTrackLemmaProfilesRepository } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { sql } from '../../transport/database/postgres-client'
+import { KnownLemmasRepository } from '../../transport/database/known-lemmas/known-lemmas-repository'
 import {
   appendSegment,
   createReadingSession,
+  ensureRuLemmaRankManifest,
   insertWiktionaryLemma,
   saveAdhocTerm,
   setupCheckpointUser,
@@ -55,6 +57,7 @@ describe('study-sessions known lemmas', () => {
   })
 
   test('golden path: preview → sweep skips saved terms → chip reads → un-mark', async () => {
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     const s = uniqueCyrillicSuffix()
@@ -125,6 +128,7 @@ describe('study-sessions known lemmas', () => {
   })
 
   test('span sweeps accumulate across sittings and never depend on the profile', async () => {
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     const s = uniqueCyrillicSuffix()
@@ -175,7 +179,120 @@ describe('study-sessions known lemmas', () => {
     expect(resweep.body.data).toEqual({ markedCount: 0, sweepBatchId: null })
   })
 
+  test('whole-text sweep drops unranked homograph siblings; chip/un-mark still reach historical junk', async () => {
+    await ensureRuLemmaRankManifest()
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    const s = uniqueCyrillicSuffix()
+    const rankedWord = `наст${s}`
+    const junkSibling = `хлам${s}`
+    const soleRare = `редк${s}`
+    // The junk entry claims the ranked word's surface form (the becuz/because
+    // shape), so the chip's live resolution sees both candidates.
+    await insertWiktionaryLemma(rankedWord, [])
+    await insertWiktionaryLemma(junkSibling, [rankedWord])
+    await sql`
+      INSERT INTO public.lemma_ranks (target_language, lemma, rank, freq_mass)
+      VALUES ('ru', ${rankedWord}, 12345, 0.00001)
+    `
+    await seedProfile(session.text_track_id, {
+      [rankedWord]: [rankedWord, junkSibling],
+      [soleRare]: [soleRare],
+      [`гоу${s}`]: [`${rankedWord} ${junkSibling}`],
+    })
+
+    // Ranked sibling wins its token; the all-unranked token keeps its sole
+    // candidate; the multi-word-only token contributes nothing.
+    const preview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
+      .set(buildAuthorizationHeaders(token))
+    expect(preview.body.data).toEqual({ status: 'ready', markableLemmaCount: 2, sessionMarkedCount: 0 })
+
+    const marked = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({})
+    expect(marked.body.data).toEqual({ markedCount: 2, sweepBatchId: expect.any(String) })
+    const rows = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru' ORDER BY lemma
+    `
+    expect(rows.map((r) => r.lemma).sort()).toEqual([rankedWord, soleRare].sort())
+
+    // A pre-filtering sweep left a junk row behind: the chip's correction
+    // path stays unfiltered, so un-mark can still delete it.
+    await KnownLemmasRepository().bulkMarkKnown({
+      userId,
+      targetLanguage: 'ru',
+      lemmas: [junkSibling],
+      source: 'bulk_text',
+      sourceId: session.id,
+      sweepBatchId: null,
+    })
+    const gloss = await request(testApp)
+      .post('/api/v1/glosses/fast-gloss')
+      .set(buildAuthorizationHeaders(token))
+      .send({ selectionText: rankedWord, contextLine: `Вот ${rankedWord} тут.`, targetLanguage: 'ru' })
+    expect(gloss.body.data.knownLemmaCandidates).toEqual([rankedWord, junkSibling].sort())
+
+    const unmarked = await request(testApp)
+      .post('/api/v1/known-lemmas/unmark')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'ru', lemmas: gloss.body.data.knownLemmaCandidates })
+    expect(unmarked.body.data).toEqual({ removedCount: 2 })
+  })
+
+  test('span sweep drops unranked homograph siblings of a live-resolved token', async () => {
+    await ensureRuLemmaRankManifest()
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const session = await createReadingSession(userId, 'ru')
+    const s = uniqueCyrillicSuffix()
+    const rankedWord = `верн${s}`
+    const junkSibling = `мусор${s}`
+    // Both entries own the same inflected form — the live span resolution
+    // returns both as candidates of one token.
+    await insertWiktionaryLemma(rankedWord, [`${rankedWord}ов`])
+    await insertWiktionaryLemma(junkSibling, [`${rankedWord}ов`])
+    await sql`
+      INSERT INTO public.lemma_ranks (target_language, lemma, rank, freq_mass)
+      VALUES ('ru', ${rankedWord}, 23456, 0.00001)
+    `
+    await appendSegment(session.text_track_id, `Вот ${rankedWord}ов здесь.`)
+
+    const sweep = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: 0 })
+    expect(sweep.body.data).toEqual({ markedCount: 1, sweepBatchId: expect.any(String) })
+    const rows = await sql`
+      SELECT lemma FROM public.known_lemmas WHERE user_id = ${userId} AND target_language = 'ru'
+    `
+    expect(rows.map((r) => r.lemma)).toEqual([rankedWord])
+  })
+
+  test('a kaikki language without a ranks manifest is unsupported for preview and sweep', async () => {
+    // de has wiktionary data but (in this test DB) no lemma_rank_builds row —
+    // the sweep must refuse like the difficulty stat does, or the creditable
+    // filter's no-ranks pass-through would mark every homograph. If a future
+    // test seeds a de manifest, this test must move to a synthetic language.
+    const { userId, token } = await setupCheckpointUser(testApp)
+    await UserTargetLanguagePrefsRepository().upsertCefr(userId, 'de', 'B1')
+    const session = await createReadingSession(userId, 'de')
+
+    const preview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/mark-known-preview`)
+      .set(buildAuthorizationHeaders(token))
+    expect(preview.body.data).toEqual({ status: 'unsupported', markableLemmaCount: 0, sessionMarkedCount: 0 })
+
+    const marked = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/mark-known`)
+      .set(buildAuthorizationHeaders(token))
+      .send({})
+    expect(marked.status).toBe(422)
+    expect(marked.body.data.errors[0].code).toBe('UNSUPPORTED')
+  })
+
   test('sweep-exact toast undo vs session-wide un-mark, and sessionMarkedCount lifecycle', async () => {
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     const s = uniqueCyrillicSuffix()
@@ -243,6 +360,7 @@ describe('study-sessions known lemmas', () => {
   })
 
   test('missing profile: preview reports pending, sweep refuses, and a build job is enqueued', async () => {
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
 
@@ -268,6 +386,7 @@ describe('study-sessions known lemmas', () => {
   })
 
   test('terminally failed build: preview reports failed, sweep refuses, and NO new job is enqueued', async () => {
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     await sql`

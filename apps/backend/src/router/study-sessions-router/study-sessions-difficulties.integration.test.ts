@@ -9,6 +9,7 @@ import { UserTargetLanguagePrefsRepository } from '../../transport/database/user
 import { sql } from '../../transport/database/postgres-client'
 import {
   createReadingSession,
+  ensureRuLemmaRankManifest,
   patchRecognitionFacet,
   saveAdhocTerm,
   setupCheckpointUser,
@@ -28,16 +29,6 @@ describe('study-sessions difficulties', () => {
   })
   const profilesRepository = TextTrackLemmaProfilesRepository()
   const knownLemmasRepository = KnownLemmasRepository()
-
-  // The supported gate needs a build-manifest row for ru; the shared test DB
-  // is never reset, so an idempotent insert is safe across parallel files.
-  const ensureRuManifest = async () => {
-    await sql`
-      INSERT INTO public.lemma_rank_builds (target_language, version, wordfreq_version, row_count, mass_matched_pct)
-      VALUES ('ru', 1, 'test', 0, 99)
-      ON CONFLICT (target_language) DO NOTHING
-    `
-  }
 
   const getDifficulties = async (token: string, sessionIds: string[]) =>
     request(testApp)
@@ -63,7 +54,7 @@ describe('study-sessions difficulties', () => {
   })
 
   test('golden path: blends known/scheduled/saved-not-started/unknown with pinned count semantics', async () => {
-    await ensureRuManifest()
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     const s = uniqueCyrillicSuffix()
@@ -123,7 +114,7 @@ describe('study-sessions difficulties', () => {
   })
 
   test('dedupes repeated ids; foreign and unknown ids are omitted from the map', async () => {
-    await ensureRuManifest()
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const { userId: otherUserId } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
@@ -167,7 +158,7 @@ describe('study-sessions difficulties', () => {
   })
 
   test('missing profile reports pending and enqueues exactly one build job', async () => {
-    await ensureRuManifest()
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
 
@@ -184,7 +175,7 @@ describe('study-sessions difficulties', () => {
   })
 
   test('a terminally failed build reports failed and is never auto-requeued', async () => {
-    await ensureRuManifest()
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     await sql`
@@ -203,7 +194,7 @@ describe('study-sessions difficulties', () => {
   })
 
   test('stale profile re-enqueues once; a failed rebuild turns terminal instead of looping', async () => {
-    await ensureRuManifest()
+    await ensureRuLemmaRankManifest()
     const { userId, token } = await setupCheckpointUser(testApp)
     const session = await createReadingSession(userId, 'ru')
     const s = uniqueCyrillicSuffix()
