@@ -15,7 +15,6 @@ import { useExploreCard, useGetCard, useListCardsBySession, useRemoveCardFromSes
 import { invalidateCardEverywhere } from '../api/card-cache'
 import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
 import { getStudyTargetsKey } from '@/features/vocabulary/api/facet-cache'
-import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 import { FormSelector } from './form-selector'
 import { PerFormCardEditor } from './per-form-card-editor'
 import type { FormAutoSetup, SelectedTarget } from './study-target-helpers'
@@ -41,24 +40,15 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const {
-    from,
-    source,
-    practiceLang,
-    practicePool,
-    practiceMode,
-    practiceStudySessionId,
-    practiceSessionHard,
-    practiceFilter,
-    practiceMix,
-  } = useSearch({
+  const { scope, source } = useSearch({
     from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
   })
-  const fromVocabulary = from === 'vocabulary'
-  const fromPractice = from === 'practice'
-  // Practice & Vocabulary entries are language-wide views over kept chunks,
-  // not session-scoped vocabulary lists — same loading shortcut applies.
-  const shouldLoadSessionScope = (!fromVocabulary && !fromPractice) || source === 'available'
+  // Language-wide entries (opened from Vocabulary or a practice surface) are
+  // views over kept chunks, not session-scoped vocabulary lists: they're kept
+  // by definition, and they skip the session-scoped loads — unless the source
+  // session is known to still exist (`source: 'available'`).
+  const isLanguageWideEntry = scope === 'language'
+  const shouldLoadSessionScope = !isLanguageWideEntry || source === 'available'
 
   const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId, {
     enabled: shouldLoadSessionScope,
@@ -123,88 +113,9 @@ export const FocusView = () => {
 
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
-  // Preserve the `from` origin across prev/next so the close button still
-  // knows where to land after the user navigates around. Practice carries the
-  // language + pool so the back-route resolves to the sessionless review screen.
-  const search = from
-    ? fromPractice && practiceLang
-      ? {
-          from,
-          practiceLang,
-          practicePool,
-          practiceMode,
-          practiceStudySessionId,
-          practiceSessionHard,
-          practiceFilter,
-          practiceMix,
-        }
-      : { from }
-    : undefined
-  const backToPractice = () => {
-    if (!practiceLang) return
-    // Dedicated exercise sessions re-enter their own route under the SAME
-    // search params, so the session snapshot stashed on unmount matches and
-    // resumes where the queue stood (see exercise-session-snapshot.ts).
-    if (practiceMode === 'strengthen') {
-      void navigate({
-        to: '/practice/strengthen/$targetLanguage',
-        params: { targetLanguage: practiceLang },
-        search: { pool: practicePool ?? 'recognition', sessionHard: practiceSessionHard, mix: practiceMix },
-        replace: true,
-      })
-      return
-    }
-    if (practiceMode === 'warmup') {
-      if (practiceStudySessionId) {
-        void navigate({
-          to: '/practice/warmup/$targetLanguage',
-          params: { targetLanguage: practiceLang },
-          search: { studySessionId: practiceStudySessionId },
-          replace: true,
-        })
-      } else {
-        // Warm-up can't re-enter without its session scope (hand-edited URL) —
-        // degrade to the language action screen.
-        void navigate({
-          to: '/practice/language/$targetLanguage',
-          params: { targetLanguage: practiceLang },
-          replace: true,
-        })
-      }
-      return
-    }
-    // Flashcards live in the composed queue: close re-enters the composed
-    // route under the filter carried in `practiceFilter`, so the session
-    // snapshot stashed when the queue unmounted matches and resumes (a
-    // mismatched filter would compose fresh and re-run auto-warm-up). The
-    // fallback covers hand-edited URLs that dropped the filter. A
-    // reading-mode origin returns to the reading route, scope reset to
-    // 'mixed'.
-    if (practiceMode === 'flashcards') {
-      void navigate({
-        to: '/practice/composed/$targetLanguage',
-        params: { targetLanguage: practiceLang },
-        search: {
-          ...(practiceFilter ?? {
-            pools: ['production', 'recognition'],
-            scope: 'both',
-            render: 'both',
-            autoWarmup: true,
-            includeOptInNew: false,
-          }),
-          mix: practiceMix,
-        },
-        replace: true,
-      })
-      return
-    }
-    void navigate({
-      to: '/practice/review/$targetLanguage',
-      params: { targetLanguage: practiceLang },
-      search: { pool: practicePool ?? 'recognition', scope: 'mixed' },
-      replace: true,
-    })
-  }
+  // Preserve the editing scope across prev/next so a paged-to card renders
+  // under the same scope as the one that was opened.
+  const search = { scope, source }
   const goPrev = () => {
     if (cursor.prev) {
       // Replace, don't push: paging through cards is flow-internal stepping
@@ -293,32 +204,24 @@ export const FocusView = () => {
   }, [cardId])
 
   // Deep-link fallback only — with in-app history the hook returns to the
-  // actual opener (review list, vocabulary with live search state, or the
-  // practice route whose stashed session snapshot then resumes).
-  const closeToSessionVocabulary = useModalScreenClose(() => {
-    if (from === 'vocabulary') {
-      // Restore the sort/filter state the user was browsing under (the close
-      // nav would otherwise rebuild /vocabulary with an empty search).
-      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch(), replace: true })
-      return
-    }
-    if (from === 'practice' && practiceLang) {
-      backToPractice()
-      return
-    }
-    void navigate({ to: '/sessions/$sessionId/review', params: { sessionId }, replace: true })
-  })
+  // actual opener (review list, vocabulary with live filters, or the practice
+  // route whose stashed session snapshot then resumes). A deep-linked
+  // language-wide card has no session position to return to, so it falls back
+  // to Vocabulary; a session-scoped card falls back to its review list.
+  const closeToParent = useModalScreenClose(
+    isLanguageWideEntry ? { to: '/vocabulary' } : { to: '/sessions/$sessionId/review', params: { sessionId } }
+  )
 
   if (isLoading) {
     return (
-      <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={t`Card`}>
+      <ModalScreen onClose={closeToParent} closeIcon='chevron' title={t`Card`}>
         <FocusViewSkeleton />
       </ModalScreen>
     )
   }
   if (!card) {
     return (
-      <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={t`Card`}>
+      <ModalScreen onClose={closeToParent} closeIcon='chevron' title={t`Card`}>
         <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Card not found.`}</div>
       </ModalScreen>
     )
@@ -351,10 +254,6 @@ export const FocusView = () => {
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
-  // Vocabulary + Practice entries are already kept by definition, so the
-  // keep/reject toggles and the per-session position counter don't apply.
-  // Show the chunk's headword as the title instead.
-  const isLanguageWideEntry = fromVocabulary || fromPractice
   // A kept term must keep ≥1 enabled skill per target (backend floor guard); the
   // SkillsCard last-skill lock is the friendly front. Language-wide entries are
   // kept by definition; session entries auto-keep once they have basic data, so
@@ -418,7 +317,7 @@ export const FocusView = () => {
   // back to the session-vocabulary list so the user isn't stranded.
   const advanceOrClose = () => {
     if (cursor.next) goNext()
-    else closeToSessionVocabulary()
+    else closeToParent()
   }
 
   // Remove-from-session = unkeep this card (non-destructive). It survives in
@@ -435,7 +334,7 @@ export const FocusView = () => {
   return (
     <div className='flex h-dvh'>
       <div className='flex min-w-0 flex-1 flex-col'>
-        <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={title} rightSlot={headerNav}>
+        <ModalScreen onClose={closeToParent} closeIcon='chevron' title={title} rightSlot={headerNav}>
           <div className='flex-1 overflow-y-auto px-4 py-4'>
             <div className='mx-auto flex max-w-4xl flex-col gap-6'>
               <section>
@@ -475,7 +374,6 @@ export const FocusView = () => {
                     facets={facets}
                     translationFieldsMode={translationFieldsMode}
                     sourceSessionId={sourceSessionId}
-                    fromVocabulary={fromVocabulary}
                     autoSetup={autoSetup}
                     onAutoSetupConsumed={() => setAutoSetup(null)}
                   />
@@ -570,7 +468,7 @@ export const FocusView = () => {
                         {
                           onSuccess: () => {
                             setDeleteConfirmOpen(false)
-                            closeToSessionVocabulary()
+                            closeToParent()
                           },
                         }
                       )

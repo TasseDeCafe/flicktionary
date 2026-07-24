@@ -7,10 +7,7 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
-import type {
-  PracticePool,
-  StrengthenExerciseEntry,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { mergePlaceholders } from './exercise-queue-merge'
 import { currentDayKey } from './composed-session-snapshot'
 import { clearExerciseSession, saveExerciseSession, type ExerciseSessionSnapshot } from './exercise-session-snapshot'
@@ -40,18 +37,6 @@ type ExerciseSessionProps = {
   pollExercises?: () => Promise<StrengthenExerciseEntry[] | null>
   onClose: () => void
   targetLanguage: string
-  // Threaded into the header kebab's Edit-term deep-link so the focus view's
-  // close re-enters THIS session, where the stashed snapshot resumes.
-  practiceMode: 'strengthen' | 'warmup'
-  practiceStudySessionId?: string
-  practiceSessionHard?: string[]
-  // The Daily Mix chain, when the strengthen session is part of one — carried
-  // through the focus-view detour so returning doesn't drop the run.
-  practiceMix?: string[]
-  // The session's route pool ('strengthen' only) — the Edit-term return trip
-  // must rebuild the SAME route (the queue can contain terms of either pool,
-  // and returning under a term's pool would mismatch the stashed snapshot).
-  sessionPool?: PracticePool
   // Identity of this session's scope for the interrupted-session stash; the
   // caller resumes a matching snapshot instead of starting fresh (see
   // exercise-session-snapshot.ts).
@@ -102,11 +87,6 @@ const LoadedExerciseSessionView = ({
   pollExercises,
   onClose,
   targetLanguage,
-  practiceMode,
-  practiceStudySessionId,
-  practiceSessionHard,
-  practiceMix,
-  sessionPool,
   sessionKey,
   resumedSession,
 }: ExerciseSessionProps & { initialEntries: StrengthenExerciseEntry[] }) => {
@@ -263,19 +243,7 @@ const LoadedExerciseSessionView = ({
         ) : undefined
       }
     >
-      {actionsTerm && (
-        <TermActionsOverlay
-          open={actionsOpen}
-          onOpenChange={setActionsOpen}
-          term={actionsTerm}
-          targetLanguage={targetLanguage}
-          pool={sessionPool ?? actionsTerm.pool}
-          practiceMode={practiceMode}
-          practiceStudySessionId={practiceStudySessionId}
-          practiceSessionHard={practiceSessionHard}
-          practiceMix={practiceMix}
-        />
-      )}
+      {actionsTerm && <TermActionsOverlay open={actionsOpen} onOpenChange={setActionsOpen} term={actionsTerm} />}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {queue.length === 0 && (
           <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>

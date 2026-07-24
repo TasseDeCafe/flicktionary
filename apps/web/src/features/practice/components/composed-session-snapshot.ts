@@ -35,8 +35,8 @@ export type ComposedSessionSnapshot = {
   dayKey: string
 }
 
-// Module-level stash of the last in-progress composed practice session (same
-// pattern as the Vocabulary tab's saved-search). The composed queue is client
+// Module-level stash of the last in-progress composed practice session.
+// The composed queue is client
 // state, so navigating away — the "Edit term" focus-view detour, a back
 // gesture — unmounts and would otherwise discard it; re-entering would then
 // compose a FRESH queue whose auto-warm-up pass parks a new batch of terms.

@@ -1,10 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Pencil } from 'lucide-react'
-import type {
-  PracticePool,
-  PracticeQueueFilter,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -21,48 +17,22 @@ interface TermActionsOverlayProps {
   // The term behind the displayed queue item — flashcard or exercise alike
   // (current or peeked); null when the queue is done.
   term: { userLookupId: string; headword: string } | null
-  targetLanguage: string
-  pool: PracticePool
-  // The serving surface — routes the focus view's close back here. 'strengthen'
-  // carries its bonus list, 'warmup' its session scope, so the re-entered route
-  // rebuilds the same session.
-  practiceMode: 'flashcards' | 'strengthen' | 'warmup'
-  practiceStudySessionId?: string
-  practiceSessionHard?: string[]
-  // The composed queue's filter ('flashcards' mode only) — carried through the
-  // focus-view URL so its close re-enters the composed route under the same
-  // filter, which is what lets the stashed session snapshot match and resume.
-  practiceFilter?: PracticeQueueFilter
-  // The Daily Mix chain, when the session is part of one — rides the same
-  // detour so returning doesn't drop the run.
-  practiceMix?: string[]
 }
 
-// Header-kebab actions for the term behind the displayed composed-queue item.
+// Header-kebab actions for the term behind the displayed queue item.
 // "Edit term" deep-links to the focus view via the chunk's representative-card
 // pointer, fetched lazily on open (the queue payloads stay lean). Same menu
 // pattern as the vocabulary rows and the reading-mode rate sheet.
 //
-// Navigating away unmounts the composed queue, but the session survives the
-// detour: the view stashes its snapshot on unmount and the focus view's close
-// re-enters the same route, where the snapshot resumes (see
-// composed-session-snapshot.ts).
-export const TermActionsOverlay = ({
-  open,
-  onOpenChange,
-  term,
-  targetLanguage,
-  pool,
-  practiceMode,
-  practiceStudySessionId,
-  practiceSessionHard,
-  practiceFilter,
-  practiceMix,
-}: TermActionsOverlayProps) => {
+// Navigating away unmounts the serving queue, but the session survives the
+// detour: the view stashes its snapshot on unmount, and the focus view's close
+// pops history back to the same route+search entry, where the snapshot resumes
+// (see exercise-session-snapshot.ts).
+export const TermActionsOverlay = ({ open, onOpenChange, term }: TermActionsOverlayProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data, isPending } = useGetChunk(term?.userLookupId ?? '', open && term !== null)
-  const canEdit = !!data?.firstCardId && !!data?.firstCardSessionId
+  const canEdit = !!data?.firstCardId && !!data.firstCardSessionId
 
   if (!term) return null
 
@@ -72,18 +42,9 @@ export const TermActionsOverlay = ({
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId: data.firstCardSessionId, cardId: data.firstCardId },
-      // practiceMode routes the focus view's close back to the serving surface
-      // instead of reading mode.
-      search: {
-        from: 'practice' as const,
-        practiceLang: targetLanguage,
-        practicePool: pool,
-        practiceMode,
-        practiceStudySessionId,
-        practiceSessionHard,
-        practiceFilter,
-        practiceMix,
-      },
+      // `scope: 'language'` renders the card as a language-wide entry (kept by
+      // definition, no session position counter or paging).
+      search: { scope: 'language' as const },
     })
   }
 

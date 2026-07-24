@@ -79,10 +79,6 @@ export const StrengthenView = () => {
       backLabel={backLabel}
       onClose={close}
       targetLanguage={targetLanguage}
-      practiceMode='strengthen'
-      practiceSessionHard={sessionHard}
-      practiceMix={mix}
-      sessionPool={pool}
       sessionKey={sessionKey}
       resumedSession={resumedSession}
     />

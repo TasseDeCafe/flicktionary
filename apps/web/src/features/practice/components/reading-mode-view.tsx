@@ -223,7 +223,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId, cardId },
-      search: { from: 'practice' as const, practiceLang: targetLanguage, practicePool: pool },
+      search: { scope: 'language' as const },
     })
   }
 

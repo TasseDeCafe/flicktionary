@@ -63,8 +63,6 @@ export const WarmupView = () => {
       pollExercises={pollExercises}
       onClose={close}
       targetLanguage={targetLanguage}
-      practiceMode='warmup'
-      practiceStudySessionId={studySessionId}
       sessionKey={sessionKey}
       resumedSession={resumedSession}
     />

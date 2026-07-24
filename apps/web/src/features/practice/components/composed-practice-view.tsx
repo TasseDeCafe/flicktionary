@@ -763,7 +763,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         ? current.entry
         : current.card
       : null
-  const actionsPool = current ? (current.type === 'exercise' ? current.entry.pool : poolForCard(current.card)) : null
 
   const wrap = (children: React.ReactNode) => (
     <ModalScreen
@@ -785,18 +784,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
       }
     >
       {children}
-      {actionsTerm && actionsPool && (
-        <TermActionsOverlay
-          open={actionsOpen}
-          onOpenChange={setActionsOpen}
-          term={actionsTerm}
-          targetLanguage={targetLanguage}
-          pool={actionsPool}
-          practiceMode='flashcards'
-          practiceFilter={filter}
-          practiceMix={mix}
-        />
-      )}
+      {actionsTerm && <TermActionsOverlay open={actionsOpen} onOpenChange={setActionsOpen} term={actionsTerm} />}
     </ModalScreen>
   )
 
