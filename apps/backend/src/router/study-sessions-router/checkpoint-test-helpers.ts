@@ -25,6 +25,17 @@ export const uniqueCyrillicSuffix = (): string =>
 
 const REAL_LEMMA_DATA = { head_templates: [{ name: 'head' }], senses: [{ glosses: ['test gloss'] }] }
 
+// The ranks-manifest supported gate (difficulty AND the mark-known sweep)
+// needs a build row for ru; the shared test DB is never reset, so an
+// idempotent insert is safe across parallel files.
+export const ensureRuLemmaRankManifest = async (): Promise<void> => {
+  await sql`
+    INSERT INTO public.lemma_rank_builds (target_language, version, wordfreq_version, row_count, mass_matched_pct)
+    VALUES ('ru', 1, 'test', 0, 99)
+    ON CONFLICT (target_language) DO NOTHING
+  `
+}
+
 export const insertWiktionaryLemma = async (headword: string, forms: string[]): Promise<void> => {
   const [row] = (await sql`
     INSERT INTO public.wiktionary_entries (target_language, headword, pos, data)

@@ -109,6 +109,43 @@ describe('computeDifficulty', () => {
     expect(result.frequentUnknownLemmas).toEqual(['common'])
   })
 
+  it('ignores a known mark on an unranked candidate when the group has a ranked one', () => {
+    // Pre-filtering sweeps marked junk homographs (musth next to must). The
+    // junk P=1 must not mask the ranked lemma the user is actually studying.
+    const result = computeDifficulty({
+      groups: [{ tokenCount: 10, candidateLemmas: ['must', 'musth'] }],
+      knowledgeByLemma: knowledge({
+        must: { kind: 'scheduled', retrievability: 0.4 },
+        musth: { kind: 'known' },
+      }),
+      ranksByLemma: ranks({ must: { rank: 50, freqMass: 0.001 } }),
+    })
+    expect(result.expectedCoverage).toBeCloseTo(0.4)
+    expect(result.knownLemmas).toEqual([])
+  })
+
+  it('a junk-only known group with a ranked candidate counts as unknown, not covered', () => {
+    const result = computeDifficulty({
+      groups: [{ tokenCount: 5, candidateLemmas: ['must', 'musth'] }],
+      knowledgeByLemma: knowledge({ musth: { kind: 'known' } }),
+      ranksByLemma: ranks({ must: { rank: 50, freqMass: 0.001 } }),
+    })
+    expect(result.expectedCoverage).toBe(0)
+    expect(result.unknownLemmas).toEqual(['must'])
+  })
+
+  it('keeps the known credit of an unranked candidate when no candidate is ranked', () => {
+    // Sole-owner rare words stay creditable; a group entirely below the rank
+    // floor is not the junk-homograph shape.
+    const result = computeDifficulty({
+      groups: [{ tokenCount: 2, candidateLemmas: ['musth'] }],
+      knowledgeByLemma: knowledge({ musth: { kind: 'known' } }),
+      ranksByLemma: ranks({}),
+    })
+    expect(result.expectedCoverage).toBe(1)
+    expect(result.knownLemmas).toEqual(['musth'])
+  })
+
   it('clamps out-of-range retrievability defensively', () => {
     const result = computeDifficulty({
       groups: [{ tokenCount: 1, candidateLemmas: ['weird'] }],

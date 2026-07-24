@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { foldUserHeadwordCandidates } from '@flicktionary/core/utils/checkpoint-fold'
 import type { KnownLemmasRepositoryInterface } from '../../transport/database/known-lemmas/known-lemmas-repository'
+import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -11,19 +12,22 @@ import type { UserLookupsRepositoryInterface } from '../../transport/database/us
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
 import { countFoldedTokens } from '../lemma-profiles/count-tokens'
 import { resolveTrackProfileReadiness } from '../lemma-profiles/profile-readiness'
+import { filterCreditableCandidates } from './filter-creditable-candidates'
 
 // The per-session "mark the rest as known" sweep (coverage proposal): every
-// candidate lemma that is neither studied nor already marked gets a
-// known_lemmas row. Ambiguous tokens mark ALL candidates — over-crediting a
-// rare homograph is invisible noise. The sweep SKIPS saved terms (saving is
-// the stronger, more specific signal), and read-time precedence keeps a later
-// save winning over the mark.
+// CREDITABLE candidate lemma that is neither studied nor already marked gets
+// a known_lemmas row. An ambiguous token marks all its ranked candidates,
+// but never an unranked homograph standing next to a ranked one ("because"
+// must not mark becuz — see filter-creditable-candidates.ts). The sweep
+// SKIPS saved terms (saving is the stronger, more specific signal), and
+// read-time precedence keeps a later save winning over the mark.
 //
-// Two scopes: the WHOLE text (candidates from the stored track profile) or a
-// SPAN [0, toSegmentIndex] for the progressive multi-sitting flow — the span
-// is tokenized live in bounded batches through the checkpoint matcher because
-// profile rows carry no segment positions. Repeated span sweeps accumulate:
-// ON CONFLICT DO NOTHING plus the already-known exclusion make overlap free.
+// Two scopes: the WHOLE text (per-token candidates from the stored track
+// profile) or a SPAN [0, toSegmentIndex] for the progressive multi-sitting
+// flow — the span is tokenized live in bounded batches through the checkpoint
+// matcher because profile rows carry no segment positions. Repeated span
+// sweeps accumulate: ON CONFLICT DO NOTHING plus the already-known exclusion
+// make overlap free.
 
 export type MarkRemainingKnownDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -33,22 +37,23 @@ export type MarkRemainingKnownDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   knownLemmasRepository: KnownLemmasRepositoryInterface
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
+  lemmaRanksRepository: LemmaRanksRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
 }
 
 const SEGMENT_BATCH_SIZE = 500
 const RESOLVE_CHUNK_SIZE = 5_000
 
-// Candidate lemmas of the segments [0, toSegmentIndex] (clamped by the rows
-// that actually exist), resolved through the same matcher the profile build
-// uses. Keyset pages over real rows — indices are client-supplied and not
-// guaranteed dense, so stepping through the index space would let a sparse or
-// crafted max index burn the request on empty range queries.
-const resolveSpanCandidates = async (
+// Candidate lemmas per folded token of the segments [0, toSegmentIndex]
+// (clamped by the rows that actually exist), resolved through the same
+// matcher the profile build uses. Keyset pages over real rows — indices are
+// client-supplied and not guaranteed dense, so stepping through the index
+// space would let a sparse or crafted max index burn the request on empty
+// range queries.
+const resolveSpanTokenLemmas = async (
   params: { textTrackId: string; targetLanguage: string; toSegmentIndex: number },
   deps: MarkRemainingKnownDependencies
-): Promise<Set<string>> => {
-  const candidates = new Set<string>()
+): Promise<Map<string, Set<string>>> => {
   const counts = new Map<string, number>()
   let cursor: number | null = null
   for (;;) {
@@ -63,17 +68,41 @@ const resolveSpanCandidates = async (
     cursor = segments[segments.length - 1].index
     if (segments.length < SEGMENT_BATCH_SIZE) break
   }
+  const lemmasByToken = new Map<string, Set<string>>()
   const tokens = [...counts.keys()]
   for (let i = 0; i < tokens.length; i += RESOLVE_CHUNK_SIZE) {
     const resolved = await deps.wiktionaryMatchRepository.resolveFoldedLemmasForTokens({
       targetLanguage: params.targetLanguage,
       foldedTokens: tokens.slice(i, i + RESOLVE_CHUNK_SIZE),
     })
-    for (const lemmas of resolved.values()) {
-      for (const lemma of lemmas) candidates.add(lemma)
-    }
+    for (const [token, lemmas] of resolved) lemmasByToken.set(token, lemmas)
   }
-  return candidates
+  return lemmasByToken
+}
+
+// Rank membership is read fresh per call (never stored), so rank rebuilds
+// need no coordination with the sweep.
+const collectCreditableLemmas = async (
+  params: { lemmasByToken: ReadonlyMap<string, Set<string>>; targetLanguage: string },
+  deps: MarkRemainingKnownDependencies
+): Promise<Set<string>> => {
+  const allCandidates = new Set<string>()
+  for (const lemmas of params.lemmasByToken.values()) {
+    for (const lemma of lemmas) allCandidates.add(lemma)
+  }
+  const ranks = await deps.lemmaRanksRepository.listRanksForLemmas({
+    targetLanguage: params.targetLanguage,
+    lemmas: [...allCandidates],
+  })
+  const filtered = filterCreditableCandidates({
+    lemmasByToken: params.lemmasByToken,
+    rankedLemmas: new Set(ranks.keys()),
+  })
+  const creditable = new Set<string>()
+  for (const lemmas of filtered.values()) {
+    for (const lemma of lemmas) creditable.add(lemma)
+  }
+  return creditable
 }
 
 export type SweepComputation =
@@ -94,15 +123,20 @@ export const computeMarkableLemmas = async (
   }
   const targetLanguage = session.target_language
   if (!KAIKKI_LANGUAGES.has(targetLanguage)) return { ok: false, reason: 'unsupported' }
+  // Same manifest gate as the difficulty stat: sweep marks exist to feed the
+  // rank-gated coverage/difficulty reads, and without ranks the creditable
+  // filter would pass every homograph through.
+  const builtLanguages = await deps.lemmaRanksRepository.listBuiltLanguages()
+  if (!builtLanguages.has(targetLanguage)) return { ok: false, reason: 'unsupported' }
 
   const track = await deps.textTracksRepository.findByIdWithSourceType(session.text_track_id)
   if (!track) return { ok: false, reason: 'not_found' }
 
-  let candidateLemmas: Set<string>
+  let lemmasByToken: Map<string, Set<string>>
   if (params.toSegmentIndex != null) {
     // Span scope tokenizes live and never depends on the profile, so it works
     // (and never reports pending) even while the build job runs.
-    candidateLemmas = await resolveSpanCandidates(
+    lemmasByToken = await resolveSpanTokenLemmas(
       { textTrackId: track.id, targetLanguage, toSegmentIndex: params.toSegmentIndex },
       deps
     )
@@ -114,11 +148,9 @@ export const computeMarkableLemmas = async (
     if (readiness === 'failed') return { ok: false, reason: 'profile_failed' }
     if (readiness === 'pending') return { ok: false, reason: 'profile_pending' }
     const profileRows = await deps.textTrackLemmaProfilesRepository.listRowsByTrackId(track.id)
-    candidateLemmas = new Set<string>()
-    for (const row of profileRows) {
-      for (const lemma of row.candidate_lemmas) candidateLemmas.add(lemma)
-    }
+    lemmasByToken = new Map(profileRows.map((row) => [row.folded_token, new Set(row.candidate_lemmas)]))
   }
+  const candidateLemmas = await collectCreditableLemmas({ lemmasByToken, targetLanguage }, deps)
 
   const vocab = await deps.userLookupsRepository.listCheckpointVocab({ userId: params.userId, targetLanguage })
 

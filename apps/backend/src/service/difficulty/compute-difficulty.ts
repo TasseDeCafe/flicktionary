@@ -67,12 +67,21 @@ export const computeDifficulty = (params: {
     if (group.candidateLemmas.length === 0 || group.tokenCount <= 0) continue
     matchedTokenCount += group.tokenCount
 
+    const groupHasRankedCandidate = group.candidateLemmas.some((lemma) => params.ranksByLemma.has(lemma))
+
     let maxP = 0
     let sawSavedNotStarted: string | null = null
     let allUnknown = true
     for (const lemma of group.candidateLemmas) {
       const knowledge = params.knowledgeByLemma.get(lemma)
       if (!knowledge) continue
+      // A known MARK on an unranked candidate is ignored when the group has a
+      // ranked one: sweeps written before candidate filtering existed marked
+      // junk homographs ("musth" next to "must"), and since the sweep skips
+      // saved lemmas individually, such a mark would count a token fully
+      // covered while its real lemma is still being studied. Scheduled/saved
+      // knowledge is never second-guessed — only sweep marks are suspect.
+      if (knowledge.kind === 'known' && groupHasRankedCandidate && !params.ranksByLemma.has(lemma)) continue
       allUnknown = false
       if (knowledge.kind === 'scheduled') {
         // Clamp defensively — a candidate can never contribute more than 1.
