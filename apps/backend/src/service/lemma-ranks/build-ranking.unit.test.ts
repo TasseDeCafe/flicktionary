@@ -194,6 +194,52 @@ describe('rankLemmas', () => {
       { lemma: 'b', rank: 3, freqMass: 0.5 },
     ])
   })
+
+  it('drops lemmas below the mass floor and renumbers ranks contiguously', () => {
+    // Epsilon-plateau shape: dust masses just under the floor, one real lemma
+    // above it, one exactly at it (a floor is inclusive — "at least the
+    // rarest measurable form").
+    const ranked = rankLemmas(
+      new Map([
+        ['real', 0.5],
+        ['at-floor', 1e-7],
+        ['dust-a', 9.12e-9],
+        ['dust-b', 9.11e-9],
+      ]),
+      1e-7
+    )
+    expect(ranked).toEqual([
+      { lemma: 'real', rank: 1, freqMass: 0.5 },
+      { lemma: 'at-floor', rank: 2, freqMass: 1e-7 },
+    ])
+  })
+
+  it('keeps a sole-candidate lemma whose inherited full form mass clears the floor', () => {
+    // An unlisted lemma that fully owns a listed form gets the form's whole
+    // mass — legitimate, and it must survive the floor.
+    const split = splitFormMass({
+      formFrequency: 2e-7,
+      candidates: [{ lemma: 'musth', foldedLemma: 'musth' }],
+      targetLanguage: 'en',
+      frequencyOfFoldedLemma: () => undefined,
+      epsilonWeight: 1e-8,
+    })
+    const ranked = rankLemmas(split, 1e-7)
+    expect(ranked).toHaveLength(1)
+    expect(ranked[0].lemma).toBe('musth')
+    expect(ranked[0].rank).toBe(1)
+    expect(ranked[0].freqMass).toBeCloseTo(2e-7, 12)
+  })
+
+  it('keeps every positive-mass lemma when no floor is given', () => {
+    const ranked = rankLemmas(
+      new Map([
+        ['real', 0.5],
+        ['dust', 9.12e-9],
+      ])
+    )
+    expect(ranked).toHaveLength(2)
+  })
 })
 
 describe('checkAcceptance', () => {

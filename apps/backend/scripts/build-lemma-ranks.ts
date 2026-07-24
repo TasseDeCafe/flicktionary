@@ -223,7 +223,11 @@ const buildLanguage = async (sql: Sql, lang: string): Promise<void> => {
     }
   }
 
-  const ranked = rankLemmas(massByLemma)
+  // Floor = the rarest listed form's frequency: lemmas below it carry only
+  // epsilon-share slivers whose rank order is corpus noise (see rankLemmas).
+  const ranked = rankLemmas(massByLemma, minListedFrequency)
+  const positiveMassCount = [...massByLemma.values()].filter((mass) => mass > 0).length
+  const droppedCount = positiveMassCount - ranked.length
   const acceptance = checkAcceptance({
     totalWordTokenMass,
     matchedWordTokenMass,
@@ -231,7 +235,9 @@ const buildLanguage = async (sql: Sql, lang: string): Promise<void> => {
   })
 
   console.log(`  token mass matched: ${acceptance.massMatchedPct.toFixed(2)}%`)
-  console.log(`  denominator: ${ranked.length.toLocaleString()} lemmas with mass`)
+  console.log(
+    `  denominator: ${ranked.length.toLocaleString()} lemmas with mass ≥ floor (${droppedCount.toLocaleString()} epsilon-dust lemmas below ${minListedFrequency.toExponential(2)} dropped)`
+  )
 
   console.log(`  top ${TOP_PRINT} (compare against the spike tables in docs/proposals/vocab-coverage-visualization.md):`)
   let cumulative = 0

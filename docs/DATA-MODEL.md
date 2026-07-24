@@ -583,9 +583,21 @@ A language is "supported" for difficulty only when it is in
 alone would claim support against an empty ranks table between deploy and the
 one-off prod build. Ambiguous surface forms split their mass across candidate
 lemmas weighted by each candidate's own corpus frequency (never evenly);
-`pos = 'character'` entries and multi-word lemmas are excluded; German
+candidates wordfreq doesn't list weigh in at epsilon (min listed frequency
+/ 10); `pos = 'character'` entries and multi-word lemmas are excluded; German
 capitalized lemmas competing with their lowercase twin for the same form are
 discounted ×0.02 (wordfreq is caseless).
+
+The published list applies a **mass floor**: lemmas whose total mass is below
+the least frequent listed form's own frequency are dropped before ranking.
+Below that floor sit only epsilon-share slivers of forms dominated by other
+candidates (alt-spellings and acronym homographs — "because" → becuz,
+"five" → MI5); their near-identical masses would otherwise rank as a dense
+junk plateau deep in the list, which made sweep-marked coverage render as
+artificial clusters of adjacent "known" cells. A lemma wordfreq doesn't list
+still ranks when it is the sole candidate of a listed form (it inherits the
+form's full mass). The floor trims roughly 8–12% of positive-mass lemmas per
+language.
 
 ### Populating the reference tables locally
 

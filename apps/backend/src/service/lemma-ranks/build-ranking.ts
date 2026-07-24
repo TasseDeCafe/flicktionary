@@ -83,9 +83,18 @@ export type RankedLemma = {
 }
 
 // Deterministic ranking: mass descending, folded lemma ascending on ties.
-export const rankLemmas = (massByLemma: ReadonlyMap<string, number>): RankedLemma[] => {
+//
+// The mass floor keeps only lemmas carrying at least as much mass as the
+// rarest form wordfreq can measure (the caller passes minListedFrequency).
+// Below it sit lemmas whose entire mass is epsilon-share slivers of forms
+// dominated by other candidates (alt-spellings, acronym redirects — "becuz",
+// "MI5"): their near-identical masses would rank them as a dense plateau of
+// junk deep in the list, and their rank order is corpus noise. A lemma
+// wordfreq doesn't list itself still ranks fine when it's the sole candidate
+// of a listed form — it inherits the form's full mass and clears the floor.
+export const rankLemmas = (massByLemma: ReadonlyMap<string, number>, massFloor = 0): RankedLemma[] => {
   return [...massByLemma.entries()]
-    .filter(([, mass]) => mass > 0)
+    .filter(([, mass]) => mass > 0 && mass >= massFloor)
     .sort(([lemmaA, massA], [lemmaB, massB]) => massB - massA || lemmaA.localeCompare(lemmaB))
     .map(([lemma, freqMass], i) => ({ lemma, rank: i + 1, freqMass }))
 }
