@@ -8,6 +8,15 @@ describe('normalizeTargetForm', () => {
     expect(normalizeTargetForm('е́сли')).toBe('если')
   })
 
+  it('keeps orthographic acutes arriving decomposed (NFC runs before the strip)', () => {
+    // NFD más (a + combining acute, written as escapes so no editor can
+    // silently re-normalize it) must key as más, never collide with the
+    // different word mas.
+    expect(normalizeTargetForm('ma\u0301s')).toBe('m\u00e1s')
+    // Decomposed Russian stress is still stripped — Cyrillic never composes.
+    expect(normalizeTargetForm('стола\u0301')).toBe('стола')
+  })
+
   it('lowercases so case variants collapse to one key', () => {
     expect(normalizeTargetForm('Houses')).toBe('houses')
     expect(normalizeTargetForm('houses')).toBe('houses')

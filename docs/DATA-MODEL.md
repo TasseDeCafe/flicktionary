@@ -538,8 +538,10 @@ wiktionary_form_redirects          -- precomputed stub resolution (form-of /
 ```
 
 Checkpoint-review matching folds BOTH sides of every comparison through
-`public.checkpoint_fold(input, lang)` (strip U+0301 → NFC → trim → lower, then
-ru `ё→е`, de `ß→ss`). Expression indexes
+`public.checkpoint_fold(input, lang)` (NFC → strip U+0301 → trim → lower, then
+ru `ё→е`, de `ß→ss`; NFC runs first so orthographic acutes arriving decomposed
+compose and survive the strip — only non-composable marks, i.e. Russian-style
+stress accents, are removed). Expression indexes
 `(target_language, checkpoint_fold(form|headword, target_language))` on
 `wiktionary_forms` / `wiktionary_entries` make folded point lookups indexed;
 query-side tokens fold through the byte-pinned TS twin

@@ -94,9 +94,11 @@ const writeCsvLine = async (out: Writable, line: string): Promise<void> => {
 
 // U+0301 = combining acute accent. Russian kaikki entries store stressed forms
 // in `forms[]` (e.g. "обнару́жил"); LLM-emitted headwords are always unstressed.
-// We index stress-stripped versions so plain lookups hit.
+// We index stress-stripped versions so plain lookups hit. NFC first so only
+// non-composable acutes (stress marks) are stripped — an orthographic accent
+// arriving decomposed (NFD `más`) composes and survives.
 const stripStress = (s: string): string => {
-  return s.replace(/́/g, '')
+  return s.normalize('NFC').replace(/́/g, '')
 }
 
 // kaikki packs internal metadata into the same `forms[]` array as real surface
