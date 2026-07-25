@@ -13,7 +13,7 @@ The web app answers "where should close take you?" with two mechanisms at
 once:
 
 1. **Router history** — `useModalScreenClose`
-   (`apps/web/src/features/navigation/hooks/use-modal-screen-close.ts`) pops
+   (`../apps/web/src/features/navigation/hooks/use-modal-screen-close.ts`) pops
    back to the actual opener via `useCanGoBack`, falling back to a fixed
    parent on deep links. Zero obligations at call sites: any new link into a
    modal screen gets correct close-to-origin behavior for free.
