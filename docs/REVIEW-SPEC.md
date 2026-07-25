@@ -175,7 +175,11 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   (true when the newest assistant turn is newer than `last_read_at`). The chat
   tool can call `update_card_fields` to patch any basic column or merge into
   `exploration_extras` / `grammar` server-side; the assistant body gets a
-  `_Updated: …_` italic line and the focus view re-fetches the card. An
+  `_Updated: …_` italic line and the focus view re-fetches the card. When a
+  turn patched the chunk, the `sendMessage` response also carries the persisted
+  result as `updatedChunk` (null on conversational turns), which the client
+  uses to reconcile embedded chunk copies — e.g. a stashed practice session —
+  without waiting on a refetch. An
   unqualified request to fill / create / generate the card's data populates
   only the basic fields (translation, definition, target/native example) plus
   core grammar — `extras_patch` (the full-exploration bag: frequency, register,

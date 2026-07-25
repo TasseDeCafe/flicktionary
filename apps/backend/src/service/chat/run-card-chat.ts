@@ -5,7 +5,11 @@ import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/lo
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
-import { CardsRepositoryInterface, DbCardWithChunk } from '../../transport/database/cards/cards-repository'
+import {
+  CardsRepositoryInterface,
+  DbCardWithChunk,
+  DbChunkSummary,
+} from '../../transport/database/cards/cards-repository'
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import {
   CardChatMessagesRepositoryInterface,
@@ -56,6 +60,10 @@ export type RunCardChatInput = {
 export type RunCardChatResult = {
   userMessage: DbCardChatMessage
   assistantMessage: DbCardChatMessage
+  // The chunk as persisted after this turn's update_card_fields patch; null
+  // when the turn didn't touch the chunk (conversational reply, surface_form-
+  // only edit, or a replayed seeded turn).
+  updatedChunk: DbChunkSummary | null
 }
 
 const VERBATIM_TURNS = 4
@@ -301,7 +309,7 @@ export const runCardChat = async (
         source: input.source ?? 'seed',
         sourceTurnKey: input.sourceKey,
       })
-      return { userMessage, assistantMessage: existingAssistant }
+      return { userMessage, assistantMessage: existingAssistant, updatedChunk: null }
     }
   }
 
@@ -381,6 +389,7 @@ export const runCardChat = async (
   const toolUse = response.content.find((block) => block.type === 'tool_use')
 
   let updatedFieldNames: string[] = []
+  let chunkPatched = false
   if (toolUse && toolUse.type === 'tool_use' && toolUse.name === UPDATE_TOOL_NAME) {
     const parsed = parseToolInput(toolUse.input)
     if (parsed) {
@@ -430,6 +439,7 @@ export const runCardChat = async (
           studySessionsRepository: deps.studySessionsRepository,
           userLookupsRepository: deps.userLookupsRepository,
         })
+        chunkPatched = true
       }
       if (parsed.patch.headword !== null || parsed.patch.sense !== null) {
         const result = await deps.userLookupsRepository.renameKey({
@@ -442,11 +452,19 @@ export const runCardChat = async (
           // reply still lists what we did manage to apply. A future iteration
           // could surface a typed warning to the assistant.
           parsed.changedFieldNames = parsed.changedFieldNames.filter((n) => n !== 'headword' && n !== 'sense')
+        } else {
+          chunkPatched = true
         }
       }
       updatedFieldNames = parsed.changedFieldNames
     }
   }
+
+  // Refetch after the patch so the response carries the chunk as persisted
+  // (JSONB merges and the rename may differ from the raw tool input).
+  const updatedChunk = chunkPatched
+    ? ((await deps.cardsRepository.findByIdForUser(input.cardId, input.userId))?.chunk ?? null)
+    : null
 
   const baseText = assistantText || (updatedFieldNames.length > 0 ? 'Done.' : '')
   if (!baseText) {
@@ -475,7 +493,7 @@ export const runCardChat = async (
       source,
       sourceTurnKey: input.sourceKey,
     })
-    return { userMessage, assistantMessage }
+    return { userMessage, assistantMessage, updatedChunk }
   }
 
   const userMessage = await deps.cardChatMessagesRepository.insertMessage({
@@ -490,5 +508,5 @@ export const runCardChat = async (
     content: finalAssistantBody,
   })
 
-  return { userMessage, assistantMessage }
+  return { userMessage, assistantMessage, updatedChunk }
 }

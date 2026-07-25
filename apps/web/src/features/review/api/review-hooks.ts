@@ -104,6 +104,15 @@ export const useSendChatMessage = (cardId: string, sessionId?: string) => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.cardChat.sendMessage.mutationOptions({
+      // When the assistant's update_card_fields tool patched the chunk, the
+      // response carries the persisted result — reconcile the stashed practice
+      // session's embedded copies, same as the direct edit mutations.
+      onSuccess: ({ data }) => {
+        if (data.updatedChunk) {
+          patchTermInComposedSession(data.updatedChunk)
+          patchTermInExerciseSession(data.updatedChunk)
+        }
+      },
       meta: {
         // The chat handler may have called update_card_fields server-side,
         // so the card data on disk may have shifted — refetch the card caches
@@ -150,6 +159,10 @@ export const useExploreCard = () => {
     orpcQuery.cards.explore.mutationOptions({
       onSuccess: (response) => {
         setCardEverywhere(queryClient, response.data)
+        // Full exploration rewrites chunk content — reconcile the stashed
+        // practice session's embedded copies, same as the edit mutations.
+        patchTermInComposedSession(response.data.chunk)
+        patchTermInExerciseSession(response.data.chunk)
       },
       meta: { errorMessage: t`Failed to generate exploration` },
     })

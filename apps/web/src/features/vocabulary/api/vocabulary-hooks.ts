@@ -3,7 +3,11 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
-import { dropTermFromComposedSession } from '@/features/practice/components/composed-session-snapshot'
+import {
+  dropFacetFromComposedSession,
+  dropTermFromComposedSession,
+  patchFacetInComposedSession,
+} from '@/features/practice/components/composed-session-snapshot'
 import { dropTermFromExerciseSession } from '@/features/practice/components/exercise-session-snapshot'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import {
@@ -150,6 +154,12 @@ export const useGenerateFacetData = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.generateFacetData.mutationOptions({
+      // A stashed practice session embeds form cards' facetPayload — patch it
+      // so the generated data shows when the session resumes (same rationale
+      // as the chunk edit mutations' patchTermIn*Session calls).
+      onSuccess: ({ data }, variables) => {
+        patchFacetInComposedSession(variables.chunkId, data.facets)
+      },
       meta: {
         invalidates: [orpcQuery.chunks.getStudyTargets.key(), ...practiceSummaryKeys()],
         errorMessage: t`Couldn't generate the form's data`,
@@ -169,6 +179,9 @@ export const useSetFacetPayload = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.setFacetPayload.mutationOptions({
+      onSuccess: ({ data }, variables) => {
+        patchFacetInComposedSession(variables.chunkId, data.facets)
+      },
       meta: {
         invalidates: [
           orpcQuery.chunks.getStudyTargets.key(),
@@ -191,6 +204,12 @@ export const useDeleteFacet = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.deleteFacet.mutationOptions({
+      // A stashed practice session must not re-serve the deleted facet's cards
+      // (rating a deleted facet fails) — the facet-scoped analog of the
+      // soft-delete mutations' dropTermFromComposedSession call.
+      onSuccess: (_data, variables) => {
+        dropFacetFromComposedSession(variables.chunkId, variables.skill, variables.targetForm)
+      },
       meta: {
         invalidates: [orpcQuery.chunks.getStudyTargets.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
         errorMessage: t`Couldn't remove the form`,

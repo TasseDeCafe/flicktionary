@@ -20,7 +20,8 @@ import {
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { toIsoString } from '../router-utils'
 
-const toChunkDto = (chunk: DbChunkSummary) => ({
+// Also consumed by the card-chat router for the sendMessage updatedChunk field.
+export const toChunkDto = (chunk: DbChunkSummary) => ({
   id: chunk.id,
   userId: chunk.user_id,
   targetLanguage: chunk.target_language,

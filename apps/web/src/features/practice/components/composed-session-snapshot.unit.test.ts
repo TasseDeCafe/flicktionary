@@ -10,8 +10,10 @@ import type { ExerciseAnswerData } from './strengthen-types'
 import {
   clearComposedSession,
   currentDayKey,
+  dropFacetFromComposedSession,
   dropTermFromComposedSession,
   ipaSourceForChunk,
+  patchFacetInComposedSession,
   patchTermInComposedSession,
   saveComposedSession,
   takeComposedSession,
@@ -202,6 +204,71 @@ describe('patchTermInComposedSession', () => {
 
   it('is a no-op when nothing is stashed', () => {
     expect(() => patchTermInComposedSession(editedChunk())).not.toThrow()
+  })
+})
+
+describe('patchFacetInComposedSession', () => {
+  it('replaces the matching form card payload; citation and other-facet cards stay untouched', () => {
+    const formCard = cardItem('edited', {
+      skill: 'meaning_recognition',
+      targetForm: 'forms',
+      facetPayload: { form: 'forms', translation: 'old' },
+    })
+    const otherSkill = cardItem('edited', {
+      skill: 'meaning_production',
+      targetForm: 'forms',
+      facetPayload: { form: 'forms', translation: 'old' },
+    })
+    const citation = cardItem('edited', { targetForm: '', translation: 'lemma gloss' })
+    saveComposedSession(snapshot({ queue: [formCard, otherSkill, citation] }))
+
+    patchFacetInComposedSession('edited', [
+      {
+        skill: 'meaning_recognition',
+        targetForm: 'forms',
+        enabled: true,
+        dataStatus: 'ready',
+        srsState: null,
+        payload: { form: 'forms', translation: 'new' },
+        generatedPayload: null,
+        source: null,
+      },
+    ])
+
+    const resumed = takeComposedSession('en', filter())
+    const [patched, untouchedSkill, untouchedCitation] = resumed?.queue ?? []
+    expect(patched?.type === 'flashcard' && patched.card.facetPayload).toEqual({ form: 'forms', translation: 'new' })
+    expect(untouchedSkill?.type === 'flashcard' && untouchedSkill.card.facetPayload).toEqual({
+      form: 'forms',
+      translation: 'old',
+    })
+    expect(untouchedCitation?.type === 'flashcard' && untouchedCitation.card.translation).toBe('lemma gloss')
+  })
+
+  it('is a no-op when nothing is stashed', () => {
+    expect(() => patchFacetInComposedSession('edited', [])).not.toThrow()
+  })
+})
+
+describe('dropFacetFromComposedSession', () => {
+  it('removes the deleted facet at and after the live index, keeping siblings and consumed copies', () => {
+    const consumed = cardItem('term', { skill: 'meaning_recognition', targetForm: 'forms' })
+    const live = cardItem('term', { skill: 'meaning_recognition', targetForm: 'forms' })
+    const otherFacet = cardItem('term', { skill: 'meaning_recognition', targetForm: 'other' })
+    const citation = cardItem('term', { skill: 'meaning_recognition', targetForm: '' })
+    const ratingRecords = new Map([[live, { rating: 'good' as const, eventId: 'e1', redrill: null }]])
+    saveComposedSession(snapshot({ queue: [consumed, live, otherFacet, citation], index: 1, ratingRecords }))
+
+    // Raw (uppercased, padded) form still matches the normalized stored key.
+    dropFacetFromComposedSession('term', 'meaning_recognition', '  Forms ')
+
+    const resumed = takeComposedSession('en', filter())
+    expect(resumed?.queue).toEqual([consumed, otherFacet, citation])
+    expect(resumed?.ratingRecords.has(live)).toBe(false)
+  })
+
+  it('is a no-op when nothing is stashed', () => {
+    expect(() => dropFacetFromComposedSession('term', 'meaning_recognition', 'forms')).not.toThrow()
   })
 })
 

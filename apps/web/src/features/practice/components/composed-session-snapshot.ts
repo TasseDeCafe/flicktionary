@@ -1,5 +1,11 @@
-import type { Chunk, PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  Chunk,
+  FacetSkill,
+  PracticeQueueFilter,
+  StudyFacetSummary,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
+import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import type { RateValue } from '@flicktionary/ui/components/rate-buttons'
 import type { ComposedQueueItem } from './composed-queue-merge'
 import type { ExerciseAnswerData } from './strengthen-types'
@@ -127,6 +133,50 @@ export const patchTermInComposedSession = (chunk: Chunk) => {
       }
     }
   }
+}
+
+// The form-card counterpart of patchTermInComposedSession: rewrites a stashed
+// form card's facetPayload from the facet mutations' refreshed study-targets
+// response (the payload is the merged server truth, so a manual edit and a
+// generate pass patch identically). Citation cards never match — their content
+// lives on the chunk and flows through patchTermInComposedSession.
+export const patchFacetInComposedSession = (chunkId: string, facets: StudyFacetSummary[]) => {
+  if (!slot) return
+  for (const item of slot.queue) {
+    if (item.type !== 'flashcard' || item.card.userLookupId !== chunkId || item.card.targetForm === '') continue
+    const facet = facets.find((f) => f.skill === item.card.skill && f.targetForm === item.card.targetForm)
+    if (facet) item.card = { ...item.card, facetPayload: facet.payload }
+  }
+}
+
+// Splices a hard-deleted form facet's cards out of the stashed session (rating
+// a deleted facet would fail) — the facet-scoped analog of
+// dropTermFromComposedSession, with the same index rules: only not-yet-reached
+// positions are removed, consumed items stay so the live index keeps pointing
+// at the same card. `targetForm` is normalized like the server normalizes the
+// mutation input, so a raw form string still matches the stored facet identity.
+export const dropFacetFromComposedSession = (chunkId: string, skill: FacetSkill, targetForm: string) => {
+  if (!slot) return
+  const normalizedForm = normalizeTargetForm(targetForm)
+  const removed = new Set<ComposedQueueItem>()
+  const queue = slot.queue.filter((item, position) => {
+    if (position < slot!.index) return true
+    if (
+      item.type !== 'flashcard' ||
+      item.card.userLookupId !== chunkId ||
+      item.card.skill !== skill ||
+      item.card.targetForm !== normalizedForm
+    )
+      return true
+    removed.add(item)
+    return false
+  })
+  if (removed.size === 0) return
+  for (const item of removed) {
+    slot.ratingRecords.delete(item)
+    slot.exerciseOutcomes.delete(item)
+  }
+  slot.queue = queue
 }
 
 // Splices a deleted term out of the stashed session so a resume can't serve

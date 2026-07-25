@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { CardChatMessageSchema } from './common/flicktionary-schemas'
+import { CardChatMessageSchema, ChunkSchema } from './common/flicktionary-schemas'
 
 export const cardChatContract = {
   listForCard: oc
@@ -22,6 +22,11 @@ export const cardChatContract = {
         data: z.object({
           userMessage: CardChatMessageSchema,
           assistantMessage: CardChatMessageSchema,
+          // The chunk as it stands after this turn's update_card_fields tool
+          // patch, when the assistant applied one — null for purely
+          // conversational turns. Lets the client reconcile embedded chunk
+          // copies (e.g. a stashed practice session) without a refetch.
+          updatedChunk: ChunkSchema.nullable(),
         }),
       })
     ),
