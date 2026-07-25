@@ -293,10 +293,17 @@ The enrichment path uses these shared steps:
    into the row's `grammar` JSONB with **kaikki winning where both sides
    have a value**; LLM-only keys (e.g. `government`, `notes`,
    `notable_forms` — German keeps principal parts LLM-owned) are preserved
-   untouched. English **and German** skip Wiktionary `display_form` because
-   head-template expansions are noisy (`dictionary (plural dictionaries)`;
-   German `Haus n (strong, genitive Hauses, …)`); English IPA is bucketed
-   into GA/RP when tags allow it, while non-English IPA uses the untagged
+   untouched. English, German, Spanish **and Portuguese** skip Wiktionary
+   `display_form` because head-template expansions are noisy whole head lines
+   (`dictionary (plural dictionaries)`; German `Haus n (strong, genitive
+   Hauses, …)`; es/pt have no ` • ` separator so the entire expansion would
+   leak). IPA is bucketed per dialect-split language: English into GA/RP when
+   tags allow it, Portuguese into BR/EU from bare `Brazil`/`Portugal` tags
+   (narrower regions like Rio-de-Janeiro dropped), Spanish into
+   Castilian/LatAm via the θ-twin rule over untagged variants (a θ-variant
+   whose θ→s twin — exact, or fuzzy after stress-strip + s-degemination — is
+   present splits into `cas`/`lam`; unpaired variants stay shared). Other
+   languages use the untagged
    bucket — for German, sounds tagged only `standard` / `Germany` count as
    untagged too, and any regional tag (Austria / Switzerland /
    Southern-Germany) is dropped so a learner never gets a regional
@@ -345,8 +352,8 @@ The enrichment path uses these shared steps:
      grammar bag, not extras: `extras.ipa` is no longer in the schema
      (legacy rows keep theirs as dead-but-rendered data) and
      the pass instead emits `grammar.ipa` — a dialect bag like grounding
-     writes (English → the user's `english_ipa_dialect` bucket, others →
-     `untagged`, delimiters included) — which is merged ONLY when the
+     writes (dialect-split languages (en/es/pt) → the user's IPA dialect
+     bucket, others → `untagged`, delimiters included) — which is merged ONLY when the
      stored bag has nothing displayable, isn't Wiktionary-grounded, and
      the grammar wasn't user-edited. Per-chunk L1 notes (e.g. an
      English speaker's confusion between `près de moi` and `chez moi`)

@@ -7,12 +7,11 @@ allowed-tools: Read, Edit, Write, Bash(pnpm:*), Bash(doppler:*), Bash(grep:*), B
 
 You are adding a language code (e.g. `de`, `fr`, `es`) to the set of languages whose cards get grounded against the Kaikki Wiktionary dump. This is *separate* from UI locales — don't touch Lingui files.
 
-The grounding pipeline has four moving parts, all keyed on a two/three-letter `lang_code` matching kaikki's value:
+The grounding pipeline has three moving parts, all keyed on a two/three-letter `lang_code` matching kaikki's value:
 
-1. **Loader** — `apps/backend/scripts/load-kaikki.ts` decides which `lang_code` values survive the filter when streaming the raw `raw-wiktextract-data.jsonl.gz` dump into `wiktionary_entries` / `wiktionary_forms`.
-2. **Grounding allowlist (backend)** — `apps/backend/src/service/wiktionary-grounding/config.ts` decides whether grounding runs at all for a card's `targetLanguage`.
-3. **Grounding allowlist (shared)** — `packages/core/src/constants/language-grammar.ts` mirrors the backend set so the focus view can render the "Wiktionary" badge correctly.
-4. **Per-language extractor** — `apps/backend/src/service/wiktionary-grounding/extract.ts` decides what to pull out of each entry. The default path (POS only + IPA) works for most languages; only Russian currently has language-specific noun/verb logic, and English has dialect-bucketed IPA + a display-form skip.
+1. **Loader** — `apps/backend/scripts/load-kaikki.ts` decides which `lang_code` values survive the filter when streaming the raw `raw-wiktextract-data.jsonl.gz` dump into `wiktionary_entries` / `wiktionary_forms`. The standalone redirect rebuilder (`scripts/build-wiktionary-redirects.ts`) and the lemma-ranks scripts keep their own `DEFAULT_LANGUAGES` lists in sync.
+2. **Grounding allowlist** — `KAIKKI_LANGUAGES` in `packages/core/src/constants/language-grammar.ts` is the single set gating everything: backend grounding, the focus view's "Wiktionary" badge, and checkpoint reviews. (There is no separate backend config file.)
+3. **Per-language extractor** — `apps/backend/src/service/wiktionary-grounding/extract.ts` owns a `LANGUAGE_EXTRACTORS` registry (per-POS parsers + a `skipDisplayForm` flag per language; no if/else chain — adding a language is one registry entry at most). The default path (generic POS + IPA) works for most languages. IPA bucketing lives in `extract/ipa.ts`: English GA/RP from region tags, Portuguese BR/EU from bare `Brazil`/`Portugal` tags, Spanish Castilian/LatAm via the θ-twin rule over untagged variants; every other language keeps the `untagged` bucket.
 
 Always read the current state of these files before editing — the example values below were correct at the time of writing but the sets change as languages are added.
 
@@ -28,9 +27,9 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
    No other loader change is needed: the filter writes `lang_code` per row, the CSVs are language-tagged, and the workflow caches by gzipped raw dump.
 
-2. **Backend grounding allowlist** — in `apps/backend/src/service/wiktionary-grounding/config.ts`, add to `KAIKKI_ENABLED_LANGUAGES`. Both sets must agree.
+2. **Redirects/ranks defaults** — add `<code>` to `DEFAULT_LANGUAGES` in `scripts/build-wiktionary-redirects.ts` so standalone no-arg rebuilds cover it (the ranks-script lists come later, step 10).
 
-3. **Shared grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the same code to `KAIKKI_LANGUAGES`. (Mirror of the backend set; used by the focus view's grounding badge.) Note the blast radius: this set also hard-gates **checkpoint reviews** (docs/SRS.md §6b) — adding the language turns on the reader-footer / close-out / extension checkpoint affordances for it, so the checkpoint-matching decisions in the step below are part of shipping, not optional polish.
+3. **Grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the code to `KAIKKI_LANGUAGES` (the single set — backend gates and web badges both read it). Note the blast radius: this set also hard-gates **checkpoint reviews** (docs/SRS.md §6b) — adding the language turns on the reader-footer / close-out / extension checkpoint affordances for it, so the checkpoint-matching decisions in the step below are part of shipping, not optional polish.
 
 4. **Per-language grammar config** — in the same file, add (or extend) the `LANGUAGE_GRAMMAR[<code>]` entry. The fields you list drive what the focus view *and* the practice rate sheet render as chips (both consume `getLanguageGrammarConfig`), and what the focus view's editable panel exposes. The renderer narrows this list further by part-of-speech via `getEffectiveGrammarFields(targetLanguage, pos)` — POS-specific keys (e.g. `aspect` for verbs, `gender` for nouns) live in `POS_SPECIFIC_FIELDS` in the same file and apply across languages, so the language config just decides which keys even exist for that language. `ipa` is editable and dialect-aware: `FocusView` shows the picked bucket via `pickIpa(...)` above the chips, and the editable panel writes back to the correct bucket (`ga`/`rp`/`untagged`) based on the user's `englishIpaDialect` pref. Example shape:
 
@@ -49,24 +48,18 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
    - **Default path is often enough.** `extractGrammarPatch(entry, langCode)` falls through to `pos = POS_KAIKKI_TO_GRAMMAR[posRaw]` for any langCode not explicitly handled. For non-English languages, IPA extraction only keeps `sounds[]` entries with no tags (`untagged` bucket), and display-form extraction runs unless the language is explicitly skipped. Do not assume this is correct until you inspect real raw dump entries for the new language.
 
-   - **5a. Language-specific POS extraction.** Only add if Russian-style verb/noun template parsing would meaningfully help (gender, aspect, animacy, etc.). Gate on the new langCode the same way the Russian extractors are gated:
+   - **5a. Language-specific POS extraction.** Only add if Russian/German-style template parsing would meaningfully help (gender, aspect, plural, etc.). Add a `LANGUAGE_EXTRACTORS[<code>]` registry entry with a `byPos` map (see the `ru`/`de` entries) plus an `extract/<code>.ts` module — no if/else chain.
 
      ```ts
-     if (langCode === 'ru' && posRaw === 'verb') patch = extractVerb(entry)
-     else if (langCode === 'ru' && posRaw === 'noun') patch = extractNoun(entry)
-     else if (langCode === '<code>' && posRaw === '<pos>') patch = extract<Code><Pos>(entry)
-     else patch = { pos: POS_KAIKKI_TO_GRAMMAR[posRaw] }
+     const LANGUAGE_EXTRACTORS: Record<string, LanguageExtractor> = {
+       // ...
+       '<code>': { byPos: { noun: extract<Code>Noun } },
+     }
      ```
 
-   - **5b. Display-form quirks.** English skips `extractDisplayForm` because the head_template expansion is noisy ("dictionary (plural dictionaries)") and confuses learners. If the new language has the same problem, add it to the skip list:
+   - **5b. Display-form quirks.** en/de/es/pt skip `extractDisplayForm` because their head_template expansions are noisy whole head lines ("dictionary (plural dictionaries)", "pie m (plural pies)") — a card title, not a display form. Watch for the bullet: `extractDisplayForm` strips everything past ` • `; a language WITHOUT that separator (es/pt) returns the entire expansion, which is almost never wanted. If the new language has the same problem, set `skipDisplayForm: true` in its `LANGUAGE_EXTRACTORS` entry. Check by hand against a few entries before deciding.
 
-     ```ts
-     const display = langCode === 'en' || langCode === '<code>' ? null : extractDisplayForm(entry)
-     ```
-
-     Check by hand against a few entries before deciding — most languages are fine with the default.
-
-   - **5c. Dialect-bucketed IPA.** Only needed for languages where users will pick between dialect variants (currently only English: GA vs RP, driven by `users.english_ipa_dialect`). Don't add buckets speculatively — `untagged` works for everything else. If a new dialect preference is needed, you'll also need a new DB column + migration + user-prefs contract field + selector component, mirroring the English flow.
+   - **5c. Dialect-bucketed IPA.** Only needed for languages where users pick between dialect variants (English GA/RP from region tags; Portuguese BR/EU from bare `Brazil`/`Portugal` tags; Spanish Castilian/LatAm via the θ-twin rule — see `extract/ipa.ts`). Don't add buckets speculatively — `untagged` works for everything else. A new dialect split needs the full pref flow: `IpaBagShape`/`GrammarIpaBagSchema` keys, a DB column + migration, the `setIpaDialect` contract union arm, `pickIpa`/`hasDisplayableIpa`/`pickIpaForDisplay` resolution, the settings row + `IpaDialectFlag` entry, LLM steering (language-instructions dialect block + `grammar-tool-schema` + `sanitizeGrammarIpa`), and the export labels in `build-vocabulary-csv.ts`.
 
    - **5d. IPA tag validation.** Before trusting the default untagged IPA behavior, inspect several real entries from the raw dump:
 
@@ -129,10 +122,10 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 Reverse of adding, in roughly this order to keep types happy:
 
 1. Remove from `LANGUAGE_GRAMMAR` (or downgrade the config to a minimal entry — the focus view will fall back to `DEFAULT_GRAMMAR_CONFIG` when omitted).
-2. Remove from `KAIKKI_LANGUAGES` in `packages/core/src/constants/language-grammar.ts`.
-3. Remove from `KAIKKI_ENABLED_LANGUAGES` in `apps/backend/src/service/wiktionary-grounding/config.ts`.
-4. Remove from `LOAD_LANGUAGES` in `apps/backend/scripts/load-kaikki.ts`.
-5. Remove language-specific extractor branches and their tests if any were added.
+2. Remove from `KAIKKI_LANGUAGES` in `packages/core/src/constants/language-grammar.ts` (the single allowlist).
+3. Remove from `LOAD_LANGUAGES` in `apps/backend/scripts/load-kaikki.ts` and from `DEFAULT_LANGUAGES` in `scripts/build-wiktionary-redirects.ts`.
+4. Remove the language's `LANGUAGE_EXTRACTORS` entry, any `extract/<code>.ts` module, and their tests.
+5. If the language had a dialect split, unwind the pref flow too (bag keys, DB column, contract arm, settings row, steering).
 6. Remove any checkpoint fold/particle branches added for the language (`foldCheckpointToken` needs its SQL twin changed via a NEW migration in lockstep, plus the parity vectors; `foldUserHeadwordCandidates` / `MWE_PARTICLES` are TS-only).
 7. `pnpm check:types` + tests.
 8. Remove the language from `DEFAULT_LANGUAGES` in `scripts/export-wordfreq.py` + `scripts/build-lemma-ranks.ts` (if it was ever added) and delete its rows from `lemma_ranks` / `lemma_rank_builds` by hand — the build script only touches languages it's asked to build, so nothing deletes them automatically.
