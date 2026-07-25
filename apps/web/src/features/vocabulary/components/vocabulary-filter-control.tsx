@@ -141,15 +141,26 @@ const FilterPanel = ({ filters, onChange, languages, language, onLanguageChange 
 }
 
 // Single "Sort & filter" control: a Radix popover on desktop, a bottom sheet on
-// mobile. The trigger carries a dot when any narrowing filter is active.
+// mobile. The trigger carries a dot when any narrowing filter is active. When
+// the user studies several languages the trigger also names the selected one —
+// the list is always scoped to a single language, and without the label
+// nothing on the page says which.
 export const VocabularyFilterControl = ({ filters, onChange, languages, language, onLanguageChange }: Props) => {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const hasActiveFilters = filters.status !== undefined || filters.skills.length > 0 || filters.hasMultipleForms
+  const languageLabel =
+    languages.length > 1 && language !== null ? getLocalizedCoverageLanguageName(i18n, language) : null
 
   const trigger = (
-    <Button variant='outline' size='icon' aria-label={t`Sort and filter`} className='relative shrink-0'>
+    <Button
+      variant='outline'
+      size={languageLabel ? undefined : 'icon'}
+      aria-label={languageLabel ? t`Sort and filter — language: ${languageLabel}` : t`Sort and filter`}
+      className={languageLabel ? 'relative h-11 shrink-0 gap-1.5 px-3 md:h-9' : 'relative shrink-0'}
+    >
+      {languageLabel && <span className='max-w-28 truncate'>{languageLabel}</span>}
       <SlidersHorizontal className='h-5 w-5' />
       {hasActiveFilters && (
         <span className='border-background absolute top-1.5 right-1.5 h-2 w-2 rounded-full border bg-yellow-500' />
