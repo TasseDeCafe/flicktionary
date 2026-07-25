@@ -1,5 +1,6 @@
 import postgres from 'postgres'
 import { shiftPracticeTimestamps } from '../src/transport/database/dev-tools/shift-practice-timestamps'
+import { resolveConnectionString } from './db-connection'
 
 // Dev time travel: shift all practice timestamps backward so day-based guards
 // (warm-up / leech-rehab graduation across 3 distinct days, the daily-new cap,
@@ -10,11 +11,6 @@ import { shiftPracticeTimestamps } from '../src/transport/database/dev-tools/shi
 //   pnpm db:advance-day                     # whole dev-tunnel DB, 1 day
 //   pnpm db:advance-day --days 2            # 2 days
 //   pnpm db:advance-day --email me@x.com    # only that user's data
-//
-// Hardcoded for local dev work, like load-kaikki.ts: the loader runs as a
-// standalone tsx script without booting the app's config layer. Override with
-// SUPABASE_CONNECTION_STRING (e.g. via `doppler run --`) if needed.
-const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
 
 const parseArgs = (argv: string[]): { days: number; email?: string } => {
   let days = 1
@@ -36,7 +32,7 @@ const parseArgs = (argv: string[]): { days: number; email?: string } => {
 
 const main = async (): Promise<void> => {
   const { days, email } = parseArgs(process.argv.slice(2))
-  const connectionString = process.env.SUPABASE_CONNECTION_STRING || DEFAULT_LOCAL_DEV_CONNECTION
+  const connectionString = resolveConnectionString()
   const sql = postgres(connectionString)
 
   try {

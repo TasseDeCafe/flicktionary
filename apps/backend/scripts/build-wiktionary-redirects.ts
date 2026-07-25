@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import postgres, { type Sql } from 'postgres'
+import { maskConnectionString, resolveConnectionString } from './db-connection'
+import { LOAD_LANGUAGES } from './kaikki-languages'
 
 // Rebuilds public.wiktionary_form_redirects: the precomputed resolution of
 // kaikki stub entries (form-of / alt-of pseudo-entries) to their final real
@@ -14,9 +16,6 @@ import postgres, { type Sql } from 'postgres'
 // redirects rebuild in the same run. Standalone invocations
 // (`npx tsx scripts/build-wiktionary-redirects.ts [lang...]`) are
 // language-scoped: DELETE WHERE target_language = $lang, never TRUNCATE.
-
-const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
-const DEFAULT_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 
 // U+0301 combining acute — Russian stress mark; stub targets carry it, entry
 // headwords don't. Bound as a parameter (not a SQL U&'' literal) so the JS
@@ -102,12 +101,11 @@ export const rebuildWiktionaryRedirects = async (
 }
 
 const main = async (): Promise<void> => {
-  const envValue = process.env.SUPABASE_CONNECTION_STRING ?? ''
-  const connectionString = envValue.startsWith('postgresql://') ? envValue : DEFAULT_LOCAL_DEV_CONNECTION
-  console.log(`Connecting to ${connectionString.replace(/:[^:@]+@/, ':****@')}`)
+  const connectionString = resolveConnectionString()
+  console.log(`Connecting to ${maskConnectionString(connectionString)}`)
 
   const args = process.argv.slice(2).filter((a) => !a.startsWith('-'))
-  const languages = args.length > 0 ? args : [...DEFAULT_LANGUAGES]
+  const languages = args.length > 0 ? args : [...LOAD_LANGUAGES]
 
   const sql = postgres(connectionString, { max: 1 })
   try {

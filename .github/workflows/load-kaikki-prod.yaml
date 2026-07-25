@@ -61,3 +61,9 @@ jobs:
 
       - name: Load kaikki into prod
         run: pnpm --filter @flicktionary/backend load:kaikki
+
+      # Independent check on a fresh connection: the loader process has died
+      # silently mid-COPY before while its step still exited 0, so never trust
+      # the load step's exit code alone.
+      - name: Verify load
+        run: pnpm --filter @flicktionary/backend verify:kaikki-load
