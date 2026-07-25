@@ -131,10 +131,13 @@ stays as a write-only generation artifact; its never-overwrite gate is **form-fa
 (`hasFormFacet`).
 
 - **Key normalization** — `target_form` is normalized on every write path by
-  `normalizeTargetForm(text)` (`packages/core/utils/normalize-target-form.ts`: strip combining
-  acute U+0301 → NFC → trim → lowercase) so `стола`/`стола́`/`Houses`/`houses` collapse to one key.
-  The SQL twin (`lower(trim(normalize(regexp_replace(form, U+0301, '', 'g'), NFC)))`) is pinned
-  byte-for-byte in the migration and the candidate query. `payload` keeps the **full
+  `normalizeTargetForm(text)` (`packages/core/utils/normalize-target-form.ts`: NFC → strip
+  combining acute U+0301 → trim → lowercase) so `стола`/`стола́`/`Houses`/`houses` collapse to one
+  key. NFC runs before the strip so orthographic acutes arriving decomposed compose and survive
+  (NFD `más` keys as `más`, never colliding with `mas`); a U+0301 that survives NFC has no
+  precomposed form — a Russian-style stress mark — and is stripped. The SQL twin
+  (`lower(trim(regexp_replace(normalize(form, NFC), chr(769), '', 'g')))`) is pinned
+  byte-for-byte in the repository queries. `payload` keeps the **full
   display form** (stress/case intact); only the key folds. This is **not** the display
   `stripStressMarks` helper (which preserves case for the front render).
 - **payload** = the form's own full card content (`FormFacetPayloadSchema`: `form`, plus optional
