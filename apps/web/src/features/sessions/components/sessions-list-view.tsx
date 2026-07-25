@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { PageContainer } from '@/components/page-container'
+import { FilterChip } from '@/components/filter-chip'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
@@ -179,24 +180,4 @@ const FilterChipsSkeleton = () => (
       <Skeleton key={i} className={`h-7 shrink-0 rounded-full ${width}`} />
     ))}
   </div>
-)
-
-const FilterChip = ({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) => (
-  <button
-    type='button'
-    onClick={onClick}
-    className={`shrink-0 rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors ${
-      active ? 'bg-yellow-400 font-medium text-yellow-950' : 'bg-muted text-foreground hover:bg-accent'
-    }`}
-  >
-    {children}
-  </button>
 )

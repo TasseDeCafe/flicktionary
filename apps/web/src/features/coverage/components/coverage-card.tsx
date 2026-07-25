@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { SeeMoreLink } from '@/components/ui/see-more-link'
+import { FilterChip } from '@/components/filter-chip'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useQualifyingCoverage, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, CARD_COMPACT_RULE } from '../utils/coverage-render'
@@ -24,7 +25,7 @@ const CARD_END_RANK = 5000
 // safety net. On mobile the card chrome drops so the wall spans the same
 // width as the session cards below.
 export const CoverageCard = () => {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const { qualifying, isLoading } = useQualifyingCoverage()
   const { data: prefs } = useGetUserPrefs()
   const [selected, setSelected] = useState<string | null>(null)
@@ -64,12 +65,13 @@ export const CoverageCard = () => {
       {chips.length > 0 && (
         <div className='mt-auto flex flex-wrap justify-center gap-2 pt-3'>
           {chips.map((language) => (
-            <CoverageChip
+            <FilterChip
               key={language}
-              language={language}
               active={language === active.targetLanguage}
-              onSelect={setSelected}
-            />
+              onClick={() => setSelected(language)}
+            >
+              {getLocalizedCoverageLanguageName(i18n, language)}
+            </FilterChip>
           ))}
         </div>
       )}
@@ -92,31 +94,6 @@ const CoverageCardHeader = ({ coverage, wallSize }: { coverage: LanguageCoverage
         <div className='text-muted-foreground text-xs'>{t`of typical text`}</div>
       </div>
     </div>
-  )
-}
-
-const CoverageChip = ({
-  language,
-  active,
-  onSelect,
-}: {
-  language: string
-  active: boolean
-  onSelect: (language: string) => void
-}) => {
-  const { i18n } = useLingui()
-  return (
-    <button
-      type='button'
-      onClick={() => onSelect(language)}
-      className={`shrink-0 rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors ${
-        active
-          ? 'bg-yellow-400 font-medium text-yellow-950'
-          : 'bg-muted text-foreground hover:bg-accent active:bg-accent/80'
-      }`}
-    >
-      {getLocalizedCoverageLanguageName(i18n, language)}
-    </button>
   )
 }
 
