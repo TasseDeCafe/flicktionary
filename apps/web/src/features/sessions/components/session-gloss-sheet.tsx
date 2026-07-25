@@ -18,7 +18,8 @@ import {
   draftToStudyIntent,
   type StudyIntentDraft,
 } from '@flicktionary/ui/components/study-options-section'
-import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
+import { ipaDialectsFromPrefs } from '@flicktionary/core/utils/pick-ipa'
 import {
   FloatingSheet,
   FloatingSheetBody,
@@ -634,9 +635,9 @@ export const SessionGlossSheet = ({
     document.addEventListener('pointerdown', onPointerDown, { capture: true })
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
   }, [open, isPreview, handleSave, handleRemove])
-  const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
+  const ipaDialects = ipaDialectsFromPrefs(userPrefs)
   // Server-picked, dialect-correct display string — no client-side bag picking.
-  // The prefs read above still feeds the EnglishIpaDialectFlag next to it.
+  // The prefs read above still feeds the IpaDialectFlag next to it.
   const displayedIpa = isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaDisplay : null
   // Only label the IPA with its lemma when there's an actual IPA to label (never
   // next to the "No Wiktionary IPA" fallback).
@@ -716,7 +717,7 @@ export const SessionGlossSheet = ({
                   ipaLemma={displayedIpaLemma}
                   ipaPrefix={
                     showIpaFlag ? (
-                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                      <IpaDialectFlag targetLanguage={targetLanguage} ipaDialects={ipaDialects} />
                     ) : undefined
                   }
                   srDescription={ariaDescription}

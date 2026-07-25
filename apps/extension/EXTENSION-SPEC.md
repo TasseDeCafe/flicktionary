@@ -529,7 +529,8 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   `FloatingSheet` desktop popover, portaled into a separate non-transformed
   popover shadow host): word, IPA
   (the server-picked `ipaDisplay` string — the backend resolves the user's
-  `english_ipa_dialect` pref, so the overlay shows the same dialect as the web
+  per-language IPA dialect pref (English GA/RP, Spanish Castilian/LatAm,
+  Portuguese BR/EU), so the overlay shows the same dialect as the web
   app; no client-side bag picking). When the surface form has no Wiktionary
   pronunciation of its own and the lookup fell back to its lemma's, the
   response's `ipaLemma` labels the IPA with that lemma (`beheben /bəˈheːbən/`

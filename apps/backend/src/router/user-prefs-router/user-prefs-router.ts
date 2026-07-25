@@ -22,6 +22,8 @@ type UserPrefsResponse = {
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
   englishIpaDialect: 'ga' | 'rp'
+  spanishIpaDialect: 'cas' | 'lam'
+  portugueseIpaDialect: 'br' | 'eu'
   uiTheme: 'light' | 'dark' | 'system' | null
   uiLanguage: string | null
   targetLanguagePrefs: {
@@ -52,7 +54,7 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
-    englishIpaDialect,
+    ipaDialects,
     uiTheme,
     uiLanguage,
     targetPrefs,
@@ -63,7 +65,7 @@ const buildPrefs = async (
     usersRepository.getLastTargetLanguage(userId),
     usersRepository.getTapToTranslateEnabled(userId),
     usersRepository.getLlmHighlightsEnabled(userId),
-    usersRepository.getEnglishIpaDialect(userId),
+    usersRepository.getIpaDialects(userId),
     usersRepository.getUiTheme(userId),
     usersRepository.getUiLanguage(userId),
     prefsRepository.listForUser(userId),
@@ -75,7 +77,9 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
-    englishIpaDialect,
+    englishIpaDialect: ipaDialects.en,
+    spanishIpaDialect: ipaDialects.es,
+    portugueseIpaDialect: ipaDialects.pt,
     uiTheme,
     uiLanguage,
     accountFlags: toKnownAccountFlags(accountFlags),
@@ -194,12 +198,14 @@ export const UserPrefsRouter = (
       }
     ),
 
-    setEnglishIpaDialect: implementer.setEnglishIpaDialect.handler(async ({ input, context, errors }) => {
+    setIpaDialect: implementer.setIpaDialect.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const ok = await usersRepository.setEnglishIpaDialect(userId, input.dialect)
+      // The contract's discriminated union already ties dialect values to the
+      // language, so the repository can trust the pair.
+      const ok = await usersRepository.setIpaDialect(userId, input.targetLanguage, input.dialect)
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update English IPA dialect' }] },
+          data: { errors: [{ message: 'Failed to update IPA dialect' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

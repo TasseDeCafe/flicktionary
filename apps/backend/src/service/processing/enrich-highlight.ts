@@ -105,7 +105,7 @@ export const enrichHighlight = async (
   // data pass now generates grammar.ipa by default (grounding overwrites it
   // with Wiktionary's where available).
   const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
-    ? await usersRepository.getEnglishIpaDialect(userId)
+    ? (await usersRepository.getIpaDialects(userId)).en
     : undefined
 
   const chunks = await anthropicPasses.basicDataPass({

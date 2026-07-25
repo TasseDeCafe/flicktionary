@@ -1,4 +1,4 @@
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { pickIpa, type IpaDialects } from '@flicktionary/core/utils/pick-ipa'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import type { Grammar, ReviewTerm } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
@@ -42,7 +42,7 @@ const grammarOf = (payload: Record<string, unknown> | null | undefined): Grammar
 export const resolveCardContent = (
   card: ReviewTerm,
   targetLanguage: string,
-  englishIpaDialect: 'ga' | 'rp'
+  ipaDialects: IpaDialects
 ): ResolvedCardContent => {
   const lemmaGrammar = (card.grammar ?? {}) as Grammar
 
@@ -59,7 +59,7 @@ export const resolveCardContent = (
       isForm: false,
       displayForm: citation.title,
       citationForms: citation.forms,
-      ipa: pickIpa(lemmaGrammar.ipa, targetLanguage, englishIpaDialect) ?? null,
+      ipa: pickIpa(lemmaGrammar.ipa, targetLanguage, ipaDialects) ?? null,
       translation: card.translation,
       definition: card.definition,
       targetExample: card.targetExample,
@@ -80,7 +80,7 @@ export const resolveCardContent = (
     displayForm: formDisplay,
     citationForms: null,
     // Form IPA only — never the lemma's (it would be wrong for the inflection).
-    ipa: hasFormGrammar ? (pickIpa(formGrammar.ipa, targetLanguage, englishIpaDialect) ?? null) : null,
+    ipa: hasFormGrammar ? (pickIpa(formGrammar.ipa, targetLanguage, ipaDialects) ?? null) : null,
     translation: str(p.translation) ?? card.translation,
     definition: str(p.definition) ?? card.definition,
     targetExample: str(p.targetExample) ?? card.targetExample,

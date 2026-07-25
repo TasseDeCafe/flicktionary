@@ -203,8 +203,8 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
   `regionalism`, `collocations`, `etymology`, `l1_notes`, `extra_notes`).
   Arrays/objects are rendered human-readable (`; `-joined, `label: form`);
   sparse keys leave empty cells. `ipa` prefers the extras string over the
-  grammar bag's dialect-tagged object (rendered `GA …; RP …` when untagged is
-  absent).
+  grammar bag's dialect-tagged object (dialect buckets rendered with labels —
+  `GA …; RP …`, `BR …; EU …`, `LatAm …; Cast. …` — when untagged is absent).
 - Tags: `flicktionary <target_language>`, plus `active` when the term has an
   enabled `(meaning_production, '')` facet and `leech` when either pool is leech-parked
   (Anki treats a `leech` tag natively).

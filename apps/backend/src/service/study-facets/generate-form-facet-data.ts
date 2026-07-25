@@ -99,7 +99,7 @@ export const generateFormFacetData = async (
 
     // English form IPA follows the user's dialect preference (GA vs RP).
     const englishIpaDialect = isEnglishTargetLanguage(term.targetLanguage)
-      ? await deps.usersRepository.getEnglishIpaDialect(params.userId)
+      ? (await deps.usersRepository.getIpaDialects(params.userId)).en
       : undefined
 
     const result = await deps.anthropicPasses.generateFormData({

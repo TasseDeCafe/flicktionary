@@ -12,7 +12,8 @@ import {
   draftToStudyIntent,
   type StudyIntentDraft,
 } from '@flicktionary/ui/components/study-options-section'
-import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
+import { ipaDialectsFromPrefs } from '@flicktionary/core/utils/pick-ipa'
 import {
   FloatingSheet,
   FloatingSheetBody,
@@ -184,7 +185,7 @@ export const LookupSheet = ({
   const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
   const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
-  const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
+  const ipaDialects = ipaDialectsFromPrefs(userPrefs)
 
   return (
     <>
@@ -209,9 +210,7 @@ export const LookupSheet = ({
               ipaLabel={ipaLabel}
               ipaLemma={displayedIpaLemma}
               ipaPrefix={
-                showIpaFlag ? (
-                  <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                ) : undefined
+                showIpaFlag ? <IpaDialectFlag targetLanguage={targetLanguage} ipaDialects={ipaDialects} /> : undefined
               }
               srDescription={t`Translation lookup and save action for the selected text.`}
             />

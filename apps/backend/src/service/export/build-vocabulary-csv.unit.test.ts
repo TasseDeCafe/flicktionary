@@ -117,6 +117,17 @@ describe('buildVocabularyCsv', () => {
     expect(row).not.toContain('GA /x/')
   })
 
+  it('renders labeled dialect buckets for es/pt bags with no untagged value', async () => {
+    const chunk = baseChunk({
+      grammar: { ipa: { br: '/teˈzaw.ɾus/', eu: '/tɨˈzaw.ɾuʃ/' } },
+      explorationExtras: {},
+    })
+    const { csv } = await buildVocabularyCsv('u1', 'pt', createDeps([chunk]))
+    const row = parseLines(csv)[4]
+    expect(row).toContain('BR /teˈzaw.ɾus/')
+    expect(row).toContain('EU /tɨˈzaw.ɾuʃ/')
+  })
+
   it('treats explicit nulls and odd shapes in the JSONB bags as absent', async () => {
     const chunk = baseChunk({
       grammar: { pos: null, notable_forms: 'oops', ipa: null },

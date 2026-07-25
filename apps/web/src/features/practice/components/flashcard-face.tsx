@@ -1,10 +1,10 @@
 import { useLingui } from '@lingui/react/macro'
 import { BadgeCheck, Volume2 } from 'lucide-react'
-import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-import { pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
+import { ipaDialectsFromPrefs, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
 import {
@@ -47,7 +47,7 @@ export const FlashcardFace = ({
   const nativeLanguage = userPrefs?.nativeLanguage ?? null
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
-  const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
+  const ipaDialects = ipaDialectsFromPrefs(userPrefs)
 
   // Pronunciation facet (recognition queue): front prompts the target + an
   // audio cue ("say it out loud"), the flip reveals the stressed display form
@@ -72,8 +72,8 @@ export const FlashcardFace = ({
       : card.grammar?.display_form || card.headword
   const pronunciationIpa = isPronunciation
     ? isFormCard
-      ? pickIpaForDisplay(formGrammar.ipa, targetLanguage, englishIpaDialect)
-      : pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
+      ? pickIpaForDisplay(formGrammar.ipa, targetLanguage, ipaDialects)
+      : pickIpaForDisplay(card.grammar?.ipa, targetLanguage, ipaDialects)
     : undefined
   // Blue check next to the IPA when the transcription is dictionary-grounded
   // (citation cards only — ipaSource is computed server-side and always null
@@ -92,7 +92,7 @@ export const FlashcardFace = ({
   // lemma's transcription is wrong for an inflection). The form swaps into the
   // 'headword' slot (front on recognition, back on production) and the lemma is
   // demoted to a secondary line on the back. Citation cards resolve to the lemma.
-  const content = resolveCardContent(card, targetLanguage, englishIpaDialect)
+  const content = resolveCardContent(card, targetLanguage, ipaDialects)
 
   // A production front prompts with the gloss alone, which for aspect-pair
   // languages is ambiguous between the twins ("to see" → ви́деть/уви́деть) — so
@@ -140,7 +140,7 @@ export const FlashcardFace = ({
       case 'ipa':
         return content.ipa ? (
           <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
-            <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+            <IpaDialectFlag targetLanguage={targetLanguage} ipaDialects={ipaDialects} />
             <span>{content.ipa}</span>
             {ipaBadge}
           </div>
@@ -207,7 +207,7 @@ export const FlashcardFace = ({
             </span>
             {pronunciationIpa && (
               <div className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
-                <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                <IpaDialectFlag targetLanguage={targetLanguage} ipaDialects={ipaDialects} />
                 <span>{pronunciationIpa}</span>
                 {ipaBadge}
               </div>

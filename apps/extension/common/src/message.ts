@@ -417,7 +417,7 @@ export interface FlicktionaryGlossResponse {
   readonly pos?: string | null
   readonly register?: string | null
   // Server-picked, dialect-correct IPA display string (the backend resolves
-  // the user's english_ipa_dialect pref) — render verbatim, no bag picking.
+  // the user's per-language IPA dialect pref) — render verbatim, no bag picking.
   readonly ipaDisplay?: string | null
   // Lemma the IPA was sourced from on form-of fallback (the surface form has no
   // pronunciation of its own) — labeled next to the IPA. Null/absent otherwise.

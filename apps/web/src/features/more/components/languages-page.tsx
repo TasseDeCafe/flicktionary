@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { ipaDialectsFromPrefs } from '@flicktionary/core/utils/pick-ipa'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { NativeLanguageSelector } from '@/features/settings/components/native-language-selector'
@@ -18,7 +19,7 @@ export const LanguagesPage = () => {
         ) : (
           <>
             <NativeLanguageSelector currentValue={prefs.nativeLanguage} />
-            <CefrPerLanguageList prefs={prefs.targetLanguagePrefs} englishIpaDialect={prefs.englishIpaDialect} />
+            <CefrPerLanguageList prefs={prefs.targetLanguagePrefs} ipaDialects={ipaDialectsFromPrefs(prefs)} />
           </>
         )}
       </div>

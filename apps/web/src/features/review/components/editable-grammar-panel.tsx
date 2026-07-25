@@ -2,7 +2,12 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, Loader2, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import {
+  IPA_DIALECT_LANGUAGES,
+  ipaDialectsFromPrefs,
+  pickIpa,
+  type IpaDialects,
+} from '@flicktionary/core/utils/pick-ipa'
 import {
   getEffectiveGrammarFields,
   getLanguageGrammarConfig,
@@ -12,7 +17,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Input } from '@flicktionary/ui/components/input'
 import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
-import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
 import type {
   Grammar,
   GrammarIpaBag,
@@ -39,11 +44,22 @@ type Props = {
   provenanceFor?: (key: GrammarFieldKey, currentValue: unknown) => FieldProvenance
 }
 
-// English edits the GA / RP bucket driven by the user's dialect preference,
-// but display falls back to a shared Wiktionary `untagged` IPA when the
-// selected dialect bucket is empty.
-const ipaBucketKey = (lang: string | undefined, dialect: 'ga' | 'rp'): 'ga' | 'rp' | 'untagged' =>
-  lang === 'en' ? dialect : 'untagged'
+// Dialect-split languages edit the bucket driven by the user's dialect
+// preference (en GA/RP, es Cast./LatAm, pt BR/EU); everything else edits
+// `untagged`. Display falls back to a shared Wiktionary `untagged` IPA when
+// the selected dialect bucket is empty.
+const ipaBucketKey = (lang: string | undefined, dialects: IpaDialects): keyof GrammarIpaBag =>
+  lang && IPA_DIALECT_LANGUAGES.has(lang) ? dialects[lang as keyof IpaDialects] : 'untagged'
+
+// Short parenthetical next to the IPA label naming the edited dialect bucket.
+const IPA_DIALECT_SHORT_LABELS: Record<string, string> = {
+  ga: 'GA',
+  rp: 'RP',
+  cas: 'Cast.',
+  lam: 'LatAm',
+  br: 'BR',
+  eu: 'EU',
+}
 
 const SAVE_DEBOUNCE_MS = 600
 
@@ -126,7 +142,7 @@ export const EditableGrammarPanel = ({
 }: Props) => {
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
-  const englishIpaDialect: 'ga' | 'rp' = userPrefs?.englishIpaDialect ?? 'ga'
+  const ipaDialects = ipaDialectsFromPrefs(userPrefs)
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
   // Stable unique ids for the boolean-field label/checkbox pairs (used to be
@@ -149,14 +165,14 @@ export const EditableGrammarPanel = ({
   const has = (k: GrammarFieldKey) => editableFields.includes(k)
   const hint = (k: GrammarFieldKey) => config.hints?.[k]
 
-  // IPA is bucketed (`ga` / `rp` / `untagged`); user-facing edit writes to
-  // the bucket matching the current language + dialect preference. When the
-  // bag becomes empty, drop the `ipa` key entirely so the renderer doesn't
-  // display a stale empty object.
-  const ipaBucket = ipaBucketKey(targetLanguage, englishIpaDialect)
+  // IPA is bucketed by dialect; user-facing edit writes to the bucket
+  // matching the current language + dialect preference. When the bag becomes
+  // empty, drop the `ipa` key entirely so the renderer doesn't display a
+  // stale empty object.
+  const ipaBucket = ipaBucketKey(targetLanguage, ipaDialects)
   const displayedIpa = useMemo<string>(() => {
-    return pickIpa(grammar.ipa, targetLanguage ?? '', englishIpaDialect) ?? ''
-  }, [grammar.ipa, targetLanguage, englishIpaDialect])
+    return pickIpa(grammar.ipa, targetLanguage ?? '', ipaDialects) ?? ''
+  }, [grammar.ipa, targetLanguage, ipaDialects])
   const setIpa = (value: string) => {
     setGrammar((prev) => {
       const prevBag = (prev.ipa ?? {}) as Record<string, string | null | undefined>
@@ -165,7 +181,11 @@ export const EditableGrammarPanel = ({
         if (typeof v === 'string' && v.trim().length > 0) nextBag[k] = v
       }
       const trimmed = value.trim()
-      const bucketToEdit = targetLanguage === 'en' && !nextBag[ipaBucket] && nextBag.untagged ? 'untagged' : ipaBucket
+      // For any dialect-split language the DISPLAYED value may be the shared
+      // `untagged` fallback (pref'd bucket empty) — clearing must delete what
+      // is shown, not a bucket that was never set.
+      const isDialectLang = !!targetLanguage && IPA_DIALECT_LANGUAGES.has(targetLanguage)
+      const bucketToEdit = isDialectLang && !nextBag[ipaBucket] && nextBag.untagged ? 'untagged' : ipaBucket
       if (trimmed.length === 0) delete nextBag[bucketToEdit]
       else nextBag[ipaBucket] = value
       const next: Grammar = { ...prev }
@@ -275,10 +295,10 @@ export const EditableGrammarPanel = ({
               <div className='flex items-center gap-1'>
                 <Label className='text-xs'>
                   {hint('ipa')?.label ?? t`IPA`}
-                  {targetLanguage === 'en' && (
+                  {!!targetLanguage && IPA_DIALECT_LANGUAGES.has(targetLanguage) && (
                     <span className='text-muted-foreground ml-1 inline-flex items-center gap-1 font-normal'>
-                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />(
-                      {englishIpaDialect === 'ga' ? t`GA` : t`RP`})
+                      <IpaDialectFlag targetLanguage={targetLanguage} ipaDialects={ipaDialects} />(
+                      {IPA_DIALECT_SHORT_LABELS[ipaBucket] ?? ipaBucket})
                     </span>
                   )}
                 </Label>

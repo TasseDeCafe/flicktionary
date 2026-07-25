@@ -324,7 +324,7 @@ export const runCardChat = async (
   // Chat shares the enrichment pass's dialect handling so its answers (and any
   // extras_patch edits) stay consistent with the generated exploration.
   const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
-    ? await deps.usersRepository.getEnglishIpaDialect(input.userId)
+    ? (await deps.usersRepository.getIpaDialects(input.userId)).en
     : undefined
 
   const promptContext = await buildPromptContext(

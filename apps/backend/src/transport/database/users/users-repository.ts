@@ -1,3 +1,4 @@
+import type { IpaDialects } from '@flicktionary/core/utils/pick-ipa'
 import { sql } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
@@ -178,17 +179,35 @@ const setLlmHighlightsEnabled = async (userId: string, enabled: boolean): Promis
   return result.count === 1
 }
 
-const getEnglishIpaDialect = async (userId: string): Promise<'ga' | 'rp'> => {
+// One row read for all three dialect-split languages; unexpected stored
+// values coerce to each language's default so callers always get a valid
+// bucket key.
+const getIpaDialects = async (userId: string): Promise<IpaDialects> => {
   const result = (await sql`
-    SELECT english_ipa_dialect FROM public.users WHERE id = ${userId}
-  `) as { english_ipa_dialect: string | null }[]
-  const value = result[0]?.english_ipa_dialect
-  return value === 'rp' ? 'rp' : 'ga'
+    SELECT english_ipa_dialect, spanish_ipa_dialect, portuguese_ipa_dialect
+    FROM public.users WHERE id = ${userId}
+  `) as {
+    english_ipa_dialect: string | null
+    spanish_ipa_dialect: string | null
+    portuguese_ipa_dialect: string | null
+  }[]
+  const row = result[0]
+  return {
+    en: row?.english_ipa_dialect === 'rp' ? 'rp' : 'ga',
+    es: row?.spanish_ipa_dialect === 'cas' ? 'cas' : 'lam',
+    pt: row?.portuguese_ipa_dialect === 'eu' ? 'eu' : 'br',
+  }
 }
 
-const setEnglishIpaDialect = async (userId: string, dialect: 'ga' | 'rp'): Promise<boolean> => {
+const setIpaDialect = async (userId: string, targetLanguage: 'en' | 'es' | 'pt', dialect: string): Promise<boolean> => {
+  const column =
+    targetLanguage === 'en'
+      ? sql`english_ipa_dialect`
+      : targetLanguage === 'es'
+        ? sql`spanish_ipa_dialect`
+        : sql`portuguese_ipa_dialect`
   const result = await sql`
-    UPDATE public.users SET english_ipa_dialect = ${dialect} WHERE id = ${userId}
+    UPDATE public.users SET ${column} = ${dialect} WHERE id = ${userId}
   `
   return result.count === 1
 }
@@ -275,8 +294,8 @@ export interface UsersRepositoryInterface {
   setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
   getLlmHighlightsEnabled: (userId: string) => Promise<boolean>
   setLlmHighlightsEnabled: (userId: string, enabled: boolean) => Promise<boolean>
-  getEnglishIpaDialect: (userId: string) => Promise<'ga' | 'rp'>
-  setEnglishIpaDialect: (userId: string, dialect: 'ga' | 'rp') => Promise<boolean>
+  getIpaDialects: (userId: string) => Promise<IpaDialects>
+  setIpaDialect: (userId: string, targetLanguage: 'en' | 'es' | 'pt', dialect: string) => Promise<boolean>
   getUiTheme: (userId: string) => Promise<'light' | 'dark' | 'system' | null>
   setUiTheme: (userId: string, uiTheme: 'light' | 'dark' | 'system' | null) => Promise<boolean>
   getUiLanguage: (userId: string) => Promise<string | null>
@@ -306,8 +325,8 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setTapToTranslateEnabled,
     getLlmHighlightsEnabled,
     setLlmHighlightsEnabled,
-    getEnglishIpaDialect,
-    setEnglishIpaDialect,
+    getIpaDialects,
+    setIpaDialect,
     getUiTheme,
     setUiTheme,
     getUiLanguage,

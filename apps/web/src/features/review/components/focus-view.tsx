@@ -8,7 +8,7 @@ import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2 } from 'lucide-react'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { ipaDialectsFromPrefs, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import { useExploreCard, useGetCard, useListCardsBySession, useRemoveCardFromSession } from '../api/review-hooks'
@@ -239,7 +239,7 @@ export const FocusView = () => {
   const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
   // Wiktionary-grounded IPA. When set, the full-exploration renderer must
   // suppress its own `extras.ipa` so we don't show pronunciation twice.
-  const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
+  const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, ipaDialectsFromPrefs(userPrefs))
   const wiktionaryUrl = buildWiktionaryUrl(card.chunk.headword, targetLanguage, card.chunk.grammar?.pos)
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   // sameLanguage: translation fields are meaningless — fully hidden. With the

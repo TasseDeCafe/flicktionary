@@ -26,6 +26,16 @@ export const AccountFlagSchema = z.enum([
 ])
 export type AccountFlag = z.infer<typeof AccountFlagSchema>
 
+// Per-language IPA dialect picks. The dialect values double as the grammar
+// bag's bucket keys (GrammarIpaBagSchema), so a pref value can be used
+// directly to index the bag.
+export const IpaDialectInputSchema = z.discriminatedUnion('targetLanguage', [
+  z.object({ targetLanguage: z.literal('en'), dialect: z.enum(['ga', 'rp']) }),
+  z.object({ targetLanguage: z.literal('es'), dialect: z.enum(['cas', 'lam']) }),
+  z.object({ targetLanguage: z.literal('pt'), dialect: z.enum(['br', 'eu']) }),
+])
+export type IpaDialectInput = z.infer<typeof IpaDialectInputSchema>
+
 const UserPrefsSchema = z.object({
   nativeLanguage: z.string().nullable(),
   isOnboarded: z.boolean(),
@@ -33,6 +43,8 @@ const UserPrefsSchema = z.object({
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
   englishIpaDialect: z.enum(['ga', 'rp']),
+  spanishIpaDialect: z.enum(['cas', 'lam']),
+  portugueseIpaDialect: z.enum(['br', 'eu']),
   uiTheme: z.enum(['light', 'dark', 'system']).nullable(),
   uiLanguage: z.string().nullable(),
   targetLanguagePrefs: z.array(TargetLanguagePrefSchema),
@@ -105,10 +117,10 @@ export const userPrefsContract = {
     .input(PracticeLimitsForLanguageInputSchema)
     .output(z.object({ data: UserPrefsSchema })),
 
-  setEnglishIpaDialect: oc
-    .route({ method: 'PUT', path: '/user-prefs/english-ipa-dialect', successStatus: 200 })
+  setIpaDialect: oc
+    .route({ method: 'PUT', path: '/user-prefs/ipa-dialect', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
-    .input(z.object({ dialect: z.enum(['ga', 'rp']) }))
+    .input(IpaDialectInputSchema)
     .output(z.object({ data: UserPrefsSchema })),
 
   setUiTheme: oc

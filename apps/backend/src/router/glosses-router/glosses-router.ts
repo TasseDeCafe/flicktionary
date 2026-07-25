@@ -13,7 +13,7 @@ import type { WiktionaryMatchRepositoryInterface } from '../../transport/databas
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
 // practice-surface lookup sheet). Takes the context line directly and is bound
@@ -69,14 +69,16 @@ export const GlossesRouter = (
       })
       const ipa = ipaResult?.ipa ?? null
       // Pre-pick the dialect-correct display string server-side so every
-      // client renders the same IPA. The dialect pref only matters for
-      // English; skip the DB roundtrip otherwise.
-      const dialect = targetLanguage === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : 'ga'
+      // client renders the same IPA. Dialect prefs only matter for the
+      // dialect-split languages; skip the DB roundtrip otherwise.
+      const dialects = IPA_DIALECT_LANGUAGES.has(targetLanguage)
+        ? await usersRepository.getIpaDialects(userId)
+        : DEFAULT_IPA_DIALECTS
       return {
         data: {
           ...gloss,
           ipa,
-          ipaDisplay: pickIpa(ipa, targetLanguage, dialect) ?? null,
+          ipaDisplay: pickIpa(ipa, targetLanguage, dialects) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
           knownLemmaCandidates,
         },

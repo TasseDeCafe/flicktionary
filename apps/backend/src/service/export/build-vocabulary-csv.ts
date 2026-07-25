@@ -133,7 +133,17 @@ const renderMorphology = (grammar: Record<string, unknown>): string => {
 }
 
 // Exploration-extras IPA (plain string) wins; otherwise the grammar bag's
-// dialect-tagged object ({ ga, rp, untagged }).
+// dialect-tagged object. An untagged value stands alone; dialect buckets are
+// labeled so an export with both variants stays unambiguous.
+const IPA_EXPORT_LABELS = [
+  ['ga', 'GA'],
+  ['rp', 'RP'],
+  ['br', 'BR'],
+  ['eu', 'EU'],
+  ['lam', 'LatAm'],
+  ['cas', 'Cast.'],
+] as const
+
 const renderIpa = (chunk: ExportChunkRow): string => {
   const extrasIpa = str(chunk.explorationExtras['ipa'])
   if (extrasIpa) return extrasIpa
@@ -143,10 +153,10 @@ const renderIpa = (chunk: ExportChunkRow): string => {
   const untagged = str(bag['untagged'])
   if (untagged) return untagged
   const parts: string[] = []
-  const ga = str(bag['ga'])
-  const rp = str(bag['rp'])
-  if (ga) parts.push(`GA ${ga}`)
-  if (rp) parts.push(`RP ${rp}`)
+  for (const [bucket, label] of IPA_EXPORT_LABELS) {
+    const value = str(bag[bucket])
+    if (value) parts.push(`${label} ${value}`)
+  }
   return parts.join('; ')
 }
 

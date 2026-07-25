@@ -351,6 +351,71 @@ describe('user-prefs-router', async () => {
     expect(getResponse.body.data.uiTheme).toBeNull()
   })
 
+  test('ipa dialects default per language and setIpaDialect round-trips each one', async () => {
+    const token = await createUserAndGetToken()
+
+    const fresh = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    expect(fresh.status).toBe(200)
+    expect(fresh.body.data.englishIpaDialect).toBe('ga')
+    expect(fresh.body.data.spanishIpaDialect).toBe('lam')
+    expect(fresh.body.data.portugueseIpaDialect).toBe('br')
+
+    const setRp = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'en', dialect: 'rp' })
+      .set(buildAuthorizationHeaders(token))
+    expect(setRp.status).toBe(200)
+    expect(setRp.body.data.englishIpaDialect).toBe('rp')
+
+    const setCas = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'es', dialect: 'cas' })
+      .set(buildAuthorizationHeaders(token))
+    expect(setCas.status).toBe(200)
+    expect(setCas.body.data.spanishIpaDialect).toBe('cas')
+
+    const setEu = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'pt', dialect: 'eu' })
+      .set(buildAuthorizationHeaders(token))
+    expect(setEu.status).toBe(200)
+    expect(setEu.body.data.portugueseIpaDialect).toBe('eu')
+
+    const fetched = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    expect(fetched.body.data.englishIpaDialect).toBe('rp')
+    expect(fetched.body.data.spanishIpaDialect).toBe('cas')
+    expect(fetched.body.data.portugueseIpaDialect).toBe('eu')
+  })
+
+  test('setIpaDialect rejects a dialect that belongs to another language', async () => {
+    const token = await createUserAndGetToken()
+
+    // `ga` is an English bucket — the discriminated union must refuse it for es.
+    const wrongDialect = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'es', dialect: 'ga' })
+      .set(buildAuthorizationHeaders(token))
+    expect(wrongDialect.status).toBe(400)
+
+    // Languages without a dialect split are not settable at all.
+    const wrongLanguage = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'ru', dialect: 'ga' })
+      .set(buildAuthorizationHeaders(token))
+    expect(wrongLanguage.status).toBe(400)
+
+    const fetched = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    expect(fetched.body.data.spanishIpaDialect).toBe('lam')
+  })
+
+  test('setIpaDialect returns 401 when unauthenticated', async () => {
+    const response = await request(testApp)
+      .put('/api/v1/user-prefs/ipa-dialect')
+      .send({ targetLanguage: 'en', dialect: 'rp' })
+      .set({ Authorization: 'Bearer wrong-token' })
+    expect(response.status).toBe(401)
+  })
+
   // Creates the user_target_language_prefs row (upsertCefr) the limits
   // setter requires — same precondition as setShowTranslationsForLanguage.
   const setCefr = async (token: string, targetLanguage: string) => {

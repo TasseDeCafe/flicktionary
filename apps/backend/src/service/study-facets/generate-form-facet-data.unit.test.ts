@@ -58,14 +58,14 @@ const createDeps = (overrides?: { targetLanguage?: string; englishIpaDialect?: '
     },
   ])
   const setFacetPayload = vi.fn().mockResolvedValue(undefined)
-  const getEnglishIpaDialect = vi.fn().mockResolvedValue(overrides?.englishIpaDialect ?? 'ga')
+  const getIpaDialects = vi.fn().mockResolvedValue({ en: overrides?.englishIpaDialect ?? 'ga', es: 'lam', pt: 'br' })
   const deps = {
     anthropicPasses: MockAnthropicPasses({ generateFormData: generateFormData as never }),
     userLookupsRepository: { getChunkRowForUser, listFacetsForChunk, setFacetPayload },
-    usersRepository: { getEnglishIpaDialect },
+    usersRepository: { getIpaDialects },
     userTargetLanguagePrefsRepository: {},
   } as unknown as GenerateFormFacetDataDeps
-  return { deps, setFacetPayload, getEnglishIpaDialect }
+  return { deps, setFacetPayload, getIpaDialects }
 }
 
 const run = (deps: GenerateFormFacetDataDeps, skill: 'pronunciation' | 'meaning_recognition') =>
