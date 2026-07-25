@@ -1,4 +1,5 @@
-import type { PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Chunk, PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
 import type { RateValue } from '@flicktionary/ui/components/rate-buttons'
 import type { ComposedQueueItem } from './composed-queue-merge'
 import type { ExerciseAnswerData } from './strengthen-types'
@@ -78,6 +79,54 @@ export const takeComposedSession = (
   if (snapshot.dayKey !== currentDayKey()) return null
   if (!sameFilter(snapshot.filter, filter)) return null
   return snapshot
+}
+
+// Client mirror of the server's computeIpaSource (practice-router.ts): the
+// verified-IPA badge holds only while grammar.ipa still matches the grounding
+// snapshot, so an IPA edit must drop (or restore) the badge without a round
+// trip. Form cards never badge — their IPA is generated, never grounded.
+export const ipaSourceForChunk = (chunk: Chunk, targetForm: string): 'wiktionary' | null => {
+  if (targetForm !== '') return null
+  if (!chunk.groundedAt) return null
+  const patchIpa = chunk.groundingPatch?.ipa
+  if (!patchIpa) return null
+  return deepEqualNormalized(chunk.grammar.ipa, patchIpa) ? 'wiktionary' : null
+}
+
+// Rewrites the stashed session's embedded copies of an edited term so a resume
+// shows the new content — the queue payloads are snapshots of user_lookups, so
+// a focus-view edit made during the detour would otherwise be invisible until
+// the next compose. Called from the chunk edit mutations with the mutation's
+// returned chunk; a no-op when nothing is stashed. Items are patched in place
+// (never replaced): ratingRecords/exerciseOutcomes key on item identity.
+export const patchTermInComposedSession = (chunk: Chunk) => {
+  if (!slot) return
+  for (const item of slot.queue) {
+    if (item.type === 'flashcard' && item.card.userLookupId === chunk.id) {
+      // Lemma-level fields only: a form card keeps its own facetPayload (its
+      // fields resolve payload-first) but still shows the lemma's content
+      // through the fallback slots and the "lemma — gloss" sub-line.
+      item.card = {
+        ...item.card,
+        headword: chunk.headword,
+        sense: chunk.sense,
+        translation: chunk.translation,
+        definition: chunk.definition,
+        targetExample: chunk.targetExample,
+        nativeExample: chunk.nativeExample,
+        grammar: chunk.grammar,
+        ipaSource: ipaSourceForChunk(chunk, item.card.targetForm),
+      }
+    } else if (item.type === 'exercise' && item.entry.userLookupId === chunk.id) {
+      item.entry = {
+        ...item.entry,
+        headword: chunk.headword,
+        sense: chunk.sense,
+        translation: chunk.translation,
+        definition: chunk.definition,
+      }
+    }
+  }
 }
 
 // Splices a deleted term out of the stashed session so a resume can't serve
