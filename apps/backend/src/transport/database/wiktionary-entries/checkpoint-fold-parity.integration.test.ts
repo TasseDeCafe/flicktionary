@@ -11,9 +11,10 @@ import { sql } from '../postgres-client'
 // neither.
 describe('checkpoint_fold SQL-vs-TS parity', () => {
   // Inputs cover: stress marks, case, ё both cases, ß/ẞ, decomposed combining
-  // marks (U+0308), surrounding whitespace, multi-word strings, hyphens,
-  // apostrophes, digits, and the empty string — across ru/de/en plus an
-  // unconfigured language (base fold only).
+  // marks (U+0308 and orthographic acutes that must survive via NFC-first),
+  // surrounding whitespace, multi-word strings, hyphens, apostrophes, digits,
+  // and the empty string — across ru/de/en plus unconfigured languages (base
+  // fold only).
   const vectors: Array<{ input: string; lang: string }> = [
     { input: 'Стола́', lang: 'ru' },
     { input: 'ЁЖ', lang: 'ru' },
@@ -32,6 +33,17 @@ describe('checkpoint_fold SQL-vs-TS parity', () => {
     { input: 'Straße', lang: 'en' },
     { input: 'ёлка', lang: 'en' },
     { input: 'Käse42', lang: 'de' },
+    // Decomposed orthographic acutes (written as escapes so no editor can
+    // silently re-normalize them) — NFC must compose them before the strip so
+    // they fold with the accent intact (más, not mas).
+    { input: 'ma\u0301s', lang: 'es' },
+    { input: 'avo\u0301', lang: 'pt' },
+    { input: 'e\u0301te\u0301', lang: 'fr' },
+    { input: 'cafe\u0301', lang: 'en' },
+    // Vietnamese double mark: e + circumflex + acute composes to ế.
+    { input: 'e\u0302\u0301', lang: 'vi' },
+    // Decomposed Russian stress mark — still stripped (never composes).
+    { input: 'стола\u0301', lang: 'ru' },
     { input: '', lang: 'ru' },
   ]
 

@@ -11,16 +11,21 @@
 // case and display shape; this one LOWERCASES — keys must collapse case
 // (`Houses`/`houses`), display must not. Keep the two separate.
 //
-// Steps, in this exact order (must stay byte-identical to the SQL twin in the
-// Phase-4b migrate_study_form_to_form_facet migration):
-//   1. strip combining acute U+0301 (Russian stress mark) — `стола́` → `стола`
-//   2. Unicode NFC normalization — canonical composition
+// Steps, in this exact order (must stay byte-identical to the inline SQL twins
+// in user-lookups-repository.ts):
+//   1. Unicode NFC normalization — canonical composition
+//   2. strip combining acute U+0301 (Russian stress mark) — `стола́` → `стола`
 //   3. trim surrounding whitespace
 //   4. lowercase (casefold)
-// SQL twin: lower(trim(normalize(regexp_replace(form, '<U+0301>', '', 'g'), NFC)))
+// SQL twin: lower(trim(regexp_replace(normalize(form, NFC), chr(769), '', 'g')))
+//
+// NFC runs BEFORE the strip so orthographic acutes survive decomposed input
+// (NFD `más` composes to `á` instead of losing its accent and colliding with
+// `mas`); a U+0301 that survives NFC has no precomposed form — a Russian-style
+// stress mark — and is safe to strip.
 //
 // Lowercasing is language-independent today, matching the Postgres `lower()` in
 // the SQL twin. A `langCode` param for locale-aware casefolding (e.g. Turkish
 // dotted/dotless i) is deferred to Phase 4b's form-write callers — add it there
 // in lockstep with the SQL twin, never one side alone.
-export const normalizeTargetForm = (text: string): string => text.replace(/́/g, '').normalize('NFC').trim().toLowerCase()
+export const normalizeTargetForm = (text: string): string => text.normalize('NFC').replace(/́/g, '').trim().toLowerCase()

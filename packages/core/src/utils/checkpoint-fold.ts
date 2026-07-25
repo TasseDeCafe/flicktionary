@@ -9,13 +9,19 @@
 // or neither.
 //
 // Steps, in this exact order:
-//   1. strip combining acute U+0301 (Russian stress mark) — `стола́` → `стола`
-//   2. Unicode NFC normalization — canonical composition
+//   1. Unicode NFC normalization — canonical composition
+//   2. strip combining acute U+0301 (Russian stress mark) — `стола́` → `стола`
 //   3. trim surrounding whitespace
 //   4. lowercase
 //   5. per-language orthography fold: ru `ё`→`е`, de `ß`→`ss`
+//
+// NFC runs BEFORE the strip so orthographic acutes survive decomposed input:
+// NFD `más` composes to precomposed `á` (no U+0301 left to strip) instead of
+// folding to the different word `mas`. A U+0301 still present after NFC is by
+// definition a mark with no precomposed form — a Russian-style stress mark —
+// so stripping it is always safe.
 export const foldCheckpointToken = (text: string, lang: string): string => {
-  const base = text.replace(/́/g, '').normalize('NFC').trim().toLowerCase()
+  const base = text.normalize('NFC').replace(/́/g, '').trim().toLowerCase()
   if (lang === 'ru') return base.replace(/ё/g, 'е')
   if (lang === 'de') return base.replace(/ß/g, 'ss')
   return base

@@ -40,7 +40,8 @@ export const rebuildWiktionaryRedirects = async (
     const t = Date.now()
     // One set-based statement per language. Stubs point at their target via
     // senses[0].form_of[0].word or senses[0].alt_of[0].word (stress-marked in
-    // Russian — strip U+0301 to match the unstressed entry headwords).
+    // Russian — strip U+0301 to match the unstressed entry headwords; NFC
+    // first so orthographic accents in decomposed input survive the strip).
     // Self-redirects (folded stub headword equals the folded final lemma) are
     // dropped: the matcher's direct-headword arm already resolves those.
     const [{ count }] = (await sql`
@@ -48,9 +49,12 @@ export const rebuildWiktionaryRedirects = async (
         SELECT
           headword,
           regexp_replace(
-            COALESCE(
-              data->'senses'->0->'form_of'->0->>'word',
-              data->'senses'->0->'alt_of'->0->>'word'
+            normalize(
+              COALESCE(
+                data->'senses'->0->'form_of'->0->>'word',
+                data->'senses'->0->'alt_of'->0->>'word'
+              ),
+              NFC
             ),
             ${COMBINING_ACUTE}, '', 'g'
           ) AS target

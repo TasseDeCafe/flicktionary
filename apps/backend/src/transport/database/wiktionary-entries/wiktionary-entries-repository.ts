@@ -11,7 +11,9 @@ export type DbWiktionaryEntry = {
   data: Record<string, unknown>
 }
 
-const stripStress = (s: string): string => s.replace(/́/g, '')
+// NFC first so only non-composable acutes (Russian stress marks) are stripped,
+// never orthographic accents arriving decomposed (NFD `más`).
+const stripStress = (s: string): string => s.normalize('NFC').replace(/́/g, '')
 
 // Direct (lang, headword, pos) hit on real lemmas. Excludes form-of
 // pseudo-entries (those carry no rich grammar — only a back-pointer to the

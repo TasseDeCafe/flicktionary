@@ -19,6 +19,24 @@ describe('foldCheckpointToken', () => {
     expect(foldCheckpointToken('Bär', 'de')).toBe('bär')
   })
 
+  test('orthographic acutes survive decomposed input (NFC runs before the strip)', () => {
+    // NFD input (base letter + combining acute U+0301, written as escapes so
+    // no editor can silently re-normalize it) must fold identically to its
+    // precomposed NFC spelling — never lose the accent and collide with a
+    // different word (más vs mas).
+    expect(foldCheckpointToken('ma\u0301s', 'es')).toBe('m\u00e1s')
+    expect(foldCheckpointToken('avo\u0301', 'pt')).toBe('av\u00f3')
+    expect(foldCheckpointToken('e\u0301te\u0301', 'fr')).toBe('\u00e9t\u00e9')
+    expect(foldCheckpointToken('cafe\u0301', 'en')).toBe('caf\u00e9')
+    // Vietnamese stacks two marks: e + circumflex + acute composes to ế; the
+    // old strip-first order corrupted it to ê (a different tone).
+    expect(foldCheckpointToken('e\u0302\u0301', 'vi')).toBe('\u1ebf')
+  })
+
+  test('still strips decomposed Russian stress marks after NFC (they never compose)', () => {
+    expect(foldCheckpointToken('стола\u0301', 'ru')).toBe('стола')
+  })
+
   test('trims whitespace and applies no per-language fold outside ru/de', () => {
     expect(foldCheckpointToken('  Straße  ', 'en')).toBe('straße')
     expect(foldCheckpointToken(' Running ', 'en')).toBe('running')
