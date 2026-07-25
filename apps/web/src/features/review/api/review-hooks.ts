@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
+import { patchTermInComposedSession } from '@/features/practice/components/composed-session-snapshot'
+import { patchTermInExerciseSession } from '@/features/practice/components/exercise-session-snapshot'
 import {
   cancelCardCaches,
   cancelCardCachesOptionalSession,
@@ -191,6 +193,13 @@ export const useUpdateChunkContent = (sessionId?: string) => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.updateContent.mutationOptions({
+      // An interrupted practice session stashed for resume (composed or
+      // strengthen/warm-up) embeds copies of the term — patch them so the
+      // edit is visible the moment the session resumes.
+      onSuccess: ({ data }) => {
+        patchTermInComposedSession(data)
+        patchTermInExerciseSession(data)
+      },
       meta: {
         invalidates: [
           ...(sessionId ? [getSessionCardsKey(sessionId)] : []),
@@ -213,6 +222,12 @@ export const useRenameChunk = (sessionId?: string) => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.chunks.rename.mutationOptions({
+      // Same stashed-session patch as useUpdateChunkContent — a rename changes
+      // the headword every stashed card/exercise of the term displays.
+      onSuccess: ({ data }) => {
+        patchTermInComposedSession(data)
+        patchTermInExerciseSession(data)
+      },
       meta: {
         invalidates: [
           ...(sessionId ? [getSessionCardsKey(sessionId)] : []),

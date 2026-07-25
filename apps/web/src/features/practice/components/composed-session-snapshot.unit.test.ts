@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
+  Chunk,
   PracticeQueueFilter,
   ReviewTerm,
   StrengthenExerciseEntry,
@@ -10,6 +11,8 @@ import {
   clearComposedSession,
   currentDayKey,
   dropTermFromComposedSession,
+  ipaSourceForChunk,
+  patchTermInComposedSession,
   saveComposedSession,
   takeComposedSession,
   type ComposedSessionSnapshot,
@@ -24,9 +27,9 @@ const filter = (over: Partial<PracticeQueueFilter> = {}): PracticeQueueFilter =>
   ...over,
 })
 
-const cardItem = (userLookupId: string): ComposedQueueItem => ({
+const cardItem = (userLookupId: string, cardOver: Partial<ReviewTerm> = {}): ComposedQueueItem => ({
   type: 'flashcard',
-  card: { userLookupId } as ReviewTerm,
+  card: { userLookupId, ...cardOver } as ReviewTerm,
   retryCount: 0,
   requeuedForAgain: false,
 })
@@ -128,5 +131,99 @@ describe('dropTermFromComposedSession', () => {
     saveComposedSession(saved)
     dropTermFromComposedSession('victim')
     expect(takeComposedSession('en', filter())?.queue).toEqual([cardItem('other')])
+  })
+})
+
+const editedChunk = (over: Partial<Chunk> = {}): Chunk =>
+  ({
+    id: 'edited',
+    headword: 'new headword',
+    sense: 'new sense',
+    translation: 'new translation',
+    definition: 'new definition',
+    targetExample: 'new target example',
+    nativeExample: 'new native example',
+    grammar: { pos: 'noun' },
+    groundedAt: null,
+    groundingPatch: null,
+    ...over,
+  }) as Chunk
+
+describe('patchTermInComposedSession', () => {
+  it('rewrites every stashed copy of the edited term without breaking item identity', () => {
+    const card = cardItem('edited', { targetForm: '', srsState: 'review' })
+    const exercise = exerciseItem('edited')
+    const other = cardItem('other', { headword: 'untouched' })
+    const ratingRecords = new Map([[card, { rating: 'good' as const, eventId: 'e1', redrill: null }]])
+    saveComposedSession(snapshot({ queue: [card, exercise, other], ratingRecords }))
+
+    patchTermInComposedSession(editedChunk())
+
+    const resumed = takeComposedSession('en', filter())
+    const [resumedCard, resumedExercise, resumedOther] = resumed?.queue ?? []
+    expect(resumedCard?.type === 'flashcard' && resumedCard.card).toMatchObject({
+      headword: 'new headword',
+      sense: 'new sense',
+      translation: 'new translation',
+      definition: 'new definition',
+      targetExample: 'new target example',
+      nativeExample: 'new native example',
+      grammar: { pos: 'noun' },
+      // Untouched fields survive the patch.
+      srsState: 'review',
+    })
+    expect(resumedExercise?.type === 'exercise' && resumedExercise.entry).toMatchObject({
+      headword: 'new headword',
+      translation: 'new translation',
+      definition: 'new definition',
+    })
+    expect(resumedOther?.type === 'flashcard' && resumedOther.card.headword).toBe('untouched')
+    // Bookkeeping keys on item identity — the patch must not replace items.
+    expect(resumed?.ratingRecords.has(card)).toBe(true)
+  })
+
+  it('patches lemma fields on a form card but leaves its facet payload alone', () => {
+    const formCard = cardItem('edited', {
+      targetForm: 'forms',
+      facetPayload: { form: 'forms', translation: 'form translation' },
+    })
+    saveComposedSession(snapshot({ queue: [formCard] }))
+
+    patchTermInComposedSession(editedChunk())
+
+    const resumed = takeComposedSession('en', filter())
+    const [item] = resumed?.queue ?? []
+    expect(item?.type === 'flashcard' && item.card).toMatchObject({
+      headword: 'new headword',
+      facetPayload: { form: 'forms', translation: 'form translation' },
+      ipaSource: null,
+    })
+  })
+
+  it('is a no-op when nothing is stashed', () => {
+    expect(() => patchTermInComposedSession(editedChunk())).not.toThrow()
+  })
+})
+
+describe('ipaSourceForChunk', () => {
+  const ipa = { untagged: '/ipa/' }
+
+  it('badges a citation card only while grammar.ipa still matches the grounding snapshot', () => {
+    const grounded = editedChunk({ groundedAt: '2026-01-01', groundingPatch: { ipa }, grammar: { ipa } })
+    expect(ipaSourceForChunk(grounded, '')).toBe('wiktionary')
+    const edited = editedChunk({
+      groundedAt: '2026-01-01',
+      groundingPatch: { ipa },
+      grammar: { ipa: { untagged: '/x/' } },
+    })
+    expect(ipaSourceForChunk(edited, '')).toBeNull()
+  })
+
+  it('never badges form cards or ungrounded chunks', () => {
+    const grounded = editedChunk({ groundedAt: '2026-01-01', groundingPatch: { ipa }, grammar: { ipa } })
+    expect(ipaSourceForChunk(grounded, 'forms')).toBeNull()
+    expect(ipaSourceForChunk(editedChunk({ grammar: { ipa } }), '')).toBeNull()
+    // Grounded, but the snapshot carried no IPA bag: nothing to verify against.
+    expect(ipaSourceForChunk(editedChunk({ groundedAt: '2026-01-01', grammar: { ipa } }), '')).toBeNull()
   })
 })

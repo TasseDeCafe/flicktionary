@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  Chunk,
+  StrengthenExerciseEntry,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ExerciseAnswerData } from './strengthen-types'
 import { currentDayKey } from './composed-session-snapshot'
 import {
   clearExerciseSession,
   dropTermFromExerciseSession,
   exerciseSessionKey,
+  patchTermInExerciseSession,
   saveExerciseSession,
   takeExerciseSession,
   type ExerciseSessionSnapshot,
@@ -157,5 +161,32 @@ describe('dropTermFromExerciseSession', () => {
   it('is a no-op when nothing is stashed', () => {
     dropTermFromExerciseSession('victim')
     expect(takeExerciseSession(key)).toBeNull()
+  })
+})
+
+describe('patchTermInExerciseSession', () => {
+  const editedChunk = {
+    id: 'edited',
+    headword: 'new headword',
+    sense: 'new sense',
+    translation: 'new translation',
+    definition: 'new definition',
+  } as Chunk
+
+  it('rewrites every stashed entry of the edited term, leaving others untouched', () => {
+    const other = { userLookupId: 'other', headword: 'untouched' } as StrengthenExerciseEntry
+    saveExerciseSession(snapshot({ queue: [entry('edited'), other, entry('edited')] }))
+
+    patchTermInExerciseSession(editedChunk)
+
+    const resumed = takeExerciseSession(key)
+    const patched = { headword: 'new headword', sense: 'new sense', translation: 'new translation' }
+    expect(resumed?.queue[0]).toMatchObject(patched)
+    expect(resumed?.queue[2]).toMatchObject(patched)
+    expect(resumed?.queue[1]?.headword).toBe('untouched')
+  })
+
+  it('is a no-op when nothing is stashed', () => {
+    expect(() => patchTermInExerciseSession(editedChunk)).not.toThrow()
   })
 })

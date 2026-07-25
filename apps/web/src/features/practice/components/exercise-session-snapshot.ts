@@ -1,4 +1,7 @@
-import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  Chunk,
+  StrengthenExerciseEntry,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ExerciseAnswerData } from './strengthen-types'
 import { currentDayKey } from './composed-session-snapshot'
 
@@ -66,6 +69,21 @@ export const takeExerciseSession = (key: string): ExerciseSessionSnapshot | null
   if (snapshot.key !== key) return null
   if (snapshot.dayKey !== currentDayKey()) return null
   return snapshot
+}
+
+// Rewrites the stashed session's embedded copies of an edited term (headword +
+// meaning line) so a resume shows the new content — same rationale as
+// patchTermInComposedSession. Called from the chunk edit mutations; a no-op
+// when nothing is stashed.
+export const patchTermInExerciseSession = (chunk: Chunk) => {
+  if (!slot) return
+  for (const entry of slot.queue) {
+    if (entry.userLookupId !== chunk.id) continue
+    entry.headword = chunk.headword
+    entry.sense = chunk.sense
+    entry.translation = chunk.translation
+    entry.definition = chunk.definition
+  }
 }
 
 // Splices a deleted term out of the stashed session so a resume can't serve
