@@ -91,7 +91,7 @@ export const exploreCardIfMissing = async (
     // English explorations follow the user's IPA dialect preference (GA vs RP):
     // it steers extras.ipa and which variety counts as the default vs a regionalism.
     const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
-      ? await deps.usersRepository.getEnglishIpaDialect(userId)
+      ? (await deps.usersRepository.getIpaDialects(userId)).en
       : undefined
 
     const enrichment = await deps.anthropicPasses.enrichmentPass({

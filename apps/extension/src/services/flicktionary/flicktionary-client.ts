@@ -41,7 +41,7 @@ export type FlicktionaryFacetSkill = 'meaning_recognition' | 'meaning_production
 // Structured gloss for the hover tooltip — mirrors the web app's fast-gloss
 // popover (selection + IPA + gloss + POS/register). `ipaDisplay` is the
 // server-picked, dialect-correct display string (the backend resolves the
-// user's english_ipa_dialect pref) — rendered verbatim.
+// user's per-language IPA dialect pref) — rendered verbatim.
 export interface GlossData {
   gloss: string
   pos: string | null

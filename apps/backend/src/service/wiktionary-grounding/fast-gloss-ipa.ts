@@ -70,16 +70,20 @@ const uniqueById = (entries: DbWiktionaryEntry[]): DbWiktionaryEntry[] => {
   return out
 }
 
-const hasIpa = (ipa: GrammarIpaBag): boolean => !!(ipa.ga || ipa.rp || ipa.untagged)
+// Every dialect bucket the bag can carry, across all languages. One list so
+// hasIpa / ipaKey / mergeIpaBags can never disagree about what counts.
+const IPA_BAG_BUCKETS = ['ga', 'rp', 'br', 'eu', 'cas', 'lam', 'untagged'] as const
 
-const ipaKey = (ipa: GrammarIpaBag): string => JSON.stringify([ipa.ga ?? null, ipa.rp ?? null, ipa.untagged ?? null])
+const hasIpa = (ipa: GrammarIpaBag): boolean => IPA_BAG_BUCKETS.some((b) => !!ipa[b])
+
+const ipaKey = (ipa: GrammarIpaBag): string => JSON.stringify(IPA_BAG_BUCKETS.map((b) => ipa[b] ?? null))
 
 const mergeIpaBags = (bags: GrammarIpaBag[]): GrammarIpaBag | null => {
   const out: GrammarIpaBag = {}
   for (const bag of bags) {
-    if (!out.ga && bag.ga) out.ga = bag.ga
-    if (!out.rp && bag.rp) out.rp = bag.rp
-    if (!out.untagged && bag.untagged) out.untagged = bag.untagged
+    for (const b of IPA_BAG_BUCKETS) {
+      if (!out[b] && bag[b]) out[b] = bag[b]
+    }
   }
   return hasIpa(out) ? out : null
 }

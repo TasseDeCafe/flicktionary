@@ -788,13 +788,13 @@ export const useSetShowTranslationsForLanguage = () => {
   )
 }
 
-export const useSetEnglishIpaDialect = () => {
+export const useSetIpaDialect = () => {
   const { t } = useLingui()
   return useMutation(
-    orpcQuery.userPrefs.setEnglishIpaDialect.mutationOptions({
+    orpcQuery.userPrefs.setIpaDialect.mutationOptions({
       meta: {
         invalidates: [orpcQuery.userPrefs.getPrefs.key()],
-        errorMessage: t`Failed to update English IPA dialect`,
+        errorMessage: t`Failed to update IPA dialect`,
         showErrorModal: true,
       },
     })

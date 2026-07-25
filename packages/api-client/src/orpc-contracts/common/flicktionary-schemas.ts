@@ -179,12 +179,19 @@ export const GrammarNotableFormSchema = z.object({
 export type GrammarNotableForm = z.infer<typeof GrammarNotableFormSchema>
 
 // IPA strings bucketed by dialect. English populates `ga` (General American)
-// and/or `rp` (Received Pronunciation); other languages populate `untagged`.
-// Sourced from Wiktionary `sounds[]` at grounding time so the focus view can
-// render pronunciation without waiting on the LLM full-exploration pass.
+// and/or `rp` (Received Pronunciation); Portuguese `br` (Brazilian) / `eu`
+// (European); Spanish `cas` (Castilian) / `lam` (Latin American); languages
+// without a dialect split populate `untagged`. Sourced from Wiktionary
+// `sounds[]` at grounding time so the focus view can render pronunciation
+// without waiting on the LLM full-exploration pass. Keep in sync with
+// `IpaBagShape` in @flicktionary/core (pick-ipa.ts).
 export const GrammarIpaBagSchema = z.object({
   ga: z.string().nullable().optional(),
   rp: z.string().nullable().optional(),
+  br: z.string().nullable().optional(),
+  eu: z.string().nullable().optional(),
+  cas: z.string().nullable().optional(),
+  lam: z.string().nullable().optional(),
   untagged: z.string().nullable().optional(),
 })
 export type GrammarIpaBag = z.infer<typeof GrammarIpaBagSchema>

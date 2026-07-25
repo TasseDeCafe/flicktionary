@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ReviewTerm } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { DEFAULT_IPA_DIALECTS } from '@flicktionary/core/utils/pick-ipa'
 import { resolveCardContent } from './resolve-card-content'
 
 // A lemma row with full content + a GA IPA, used as the fallback source.
@@ -22,7 +23,7 @@ const baseLemma: ReviewTerm = {
 
 describe('resolveCardContent', () => {
   it('citation resolves straight from the lemma row', () => {
-    const c = resolveCardContent(baseLemma, 'ru', 'ga')
+    const c = resolveCardContent(baseLemma, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.isForm).toBe(false)
     expect(c.displayForm).toBe('посмотре́ть')
     expect(c.translation).toBe('to take a look')
@@ -45,7 +46,7 @@ describe('resolveCardContent', () => {
         grammar: { pos: 'verb' },
       },
     }
-    const c = resolveCardContent(card, 'ru', 'ga')
+    const c = resolveCardContent(card, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.isForm).toBe(true)
     expect(c.displayForm).toBe('посмо́трим')
     expect(c.translation).toBe("let's have a look")
@@ -63,7 +64,7 @@ describe('resolveCardContent', () => {
       // Only a form + translation; definition/examples/grammar absent.
       facetPayload: { form: 'посмо́трим', translation: "let's have a look" },
     }
-    const c = resolveCardContent(card, 'ru', 'ga')
+    const c = resolveCardContent(card, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.translation).toBe("let's have a look")
     // Fall back to the lemma for the silent fields.
     expect(c.definition).toBe('to look at something')
@@ -79,7 +80,7 @@ describe('resolveCardContent', () => {
       targetForm: 'посмотрим',
       facetPayload: { form: 'посмотрим', translation: "let's have a look" },
     }
-    const c = resolveCardContent(card, 'ru', 'ga')
+    const c = resolveCardContent(card, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.isForm).toBe(true)
     expect(c.displayForm).toBe('посмотрим')
     expect(c.translation).toBe("let's have a look")
@@ -92,12 +93,12 @@ describe('resolveCardContent', () => {
       targetForm: 'посмотрим',
       facetPayload: { form: 'посмотрим', translation: '   ' },
     }
-    const c = resolveCardContent(card, 'ru', 'ga')
+    const c = resolveCardContent(card, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.translation).toBe('to take a look')
   })
 
   it('non-German citation has no German forms sub-line', () => {
-    const c = resolveCardContent(baseLemma, 'ru', 'ga')
+    const c = resolveCardContent(baseLemma, 'ru', DEFAULT_IPA_DIALECTS)
     expect(c.citationForms).toBeNull()
   })
 
@@ -108,7 +109,7 @@ describe('resolveCardContent', () => {
       targetLanguage: 'de',
       grammar: { pos: 'noun', gender: 'm', plural: 'Bestandteile', genitive: 'Bestandteils' },
     }
-    const c = resolveCardContent(card, 'de', 'ga')
+    const c = resolveCardContent(card, 'de', DEFAULT_IPA_DIALECTS)
     expect(c.displayForm).toBe('der Bestandteil')
     expect(c.citationForms).toBe('pl -e')
   })
@@ -120,7 +121,7 @@ describe('resolveCardContent', () => {
       targetLanguage: 'de',
       grammar: { pos: 'noun', gender: 'n', plural: 'Häuser', genitive: 'Hauses' },
     }
-    const c = resolveCardContent(card, 'de', 'ga')
+    const c = resolveCardContent(card, 'de', DEFAULT_IPA_DIALECTS)
     expect(c.displayForm).toBe('das Haus')
     expect(c.citationForms).toBe('die Häuser')
   })

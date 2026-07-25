@@ -140,7 +140,7 @@ export const createAdhocCard = async (params: {
   // data pass now generates grammar.ipa by default (grounding overwrites it
   // with Wiktionary's where available).
   const englishIpaDialect = isEnglishTargetLanguage(targetLanguage)
-    ? await deps.usersRepository.getEnglishIpaDialect(userId)
+    ? (await deps.usersRepository.getIpaDialects(userId)).en
     : undefined
 
   let chunks

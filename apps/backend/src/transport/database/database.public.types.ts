@@ -1747,7 +1747,9 @@ export type Database = {
           last_target_language: string | null
           llm_highlights_enabled: boolean
           native_language: string | null
+          portuguese_ipa_dialect: string
           referral: string | null
+          spanish_ipa_dialect: string
           stripe_customer_id: string | null
           tap_to_translate_enabled: boolean
           telegram_chat_id: number | null
@@ -1768,7 +1770,9 @@ export type Database = {
           last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
+          portuguese_ipa_dialect?: string
           referral?: string | null
+          spanish_ipa_dialect?: string
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
           telegram_chat_id?: number | null
@@ -1789,7 +1793,9 @@ export type Database = {
           last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
+          portuguese_ipa_dialect?: string
           referral?: string | null
+          spanish_ipa_dialect?: string
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
           telegram_chat_id?: number | null

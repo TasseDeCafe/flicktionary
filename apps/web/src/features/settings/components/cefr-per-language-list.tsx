@@ -4,21 +4,21 @@ import { getLanguageName } from '@flicktionary/core/constants/supported-language
 import { Input } from '@flicktionary/ui/components/input'
 import { Label } from '@flicktionary/ui/components/label'
 import { Switch } from '@flicktionary/ui/components/switch'
+import type { IpaDialects } from '@flicktionary/core/utils/pick-ipa'
 import {
   useSetCefrForLanguage,
-  useSetEnglishIpaDialect,
+  useSetIpaDialect,
   useSetPracticeLimitsForLanguage,
   useSetShowTranslationsForLanguage,
 } from '@/features/sessions/api/sessions-hooks'
 import {
   PRACTICE_MAX_NEW_TERMS_LIMIT,
   PRACTICE_MAX_REVIEW_TERMS_LIMIT,
+  type IpaDialectInput,
 } from '@flicktionary/api-client/orpc-contracts/user-prefs-contract'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 type CefrLevel = (typeof LEVELS)[number]
-
-type IpaDialect = 'ga' | 'rp'
 
 type Pref = {
   targetLanguage: string
@@ -192,12 +192,12 @@ const PracticeLimitsRow = ({
 
 type Props = {
   prefs: Pref[]
-  englishIpaDialect: IpaDialect
+  ipaDialects: IpaDialects
 }
 
 const isCefrLevel = (v: string): v is CefrLevel => (LEVELS as readonly string[]).includes(v)
 
-export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
+export const CefrPerLanguageList = ({ prefs, ipaDialects }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending, variables } = useSetCefrForLanguage()
   const {
@@ -205,12 +205,39 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
     isPending: isSavingShowTranslations,
     variables: showTranslationsVariables,
   } = useSetShowTranslationsForLanguage()
-  const { mutate: setEnglishIpaDialect, isPending: isSavingIpaDialect } = useSetEnglishIpaDialect()
+  const { mutate: setIpaDialect, isPending: isSavingIpaDialect } = useSetIpaDialect()
 
-  const ipaOptions: Array<{ value: IpaDialect; label: string }> = [
-    { value: 'ga', label: t`American` },
-    { value: 'rp', label: t`British` },
-  ]
+  // Per-language IPA dialect toggles. Each option carries the full mutation
+  // input so the discriminated union ties the dialect values to the language.
+  const ipaDialectRowFor = (
+    targetLanguage: string
+  ): { description: string; options: Array<{ input: IpaDialectInput; label: string }> } | null => {
+    if (targetLanguage === 'en')
+      return {
+        description: t`Which pronunciation to show for English vocabulary cards.`,
+        options: [
+          { input: { targetLanguage: 'en', dialect: 'ga' }, label: t`American` },
+          { input: { targetLanguage: 'en', dialect: 'rp' }, label: t`British` },
+        ],
+      }
+    if (targetLanguage === 'es')
+      return {
+        description: t`Which pronunciation to show for Spanish vocabulary cards.`,
+        options: [
+          { input: { targetLanguage: 'es', dialect: 'lam' }, label: t`Latin American` },
+          { input: { targetLanguage: 'es', dialect: 'cas' }, label: t`European` },
+        ],
+      }
+    if (targetLanguage === 'pt')
+      return {
+        description: t`Which pronunciation to show for Portuguese vocabulary cards.`,
+        options: [
+          { input: { targetLanguage: 'pt', dialect: 'br' }, label: t`Brazilian` },
+          { input: { targetLanguage: 'pt', dialect: 'eu' }, label: t`European` },
+        ],
+      }
+    return null
+  }
 
   const handleChange = (targetLanguage: string, level: CefrLevel) => {
     mutate({ targetLanguage, cefrLevel: level })
@@ -240,6 +267,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
           const isRowPending = isPending && variables?.targetLanguage === p.targetLanguage
           const isShowTranslationsPending =
             isSavingShowTranslations && showTranslationsVariables?.targetLanguage === p.targetLanguage
+          const dialectRow = ipaDialectRowFor(p.targetLanguage)
           return (
             <li key={p.targetLanguage} className='flex flex-col gap-3 rounded-md border p-3'>
               <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
@@ -289,24 +317,22 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                 maxReviewTerms={p.practiceMaxReviewTerms}
                 maxReviewTermsProduction={p.practiceMaxReviewTermsProduction}
               />
-              {p.targetLanguage === 'en' && (
+              {dialectRow && (
                 <div className='flex items-center justify-between gap-3 border-t pt-3'>
                   <div className='flex flex-col gap-1'>
                     <span className='text-sm font-medium'>{t`IPA dialect`}</span>
-                    <p className='text-muted-foreground text-xs'>
-                      {t`Which pronunciation to show for English vocabulary cards.`}
-                    </p>
+                    <p className='text-muted-foreground text-xs'>{dialectRow.description}</p>
                   </div>
                   <div className='flex shrink-0 items-center gap-1'>
-                    {ipaOptions.map((opt) => {
-                      const active = opt.value === englishIpaDialect
+                    {dialectRow.options.map((opt) => {
+                      const active = ipaDialects[opt.input.targetLanguage] === opt.input.dialect
                       return (
                         <button
-                          key={opt.value}
+                          key={opt.input.dialect}
                           type='button'
                           disabled={isSavingIpaDialect}
                           onClick={() => {
-                            if (opt.value !== englishIpaDialect) setEnglishIpaDialect({ dialect: opt.value })
+                            if (!active) setIpaDialect(opt.input)
                           }}
                           className={
                             active

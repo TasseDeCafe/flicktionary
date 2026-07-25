@@ -14,7 +14,8 @@ import { Button } from '@flicktionary/ui/components/button'
 import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
-import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
+import { ipaDialectsFromPrefs } from '@flicktionary/core/utils/pick-ipa'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
@@ -26,7 +27,7 @@ export type RateSheetChunkContent = {
   // stress cue directly.
   displayForm: string | null
   // Already-picked IPA string. The caller is responsible for dialect selection
-  // (English GA/RP) via `pickIpa`; the rate sheet just renders the string.
+  // (per-language via `pickIpa`); the rate sheet just renders the string.
   ipa: string | null
   // Either translation (L1≠L2) or definition (L1=L2 fallback) is shown as the
   // glossing line. Optional support fields rendered when present.
@@ -131,10 +132,7 @@ export const RateSheet = ({
               </FloatingSheetTitle>
               {mode === 'rate' && chunk?.ipa && (
                 <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                  <EnglishIpaDialectFlag
-                    targetLanguage={chunk.targetLanguage}
-                    englishIpaDialect={userPrefs?.englishIpaDialect ?? 'ga'}
-                  />
+                  <IpaDialectFlag targetLanguage={chunk.targetLanguage} ipaDialects={ipaDialectsFromPrefs(userPrefs)} />
                   <span>{chunk.ipa}</span>
                 </div>
               )}

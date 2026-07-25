@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { ipaDialectsFromPrefs, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type {
   PracticePool,
@@ -150,7 +150,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
     if (!ann) return null
     const grammar = ann.grammar
     const displayForm = typeof grammar?.display_form === 'string' ? grammar.display_form : null
-    const ipa = pickIpa(grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga') ?? null
+    const ipa = pickIpa(grammar?.ipa, targetLanguage, ipaDialectsFromPrefs(userPrefs)) ?? null
     return {
       headword: ann.headword,
       displayForm,
@@ -164,7 +164,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
       isDeleted: !!ann.deletedAt,
       isProductionEnabled: ann.isProductionEnabled,
     }
-  }, [openIndex, liveText, targetLanguage, userPrefs?.englishIpaDialect])
+  }, [openIndex, liveText, targetLanguage, userPrefs])
 
   const openAnnotation = useMemo(() => {
     if (openIndex == null || !liveText) return null
