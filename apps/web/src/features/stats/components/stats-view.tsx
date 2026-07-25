@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { PageContainer } from '@/components/page-container'
+import { FilterChip } from '@/components/filter-chip'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { useQualifyingCoverage, type LanguageCoverage } from '@/features/coverage/api/coverage-hooks'
 import { CoverageDotGrid } from '@/features/coverage/components/coverage-canvas'
@@ -54,13 +55,13 @@ export const StatsView = () => {
 
         {languages.length > 1 && (
           <div className='mt-4 flex flex-wrap gap-2'>
-            <StatsChip active={active === null} onClick={() => setSelected(null)}>
+            <FilterChip active={active === null} onClick={() => setSelected(null)}>
               {t`All`}
-            </StatsChip>
+            </FilterChip>
             {languages.map((code) => (
-              <StatsChip key={code} active={code === active} onClick={() => setSelected(code)}>
+              <FilterChip key={code} active={code === active} onClick={() => setSelected(code)}>
                 {getLocalizedCoverageLanguageName(i18n, code)}
-              </StatsChip>
+              </FilterChip>
             ))}
           </div>
         )}
@@ -125,25 +126,3 @@ const StatsCoverageBlock = ({ coverage }: { coverage: LanguageCoverage }) => {
     </div>
   )
 }
-
-const StatsChip = ({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) => (
-  <button
-    type='button'
-    onClick={onClick}
-    className={`shrink-0 rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors ${
-      active
-        ? 'bg-yellow-400 font-medium text-yellow-950'
-        : 'bg-muted text-foreground hover:bg-accent active:bg-accent/80'
-    }`}
-  >
-    {children}
-  </button>
-)
