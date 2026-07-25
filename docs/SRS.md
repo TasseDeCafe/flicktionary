@@ -972,6 +972,9 @@ re-submit the server rejects. Deliberate exits (the X, completion/empty-state bu
 never stash. The chunk soft-delete mutations splice a deleted term's not-yet-reached
 entries out of the stash (`dropTermFromExerciseSession`); a correctly answered current
 entry leaves the correct tally with it (its slot leaves the completion total). The
+chunk edit mutations (content patch, rename) rewrite the stashed entries' embedded
+headword/meaning copies (`patchTermInExerciseSession`), so an Edit-term detour resumes
+onto the updated content instead of the pre-edit snapshot. The
 completion CTA names where close goes: `Back to ⟨language⟩` (plain session, to the
 language landing), `Continue with ⟨next language⟩` (mid-mix), `Finish` (final mix
 language, to the dashboard).
@@ -1033,8 +1036,12 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   screen skip the save, so re-entering Practice from the language screen composes fresh.
   Unreached planned terms remain unintroduced. The chunk soft-delete mutations
   splice a deleted term's not-yet-reached items out of the stashed queue, so a "delete
-  this card" detour resumes without it. A hard page reload still drops the session (the
-  stash is in-memory only).
+  this card" detour resumes without it. The chunk edit mutations (content patch,
+  rename) rewrite the stashed copies of the edited term (`patchTermInComposedSession`:
+  lemma-level card fields + the verified-IPA badge recomputed client-side, exercise
+  headword/meaning lines), so an Edit-term detour resumes onto the updated card — a
+  form card keeps its own facet payload; only its lemma-sourced fields refresh. A hard
+  page reload still drops the session (the stash is in-memory only).
 - **Exercise items** render through the shared exercise components
   (`McExercise` / `ProductionClozeExercise` / `UseInSentenceExercise`) with per-entry
   copy from `origin` (warm-up vs rehab); skips are non-consuming as in Strengthen.
