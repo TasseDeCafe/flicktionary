@@ -31,6 +31,10 @@ export type GrammarPatch = {
   ipa?: {
     ga?: string
     rp?: string
+    br?: string
+    eu?: string
+    cas?: string
+    lam?: string
     untagged?: string
   }
   // government — TODO: extract from senses[].raw_glosses bracketed parentheticals

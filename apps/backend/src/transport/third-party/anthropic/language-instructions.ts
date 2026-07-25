@@ -4,10 +4,27 @@
 //
 // MVP: hardcoded. v2: editable per user from the settings UI.
 
-const SPANISH_INSTRUCTIONS = `Spanish-specific guidance:
+export type SpanishIpaDialect = 'cas' | 'lam'
+export type PortugueseIpaDialect = 'br' | 'eu'
 
-- Default register: educated, neutral Latin-American Spanish (Mexican / pan-LatAm
+// Mirrors the user's Spanish IPA dialect preference (users.spanish_ipa_dialect).
+// Steers the default variety and which grammar.ipa bucket transcriptions land in.
+const buildSpanishDialectBlock = (dialect: SpanishIpaDialect): string =>
+  dialect === 'cas'
+    ? `- Default register: educated Peninsular (European) Spanish, unless the
+  source's regional signals say otherwise.
+- IPA transcriptions use Castilian pronunciation (distinción: c/z as /θ/);
+  fill the \`cas\` bucket of grammar.ipa. When a word or usage is chiefly
+  Latin American, flag it and give the Peninsular equivalent.`
+    : `- Default register: educated, neutral Latin-American Spanish (Mexican / pan-LatAm
   news register), unless the source's regional signals say otherwise.
+- IPA transcriptions use Latin-American pronunciation (seseo: c/z as /s/);
+  fill the \`lam\` bucket of grammar.ipa. When a word or usage is chiefly
+  Peninsular, flag it and give the Latin-American equivalent.`
+
+const buildSpanishInstructions = (dialect: SpanishIpaDialect): string => `Spanish-specific guidance:
+
+${buildSpanishDialectBlock(dialect)}
 - Regional sensitivity:
   - Rioplatense / Argentinian (voseo, "che", lunfardo, "vos sos / tenés / querés",
     "acá / allá" over "aquí / allí", "boludo", "pibe", "laburar", "quilombo"):
@@ -35,6 +52,36 @@ const SPANISH_INSTRUCTIONS = `Spanish-specific guidance:
   - grammar.is_reflexive — true for intrinsically pronominal verbs.
   - grammar.government — when the verb/expression has a fixed preposition that
     a learner would otherwise miss ('depender de', 'soñar con', 'consistir en').`
+
+// Mirrors users.portuguese_ipa_dialect; same role as the Spanish block.
+const buildPortugueseDialectBlock = (dialect: PortugueseIpaDialect): string =>
+  dialect === 'eu'
+    ? `- Default register: educated European Portuguese, unless the source's
+  regional signals say otherwise.
+- IPA transcriptions use European Portuguese pronunciation; fill the \`eu\`
+  bucket of grammar.ipa. When a word or usage is chiefly Brazilian, flag it
+  and give the European equivalent.`
+    : `- Default register: educated Brazilian Portuguese, unless the source's
+  regional signals say otherwise.
+- IPA transcriptions use Brazilian Portuguese pronunciation; fill the \`br\`
+  bucket of grammar.ipa. When a word or usage is chiefly European Portuguese,
+  flag it and give the Brazilian equivalent.`
+
+const buildPortugueseInstructions = (dialect: PortugueseIpaDialect): string => `Portuguese-specific guidance:
+
+${buildPortugueseDialectBlock(dialect)}
+- Headword form: infinitive for verbs, including pronominal verbs with the
+  hyphenated clitic ('queixar-se', 'lembrar-se de'); singular masculine for
+  nouns; lemma + canonical preposition for prepositional collocations. Never
+  inflected.
+- Grammar field usage:
+  - grammar.pos — populate for every chunk.
+  - grammar.gender — fill for nouns whose gender is not predictable from the
+    ending ('o problema', 'a tribo', 'o mapa'). Skip when the ending
+    mechanically gives it away.
+  - grammar.is_reflexive — true for intrinsically pronominal verbs.
+  - grammar.government — when the verb/expression has a fixed preposition a
+    learner would otherwise miss ('gostar de', 'depender de', 'sonhar com').`
 
 const RUSSIAN_INSTRUCTIONS = `Russian-specific guidance:
 
@@ -207,9 +254,6 @@ Grammar field usage — populate when relevant:
   leave unset; English doesn't use them.`
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
-  es: SPANISH_INSTRUCTIONS,
-  spa: SPANISH_INSTRUCTIONS,
-  spanish: SPANISH_INSTRUCTIONS,
   ru: RUSSIAN_INSTRUCTIONS,
   rus: RUSSIAN_INSTRUCTIONS,
   russian: RUSSIAN_INSTRUCTIONS,
@@ -218,16 +262,28 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   german: GERMAN_INSTRUCTIONS,
 }
 
+// The dialect pick for whichever dialect-split language the session targets —
+// the value is also the grammar bag bucket the model is told to fill. Each
+// value yields its own stable cache-prefix variant, same as the English
+// GA/RP split always has.
+export type TargetIpaDialect = 'ga' | 'rp' | 'cas' | 'lam' | 'br' | 'eu'
+
 export const isEnglishTargetLanguage = (targetLanguage: string): boolean =>
   ['en', 'eng', 'english'].includes(targetLanguage.trim().toLowerCase())
 
 export const getLanguageInstructions = (
   targetLanguage: string,
-  opts: { englishIpaDialect?: EnglishIpaDialect } = {}
+  opts: { ipaDialect?: TargetIpaDialect } = {}
 ): string | null => {
-  if (isEnglishTargetLanguage(targetLanguage)) {
-    return buildEnglishInstructions(opts.englishIpaDialect ?? 'ga')
-  }
   const key = targetLanguage.trim().toLowerCase()
+  if (isEnglishTargetLanguage(targetLanguage)) {
+    return buildEnglishInstructions(opts.ipaDialect === 'rp' ? 'rp' : 'ga')
+  }
+  if (['es', 'spa', 'spanish'].includes(key)) {
+    return buildSpanishInstructions(opts.ipaDialect === 'cas' ? 'cas' : 'lam')
+  }
+  if (['pt', 'por', 'portuguese'].includes(key)) {
+    return buildPortugueseInstructions(opts.ipaDialect === 'eu' ? 'eu' : 'br')
+  }
   return LANGUAGE_INSTRUCTIONS[key] ?? null
 }

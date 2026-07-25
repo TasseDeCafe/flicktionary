@@ -18,6 +18,9 @@ const REAL_WORD_TOKEN_PATTERNS: Record<string, RegExp> = {
   ru: /^[а-я]+(?:-[а-я]+)*$/,
   de: /^[a-zäöü]+(?:-[a-zäöü]+)*$/,
   en: /^[a-z]+(?:['’-][a-z]+)*$/,
+  es: /^[a-záéíóúüñ]+(?:-[a-záéíóúüñ]+)*$/,
+  // Hyphen groups cover enclitic spellings (queixar-se, dá-lo).
+  pt: /^[a-záàâãéêíóôõúüç]+(?:-[a-záàâãéêíóôõúüç]+)*$/,
 }
 
 export const isRealWordToken = (foldedForm: string, targetLanguage: string): boolean => {

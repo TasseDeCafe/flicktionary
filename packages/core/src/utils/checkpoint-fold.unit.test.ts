@@ -56,6 +56,19 @@ describe('foldUserHeadwordCandidates', () => {
     expect(foldUserHeadwordCandidates('Обнару́жить', 'ru')).toEqual(['обнаружить'])
   })
 
+  test('adds the de-reflexivized base for Spanish fused and Portuguese hyphenated citations', () => {
+    expect(foldUserHeadwordCandidates('ducharse', 'es')).toEqual(['ducharse', 'duchar'])
+    expect(foldUserHeadwordCandidates('acordarse', 'es')).toEqual(['acordarse', 'acordar'])
+    expect(foldUserHeadwordCandidates('queixar-se', 'pt')).toEqual(['queixar-se', 'queixar'])
+  })
+
+  test('does not strip ordinary -se endings that are not reflexive citations', () => {
+    // `clase` ends in -se but is a noun; only -arse/-erse/-irse strip in es.
+    expect(foldUserHeadwordCandidates('clase', 'es')).toEqual(['clase'])
+    expect(foldUserHeadwordCandidates('mise', 'pt')).toEqual(['mise'])
+    expect(foldUserHeadwordCandidates('-se', 'pt')).toEqual(['-se'])
+  })
+
   test('does not strip particles that are the whole headword', () => {
     expect(foldUserHeadwordCandidates('to ', 'en')).toEqual(['to'])
   })

@@ -360,8 +360,8 @@ describe('lookupFastGlossIpa', () => {
 
     await expect(
       lookupFastGlossIpa({
-        targetLanguage: 'es',
-        selectionText: 'perro',
+        targetLanguage: 'fr',
+        selectionText: 'chien',
         pos: 'noun',
         wiktionaryEntriesRepository: repo,
       })

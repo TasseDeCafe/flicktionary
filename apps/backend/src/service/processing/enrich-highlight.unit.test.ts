@@ -113,7 +113,7 @@ const createDeps = () => {
       updateContent: vi.fn().mockResolvedValue(undefined),
       recordEncounter: vi.fn().mockResolvedValue(undefined),
     },
-    usersRepository: {},
+    usersRepository: { getIpaDialects: vi.fn().mockResolvedValue({ en: 'ga', es: 'lam', pt: 'br' }) },
     userTargetLanguagePrefsRepository: {},
     processingTelemetryRepository: { record },
     wiktionaryEntriesRepository: {},

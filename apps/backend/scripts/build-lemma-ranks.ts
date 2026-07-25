@@ -36,7 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const WORDFREQ_DIR = join(__dirname, '.cache', 'wordfreq')
 
 const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
-const DEFAULT_LANGUAGES = ['ru', 'en', 'de'] as const
+const DEFAULT_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 
 const INSERT_CHUNK = 10_000
 const TOP_PRINT = 60

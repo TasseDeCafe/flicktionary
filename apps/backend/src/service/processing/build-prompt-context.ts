@@ -1,5 +1,5 @@
 import { buildMethodologySystem } from '../../transport/third-party/anthropic/methodology-prompt'
-import type { EnglishIpaDialect } from '../../transport/third-party/anthropic/language-instructions'
+import type { TargetIpaDialect } from '../../transport/third-party/anthropic/language-instructions'
 import type Anthropic from '@anthropic-ai/sdk'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 
@@ -9,7 +9,7 @@ export type PromptContextInput = {
   nativeLanguage?: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
 }
 
 export type PromptContext = {
@@ -39,7 +39,7 @@ export const buildPromptContext = async (
     movieContextBlob: session.context_blob,
     hideTranslationFields: input.hideTranslationFields,
     allowL1Notes: input.allowL1Notes,
-    englishIpaDialect: input.englishIpaDialect,
+    ipaDialect: input.ipaDialect,
   })
 
   return {

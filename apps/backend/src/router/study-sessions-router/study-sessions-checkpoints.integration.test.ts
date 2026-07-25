@@ -43,17 +43,17 @@ describe('study-sessions checkpoints', () => {
 
   test('collect returns UNSUPPORTED_LANGUAGE for a non-kaikki language and preview reports unsupported', async () => {
     const { userId, token } = await setupCheckpointUser(testApp)
-    await UserTargetLanguagePrefsRepository().upsertCefr(userId, 'es', 'B1')
-    const esSession = await createReadingSession(userId, 'es')
+    await UserTargetLanguagePrefsRepository().upsertCefr(userId, 'fr', 'B1')
+    const frSession = await createReadingSession(userId, 'fr')
 
     const preview = await request(testApp)
-      .get(`/api/v1/study-sessions/${esSession.id}/checkpoint-preview?toSegmentIndex=50`)
+      .get(`/api/v1/study-sessions/${frSession.id}/checkpoint-preview?toSegmentIndex=50`)
       .set(buildAuthorizationHeaders(token))
     expect(preview.status).toBe(200)
     expect(preview.body.data).toEqual({ pendingCount: 0, backlogCount: 0, supported: false })
 
     const collected = await request(testApp)
-      .post(`/api/v1/study-sessions/${esSession.id}/checkpoints`)
+      .post(`/api/v1/study-sessions/${frSession.id}/checkpoints`)
       .set(buildAuthorizationHeaders(token))
       .send({ toSegmentIndex: 50, previewedSpans: [] })
     expect(collected.status).toBe(422)

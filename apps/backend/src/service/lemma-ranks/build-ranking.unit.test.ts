@@ -9,6 +9,12 @@ describe('isRealWordToken', () => {
     expect(isRealWordToken('äugen', 'de')).toBe(true)
     expect(isRealWordToken("don't", 'en')).toBe(true)
     expect(isRealWordToken('well-being', 'en')).toBe(true)
+    expect(isRealWordToken('más', 'es')).toBe(true)
+    expect(isRealWordToken('niño', 'es')).toBe(true)
+    expect(isRealWordToken('vergüenza', 'es')).toBe(true)
+    expect(isRealWordToken('coração', 'pt')).toBe(true)
+    expect(isRealWordToken('queixar-se', 'pt')).toBe(true)
+    expect(isRealWordToken('você', 'pt')).toBe(true)
   })
 
   it('keeps single-letter words (one-letter function words are real)', () => {
@@ -23,6 +29,9 @@ describe('isRealWordToken', () => {
     expect(isRealWordToken('c++', 'en')).toBe(false)
     expect(isRealWordToken('-', 'de')).toBe(false)
     expect(isRealWordToken('', 'de')).toBe(false)
+    expect(isRealWordToken('año2', 'es')).toBe(false)
+    expect(isRealWordToken('стол', 'es')).toBe(false)
+    expect(isRealWordToken('são-', 'pt')).toBe(false)
   })
 
   it('throws on a language without a pattern', () => {

@@ -23,7 +23,7 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { getLanguageMode, type LanguageMode } from '../user-prefs/language-mode'
 import { autoKeepNeedsDataIfEligible } from '../cards/set-card-status'
 import { sanitizeExplorationExtrasForLanguageMode } from '../user-prefs/language-output-guards'
-import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
+import { getIpaDialectForTargetLanguage } from '../user-prefs/ipa-dialect'
 
 export type RunCardChatDependencies = {
   anthropicPasses: AnthropicPassesInterface
@@ -323,9 +323,7 @@ export const runCardChat = async (
 
   // Chat shares the enrichment pass's dialect handling so its answers (and any
   // extras_patch edits) stay consistent with the generated exploration.
-  const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
-    ? (await deps.usersRepository.getIpaDialects(input.userId)).en
-    : undefined
+  const ipaDialect = await getIpaDialectForTargetLanguage(deps.usersRepository, input.userId, session.target_language)
 
   const promptContext = await buildPromptContext(
     {
@@ -334,7 +332,7 @@ export const runCardChat = async (
       nativeLanguage: languagePrefs.nativeLanguage ?? undefined,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
-      englishIpaDialect,
+      ipaDialect,
     },
     deps.studySessionsRepository
   )
