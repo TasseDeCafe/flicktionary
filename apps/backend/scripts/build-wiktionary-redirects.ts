@@ -16,7 +16,7 @@ import postgres, { type Sql } from 'postgres'
 // language-scoped: DELETE WHERE target_language = $lang, never TRUNCATE.
 
 const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
-const DEFAULT_LANGUAGES = ['ru', 'en', 'de'] as const
+const DEFAULT_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 
 // U+0301 combining acute — Russian stress mark; stub targets carry it, entry
 // headwords don't. Bound as a parameter (not a SQL U&'' literal) so the JS

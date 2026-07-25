@@ -3,7 +3,7 @@ import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
-import type { EnglishIpaDialect } from '../language-instructions'
+import type { TargetIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_enrichment'
 
@@ -40,7 +40,7 @@ type EnrichmentPassArgs = {
   surroundingSegments: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
 }
 
 const buildTool = (args: {
@@ -194,7 +194,7 @@ export const enrichmentPass = async ({
   surroundingSegments,
   hideTranslationFields = false,
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
-  englishIpaDialect,
+  ipaDialect,
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
   const translationModeBlock = hideTranslationFields
     ? `\nTranslation fields are disabled for this target language. Set translation="", surface_translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
@@ -231,7 +231,7 @@ they apply.`
       movieContextBlob,
       hideTranslationFields,
       allowL1Notes,
-      englishIpaDialect,
+      ipaDialect,
     }),
     tools: [buildTool({ hideTranslationFields, allowL1Notes, targetLanguage })],
     tool_choice: { type: 'tool', name: TOOL_NAME },

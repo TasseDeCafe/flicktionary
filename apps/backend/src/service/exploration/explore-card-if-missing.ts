@@ -10,7 +10,7 @@ import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normali
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { sanitizeGrammarIpa } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
-import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
+import { getIpaDialectForTargetLanguage } from '../user-prefs/ipa-dialect'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
@@ -88,11 +88,10 @@ export const exploreCardIfMissing = async (
     })
     const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
-    // English explorations follow the user's IPA dialect preference (GA vs RP):
-    // it steers extras.ipa and which variety counts as the default vs a regionalism.
-    const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
-      ? (await deps.usersRepository.getIpaDialects(userId)).en
-      : undefined
+    // Explorations follow the user's IPA dialect preference (dialect-split
+    // languages only): it steers extras.ipa and which variety counts as the
+    // default vs a regionalism.
+    const ipaDialect = await getIpaDialectForTargetLanguage(deps.usersRepository, userId, session.target_language)
 
     const enrichment = await deps.anthropicPasses.enrichmentPass({
       nativeLanguage: languageModeNativeLanguage,
@@ -103,7 +102,7 @@ export const exploreCardIfMissing = async (
       surroundingSegments: surroundingFormatted,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
-      englishIpaDialect,
+      ipaDialect,
     })
     const sanitizedText = sanitizeTextFieldsForLanguageMode(
       {

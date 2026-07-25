@@ -104,7 +104,7 @@ const createDeps = () => {
       updateContent,
       renameKey: vi.fn().mockResolvedValue({ ok: true }),
     },
-    usersRepository: {},
+    usersRepository: { getIpaDialects: vi.fn().mockResolvedValue({ en: 'ga', es: 'lam', pt: 'br' }) },
     userTargetLanguagePrefsRepository: {},
   } as unknown as RunCardChatDependencies
   return { deps, updateContent, insertMessage }

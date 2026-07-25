@@ -4,7 +4,7 @@ import { UserLookupsRepositoryInterface } from '../../transport/database/user-lo
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { FacetSkill } from '../../transport/database/study-facets/study-facets-repository'
-import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
+import { getIpaDialectForTargetLanguage } from '../user-prefs/ipa-dialect'
 import { getLanguageMode } from '../user-prefs/language-mode'
 
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
@@ -97,10 +97,9 @@ export const generateFormFacetData = async (
       return 'generated'
     }
 
-    // English form IPA follows the user's dialect preference (GA vs RP).
-    const englishIpaDialect = isEnglishTargetLanguage(term.targetLanguage)
-      ? (await deps.usersRepository.getIpaDialects(params.userId)).en
-      : undefined
+    // Form IPA follows the user's dialect preference for dialect-split
+    // languages; other languages get the shared untagged bucket.
+    const ipaDialect = await getIpaDialectForTargetLanguage(deps.usersRepository, params.userId, term.targetLanguage)
 
     const result = await deps.anthropicPasses.generateFormData({
       nativeLanguage: languageMode.nativeLanguage ?? term.targetLanguage,
@@ -109,17 +108,13 @@ export const generateFormFacetData = async (
       headwordTranslation: term.translation,
       surfaceForm,
       encounteredSentence,
-      englishIpaDialect,
+      ipaDialect,
     })
 
     // The form's own IPA goes into the payload's grammar bag in GrammarIpaBag
     // shape — resolve-card-content reads facetPayload.grammar.ipa (deliberately
     // no lemma fallback: a lemma's transcription is wrong for an inflection).
-    const ipaBag: IpaBagShape | null = result.ipa
-      ? isEnglishTargetLanguage(term.targetLanguage)
-        ? { [englishIpaDialect ?? 'ga']: result.ipa }
-        : { untagged: result.ipa }
-      : null
+    const ipaBag: IpaBagShape | null = result.ipa ? { [ipaDialect ?? 'untagged']: result.ipa } : null
 
     // Readiness guard: a pronunciation facet with no confident generated IPA
     // must NOT flip to ready (setFacetPayload flips unconditionally) — leave it

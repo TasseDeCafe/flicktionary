@@ -121,9 +121,25 @@ describe('generateFormFacetData — per-form pronunciation', () => {
 
     await run(deps, 'pronunciation')
 
-    expect(vi.mocked(generateFormData)).toHaveBeenCalledWith(expect.objectContaining({ englishIpaDialect: 'rp' }))
+    expect(vi.mocked(generateFormData)).toHaveBeenCalledWith(expect.objectContaining({ ipaDialect: 'rp' }))
     const payload = setFacetPayload.mock.calls[0]![0].payload as { grammar: { ipa: Record<string, string> } }
     expect(payload.grammar.ipa).toEqual({ rp: '/ˈhaʊzɪz/' })
+  })
+
+  it('buckets Spanish form IPA into the user dialect (lam)', async () => {
+    const { deps, setFacetPayload } = createDeps({ targetLanguage: 'es' })
+    vi.mocked(generateFormData).mockResolvedValue({
+      ...formResult,
+      form: 'duchándose',
+      displayForm: null,
+      ipa: '/duˈt͡ʃan.do.se/',
+    })
+
+    await run(deps, 'pronunciation')
+
+    expect(vi.mocked(generateFormData)).toHaveBeenCalledWith(expect.objectContaining({ ipaDialect: 'lam' }))
+    const payload = setFacetPayload.mock.calls[0]![0].payload as { grammar: { ipa: Record<string, string> } }
+    expect(payload.grammar.ipa).toEqual({ lam: '/duˈt͡ʃan.do.se/' })
   })
 
   it('translations-off does NOT take the no-model shortcut for pronunciation — runs the model, blanks the translation', async () => {

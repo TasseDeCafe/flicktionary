@@ -15,7 +15,7 @@ import {
   HighlightInput,
 } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
-import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
+import { getIpaDialectForTargetLanguage } from '../user-prefs/ipa-dialect'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -136,12 +136,10 @@ export const createAdhocCard = async (params: {
     selectionText: headword,
   }
 
-  // English IPA follows the user's dialect preference (GA vs RP) — the basic
-  // data pass now generates grammar.ipa by default (grounding overwrites it
+  // Dialect-split languages follow the user's IPA dialect preference — the
+  // basic data pass generates grammar.ipa by default (grounding overwrites it
   // with Wiktionary's where available).
-  const englishIpaDialect = isEnglishTargetLanguage(targetLanguage)
-    ? (await deps.usersRepository.getIpaDialects(userId)).en
-    : undefined
+  const ipaDialect = await getIpaDialectForTargetLanguage(deps.usersRepository, userId, targetLanguage)
 
   let chunks
   try {
@@ -154,7 +152,7 @@ export const createAdhocCard = async (params: {
       highlights: [highlightInput],
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
-      englishIpaDialect,
+      ipaDialect,
     })
   } catch (e) {
     logCustomErrorMessageAndError(`createAdhocCard: basicDataPass failed for userId=${userId}`, e)

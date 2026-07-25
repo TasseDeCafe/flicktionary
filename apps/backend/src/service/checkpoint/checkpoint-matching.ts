@@ -1,5 +1,9 @@
 import { getWordRanges } from '@flicktionary/core/dom/word-segmenter'
-import { foldCheckpointToken, foldUserHeadwordCandidates } from '@flicktionary/core/utils/checkpoint-fold'
+import {
+  foldCheckpointToken,
+  foldUserHeadwordCandidates,
+  stripReflexiveSuffix,
+} from '@flicktionary/core/utils/checkpoint-fold'
 import type { CheckpointVocabRow } from '../../transport/database/user-lookups/user-lookups-repository'
 
 // Pure matching/partitioning logic for checkpoint reviews (docs/SRS.md
@@ -106,6 +110,8 @@ export const matchVocabAgainstSpanLemmas = (params: {
 const MWE_PARTICLES: Record<string, ReadonlySet<string>> = {
   en: new Set(['to']),
   de: new Set(['sich']),
+  es: new Set(['de', 'a', 'en', 'con', 'la', 'el', 'los', 'las', 'se', 'que']),
+  pt: new Set(['de', 'a', 'o', 'os', 'as', 'em', 'com', 'se', 'que']),
 }
 
 export const splitMweContentLemmas = (headword: string, targetLanguage: string): string[] => {
@@ -113,6 +119,10 @@ export const splitMweContentLemmas = (headword: string, targetLanguage: string):
   const parts = foldCheckpointToken(headword, targetLanguage)
     .split(/\s+/)
     .filter((p) => p.length > 0 && !particles?.has(p))
+    // Pronominal parts inside an MWE (`darse cuenta de` → `darse`) reduce to
+    // their base verb — text tokens resolve to `dar`, never `darse`, so the
+    // reflexive spelling as a required content lemma could never match.
+    .map((p) => stripReflexiveSuffix(p, targetLanguage) ?? p)
   return [...new Set(parts)]
 }
 

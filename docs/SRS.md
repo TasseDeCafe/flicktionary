@@ -120,7 +120,7 @@ Recognition/Production (both citation and form targets).
   `ReviewTerm.ipaSource === 'wiktionary'` (server-computed: grounded + `grammar.ipa` still
   matches `grounding_patch.ipa`); form cards never badge. Self-graded, passive pool.
 - Citation payload is `{}` — IPA is derived at render from `grammar.ipa`, so grammar edits stay
-  live. A form facet's payload carries its own `grammar.ipa` bag (English → the user's dialect
+  live. A form facet's payload carries its own `grammar.ipa` bag (dialect-split languages → the user's dialect
   bucket, others → `untagged`).
 
 ### Form facets
@@ -584,7 +584,7 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   track's real max index. Undo is the only non-monotonic write (exact restore,
   including NULL for a first checkpoint).
 - **Language gate.** Hard-gated to `KAIKKI_LANGUAGES` (loaded wiktionary
-  dumps — ru/en/de today). No degraded fallback: collect returns
+  dumps — ru/en/de/es/pt today). No degraded fallback: collect returns
   UNPROCESSABLE_ENTITY (`UNSUPPORTED_LANGUAGE`), preview reports
   `supported: false`, and the UI hides the affordances.
 - **Matching.** Span segments tokenize server-side with the same

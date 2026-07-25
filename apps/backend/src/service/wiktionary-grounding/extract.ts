@@ -46,6 +46,11 @@ const LANGUAGE_EXTRACTORS: Record<string, LanguageExtractor> = {
   ru: { byPos: { verb: extractRussianVerb, noun: extractRussianNoun } },
   de: { byPos: { verb: extractGermanVerb, noun: extractGermanNoun }, skipDisplayForm: true },
   en: { skipDisplayForm: true },
+  // es/pt head templates have no ` • ` separator, so extractDisplayForm would
+  // return the whole head line (`pie m (plural pies)`) — a card title, not a
+  // display form. Same noise class as the German/English skip.
+  es: { skipDisplayForm: true },
+  pt: { skipDisplayForm: true },
 }
 
 // Public: extract the structured-grammar patch we want to merge into the
@@ -63,7 +68,7 @@ export const extractGrammarPatch = (entry: KaikkiEntry, langCode: string): Gramm
   }
 
   const ipa = extractIpaBag(entry, langCode)
-  if (ipa.ga || ipa.rp || ipa.untagged) patch.ipa = ipa
+  if (ipa.ga || ipa.rp || ipa.br || ipa.eu || ipa.cas || ipa.lam || ipa.untagged) patch.ipa = ipa
 
   return patch
 }

@@ -27,14 +27,30 @@ export const foldCheckpointToken = (text: string, lang: string): string => {
   return base
 }
 
+// Reflexive/pronominal citation forms whose reflexive marker is part of the
+// word itself: Spanish fuses the enclitic (`ducharse`), Portuguese hyphenates
+// it (`queixar-se`). Returns the base verb, or null when the word carries no
+// reflexive suffix. The es rule fires only on infinitive endings so ordinary
+// -se words (`clase`) are untouched.
+export const stripReflexiveSuffix = (word: string, lang: string): string | null => {
+  if (lang === 'es' && /(?:arse|erse|irse)$/.test(word)) return word.slice(0, -2)
+  if (lang === 'pt' && word.endsWith('-se') && word.length > 3) return word.slice(0, -3)
+  return null
+}
+
 // user_lookups.headword is LLM-normalized and not guaranteed to equal the
-// kaikki lemma (`to run` vs `run`, `sich freuen` vs `freuen`). Returns the
-// folded headword plus per-language de-particled variants, deduped — every
-// candidate is matched against the folded wiktionary side.
+// kaikki lemma (`to run` vs `run`, `sich freuen` vs `freuen`, `queixar-se` vs
+// `queixar`). Returns the folded headword plus per-language de-particled /
+// de-reflexivized variants, deduped — every candidate is matched against the
+// folded wiktionary side. Deliberately liberal (a non-reflexive `duchó`
+// occurrence can credit a saved `ducharse`) — same recall-first stance as the
+// `to run`→`run` strip; precision stages sit downstream.
 export const foldUserHeadwordCandidates = (headword: string, lang: string): string[] => {
   const folded = foldCheckpointToken(headword, lang)
   const candidates = [folded]
   if (lang === 'en' && folded.startsWith('to ')) candidates.push(folded.slice('to '.length))
   if (lang === 'de' && folded.startsWith('sich ')) candidates.push(folded.slice('sich '.length))
+  const deReflexivized = stripReflexiveSuffix(folded, lang)
+  if (deReflexivized) candidates.push(deReflexivized)
   return [...new Set(candidates.filter((c) => c.length > 0))]
 }

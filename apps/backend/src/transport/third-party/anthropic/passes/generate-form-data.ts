@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
-import { getLanguageInstructions, type EnglishIpaDialect } from '../language-instructions'
+import { getLanguageInstructions, type TargetIpaDialect } from '../language-instructions'
 
 // Generate-and-confirm: when a learner adds a
 // specific inflected form as its own study target, the form facet is born
@@ -78,7 +78,7 @@ type GenerateFormDataArgs = {
   encounteredSentence: string | null
   // English IPA dialect preference — steers which variety the `ipa` field
   // transcribes for English targets. Undefined for other languages.
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
 }
 
 const buildTool = (): Anthropic.Tool => ({
@@ -138,7 +138,7 @@ export const generateFormData = async (args: GenerateFormDataArgs): Promise<Form
   // stress-marked; English: leave unset) + IPA dialect, so the form's grammar
   // matches the lemma's basic-data pass instead of the model guessing.
   const languageInstructions = getLanguageInstructions(args.targetLanguage, {
-    englishIpaDialect: args.englishIpaDialect,
+    ipaDialect: args.ipaDialect,
   })
   const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, its stress-marked display form where the language uses one, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${
     languageInstructions ? `\n\n${languageInstructions}` : ''

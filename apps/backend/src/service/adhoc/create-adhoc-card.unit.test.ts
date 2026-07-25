@@ -60,7 +60,10 @@ const createDeps = () => {
     cardsRepository: { updateStatus },
     userLookupsRepository: { applyKeepTransition },
     studyFacetsRepository: {},
-    usersRepository: { setLastTargetLanguage: vi.fn().mockResolvedValue(undefined) },
+    usersRepository: {
+      setLastTargetLanguage: vi.fn().mockResolvedValue(undefined),
+      getIpaDialects: vi.fn().mockResolvedValue({ en: 'ga', es: 'lam', pt: 'br' }),
+    },
     userTargetLanguagePrefsRepository: {
       findForLanguage: vi.fn().mockResolvedValue({ cefr_level: 'B1' }),
     },

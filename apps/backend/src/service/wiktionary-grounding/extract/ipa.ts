@@ -1,8 +1,9 @@
-// IPA-bag extraction from a kaikki entry's `sounds[]`. English buckets into
-// GA/RP (driven by the user's dialect pref downstream); every other language
-// uses the untagged bucket, plus sounds tagged only as the standard reference
-// pronunciation. This is the one piece of extraction that isn't split per
-// language — there is an English path and a non-English path, nothing more.
+// IPA-bag extraction from a kaikki entry's `sounds[]`. Dialect-split
+// languages bucket by dialect (driven by the user's pref downstream):
+// English GA/RP from region tags, Portuguese BR/EU from bare Brazil/Portugal
+// tags, Spanish Castilian/LatAm from the θ-twin rule over untagged variants.
+// Every other language uses the untagged bucket, plus sounds tagged only as
+// the standard reference pronunciation.
 
 import type { KaikkiEntry } from './shared'
 
@@ -171,16 +172,70 @@ const pushUnique = (bucket: string[], ipa: string): void => {
   if (!bucket.includes(ipa)) bucket.push(ipa)
 }
 
-export const extractIpaBag = (
-  entry: KaikkiEntry,
-  langCode: string
-): { ga?: string; rp?: string; untagged?: string } => {
+// --- Spanish θ-twin classification -----------------------------------------
+// kaikki emits Spanish distinción pairs as UNTAGGED variants: the Castilian
+// /θ/ form and its seseo twin (θ→s) side by side. A variant containing θ whose
+// twin is present goes to `cas`, the twin to `lam`; everything unpaired and
+// θ-free is dialect-neutral (loanword variants, optional sounds) and stays
+// shared in `untagged`. Full-dump validation (2026-05-12 dump): exact twins
+// cover 28,151/28,777 θ-variants and the fuzzy comparison below pairs 621 of
+// the remaining 626 (99.98% total).
+
+const deTheta = (s: string): string => s.replace(/θ/g, 's')
+
+// Comparison key for near-twins: seseo merges adjacent s-sounds
+// (/bisθeˈɾal/ → /biseˈɾal/, not /bisseˈɾal/), and the merge can shift the
+// stress mark's position — so compare with stress/syllable marks stripped and
+// s-runs collapsed. Keys are for MATCHING only; buckets keep original strings.
+const spanishFuzzyKey = (s: string): string => deTheta(s).replace(/[ˈˌ.]/g, '').replace(/s+/g, 's')
+
+const classifySpanishVariants = (candidates: string[]): { cas: string[]; lam: string[]; untagged: string[] } => {
+  const cas: string[] = []
+  const lam: string[] = []
+  const claimed = new Set<string>()
+  for (const variant of candidates) {
+    if (!variant.includes('θ')) continue
+    const twin = candidates.find(
+      (other) =>
+        other !== variant &&
+        !other.includes('θ') &&
+        (other === deTheta(variant) || spanishFuzzyKey(other) === spanishFuzzyKey(variant))
+    )
+    pushUnique(cas, variant)
+    claimed.add(variant)
+    if (twin) {
+      pushUnique(lam, twin)
+      claimed.add(twin)
+    }
+    // Unpaired θ (a handful of entries in the whole dump) stays cas-only —
+    // never served to a LatAm user as the default; display falls back.
+  }
+  const untagged = candidates.filter((c) => !claimed.has(c))
+  return { cas, lam, untagged }
+}
+
+export type IpaBag = {
+  ga?: string
+  rp?: string
+  br?: string
+  eu?: string
+  cas?: string
+  lam?: string
+  untagged?: string
+}
+
+export const extractIpaBag = (entry: KaikkiEntry, langCode: string): IpaBag => {
   const sounds = entry.sounds
   if (!Array.isArray(sounds)) return {}
 
   const ga: string[] = []
   const rp: string[] = []
+  const br: string[] = []
+  const eu: string[] = []
   const untagged: string[] = []
+  // Spanish candidates classified AFTER the loop — the θ-twin rule needs the
+  // whole variant list at once.
+  const esCandidates: string[] = []
   const entryPos = langCode === 'en' ? normalizeKaikkiPos(entry.pos) : null
 
   for (const raw of sounds) {
@@ -203,7 +258,24 @@ export const extractIpaBag = (
       continue
     }
 
-    // Non-English: keep untagged sounds, plus those marked only as the
+    if (langCode === 'pt') {
+      // Portuguese kaikki IPA is ~98% dialect-tagged. Accept ONLY the bare
+      // one-tag reference rows (97.8% / 96.0% coverage) — a narrower region
+      // alongside (Rio-de-Janeiro, Southern-Brazil, Caipira, São-Paulo,
+      // Northern|Portugal, …) pins a sub-accent we don't want to serve as the
+      // dialect default, same discipline as bare `US` vs NARROWER_US_TAGS.
+      if (tags.length === 1 && tags[0] === 'Brazil') pushUnique(br, ipa)
+      else if (tags.length === 1 && tags[0] === 'Portugal') pushUnique(eu, ipa)
+      else if (tags.length === 0) pushUnique(untagged, ipa)
+      continue
+    }
+
+    if (langCode === 'es') {
+      if (tags.length === 0) pushUnique(esCandidates, ipa)
+      continue
+    }
+
+    // Other non-English: keep untagged sounds, plus those marked only as the
     // language's standard reference pronunciation (German tags its reference
     // form `standard` / `Germany`). Any regional tag — Austria, Switzerland,
     // Southern-Germany, etc. — fails the `every` check and is dropped, so a
@@ -213,12 +285,28 @@ export const extractIpaBag = (
     }
   }
 
-  const out: { ga?: string; rp?: string; untagged?: string } = {}
-  const pickedGa = pickPreferredFromBucket(ga)
-  if (pickedGa) out.ga = pickedGa
-  const pickedRp = pickPreferredFromBucket(rp)
-  if (pickedRp) out.rp = pickedRp
-  const pickedUntagged = pickPreferredFromBucket(untagged)
-  if (pickedUntagged) out.untagged = pickedUntagged
+  const cas: string[] = []
+  const lam: string[] = []
+  if (langCode === 'es') {
+    const classified = classifySpanishVariants(esCandidates)
+    cas.push(...classified.cas)
+    lam.push(...classified.lam)
+    untagged.push(...classified.untagged)
+  }
+
+  const out: IpaBag = {}
+  const buckets: Array<[keyof IpaBag, string[]]> = [
+    ['ga', ga],
+    ['rp', rp],
+    ['br', br],
+    ['eu', eu],
+    ['cas', cas],
+    ['lam', lam],
+    ['untagged', untagged],
+  ]
+  for (const [key, candidates] of buckets) {
+    const picked = pickPreferredFromBucket(candidates)
+    if (picked) out[key] = picked
+  }
   return out
 }

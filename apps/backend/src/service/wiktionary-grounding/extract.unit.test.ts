@@ -545,3 +545,138 @@ describe('extractIpaBag — German', () => {
     expect(extractIpaBag(entry, 'de')).toEqual({})
   })
 })
+
+// es/pt fixtures mirror real entries from the raw dump (sounds trimmed to the
+// fields the extractor reads).
+describe('extractIpaBag — Spanish θ-twin classification', () => {
+  it('splits an exact distinción pair into cas/lam (phonemic preferred per bucket)', () => {
+    // Real `abduce` sounds: phonemic + phonetic pairs, all untagged.
+    const entry: KaikkiEntry = {
+      word: 'abduce',
+      pos: 'verb',
+      sounds: [{ ipa: '/abˈduθe/' }, { ipa: '[aβ̞ˈð̞u.θe]' }, { ipa: '/abˈduse/' }, { ipa: '[aβ̞ˈð̞u.se]' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ cas: '/abˈduθe/', lam: '/abˈduse/' })
+  })
+
+  it('pairs seseo-degeminated fuzzy twins (adjacent s merge shifts the stress mark)', () => {
+    // Real `visceral`: seseo merges /sθ/ → /s/, so the twin is not an exact θ→s match.
+    const entry: KaikkiEntry = {
+      word: 'visceral',
+      pos: 'adj',
+      sounds: [{ ipa: '/bisθeˈɾal/' }, { ipa: '/biseˈɾal/' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ cas: '/bisθeˈɾal/', lam: '/biseˈɾal/' })
+  })
+
+  it('keeps dialect-neutral variant sets shared in untagged', () => {
+    // Real `pie`: two pronunciations, neither a distinción pair.
+    const entry: KaikkiEntry = {
+      word: 'pie',
+      pos: 'noun',
+      sounds: [{ ipa: '/ˈpje/' }, { ipa: '/piˈe/' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ untagged: '/ˈpje/' })
+  })
+
+  it('classifies θ pairs even when the θ variant is not listed first, leaving extras shared', () => {
+    // Real `quiz`: the loanword variant /ˈkwis/ precedes the θ pair.
+    const entry: KaikkiEntry = {
+      word: 'quiz',
+      pos: 'noun',
+      sounds: [{ ipa: '/ˈkwis/' }, { ipa: '/ˈkiθ/' }, { ipa: '/ˈkis/' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ cas: '/ˈkiθ/', lam: '/ˈkis/', untagged: '/ˈkwis/' })
+  })
+
+  it('puts an unpaired θ variant in cas only (never served as the LatAm default)', () => {
+    const entry: KaikkiEntry = {
+      word: 'acceptable',
+      pos: 'adj',
+      sounds: [{ ipa: '/akθepˈtable/' }, { ipa: '[ak.θepˈt̪a.βle]' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ cas: '/akθepˈtable/' })
+  })
+
+  it('a single seseo-only pronunciation stays shared in untagged', () => {
+    const entry: KaikkiEntry = {
+      word: 'casa',
+      pos: 'noun',
+      sounds: [{ ipa: '/ˈkasa/' }, { ipa: '[ˈka.sa]' }],
+    }
+    expect(extractIpaBag(entry, 'es')).toEqual({ untagged: '/ˈkasa/' })
+  })
+})
+
+describe('extractIpaBag — Portuguese bare-tag buckets', () => {
+  it('buckets bare Brazil/Portugal rows and drops narrower regions', () => {
+    // Real `thesaurus` sounds incl. Rio-de-Janeiro rows that must not leak.
+    const entry: KaikkiEntry = {
+      word: 'thesaurus',
+      pos: 'noun',
+      sounds: [
+        { ipa: '/teˈzaw.ɾus/', tags: ['Brazil'] },
+        { ipa: '[teˈzaʊ̯.ɾus]', tags: ['Brazil'] },
+        { ipa: '/teˈzaw.ɾuʃ/', tags: ['Rio-de-Janeiro'] },
+        { ipa: '/tɨˈzaw.ɾuʃ/', tags: ['Portugal'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'pt')).toEqual({ br: '/teˈzaw.ɾus/', eu: '/tɨˈzaw.ɾuʃ/' })
+  })
+
+  it('drops rows whose only tags are narrower regions or multi-tag combos', () => {
+    const entry: KaikkiEntry = {
+      word: 'x',
+      pos: 'noun',
+      sounds: [
+        { ipa: '/a/', tags: ['Southern-Brazil'] },
+        { ipa: '/b/', tags: ['Portugal', 'Southern'] },
+        { ipa: '/c/', tags: ['Caipira'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'pt')).toEqual({})
+  })
+
+  it('keeps the rare genuinely untagged row in untagged', () => {
+    const entry: KaikkiEntry = {
+      word: 'o',
+      pos: 'article',
+      sounds: [{ ipa: '/u/' }],
+    }
+    expect(extractIpaBag(entry, 'pt')).toEqual({ untagged: '/u/' })
+  })
+})
+
+describe('extractGrammarPatch — es/pt end to end', () => {
+  it('persists a dialect-bucket-only Portuguese bag through the ipa gate', () => {
+    // The typical pt case has NO ga/rp/untagged value — the gate must keep it.
+    const entry: KaikkiEntry = {
+      word: 'coração',
+      pos: 'noun',
+      head_templates: [{ name: 'pt-noun', expansion: 'coração m (plural corações)' }],
+      sounds: [{ ipa: '/ko.ɾaˈsɐ̃w̃/', tags: ['Brazil'] }],
+      senses: [{}],
+    }
+    const patch = extractGrammarPatch(entry, 'pt')
+    expect(patch.pos).toBe('noun')
+    expect(patch.ipa).toEqual({ br: '/ko.ɾaˈsɐ̃w̃/' })
+    // Bullet-less head expansions are card titles, not display forms — skipped.
+    expect(patch.display_form).toBeUndefined()
+  })
+
+  it('does not run Russian extractors for es and skips the display form', () => {
+    const entry: KaikkiEntry = {
+      word: 'cerveza',
+      pos: 'noun',
+      head_templates: [{ name: 'es-noun', expansion: 'cerveza f (plural cervezas)' }],
+      sounds: [{ ipa: '/θeɾˈbeθa/' }, { ipa: '/seɾˈbesa/' }],
+      senses: [{}],
+    }
+    const patch = extractGrammarPatch(entry, 'es')
+    expect(patch.pos).toBe('noun')
+    expect(patch.gender).toBeUndefined()
+    expect(patch.aspect).toBeUndefined()
+    expect(patch.display_form).toBeUndefined()
+    expect(patch.ipa).toEqual({ cas: '/θeɾˈbeθa/', lam: '/seɾˈbesa/' })
+  })
+})

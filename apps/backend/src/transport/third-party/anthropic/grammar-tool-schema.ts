@@ -33,7 +33,7 @@ const POS_ENUM = [
 ]
 
 const IPA_DESCRIPTION =
-  "IPA transcription of the HEADWORD (citation form, not the inflected surface form). Include for every chunk. For English targets fill ONLY the dialect bucket the system prompt specifies (`ga` for General American, `rp` for Received Pronunciation); for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing."
+  "IPA transcription of the HEADWORD (citation form, not the inflected surface form). Include for every chunk. For dialect-split targets fill ONLY the dialect bucket the system prompt specifies — English `ga` (General American) / `rp` (Received Pronunciation), Spanish `cas` (Castilian) / `lam` (Latin American), Portuguese `br` (Brazilian) / `eu` (European) — and for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing."
 
 // One JSON-schema fragment (with its LLM-facing description) per grammar key.
 // Iteration order here is the canonical property order in the assembled schema.
@@ -103,6 +103,10 @@ const GRAMMAR_KEY_SCHEMA: Record<GrammarFieldKey, Record<string, unknown>> = {
     properties: {
       ga: { type: 'string' },
       rp: { type: 'string' },
+      br: { type: 'string' },
+      eu: { type: 'string' },
+      cas: { type: 'string' },
+      lam: { type: 'string' },
       untagged: { type: 'string' },
     },
   },

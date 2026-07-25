@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getLanguageInstructions, type EnglishIpaDialect } from './language-instructions'
+import { getLanguageInstructions, type TargetIpaDialect } from './language-instructions'
 
 // Static methodology preamble — applies to every pipeline pass and per-card chat turn.
 // Stable across all sessions and users; first cacheable layer.
@@ -44,7 +44,7 @@ type BuildMethodologySystemArgs = {
   // variant of the English instructions (usage defaults + IPA dialect). The
   // instructions sit inside the cacheable prefix, so each dialect is its own
   // stable cache variant.
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
 }
 
 const buildTranslationModeBlock = (args: { hideTranslationFields?: boolean; allowL1Notes?: boolean }): string => {
@@ -77,7 +77,7 @@ export const buildMethodologySystem = ({
   movieContextBlob,
   hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
-  englishIpaDialect,
+  ipaDialect,
 }: BuildMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
@@ -87,7 +87,7 @@ export const buildMethodologySystem = ({
   const contextBlock = `Source context for this session:
 ${movieContextBlob}`
 
-  const languageInstructions = getLanguageInstructions(targetLanguage, { englishIpaDialect })
+  const languageInstructions = getLanguageInstructions(targetLanguage, { ipaDialect })
   const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
@@ -109,7 +109,7 @@ type BuildPracticeMethodologySystemArgs = {
   cefrLevel: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
   // Additional STABLE system blocks appended after the user profile — pass-static
   // text (rubrics, hard rules) that must sit inside the cacheable prefix instead
   // of being rebuilt into every user message. Anything that varies per call must
@@ -127,7 +127,7 @@ export const buildPracticeMethodologySystem = ({
   cefrLevel,
   hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
-  englishIpaDialect,
+  ipaDialect,
   extraStableBlocks = [],
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
@@ -135,7 +135,7 @@ export const buildPracticeMethodologySystem = ({
 - Target language: ${targetLanguage}
 - CEFR level: ${cefrLevel}`
 
-  const languageInstructions = getLanguageInstructions(targetLanguage, { englishIpaDialect })
+  const languageInstructions = getLanguageInstructions(targetLanguage, { ipaDialect })
   const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]

@@ -3,7 +3,7 @@ import { getAnthropicClient, MODEL_OPUS, THINKING_DISABLED } from '../anthropic-
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
-import type { EnglishIpaDialect } from '../language-instructions'
+import type { TargetIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_basic_data'
 
@@ -33,7 +33,7 @@ type BasicDataPassArgs = {
   allowL1Notes?: boolean
   // English IPA dialect preference (GA vs RP) — steers which grammar.ipa
   // bucket the model fills for English targets. Undefined for other languages.
-  englishIpaDialect?: EnglishIpaDialect
+  ipaDialect?: TargetIpaDialect
   // Which model runs the pass. The per-highlight enrichment path passes
   // MODEL_ENRICHMENT (Opus 4.8 by default).
   model?: string
@@ -184,7 +184,7 @@ export const basicDataPass = async ({
   highlights,
   hideTranslationFields = false,
   allowL1Notes,
-  englishIpaDialect,
+  ipaDialect,
   model = MODEL_OPUS,
 }: BasicDataPassArgs): Promise<BasicDataChunk[]> => {
   const sameLanguage = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
@@ -246,7 +246,7 @@ ${segmentLines}`
       movieContextBlob,
       hideTranslationFields: shouldHideTranslationFields,
       allowL1Notes,
-      englishIpaDialect,
+      ipaDialect,
     }),
     tools: [buildTool(shouldHideTranslationFields, targetLanguage)],
     tool_choice: { type: 'tool', name: TOOL_NAME },
@@ -291,7 +291,7 @@ export const bindChunksToSingleHighlight = (chunks: BasicDataChunk[], highlight:
 // dialect buckets with non-empty string values, drop the key entirely when
 // nothing survives (a malformed bag must never reach the JSONB merge — the
 // renderer and the pronunciation readiness gate both index into it).
-const IPA_BUCKETS = ['ga', 'rp', 'untagged'] as const
+const IPA_BUCKETS = ['ga', 'rp', 'br', 'eu', 'cas', 'lam', 'untagged'] as const
 export const sanitizeGrammarIpa = (grammar: Record<string, unknown>): Record<string, unknown> => {
   if (!('ipa' in grammar)) return grammar
   const { ipa, ...rest } = grammar

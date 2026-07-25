@@ -168,6 +168,17 @@ describe('splitMweContentLemmas', () => {
     expect(splitMweContentLemmas('sich auf etwas freuen', 'de')).toEqual(['auf', 'etwas', 'freuen'])
     expect(splitMweContentLemmas('идти дождь', 'ru')).toEqual(['идти', 'дождь'])
   })
+
+  test('drops es/pt function words and reduces pronominal parts to the base verb', () => {
+    // The Spanish citation convention includes the fused clitic: `darse` can
+    // never match token-resolved lemmas (`da`/`dio` → `dar`), so the part
+    // reduces to `dar`.
+    expect(splitMweContentLemmas('darse cuenta de', 'es')).toEqual(['dar', 'cuenta'])
+    expect(splitMweContentLemmas('tener en cuenta', 'es')).toEqual(['tener', 'cuenta'])
+    expect(splitMweContentLemmas('dar-se conta de', 'pt')).toEqual(['dar', 'conta'])
+    // Ordinary -se words are untouched (only infinitive endings strip).
+    expect(splitMweContentLemmas('clase de baile', 'es')).toEqual(['clase', 'baile'])
+  })
 })
 
 describe('findMweCandidates', () => {

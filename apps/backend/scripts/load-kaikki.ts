@@ -19,7 +19,7 @@ const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
 // deprecated.
 const KAIKKI_URL = 'https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz'
 const KAIKKI_GZ_FILENAME = 'raw-wiktextract-data.jsonl.gz'
-const LOAD_LANGUAGES = ['ru', 'en', 'de'] as const
+const LOAD_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 const LOAD_LANGUAGES_SET: ReadonlySet<string> = new Set(LOAD_LANGUAGES)
 
 // Hardcoded for local dev work. The dev-tunnel Supabase connection string is
