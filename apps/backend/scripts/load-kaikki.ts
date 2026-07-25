@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 import { rebuildWiktionaryRedirects } from './build-wiktionary-redirects'
 import { snapshotReferenceTables } from './snapshot-reference-tables'
+import { DEFAULT_LOCAL_DEV_CONNECTION, maskConnectionString, resolveConnectionString } from './db-connection'
+import { LOAD_LANGUAGES } from './kaikki-languages'
+import { verifyKaikkiLoad } from './verify-kaikki-load'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
@@ -19,14 +22,7 @@ const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
 // deprecated.
 const KAIKKI_URL = 'https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz'
 const KAIKKI_GZ_FILENAME = 'raw-wiktextract-data.jsonl.gz'
-const LOAD_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 const LOAD_LANGUAGES_SET: ReadonlySet<string> = new Set(LOAD_LANGUAGES)
-
-// Hardcoded for local dev work. The dev-tunnel Supabase connection string is
-// also hardcoded in apps/backend/src/config/environment-config.ts; we duplicate
-// it here so the loader can run as a standalone tsx script without booting the
-// app's config layer. Override with SUPABASE_CONNECTION_STRING if needed.
-const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
 
 const ensureCacheDir = (): void => {
   if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
@@ -204,7 +200,10 @@ const generateCsvs = async (gzPath: string): Promise<CsvOutputs> => {
   return { entriesCsv, formsCsv, entryCount, formCount, parseErrors, skippedNoWordOrPos, skippedWrongLang }
 }
 
-const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: string): Promise<void> => {
+const loadCsvs = async (
+  connectionString: string,
+  { entriesCsv, formsCsv, entryCount: expectedEntries, formCount: expectedForms }: CsvOutputs
+): Promise<void> => {
   const sql = postgres(connectionString, { max: 1 })
   try {
     // Supabase's pooled `postgres` role has a short default statement_timeout
@@ -257,6 +256,10 @@ const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: 
     console.log('Analyzing wiktionary tables...')
     await sql`ANALYZE public.wiktionary_entries, public.wiktionary_forms, public.wiktionary_form_redirects`
 
+    // The COPY connection has died mid-stream without an error before (leaving
+    // wiktionary_forms empty behind a green exit) — so don't trust the COPYs:
+    // require the DB to hold exactly what the CSVs contained, and every
+    // language to have rows in all three tables.
     const [entriesCount] = await sql<[{ count: number }]>`
       SELECT COUNT(*)::int AS count FROM public.wiktionary_entries
     `
@@ -266,15 +269,16 @@ const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: 
     console.log(
       `\nFinal counts: ${entriesCount.count.toLocaleString()} entries, ${formsCount.count.toLocaleString()} forms`
     )
+    if (entriesCount.count !== expectedEntries || formsCount.count !== expectedForms) {
+      throw new Error(
+        `Loaded counts don't match the generated CSVs: ` +
+          `entries ${entriesCount.count.toLocaleString()} vs ${expectedEntries.toLocaleString()} expected, ` +
+          `forms ${formsCount.count.toLocaleString()} vs ${expectedForms.toLocaleString()} expected`
+      )
+    }
 
-    console.log('\nPer-language entry counts:')
-    const perLang = await sql<{ target_language: string; count: number }[]>`
-      SELECT target_language, COUNT(*)::int AS count
-      FROM public.wiktionary_entries
-      GROUP BY target_language
-      ORDER BY target_language
-    `
-    console.log(JSON.stringify(perLang, null, 2))
+    console.log('\nVerifying per-language counts:')
+    await verifyKaikkiLoad(sql, LOAD_LANGUAGES)
 
     console.log("\nSample lookup: headword = 'обнаружить'")
     const sample = await sql`
@@ -299,9 +303,8 @@ const loadCsvs = async (connectionString: string, entriesCsv: string, formsCsv: 
 }
 
 const main = async (): Promise<void> => {
-  const envValue = process.env.SUPABASE_CONNECTION_STRING ?? ''
-  const connectionString = envValue.startsWith('postgresql://') ? envValue : DEFAULT_LOCAL_DEV_CONNECTION
-  console.log(`Connecting to ${connectionString.replace(/:[^:@]+@/, ':****@')}`)
+  const connectionString = resolveConnectionString()
+  console.log(`Connecting to ${maskConnectionString(connectionString)}`)
 
   ensureCacheDir()
   const gzPath = await downloadIfMissing()
@@ -317,7 +320,7 @@ const main = async (): Promise<void> => {
   console.log(`  Skipped ${out.skippedWrongLang.toLocaleString()} entries from non-loaded languages`)
 
   console.log('\nLoading into DB...')
-  await loadCsvs(connectionString, out.entriesCsv, out.formsCsv)
+  await loadCsvs(connectionString, out)
 
   if (connectionString === DEFAULT_LOCAL_DEV_CONNECTION) {
     console.log('\nSnapshotting reference tables for fast db reset...')
@@ -329,7 +332,19 @@ const main = async (): Promise<void> => {
   console.log('\n✓ Done.')
 }
 
-main().catch((err: unknown) => {
-  console.error('FAILED:', err)
-  process.exit(1)
-})
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  // If the DB connection dies mid-COPY the stream pipeline can hang forever
+  // instead of rejecting; node then exits 0 once the event loop drains, with
+  // main()'s promise still pending — CI reads that as success. Pre-set a
+  // failing exit code and clear it only after main() fully resolves
+  // (verification included).
+  process.exitCode = 1
+  main()
+    .then(() => {
+      process.exitCode = 0
+    })
+    .catch((err: unknown) => {
+      console.error('FAILED:', err)
+      process.exit(1)
+    })
+}

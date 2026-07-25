@@ -624,6 +624,14 @@ need re-running to pick up new upstream data or ranking-logic changes. In
 prod, the kaikki load runs via the manually-triggered
 `load-kaikki-prod.yaml` workflow; the lemma-ranks build is a separate manual
 `doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts` step.
+The load never trusts a COPY's clean exit: the loader requires the DB totals
+to match the generated CSVs exactly and every loaded language to have rows
+in all three wiktionary tables (`pnpm verify:kaikki-load` runs the same
+check standalone, and the prod workflow re-runs it as a separate step on a
+fresh connection). The DB scripts fall back to the dev-tunnel connection
+only when run without Doppler — under a Doppler config that doesn't provide
+`SUPABASE_CONNECTION_STRING` they abort instead of silently targeting the
+local DB.
 
 Each coverage repository response reads its manifest, mass totals, and
 requested ranks or labels from one SQL statement snapshot. An atomic build

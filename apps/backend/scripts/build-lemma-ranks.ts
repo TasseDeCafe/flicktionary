@@ -10,6 +10,8 @@ import {
   type FormCandidate,
 } from '../src/service/lemma-ranks/build-ranking'
 import { snapshotReferenceTables } from './snapshot-reference-tables'
+import { DEFAULT_LOCAL_DEV_CONNECTION, maskConnectionString, resolveConnectionString } from './db-connection'
+import { LOAD_LANGUAGES } from './kaikki-languages'
 
 // Builds public.lemma_ranks + its lemma_rank_builds manifest row per language
 // from the wordfreq export (scripts/export-wordfreq.py → .cache/wordfreq/) and
@@ -34,9 +36,6 @@ import { snapshotReferenceTables } from './snapshot-reference-tables'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const WORDFREQ_DIR = join(__dirname, '.cache', 'wordfreq')
-
-const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
-const DEFAULT_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt'] as const
 
 const INSERT_CHUNK = 10_000
 const TOP_PRINT = 60
@@ -239,7 +238,9 @@ const buildLanguage = async (sql: Sql, lang: string): Promise<void> => {
     `  denominator: ${ranked.length.toLocaleString()} lemmas with mass ≥ floor (${droppedCount.toLocaleString()} epsilon-dust lemmas below ${minListedFrequency.toExponential(2)} dropped)`
   )
 
-  console.log(`  top ${TOP_PRINT} (compare against the spike tables in docs/proposals/vocab-coverage-visualization.md):`)
+  console.log(
+    `  top ${TOP_PRINT} (compare against the spike tables in docs/proposals/vocab-coverage-visualization.md):`
+  )
   let cumulative = 0
   for (const { lemma, rank, freqMass } of ranked.slice(0, TOP_PRINT)) {
     cumulative += freqMass
@@ -284,12 +285,11 @@ const buildLanguage = async (sql: Sql, lang: string): Promise<void> => {
 }
 
 const main = async (): Promise<void> => {
-  const envValue = process.env.SUPABASE_CONNECTION_STRING ?? ''
-  const connectionString = envValue.startsWith('postgresql://') ? envValue : DEFAULT_LOCAL_DEV_CONNECTION
-  console.log(`Connecting to ${connectionString.replace(/:[^:@]+@/, ':****@')}`)
+  const connectionString = resolveConnectionString()
+  console.log(`Connecting to ${maskConnectionString(connectionString)}`)
 
   const args = process.argv.slice(2).filter((a) => !a.startsWith('-'))
-  const languages = args.length > 0 ? args : [...DEFAULT_LANGUAGES]
+  const languages = args.length > 0 ? args : [...LOAD_LANGUAGES]
 
   // onnotice silences the expected "table does not exist, skipping" notices
   // from the DROP TABLE IF EXISTS of the per-language temp tables.
