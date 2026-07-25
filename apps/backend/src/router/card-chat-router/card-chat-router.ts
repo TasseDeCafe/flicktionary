@@ -10,6 +10,7 @@ import {
 } from '../../transport/database/card-chat-messages/card-chat-messages-repository'
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { runCardChat, RunCardChatDependencies } from '../../service/chat/run-card-chat'
+import { toChunkDto } from '../cards-router/cards-router'
 
 const toChatMessageDto = (row: DbCardChatMessage) => ({
   id: row.id,
@@ -47,7 +48,7 @@ export const CardChatRouter = (
           data: { errors: [{ message: 'Card not found' }] },
         })
       }
-      const { userMessage, assistantMessage } = await runCardChat(
+      const { userMessage, assistantMessage, updatedChunk } = await runCardChat(
         { cardId: input.cardId, userId, content: input.content },
         chatDependencies
       )
@@ -55,6 +56,7 @@ export const CardChatRouter = (
         data: {
           userMessage: toChatMessageDto(userMessage),
           assistantMessage: toChatMessageDto(assistantMessage),
+          updatedChunk: updatedChunk ? toChunkDto(updatedChunk) : null,
         },
       }
     }),

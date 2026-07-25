@@ -157,3 +157,52 @@ describe('runCardChat — translation patches', () => {
     expect(updateContent).toHaveBeenCalledWith(expect.objectContaining({ id: lookupId, translation: 'le mot' }))
   })
 })
+
+describe('runCardChat — updatedChunk', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(buildPromptContext).mockResolvedValue({ systemBlocks: [] } as unknown as Awaited<
+      ReturnType<typeof buildPromptContext>
+    >)
+  })
+
+  it('returns the REFETCHED chunk after a tool patch (not the pre-patch row)', async () => {
+    vi.mocked(getLanguageMode).mockResolvedValue({
+      ...prefOffMode,
+      showTranslationsEnabled: true,
+      hideTranslationFields: false,
+    } as LanguagePrefs)
+    const { deps } = createDeps()
+    const patchedChunk = { ...card.chunk, translation: 'le mot' }
+    vi.mocked(deps.cardsRepository.findByIdForUser)
+      .mockResolvedValueOnce(card as never)
+      .mockResolvedValue({ ...card, chunk: patchedChunk } as never)
+
+    const result = await runCardChat({ cardId, userId, content: 'Fix the translation' }, deps)
+
+    expect(result.updatedChunk).toEqual(patchedChunk)
+  })
+
+  it('is null for a purely conversational turn', async () => {
+    vi.mocked(getLanguageMode).mockResolvedValue(prefOffMode)
+    const { deps } = createDeps()
+    vi.mocked(deps.anthropicPasses.createChatCompletion).mockResolvedValue({
+      content: [{ type: 'text', text: 'Great question — it means "word".' }],
+    } as never)
+
+    const result = await runCardChat({ cardId, userId, content: 'What does it mean?' }, deps)
+
+    expect(result.updatedChunk).toBeNull()
+    // No patch → no refetch beyond the initial ownership read.
+    expect(deps.cardsRepository.findByIdForUser).toHaveBeenCalledTimes(1)
+  })
+
+  it('is null when the whole patch was dropped (sameLanguage translation-only)', async () => {
+    vi.mocked(getLanguageMode).mockResolvedValue(sameLanguageMode)
+    const { deps } = createDeps()
+
+    const result = await runCardChat({ cardId, userId, content: 'Add a translation please' }, deps)
+
+    expect(result.updatedChunk).toBeNull()
+  })
+})
