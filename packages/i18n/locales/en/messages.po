@@ -895,6 +895,10 @@ msgid "Brand-new and struggling terms warm up with quick exercises before they b
 msgstr "Brand-new and struggling terms warm up with quick exercises before they become flashcards."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Brazilian"
+msgstr "Brazilian"
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "British"
 msgstr "British"
 
@@ -1729,6 +1733,10 @@ msgstr "Error: {message}"
 msgid "Etymology"
 msgstr "Etymology"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "European"
+msgstr "European"
+
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
 msgstr "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
@@ -2152,16 +2160,16 @@ msgid "Failed to undo the collected reviews"
 msgstr "Failed to undo the collected reviews"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Failed to update English IPA dialect"
-msgstr "Failed to update English IPA dialect"
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to update highlight"
 msgstr "Failed to update highlight"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to update interface language"
 msgstr "Failed to update interface language"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to update IPA dialect"
+msgstr "Failed to update IPA dialect"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to update LLM-highlights setting"
@@ -2329,10 +2337,6 @@ msgstr "frustrating"
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Full exploration"
 msgstr "Full exploration"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx
-msgid "GA"
-msgstr "GA"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/review/components/grammar-chips.tsx
@@ -2821,6 +2825,10 @@ msgstr "Last day to cancel before first charge"
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Last read"
 msgstr "Last read"
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Latin American"
+msgstr "Latin American"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Layout"
@@ -4185,10 +4193,6 @@ msgstr "Reviews collected for everything you've read."
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Right-click a word or phrase to save it with the sentence it appeared in."
 msgstr "Right-click a word or phrase to save it with the sentence it appeared in."
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx
-msgid "RP"
-msgstr "RP"
 
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Russian"
@@ -5775,6 +5779,14 @@ msgstr "Where did you hear this? Paste a sentence or leave blank."
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Which pronunciation to show for English vocabulary cards."
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Which pronunciation to show for Portuguese vocabulary cards."
+msgstr "Which pronunciation to show for Portuguese vocabulary cards."
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Which pronunciation to show for Spanish vocabulary cards."
+msgstr "Which pronunciation to show for Spanish vocabulary cards."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "While you read a session, a button labeled <0>I understood up to here</0> appears (at the end of the text: <1>I understood everything</1>). Pressing it tells Flicktionary you read and understood everything up to that point. Words you saved earlier that appeared in that stretch of text and were due for review are credited as successful reviews automatically — reading counts as practice, so they won't come up as flashcards that day. Words you looked up or saved while reading are simply left out; looking something up never counts against you."
