@@ -4666,6 +4666,10 @@ msgstr "Sort & filter"
 msgid "Sort and filter"
 msgstr "Sort and filter"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Sort and filter — language: {languageLabel}"
+msgstr "Sort and filter — language: {languageLabel}"
+
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Spanish"
 msgstr "Spanish"
