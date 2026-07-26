@@ -309,7 +309,11 @@ so `pnpm db:advance-day` time travel works.
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
 `(meaning_recognition,'')`, active → `(meaning_production,'')`; both draw on the one
-combined budget). **Opt-in new** facets
+combined budget). A recognition primary-citation card is additionally excluded — from the
+new bucket, warm-up discovery, `new_count`, AND the introduction write gates — when the
+term's enabled production citation facet is **live** (scheduled or parked): such terms get
+their recognition schedule from the production→recognition bridge instead (§7). **Opt-in
+new** facets
 (pronunciation/forms) bypass the daily-new cap but are served **only in `learn_new`**,
 never `mixed` — otherwise the primary Practice button would flood a session with every
 enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
@@ -363,7 +367,9 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   Practice), composition includes eligible never-reviewed citation terms as onboarding
   gates — discovery is by (user, language) via `listEligibleNewCitationFacets`
   (tier-ordered like the flashcard
-  new bucket, decayed terms excluded — see §4). **Production is allocated first**, then
+  new bucket, decayed terms excluded — see §4; recognition candidates also exclude terms
+  whose production citation facet is live — the bridge covers those, see §7).
+  **Production is allocated first**, then
   recognition, under the COMBINED daily budget. The per-compose budget is
   `min(MAX_WARMUP_INTRO_PER_SESSION, remaining daily budget)` — deliberately NOT coupled
   to the gate backlog (a full warm-up pipeline must not silently starve introductions);
@@ -836,6 +842,51 @@ sets from the same column. Everything below "park" is shared.
   every onboarding-parked term (already-parked + newly-parked), so a re-enter after
   `generating` placeholders never returns empty.
 
+### Production→recognition bridge
+
+Producing a word is strictly stronger evidence than recognizing it, so a term studied in
+both pools never runs recognition onboarding on its own — without this, the recognition
+facet would enter warm-up days after the production facet already graduated (the
+production-first budget allocation), which reads as an already-learned word regressing to
+warm-up.
+
+- **Intro-side exclusion.** While a term's ENABLED production citation facet is **live**
+  (`srs_state IS NOT NULL OR leech_parked_at IS NOT NULL` — scheduled or parked), its
+  recognition citation facet is excluded from `listEligibleNewCitationFacets`, the
+  recognition flashcard new bucket, and the due summary's `new_count`
+  (`noLiveProductionSiblingSql`). Enforced at BOTH atomic write gates, not just queue
+  selection: the warm-up park guard returns `not_eligible` and
+  `initializeCitationFacetIfUnderDailyCap` refuses (reads as a cap refusal — the client
+  drops the card), so a queue item or plan computed before production went live can't
+  introduce. Demoting (disabling) the production facet lifts the exclusion. The vocab
+  `up_next` stage deliberately keeps counting bridge-pending terms — the six-stage
+  partition must cover every kept term; the bridge moves them to `review` at the next
+  production credit.
+- **Bridged credit** (`recognition-bridge.ts`, hooked after `applyTermRating`'s commit —
+  covers every production rating surface: flashcards, production reading advances). A
+  citation-production `good`/`easy` credits the recognition sibling: a never-scheduled
+  facet is seeded straight into review with the generous known-assert schedule
+  (`seedKnownAssertFacet` — no `introduced_at`, so bridged introductions never consume
+  the daily-new budget); an already-scheduled one gets an implicit FSRS `good`. Since
+  recognition schedules at lower desired retention and every production review refreshes
+  it, a bridged facet effectively never comes due on its own — until production evidence
+  stops flowing (lapse, leech park, demotion), exactly when an independent recognition
+  check regains value. Production `again`/`hard` propagate nothing (a production miss is
+  not evidence the user can't recognize).
+- **Silent direct write.** Like graduation (`unparkAndSoftReentryFacet`), bridge writes
+  log NO `practice_rating_events` row: derived credit must not charge the review budget,
+  count as practice activity, or enter the undo chain — undoing the production rating
+  leaves bridged credit in place (the next production credit re-derives it). Seed-vs-refresh
+  is chosen on the row-locked facet (the shared writer serialization point); parked and
+  disabled recognition facets are never touched (a leech-parked recognition facet keeps
+  its gates — direct recognition failure outweighs derived production evidence). The
+  bridge is best-effort: it runs after the production rating committed, and a bridge
+  failure is logged, never surfaced — failing the endpoint would invite a retry that
+  double-applies the committed rating.
+- **No backfill needed.** Terms already mid-recognition-warm-up finish their remaining
+  gate days and graduate normally; already-scheduled recognition facets fade out as the
+  bridge pushes their due dates past production's.
+
 ### Exercise bank + serve resilience
 
 - **Exercise bank** (`exercise-bank.ts`, `practice_exercise` table): durable
@@ -1289,7 +1340,8 @@ origin **on both pools**: `parkedCount` / `productionParkedCount` are leech-only
 `srs_state IS NOT NULL`), `warmupCount` / `productionWarmupCount` are onboarding (parked +
 `srs_state IS NULL`); the composed queue serves both origins' gates in one session.
 `newCount` / `productionNewCount` exclude parked rows so a warm-up term is never advertised
-as servable-new. On the client, `dueSummary` and `previewPracticeQueue` are ONE
+as servable-new; `newCount` also excludes terms whose production citation facet is live
+(the bridge covers them — §7), keeping the same no-overpromise invariant. On the client, `dueSummary` and `previewPracticeQueue` are ONE
 invalidation unit (`practiceSummaryKeys()` in `practice-hooks.ts`, spread by every
 mutation that can move practice state — including the vocabulary / review /
 lesson-import / prefs hooks); a mutation that refreshed one but not the other would leave
