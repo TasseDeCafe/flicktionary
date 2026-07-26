@@ -61,16 +61,30 @@ const makeFacet = (overrides: Partial<DbStudyFacet> = {}): DbStudyFacet =>
     ...overrides,
   }) as DbStudyFacet
 
-const createDeps = (lookup: DbUserLookup | null, facet: DbStudyFacet | null = makeFacet()) => {
+const createDeps = (
+  lookup: DbUserLookup | null,
+  facet: DbStudyFacet | null = makeFacet(),
+  // The recognition citation sibling the production→recognition bridge loads
+  // after a correct production rating. Default null = no sibling, bridge
+  // no-ops — keeps non-bridge tests focused on the rated facet.
+  recognitionSibling: DbStudyFacet | null = null
+) => {
   const initializeCitationFacetIfUnderDailyCap = vi.fn().mockResolvedValue(true)
   const initializeFacet = vi.fn().mockResolvedValue(undefined)
   const applyFsrsResultForFacet = vi.fn().mockResolvedValue(undefined)
   const parkLeechFacet = vi.fn().mockResolvedValue(undefined)
   const ensureCitationFacet = vi.fn().mockResolvedValue(undefined)
-  const getFacet = vi.fn().mockResolvedValue(facet)
-  // The in-transaction locked reload returns the same facet as the pre-read —
-  // the unit fakes model no concurrent writer.
-  const getFacetForUpdate = vi.fn().mockResolvedValue(facet)
+  const seedKnownAssertFacet = vi.fn().mockResolvedValue(true)
+  // Skill-aware facet resolution: the rated facet answers its own skill; a
+  // recognition read against a production-rated test resolves the bridge's
+  // sibling instead. The locked reload returns the same rows — the unit fakes
+  // model no concurrent writer.
+  const resolveFacet = (params: { skill?: string } | undefined) =>
+    params?.skill === 'meaning_recognition' && facet != null && facet.skill !== 'meaning_recognition'
+      ? recognitionSibling
+      : facet
+  const getFacet = vi.fn().mockImplementation(async (params: { skill?: string }) => resolveFacet(params))
+  const getFacetForUpdate = vi.fn().mockImplementation(async (params: { skill?: string }) => resolveFacet(params))
   // Insert returns the new event's id (the undo handle rateTerm surfaces).
   const insertRatingEvent = vi.fn().mockResolvedValue(eventId)
   const warmExerciseBank = vi.fn()
@@ -86,6 +100,7 @@ const createDeps = (lookup: DbUserLookup | null, facet: DbStudyFacet | null = ma
       initializeFacet,
       applyFsrsResultForFacet,
       parkLeechFacet,
+      seedKnownAssertFacet,
     },
     practiceRatingEventsRepository: {
       insert: insertRatingEvent,
@@ -104,6 +119,7 @@ const createDeps = (lookup: DbUserLookup | null, facet: DbStudyFacet | null = ma
     applyFsrsResultForFacet,
     parkLeechFacet,
     insertRatingEvent,
+    seedKnownAssertFacet,
     warmExerciseBank,
   }
 }
@@ -430,5 +446,124 @@ describe('rateTerm leech parking', () => {
     const result = await rateTerm(lookupId, userId, 'again', 'production', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })
+  })
+})
+
+// A correct citation-production rating credits the recognition sibling via
+// the production→recognition bridge (recognition-bridge.ts) — a direct facet
+// write with NO rating event. Full bridge behavior is covered in
+// recognition-bridge.unit.test.ts; these tests pin the hook's trigger
+// condition.
+describe('rateTerm production→recognition bridge hook', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  const productionReviewFacet = makeFacet({
+    skill: 'meaning_production',
+    srs_state: 'review',
+    srs_due: '2026-05-12T00:00:00Z',
+    srs_stability: 5,
+    srs_difficulty: 6,
+    srs_last_review: '2026-05-01T00:00:00Z',
+    srs_reps: 3,
+  })
+
+  it('seeds a never-scheduled recognition sibling on a production good, without a second event', async () => {
+    const { deps, seedKnownAssertFacet, insertRatingEvent } = createDeps(
+      makeLookup(),
+      productionReviewFacet,
+      makeFacet()
+    )
+    await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', '', deps)
+    expect(seedKnownAssertFacet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userLookupId: lookupId,
+        skill: 'meaning_recognition',
+        targetForm: '',
+        state: 'review',
+      }),
+      undefined
+    )
+    // Only the production rating logs an event — bridged credit is silent.
+    expect(insertRatingEvent).toHaveBeenCalledTimes(1)
+  })
+
+  it('a bridge failure is swallowed — the committed production rating still reports ok', async () => {
+    const { deps, seedKnownAssertFacet } = createDeps(makeLookup(), productionReviewFacet, makeFacet())
+    seedKnownAssertFacet.mockRejectedValue(new Error('db down'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const result = await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', '', deps)
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
+    expect(consoleError).toHaveBeenCalled()
+  })
+
+  it('refreshes an already-scheduled recognition sibling on a production easy', async () => {
+    const { deps, seedKnownAssertFacet, applyFsrsResultForFacet } = createDeps(
+      makeLookup(),
+      productionReviewFacet,
+      makeFacet({
+        srs_state: 'review',
+        srs_due: '2026-05-12T00:00:00Z',
+        srs_stability: 4,
+        srs_difficulty: 5,
+        srs_reps: 2,
+      })
+    )
+    await rateTerm(lookupId, userId, 'easy', 'production', 'meaning_production', '', deps)
+    expect(seedKnownAssertFacet).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'meaning_recognition', targetForm: '' }),
+      undefined
+    )
+  })
+
+  it('does not bridge on a production again or hard', async () => {
+    for (const rating of ['again', 'hard'] as const) {
+      const { deps, seedKnownAssertFacet, applyFsrsResultForFacet } = createDeps(
+        makeLookup(),
+        productionReviewFacet,
+        makeFacet()
+      )
+      await rateTerm(lookupId, userId, rating, 'production', 'meaning_production', '', deps)
+      expect(seedKnownAssertFacet).not.toHaveBeenCalled()
+      expect(applyFsrsResultForFacet).not.toHaveBeenCalledWith(
+        expect.objectContaining({ skill: 'meaning_recognition' }),
+        undefined
+      )
+    }
+  })
+
+  it('does not bridge from recognition ratings', async () => {
+    const { deps, seedKnownAssertFacet } = createDeps(makeLookup())
+    await rateTerm(lookupId, userId, 'good', 'recognition', 'meaning_recognition', '', deps)
+    expect(seedKnownAssertFacet).not.toHaveBeenCalled()
+  })
+
+  it('does not bridge from a production FORM facet rating', async () => {
+    const { deps, seedKnownAssertFacet } = createDeps(
+      makeLookup(),
+      makeFacet({
+        skill: 'meaning_production',
+        target_form: 'gatos',
+        srs_state: 'review',
+        srs_due: '2026-05-12T00:00:00Z',
+      }),
+      makeFacet()
+    )
+    await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', 'gatos', deps)
+    expect(seedKnownAssertFacet).not.toHaveBeenCalled()
+  })
+
+  it('skips the bridge for a parked recognition sibling', async () => {
+    const { deps, seedKnownAssertFacet, applyFsrsResultForFacet } = createDeps(
+      makeLookup(),
+      productionReviewFacet,
+      makeFacet({ leech_parked_at: '2026-05-01T00:00:00Z' })
+    )
+    await rateTerm(lookupId, userId, 'good', 'production', 'meaning_production', '', deps)
+    expect(seedKnownAssertFacet).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).not.toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'meaning_recognition' }),
+      undefined
+    )
   })
 })

@@ -425,6 +425,95 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     ).toEqual([term.id])
   })
 
+  // The production→recognition bridge's intro-side exclusion: a term whose
+  // enabled production citation sibling is LIVE (scheduled or parked) gets its
+  // recognition schedule from the bridge, so it must vanish from every
+  // recognition-introduction surface — eligibility, the new bucket, and the
+  // due summary's new_count promise.
+  test('a live production sibling removes the term from recognition intro eligibility', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+
+    const withSibling = async (headword: string, sibling: 'scheduled' | 'parked' | 'disabled' | 'unseen' | 'none') => {
+      const term = await createKeptTerm(userId, headword)
+      await studyFacetsRepository.ensureCitationFacet(term.id)
+      if (sibling === 'none') return term
+      await insertFacet({
+        userLookupId: term.id,
+        userId,
+        skill: 'meaning_production',
+        targetForm: '',
+        srsState: sibling === 'scheduled' ? 'review' : null,
+        srsDue: sibling === 'scheduled' ? '2026-06-01T00:00:00Z' : null,
+        disabledAt: sibling === 'disabled' ? '2026-06-01T00:00:00Z' : null,
+      })
+      if (sibling === 'parked') {
+        await sql`
+          UPDATE public.study_facets SET leech_parked_at = NOW()
+          WHERE user_lookup_id = ${term.id} AND skill = 'meaning_production'
+        `
+      }
+      if (sibling === 'disabled') {
+        // A demoted production facet keeps its history — still not "live".
+        await sql`
+          UPDATE public.study_facets SET srs_state = 'review'
+          WHERE user_lookup_id = ${term.id} AND skill = 'meaning_production'
+        `
+      }
+      return term
+    }
+
+    const scheduled = await withSibling('scheduled', 'scheduled')
+    const parked = await withSibling('parked', 'parked')
+    const demoted = await withSibling('demoted', 'disabled')
+    const unseen = await withSibling('unseen', 'unseen')
+    const solo = await withSibling('solo', 'none')
+
+    const eligible = await userLookupsRepository.listEligibleNewCitationFacets({
+      userId,
+      targetLanguage: 'es',
+      pool: 'recognition',
+    })
+    // Live siblings (scheduled/parked) are excluded; a demoted sibling, an
+    // enabled-but-unseen sibling, and no sibling all stay eligible.
+    expect(eligible).not.toContain(scheduled.id)
+    expect(eligible).not.toContain(parked.id)
+    expect(eligible).toContain(demoted.id)
+    expect(eligible).toContain(unseen.id)
+    expect(eligible).toContain(solo.id)
+
+    // Production intro eligibility ignores the guard (the unseen sibling IS a
+    // production candidate).
+    const productionEligible = await userLookupsRepository.listEligibleNewCitationFacets({
+      userId,
+      targetLanguage: 'es',
+      pool: 'production',
+    })
+    expect(productionEligible).toContain(unseen.id)
+
+    // The recognition NEW bucket refuses the same terms...
+    const served = await userLookupsRepository.listReviewTerms({
+      userId,
+      targetLanguage: 'es',
+      pool: 'recognition',
+      scope: 'learn_new',
+      maxReviewTerms: 100,
+      maxLearningTerms: 100,
+      maxNewTerms: 100,
+      maxOptInNewTerms: 0,
+    })
+    const servedIds = served.map((row) => row.id)
+    expect(servedIds).not.toContain(scheduled.id)
+    expect(servedIds).not.toContain(parked.id)
+    expect(servedIds).toContain(demoted.id)
+    expect(servedIds).toContain(unseen.id)
+    expect(servedIds).toContain(solo.id)
+
+    // ...and the due summary's new_count only promises what the queue serves
+    // (solo + demoted + unseen).
+    const summary = (await userLookupsRepository.listDueSummary(userId)).find((s) => s.targetLanguage === 'es')
+    expect(summary?.newCount).toBe(3)
+  })
+
   // The composed queue's wasted-gate guard: a term whose rehab day-credit was
   // already earned today is excluded (same CURRENT_DATE semantics as
   // advanceRehabDayFacet's IS DISTINCT FROM guard).
