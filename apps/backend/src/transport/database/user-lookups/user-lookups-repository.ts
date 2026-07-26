@@ -823,8 +823,11 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // test is also true on a join miss. It also excludes leech_parked_at: an
   // exercise-first warm-up term is parked AND never-reviewed (srs_state NULL),
   // and the queue (listReviewTerms) won't serve a parked term, so counting it
-  // here would promise a new card the queue refuses. newIntroducedTodayCount
-  // intentionally
+  // here would promise a new card the queue refuses. Terms with a live
+  // production sibling (pf scheduled or parked) are excluded for the same
+  // no-overpromise reason: the recognition bridge covers them, so the queue
+  // never serves them as new (the pf-alias predicate is the inline form of
+  // noLiveProductionSiblingSql). newIntroducedTodayCount intentionally
   // stays unfiltered: it feeds the remaining-daily-new budget, and an
   // introduction performed today consumed that budget even if the facet was
   // disabled later.
@@ -860,6 +863,8 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL
           AND rf.data_status = 'ready' AND rf.srs_state IS NULL
           AND rf.leech_parked_at IS NULL
+          AND (pf.id IS NULL OR pf.disabled_at IS NOT NULL
+            OR (pf.srs_state IS NULL AND pf.leech_parked_at IS NULL))
           AND ${newTermNotDecayedSql()}
       )::int AS new_count,
       (COUNT(*) FILTER (
@@ -1070,6 +1075,11 @@ const listReviewTerms = async (params: {
   `
   const facetJoin = sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skills})`
   const primaryCitation = sql`(f.skill = ${primarySkill} AND f.target_form = ${CITATION_FORM})`
+  // Recognition-pool new cards additionally require no live production
+  // sibling: those terms get their recognition schedule from the
+  // production→recognition bridge instead of an introduction, so serving one
+  // here would spend a daily-new slot on a facet the bridge covers for free.
+  const newBucketBridgeGuard = params.pool === 'recognition' ? noLiveProductionSiblingSql() : sql`TRUE`
 
   // Four capped buckets unioned, then spaced. Priority: 1 due-review,
   // 2 due-learning, 3 new. A bucket with a 0 LIMIT contributes nothing.
@@ -1111,6 +1121,7 @@ const listReviewTerms = async (params: {
         WHERE ${eligible}
           AND f.srs_state IS NULL
           AND ${primaryCitation}
+          AND ${newBucketBridgeGuard}
           AND ${newTermNotDecayedSql()}
         ORDER BY ${newTermOrderSql()}, f.target_form ASC
         LIMIT ${newLimit}
@@ -1411,19 +1422,44 @@ const listParkedTerms = async (params: {
   `) as DbUserLookupWithFacet[]
 }
 
+// TRUE when the term's recognition citation facet still needs its OWN
+// introduction — i.e. no enabled production citation sibling is live
+// (scheduled or parked in warm-up). Producing a word is stronger evidence
+// than recognizing it, so a term with production work in flight gets its
+// recognition schedule from the production→recognition bridge
+// (recognition-bridge.ts) instead of a second exercise-first onboarding —
+// which would read to the user as an already-graduated word regressing to
+// warm-up. Correlated on the outer query's `ul` alias.
+const noLiveProductionSiblingSql = () => sql`
+  NOT EXISTS (
+    SELECT 1
+    FROM public.study_facets pfx
+    WHERE pfx.user_lookup_id = ul.id
+      AND pfx.skill = 'meaning_production'
+      AND pfx.target_form = ${CITATION_FORM}
+      AND pfx.disabled_at IS NULL
+      AND (pfx.srs_state IS NOT NULL OR pfx.leech_parked_at IS NOT NULL)
+  )
+`
+
 // Terms whose citation facet for the pool's skill could ENTER warm-up
 // scaffolding right now: kept, live term; facet exists, enabled, never
 // reviewed, not parked. The by-(user, language) counterpart of warmup.ts's
 // session-scoped eligibleToEnter — feeds composed-queue onboarding plans.
 // Tier-ordered (see new-term-priority.ts), so the daily-new cap
 // admits terms in the same order the flashcard new bucket serves them; decayed
-// never-encountered-lately terms are off the shelf here too.
+// never-encountered-lately terms are off the shelf here too. Recognition
+// candidates additionally exclude terms with a live production sibling (the
+// bridge covers those); NOTE this makes recognition eligibility strictly
+// narrower than the vocab 'up_next' stage, which deliberately keeps counting
+// bridge-pending terms until the bridge moves them to review.
 const listEligibleNewCitationFacets = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
 }): Promise<string[]> => {
   const skill = skillForPool(params.pool)
+  const bridgeGuard = params.pool === 'recognition' ? noLiveProductionSiblingSql() : sql`TRUE`
   const rows = (await sql`
     SELECT ul.id
     FROM public.user_lookups ul
@@ -1436,6 +1472,7 @@ const listEligibleNewCitationFacets = async (params: {
       AND f.disabled_at IS NULL
       AND f.srs_state IS NULL
       AND f.leech_parked_at IS NULL
+      AND ${bridgeGuard}
       AND ${newTermNotDecayedSql()}
     ORDER BY ${newTermOrderSql()}
   `) as Array<{ id: string }>
@@ -1946,9 +1983,13 @@ const parseSkillFilter = (csv: string | null | undefined): FacetSkill[] => {
 export const vocabStageClauseSql = (stage: VocabStage) => {
   switch (stage) {
     case 'up_next':
-      // Mirrors listEligibleNewCitationFacets exactly — deliberately NO
-      // data_status check: the composed queue plans these terms regardless of
-      // card-data readiness, so the stage must count them the same way.
+      // Mirrors listEligibleNewCitationFacets with two deliberate deviations:
+      // no data_status check (the composed queue plans these terms regardless
+      // of card-data readiness), and no live-production-sibling exclusion —
+      // a bridge-pending term (production in flight, recognition schedule
+      // arriving via recognition-bridge.ts) still counts here until the
+      // bridge moves it to 'review', because dropping it would break the
+      // six-stage partition of totalKept.
       return sql`(rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.srs_state IS NULL
         AND rf.leech_parked_at IS NULL AND ${newTermNotDecayedSql()})`
     case 'warming_up':

@@ -327,6 +327,122 @@ describe('study-facets-repository integration tests', () => {
     expect(pron?.introduced_at).toBeNull()
   })
 
+  test('the flashcard intro gate refuses a recognition facet whose production sibling is live', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const term = await createKeptTerm(userId, 'puente')
+    await repo.ensureCitationFacet(term.id)
+    await repo.ensureFacet({ userLookupId: term.id, skill: 'meaning_production', targetForm: '' })
+    await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: term.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_production',
+      maxNewTerms: 10,
+    })
+
+    // A stale queue item (flashcard/reading text served before production went
+    // live) reaches this gate on submit — the write must refuse, not stamp.
+    const introduced = await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: term.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_recognition',
+      maxNewTerms: 10,
+    })
+    expect(introduced).toBe(false)
+    const facet = await repo.getFacet({ userLookupId: term.id, skill: 'meaning_recognition', targetForm: '' })
+    expect(facet?.srs_state).toBeNull()
+    expect(facet?.introduced_at).toBeNull()
+
+    // Demoting production lifts the guard.
+    await sql`
+      UPDATE public.study_facets SET disabled_at = NOW()
+      WHERE user_lookup_id = ${term.id} AND skill = 'meaning_production' AND target_form = ''
+    `
+    expect(
+      await repo.initializeCitationFacetIfUnderDailyCap({
+        userLookupId: term.id,
+        userId,
+        targetLanguage: 'es',
+        skill: 'meaning_recognition',
+        maxNewTerms: 10,
+      })
+    ).toBe(true)
+  })
+
+  test('the warm-up park guard refuses a recognition facet whose production sibling is live', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const recognitionAddress = (userLookupId: string) => ({
+      userLookupId,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_recognition' as const,
+      maxNewTerms: 10,
+    })
+
+    // Production sibling SCHEDULED (introduced as a flashcard): the term's
+    // recognition schedule arrives via the production bridge, never warm-up.
+    const scheduled = await createKeptTerm(userId, 'uno')
+    await repo.ensureCitationFacet(scheduled.id)
+    await repo.ensureFacet({ userLookupId: scheduled.id, skill: 'meaning_production', targetForm: '' })
+    await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: scheduled.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_production',
+      maxNewTerms: 10,
+    })
+    expect(await repo.initializeAndParkCitationFacetIfUnderDailyCap(recognitionAddress(scheduled.id))).toBe(
+      'not_eligible'
+    )
+
+    // Production sibling PARKED (its own warm-up in flight): same refusal.
+    const parked = await createKeptTerm(userId, 'dos')
+    await repo.ensureCitationFacet(parked.id)
+    await repo.ensureFacet({ userLookupId: parked.id, skill: 'meaning_production', targetForm: '' })
+    await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: parked.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_production',
+      maxNewTerms: 10,
+    })
+    expect(await repo.initializeAndParkCitationFacetIfUnderDailyCap(recognitionAddress(parked.id))).toBe('not_eligible')
+
+    // Production sibling DISABLED (demoted): no live production evidence, so
+    // recognition warm-up entry works normally.
+    const demoted = await createKeptTerm(userId, 'tres')
+    await repo.ensureCitationFacet(demoted.id)
+    await repo.ensureFacet({ userLookupId: demoted.id, skill: 'meaning_production', targetForm: '' })
+    await sql`
+      UPDATE public.study_facets SET disabled_at = NOW(), srs_state = 'review'
+      WHERE user_lookup_id = ${demoted.id} AND skill = 'meaning_production' AND target_form = ''
+    `
+    expect(await repo.initializeAndParkCitationFacetIfUnderDailyCap(recognitionAddress(demoted.id))).toBe('scaffolded')
+
+    // The mirror direction is NOT guarded: a live recognition facet never
+    // blocks production warm-up entry (recognition is the weaker skill).
+    const recognitionFirst = await createKeptTerm(userId, 'cuatro')
+    await repo.ensureCitationFacet(recognitionFirst.id)
+    await repo.ensureFacet({ userLookupId: recognitionFirst.id, skill: 'meaning_production', targetForm: '' })
+    await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: recognitionFirst.id,
+      userId,
+      targetLanguage: 'es',
+      skill: 'meaning_recognition',
+      maxNewTerms: 10,
+    })
+    expect(
+      await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+        userLookupId: recognitionFirst.id,
+        userId,
+        targetLanguage: 'es',
+        skill: 'meaning_production',
+        maxNewTerms: 10,
+      })
+    ).toBe('scaffolded')
+  })
+
   // The locked reads are the serialization point between every SRS writer
   // (rating, checkpoint batch credit, the undo paths) — verify they really
   // hold row locks. Probed deterministically from a second pool connection

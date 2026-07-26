@@ -291,6 +291,25 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
   skill: 'meaning_recognition' | 'meaning_production'
   maxNewTerms: number
 }): Promise<boolean> => {
+  // A recognition facet whose enabled production sibling is live (scheduled or
+  // parked) gets its schedule from the production bridge, never an
+  // introduction. Enforced in the write gate — not just queue selection — so a
+  // flashcard or reading text served BEFORE production went live can't stamp
+  // introduced_at on submit/finalize. The refusal reads as a cap refusal to
+  // the caller: the client drops the card, and the bridge covers the facet on
+  // the next production good/easy.
+  const bridgeGuard =
+    params.skill === 'meaning_recognition'
+      ? sql`AND NOT EXISTS (
+          SELECT 1
+          FROM public.study_facets pf
+          WHERE pf.user_lookup_id = f.user_lookup_id
+            AND pf.skill = 'meaning_production'
+            AND pf.target_form = ${CITATION_FORM}
+            AND pf.disabled_at IS NULL
+            AND (pf.srs_state IS NOT NULL OR pf.leech_parked_at IS NOT NULL)
+        )`
+      : sql``
   return await beginTx(async (tx) => {
     await tx`
       SELECT pg_advisory_xact_lock(hashtext(${`flashcards:${params.userId}:${params.targetLanguage}`}))
@@ -312,6 +331,7 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.count > 0
         AND ul.deleted_at IS NULL
+        ${bridgeGuard}
         AND (${citationIntroductionsTodaySql(params.userId, params.targetLanguage)}) < ${params.maxNewTerms}
       RETURNING f.id
     `) as Array<{ id: string }>
@@ -333,7 +353,13 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
 // SELECT-then-decide under the advisory lock so the 3-valued result is
 // unambiguous (the UPDATE's row count can't say WHY it matched nothing):
 //   'not_eligible' — facet missing/disabled, already introduced (srs_state not
-//                    null), or already parked (covers a concurrent-park race).
+//                    null), already parked (covers a concurrent-park race), or
+//                    a RECOGNITION facet whose enabled production citation
+//                    sibling is live (scheduled or parked): those terms get
+//                    their recognition schedule from the production bridge
+//                    (recognition-bridge.ts), never a second warm-up. Checked
+//                    here — the single write gate for warm-up entry — so a
+//                    plan computed before production went live can't park.
 //   'cap_reached'  — eligible but today's introduced count is already at/over
 //                    maxNewTerms.
 //   'scaffolded'   — introduced + parked.
@@ -355,7 +381,16 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
       SELECT pg_advisory_xact_lock(hashtext(${`flashcards:${params.userId}:${params.targetLanguage}`}))
     `
     const facetRows = (await tx`
-      SELECT f.srs_state, f.leech_parked_at, f.disabled_at
+      SELECT f.srs_state, f.leech_parked_at, f.disabled_at,
+        EXISTS (
+          SELECT 1
+          FROM public.study_facets pf
+          WHERE pf.user_lookup_id = f.user_lookup_id
+            AND pf.skill = 'meaning_production'
+            AND pf.target_form = ${CITATION_FORM}
+            AND pf.disabled_at IS NULL
+            AND (pf.srs_state IS NOT NULL OR pf.leech_parked_at IS NOT NULL)
+        ) AS has_live_production_sibling
       FROM public.study_facets f
       JOIN public.user_lookups ul ON ul.id = f.user_lookup_id
       WHERE f.user_lookup_id = ${params.userLookupId}
@@ -365,9 +400,17 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.count > 0
         AND ul.deleted_at IS NULL
-    `) as Array<{ srs_state: SrsState | null; leech_parked_at: string | null; disabled_at: string | null }>
+    `) as Array<{
+      srs_state: SrsState | null
+      leech_parked_at: string | null
+      disabled_at: string | null
+      has_live_production_sibling: boolean
+    }>
     const facet = facetRows[0]
     if (!facet || facet.disabled_at !== null || facet.srs_state !== null || facet.leech_parked_at !== null) {
+      return 'not_eligible' as const
+    }
+    if (params.skill === 'meaning_recognition' && facet.has_live_production_sibling) {
       return 'not_eligible' as const
     }
 

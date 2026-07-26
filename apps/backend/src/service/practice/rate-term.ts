@@ -17,6 +17,7 @@ import type { PracticeRatingEventsRepositoryInterface } from '../../transport/da
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { applyRating, type AppRating } from './fsrs'
 import { isParked, shouldParkLeech } from './leech-config'
+import { bridgeRecognitionFromProduction } from './recognition-bridge'
 import { clampPracticeSessionLimits } from './review-caps'
 
 // Runs `fn` inside one DB transaction and hands it the executor to thread into
@@ -249,6 +250,24 @@ export const applyTermRating = async (params: {
   // post-session Strengthen list.
   if (parked || rating === 'again' || rating === 'hard') {
     deps.warmExerciseBank?.({ lookup, pool })
+  }
+
+  // A correct citation-production answer also credits the recognition sibling
+  // (see recognition-bridge.ts) — every production rating surface routes
+  // through here (flashcards, production reading advances), so this is the
+  // single hook point. Failures propagate nothing: missing a production isn't
+  // evidence the user can't recognize. Best-effort: the production rating has
+  // already committed above, so a bridge error must not fail the endpoint
+  // (a client retry would double-apply the rating) — the next production
+  // good/easy re-derives the credit anyway. Awaited (not fire-and-forget) so
+  // an immediately following undo can never interleave with an in-flight
+  // bridge write.
+  if (skill === 'meaning_production' && targetForm === CITATION_FORM && (rating === 'good' || rating === 'easy')) {
+    try {
+      await bridgeRecognitionFromProduction({ lookup, deps })
+    } catch (err) {
+      console.error('recognition bridge threw', { userLookupId: lookup.id, err })
+    }
   }
 
   return { ok: true, introducedNew: wasIntroduction, parked, eventId }
