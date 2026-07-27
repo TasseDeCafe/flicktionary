@@ -3038,8 +3038,7 @@ msgstr "Synonyme plus fréquent"
 msgid "More options"
 msgstr "Plus d'options"
 
-#: apps/web/src/features/coverage/components/coverage-card.tsx
-#: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
 msgid "More stats"
 msgstr "Plus de statistiques"
 

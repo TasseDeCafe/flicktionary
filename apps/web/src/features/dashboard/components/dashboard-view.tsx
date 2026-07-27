@@ -17,7 +17,7 @@ import { DailyMixBanner } from './daily-mix-banner'
 import { DashboardCarousel } from './dashboard-carousel'
 
 // The dashboard previews this many recent rows; the full list lives on /sessions.
-const RECENT_COUNT = 4
+const RECENT_COUNT = 12
 
 type RemoveTarget = { id: string; title: string }
 
@@ -51,6 +51,11 @@ export const DashboardView = () => {
 
       <DailyMixBanner />
 
+      {/* Mirrors the Recent header row; the cards' own mt-4 would double the
+          header→content gap, so -mb-2 nets the same 8px as Recent's mt-2. */}
+      <div className='mt-6 -mb-2 flex items-baseline justify-end'>
+        <SeeMoreLink to='/stats'>{t`More stats`}</SeeMoreLink>
+      </div>
       {/* Both cards carry their own top margin, so the carousel needs none.
           The coverage slide exists only while its data might qualify —
           during load the card shows its own skeleton; once resolved, a user
@@ -68,7 +73,7 @@ export const DashboardView = () => {
         <SeeMoreLink to='/sessions'>{t`All sessions`}</SeeMoreLink>
       </div>
       <div className='mt-2 grid grid-cols-1 gap-3 md:grid-cols-2'>
-        {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
+        {isLoading && <SkeletonList count={Math.min(RECENT_COUNT, 6)} renderItem={() => <SessionCardSkeleton />} />}
         {!isLoading && (data?.length ?? 0) === 0 && (
           <div className='md:col-span-2'>
             <SessionsEmptyState />
