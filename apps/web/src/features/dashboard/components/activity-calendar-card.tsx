@@ -3,7 +3,6 @@ import { useLingui } from '@lingui/react/macro'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
-import { SeeMoreLink } from '@/components/ui/see-more-link'
 import { useActivity } from '@/features/stats/api/stats-hooks'
 
 // All day math runs on server-UTC 'YYYY-MM-DD' strings — "today" is the last
@@ -41,8 +40,9 @@ const buildMonthCells = (month: string): Array<{ day: string; dayOfMonth: number
 const WEEKDAY_ANCHOR_MONDAY = Date.UTC(2024, 0, 1)
 
 type Props = {
-  // 'dashboard' shows the Activity title + "More stats" link; 'stats' shows
-  // the Streak title + the streak-definition caption instead.
+  // 'dashboard' shows the Activity title; 'stats' shows the Streak title +
+  // the streak-definition caption ("More stats" lives in the dashboard's
+  // section header, not in the card).
   variant?: 'dashboard' | 'stats'
 }
 
@@ -173,9 +173,7 @@ export const ActivityCalendarCard = ({ variant = 'dashboard' }: Props) => {
         </div>
       )}
 
-      {variant === 'dashboard' ? (
-        <SeeMoreLink to='/stats' className='mt-auto self-start pt-3'>{t`More stats`}</SeeMoreLink>
-      ) : (
+      {variant === 'stats' && (
         <p className='text-muted-foreground/80 mt-auto pt-3 text-[11px] leading-relaxed'>
           {t`Any activity counts — new terms, practice, exercises, or marking words known. The streak ignores the language filter.`}
         </p>
@@ -205,6 +203,6 @@ export const ActivityCalendarCardSkeleton = ({ variant = 'dashboard' }: Props) =
         <Skeleton key={i} className='size-11 rounded-full md:size-10' />
       ))}
     </div>
-    <Skeleton className={cn('mt-3 h-4', variant === 'dashboard' ? 'w-24' : 'w-full')} />
+    {variant === 'stats' && <Skeleton className='mt-3 h-4 w-full' />}
   </div>
 )
