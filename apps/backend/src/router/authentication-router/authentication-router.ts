@@ -7,6 +7,7 @@ import { logWithSentry } from '../../transport/third-party/sentry/error-monitori
 import { getSupabase } from '../../transport/database/supabase'
 import { getConfig } from '../../config/environment-config'
 import { authenticationContract } from '@flicktionary/api-client/orpc-contracts/authentication-contract'
+import { buildMagicLinkRedirectUrl } from './magic-link-redirect'
 import NodeCache from 'node-cache'
 
 // Create rate limit caches outside the function so they persist across requests
@@ -52,9 +53,9 @@ export const authenticationRouter = (): Router => {
         // Supabase will only pass the metadata at user creation. Subsequent sign ins will not pass them.
         // TODO: we need to pass the referral here too, otherwise it is stripped when signing in from the native app
         // Carry the post-login redirect (e.g. /extension-pair?nonce=...) through the magic link so the
-        // user lands back where they started after verifying. Supabase appends token_hash & co. after this.
-        const redirectParam = input.redirect ? `redirect=${encodeURIComponent(input.redirect)}&` : ''
-        const emailRedirectTo = `${getConfig().webUrl}/login/email/verify?${redirectParam}`
+        // user lands back where they started after verifying. The email template appends token_hash & co.
+        // directly onto this URL — see buildMagicLinkRedirectUrl for the separator contract.
+        const emailRedirectTo = buildMagicLinkRedirectUrl(getConfig().webUrl, input.redirect)
         const params = {
           email: input.email,
           options: {
