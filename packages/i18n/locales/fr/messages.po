@@ -1056,6 +1056,10 @@ msgstr "Cliquez sur l'<0/> <1>épingle</1> à côté de Flicktionary."
 msgid "Click the <0>puzzle icon</0> at the top right of your browser toolbar."
 msgstr "Cliquez sur l'<0>icône puzzle</0> en haut à droite de la barre d'outils de votre navigateur."
 
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx
+msgid "Click the button below to finish signing in."
+msgstr "Cliquez sur le bouton ci-dessous pour terminer la connexion."
+
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Click the link in the email to continue."
 msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
@@ -4102,6 +4106,14 @@ msgstr "Répéter la lecture : Activé"
 msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Resend email"
+msgstr "Renvoyer l'e-mail"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Resend email in {cooldownSeconds}s"
+msgstr "Renvoyer l'email dans {cooldownSeconds}s"
+
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Reset"
 msgstr "Réinitialiser"
@@ -4419,6 +4431,7 @@ msgstr "Envoi de l'email"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
@@ -4578,11 +4591,6 @@ msgstr "Se connecter à Flicktionary"
 msgid "Sign out"
 msgstr "Déconnexion"
 
-#: apps/web/src/features/billing/components/pricing-view.tsx
-#: apps/web/src/features/more/components/more-tab-view.tsx
-msgid "Sign out success"
-msgstr "Déconnexion réussie"
-
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "Sign up"
 msgstr "S'inscrire"
@@ -4591,6 +4599,11 @@ msgstr "S'inscrire"
 #: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
+
+#: apps/web/src/features/billing/components/pricing-view.tsx
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "Signed out successfully"
+msgstr "Déconnexion réussie"
 
 #: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signing in…"
@@ -5549,6 +5562,10 @@ msgstr "Configuration de l'utilisateur terminée"
 msgid "Verb"
 msgstr "Verbe"
 
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Verification email sent"
+msgstr "E-mail de vérification envoyé"
+
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx
 msgid "Verification successful! Redirecting..."
 msgstr "Vérification réussie ! Redirection en cours..."
@@ -5700,6 +5717,10 @@ msgstr "Nous n'avons pas reçu de réponse de l'extension Flicktionary sur cet a
 msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
 msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est détectée automatiquement à partir du contenu du fichier."
 
+#: apps/web/src/features/auth/components/login-email-view.tsx
+msgid "We'll email you a magic link to sign in — no password needed."
+msgstr "Nous vous enverrons un lien magique pour vous connecter — aucun mot de passe requis."
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "We'll find subtitles for it — this doesn't play the video."
 msgstr "Nous trouverons les sous-titres correspondants — cela ne lit pas la vidéo."
@@ -5769,6 +5790,10 @@ msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flick
 #: packages/ui/src/components/preset-tags.tsx
 msgid "What's the etymology or origin of this term?"
 msgstr "Quelle est l'étymologie ou l'origine de ce terme ?"
+
+#: apps/web/src/features/auth/components/login-email-view.tsx
+msgid "What's your email?"
+msgstr "Quelle est votre adresse e-mail ?"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "When you pause the video, a <0>controls overlay</0> appears: toggle subtitles, switch playback modes, adjust subtitle timing, and change the playback rate. Scroll the rightmost control to switch between subtitle navigation, subtitle offset, and playback rate."
