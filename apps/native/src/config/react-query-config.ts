@@ -124,14 +124,12 @@ export const queryClient = new QueryClient({
 
       // https://tkdodo.eu/blog/automatic-query-invalidation-after-mutations
       if (!shouldSkipInvalidation) {
-        queryClient
-          .invalidateQueries({
-            predicate: (query: Query) => {
-              const queryMeta = query.meta
-              return queryMeta?.skipGlobalInvalidation !== true
-            },
-          })
-          .then()
+        void queryClient.invalidateQueries({
+          predicate: (query: Query) => {
+            const queryMeta = query.meta
+            return queryMeta?.skipGlobalInvalidation !== true
+          },
+        })
       }
     },
     onError: (error, _variables, _context, mutation) => {

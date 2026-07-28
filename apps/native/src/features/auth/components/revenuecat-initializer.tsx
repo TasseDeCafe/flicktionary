@@ -25,13 +25,13 @@ export const RevenuecatInitializer = ({ children }: { children: ReactNode }) => 
 
     if (session?.user.id && !isRevenueCatInitialized && !getConfig().shouldSkipRevenueCatPaywall) {
       try {
-        Purchases.setLogLevel(Purchases.LOG_LEVEL.ERROR).then()
+        void Purchases.setLogLevel(Purchases.LOG_LEVEL.ERROR)
         Purchases.configure({
           apiKey: Platform.OS === 'ios' ? getConfig().revenueCatAppleApiKey : getConfig().revenueCatGoogleApiKey,
           appUserID: session.user.id,
         })
         // www.revenuecat.com/docs/integrations/third-party-integrations/posthog#1-set-posthog-user-identity
-        Purchases.setAttributes({ $posthogUserId: session.user.id }).then()
+        void Purchases.setAttributes({ $posthogUserId: session.user.id })
         setIsRevenueCatInitialized(true)
       } catch (error) {
         logWithSentry('Failed to configure RevenueCat', error)
