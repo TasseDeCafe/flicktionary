@@ -25,6 +25,7 @@ You are turning the work that just shipped in this conversation into a GitHub pu
    - Sections grouped by area (`## Web`, `## Extension`, `## Backend`, etc.) with **bold lead-ins** on each bullet describing the concrete change and the why.
    - A line noting which specs/docs were updated (e.g. "EXTENSION-SPEC.md updated alongside; lingui catalogs re-extracted").
    - A `## Tests` section: what you ran (`check:types`, `pnpm lint`, `test:run` counts) and what remains manual (Firefox smoke, golden paths) — be honest about what's verified vs pending.
+   - If the work addresses a filed GitHub issue, add a `Fixes #N` line (one per issue) so the merge closes it and its project-board card moves to Done. Check with `gh issue list --search "<keywords>"` when unsure whether one exists — but don't stretch: only link issues the PR genuinely resolves.
    - End the body with: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
    Pass the body via a HEREDOC or `--body-file` so multi-line markdown is preserved.
 

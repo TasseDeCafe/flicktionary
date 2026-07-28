@@ -34,6 +34,15 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 
 Creating or relocating a doc? Follow the `writing-docs` skill (labels, locations, when to archive).
 
+# Task tracking
+
+Tasks, bugs, and ideas live in **GitHub Issues** on this repo (browse/edit with `gh issue …`), with a kanban board layered on top: https://github.com/users/TasseDeCafe/projects/1 (Status: Backlog / Todo / In Progress / Done / Won't do, plus a Priority field). Conventions:
+
+- **Milestones are epics/phases** (e.g. `Anonymous signup`, `Prelaunch`). Labels beyond the GitHub defaults: `idea`, `ux`, `dx`, `infra`, `extension`, `practice`, `marketing`, `feedback`, `blocked`.
+- **PRs close issues**: when a PR resolves a filed issue, put `Fixes #N` in the PR body (the `create-pr` skill covers this). The board maintains itself via project workflows — new issues auto-add to Backlog, closed issues move to Done — so work at the **issue** level; don't script the project API except to set Status/Priority deliberately.
+- **Side quests found mid-session**: offer to file a labeled issue (`gh issue create`) instead of leaving the idea in conversation. `docs/proposals/` stays reserved for actual design documents; an issue can link to one.
+- Editing the board itself (fields, columns) needs the classic gh OAuth token with the `project` scope — fine-grained PATs can't manage user-owned Projects v2.
+
 The following stack is used:
 
 - Web: TypeScript React single-page application built with Vite.
