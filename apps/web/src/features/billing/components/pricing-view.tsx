@@ -111,7 +111,7 @@ export const PricingView = () => {
 
   const handleSignOut = async () => {
     await signOut(() => navigate({ to: '/login' }))
-    toast.success(t`Sign out success`)
+    toast.success(t`Signed out successfully`)
   }
 
   useEffect(() => {

@@ -65,12 +65,12 @@ export const LoginView = () => {
 
   const handleContinueWithGoogleClick = () => {
     POSTHOG_EVENTS.click('continue_with_google_button')
-    continueWithGoogle().then()
+    void continueWithGoogle()
   }
 
   const handleContinueWithAppleClick = () => {
     POSTHOG_EVENTS.click('continue_with_apple_button')
-    continueWithApple().then()
+    void continueWithApple()
   }
 
   const handleContinueWithEmailClick = () => {

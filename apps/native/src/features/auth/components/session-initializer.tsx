@@ -12,7 +12,7 @@ export const SessionInitializer = ({ children }: { children: ReactNode }) => {
   const loading = useAuthStore((state) => state.isLoading)
 
   useEffect(() => {
-    initialize().then()
+    void initialize()
 
     const { data: authSubscription } = supabaseClient.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)

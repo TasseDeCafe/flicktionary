@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 const emailSentSearchSchema = z.object({
   email: z.email().optional(),
+  redirect: z.string().optional(),
 })
 
 export const Route = createFileRoute('/login/email/sent')({

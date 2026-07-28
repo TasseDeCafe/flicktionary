@@ -97,4 +97,4 @@ const startServer = async () => {
   }
 }
 
-startServer().then()
+void startServer()

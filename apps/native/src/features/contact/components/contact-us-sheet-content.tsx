@@ -58,14 +58,14 @@ export const ContactUsSheetContent = ({ close }: ContactUsSheetContentProps) => 
     sendEmail(values, {
       onSuccess: async () => {
         setShowSuccessState(true)
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).then()
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
         await wait(1500)
         reset()
         close()
         setShowSuccessState(false)
       },
       onError: () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).then()
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       },
     })
   }

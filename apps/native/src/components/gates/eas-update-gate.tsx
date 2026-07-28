@@ -38,13 +38,13 @@ export const EasUpdateGate = ({ children }: EasUpdateGateProps) => {
     }
 
     if (!initialCheckDoneRef.current) {
-      checkForUpdates().then()
+      void checkForUpdates()
       initialCheckDoneRef.current = true
     }
 
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
-        checkForUpdates().then()
+        void checkForUpdates()
       }
     })
 

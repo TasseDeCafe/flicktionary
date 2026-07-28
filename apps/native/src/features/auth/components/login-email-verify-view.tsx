@@ -46,7 +46,7 @@ export const LoginEmailVerifyView = () => {
       }
     }
 
-    verifyToken().then()
+    void verifyToken()
   }, [token_hash, verifyMagicLinkOtp])
 
   const handleReturnToLogin = () => {

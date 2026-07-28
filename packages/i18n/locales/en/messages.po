@@ -1056,6 +1056,10 @@ msgstr "Click the <0/> <1>pin</1> next to Flicktionary."
 msgid "Click the <0>puzzle icon</0> at the top right of your browser toolbar."
 msgstr "Click the <0>puzzle icon</0> at the top right of your browser toolbar."
 
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx
+msgid "Click the button below to finish signing in."
+msgstr "Click the button below to finish signing in."
+
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Click the link in the email to continue."
 msgstr "Click the link in the email to continue."
@@ -4103,6 +4107,14 @@ msgstr "Repeat playback: On"
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
 
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Resend email"
+msgstr "Resend email"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Resend email in {cooldownSeconds}s"
+msgstr "Resend email in {cooldownSeconds}s"
+
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Reset"
 msgstr "Reset"
@@ -4420,6 +4432,7 @@ msgstr "Sending an email"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
@@ -4579,11 +4592,6 @@ msgstr "Sign in with Flicktionary"
 msgid "Sign out"
 msgstr "Sign out"
 
-#: apps/web/src/features/billing/components/pricing-view.tsx
-#: apps/web/src/features/more/components/more-tab-view.tsx
-msgid "Sign out success"
-msgstr "Sign out success"
-
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "Sign up"
 msgstr "Sign up"
@@ -4592,6 +4600,11 @@ msgstr "Sign up"
 #: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signed in as {0}"
 msgstr "Signed in as {0}"
+
+#: apps/web/src/features/billing/components/pricing-view.tsx
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "Signed out successfully"
+msgstr "Signed out successfully"
 
 #: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signing in…"
@@ -5550,6 +5563,10 @@ msgstr "User setup complete"
 msgid "Verb"
 msgstr "Verb"
 
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx
+msgid "Verification email sent"
+msgstr "Verification email sent"
+
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx
 msgid "Verification successful! Redirecting..."
 msgstr "Verification successful! Redirecting..."
@@ -5701,6 +5718,10 @@ msgstr "We did not hear back from a Flicktionary extension on this device."
 msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
 msgstr "We support .srt subtitle files. The language is detected automatically from the file contents."
 
+#: apps/web/src/features/auth/components/login-email-view.tsx
+msgid "We'll email you a magic link to sign in — no password needed."
+msgstr "We'll email you a magic link to sign in — no password needed."
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "We'll find subtitles for it — this doesn't play the video."
 msgstr "We'll find subtitles for it — this doesn't play the video."
@@ -5770,6 +5791,10 @@ msgstr "What language do you speak natively? This is the language Flicktionary w
 #: packages/ui/src/components/preset-tags.tsx
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
+
+#: apps/web/src/features/auth/components/login-email-view.tsx
+msgid "What's your email?"
+msgstr "What's your email?"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "When you pause the video, a <0>controls overlay</0> appears: toggle subtitles, switch playback modes, adjust subtitle timing, and change the playback rate. Scroll the rightmost control to switch between subtitle navigation, subtitle offset, and playback rate."

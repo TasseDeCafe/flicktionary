@@ -79,22 +79,34 @@ export const LoginEmailVerifyView = () => {
   }
 
   return (
-    <div className='flex w-full flex-1 items-center justify-center'>
-      <div className='flex w-full max-w-md flex-col gap-y-4 p-4 text-center'>
-        {isError ? (
-          <>
-            <h1 className='text-xl font-semibold'>{t`Link expired or invalid`}</h1>
-            <p className='text-muted-foreground'>{t`Please request a new verification link.`}</p>
-            <Button onClick={handleReturnToAuth}>{t`Back to login`}</Button>
-          </>
-        ) : (
-          <>
-            <h1 className='text-xl font-semibold'>{t`Verify your email`}</h1>
-            <Button onClick={handleVerifyEmailClick} disabled={isPending}>
+    <div className='flex w-full flex-1 flex-col overflow-hidden'>
+      <div className='flex flex-1 items-center justify-center overflow-y-auto px-4'>
+        <div className='mx-auto flex w-full max-w-md flex-col gap-2 text-center'>
+          {isError ? (
+            <>
+              <h1 className='text-2xl font-semibold tracking-tight'>{t`Link expired or invalid`}</h1>
+              <p className='text-muted-foreground'>{t`Please request a new verification link.`}</p>
+            </>
+          ) : (
+            <>
+              <h1 className='text-2xl font-semibold tracking-tight'>{t`Verify your email`}</h1>
+              <p className='text-muted-foreground'>{t`Click the button below to finish signing in.`}</p>
+            </>
+          )}
+        </div>
+      </div>
+      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+          {isError ? (
+            <Button size='xl' className='w-full' onClick={handleReturnToAuth}>
+              {t`Back to login`}
+            </Button>
+          ) : (
+            <Button size='xl' className='w-full' onClick={handleVerifyEmailClick} disabled={isPending}>
               {isPending ? t`Verifying...` : t`Verify`}
             </Button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
