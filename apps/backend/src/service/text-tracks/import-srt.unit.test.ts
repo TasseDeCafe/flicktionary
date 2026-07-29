@@ -32,6 +32,7 @@ describe('importSrt', () => {
     const existingTrack = buildTrack()
     const textTracksRepository: TextTracksRepositoryInterface = {
       findByContentSourceLanguageAndHash: vi.fn().mockResolvedValue(existingTrack),
+      findByContentSourceLanguageAndExternalId: vi.fn(),
       insertTextTrack: vi.fn(),
       findById: vi.fn(),
       findByIdWithSourceType: vi.fn(),

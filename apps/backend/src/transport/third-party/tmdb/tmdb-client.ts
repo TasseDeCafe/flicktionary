@@ -1,6 +1,17 @@
 import { getConfig } from '../../../config/environment-config'
+import { UpstreamRateLimitError } from '../upstream-rate-limit-error'
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
+
+// TMDB throttles at roughly 40 requests/second per IP and answers 429 — since
+// every user's search funnels through this server's single IP, surface it as a
+// typed error the boundary maps to our own 429. Exported for unit tests.
+export const classifyTmdbFailure = (label: string, response: { status: number; statusText: string }): Error => {
+  if (response.status === 429) {
+    return new UpstreamRateLimitError('tmdb', 'rate_limited', `TMDB ${label} rate limited (429)`)
+  }
+  return new Error(`TMDB ${label} failed: ${response.status} ${response.statusText}`)
+}
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w342'
 
 export type TmdbMovie = {
@@ -37,7 +48,7 @@ export const searchMovies = async (query: string, year?: number): Promise<TmdbMo
 
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`TMDB search failed: ${response.status} ${response.statusText}`)
+    throw classifyTmdbFailure('search', response)
   }
   const data = (await response.json()) as TmdbSearchResponse
   return data.results.map((r) => ({
@@ -76,7 +87,7 @@ export const searchTvShows = async (query: string): Promise<TmdbTvShow[]> => {
 
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`TMDB TV search failed: ${response.status} ${response.statusText}`)
+    throw classifyTmdbFailure('TV search', response)
   }
   const data = (await response.json()) as TmdbTvSearchResponse
   return data.results.map((r) => ({
@@ -110,7 +121,7 @@ export const getTvSeasons = async (tmdbId: number): Promise<TmdbSeason[]> => {
   const url = `${TMDB_BASE_URL}/tv/${tmdbId}?language=en-US`
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`TMDB TV details failed: ${response.status} ${response.statusText}`)
+    throw classifyTmdbFailure('TV details', response)
   }
   const data = (await response.json()) as TmdbTvDetailsResponse
   return data.seasons
@@ -143,7 +154,7 @@ export const getTvEpisodes = async (tmdbId: number, seasonNumber: number): Promi
   const url = `${TMDB_BASE_URL}/tv/${tmdbId}/season/${seasonNumber}?language=en-US`
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`TMDB TV season failed: ${response.status} ${response.statusText}`)
+    throw classifyTmdbFailure('TV season', response)
   }
   const data = (await response.json()) as TmdbSeasonDetailsResponse
   return data.episodes.map((e) => ({

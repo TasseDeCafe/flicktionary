@@ -661,6 +661,10 @@ msgstr "Une erreur s'est produite. Veuillez réessayer."
 msgid "An estimate of how much of this text's vocabulary you already know. It only measures vocabulary — grammar, speech rate, and abstractness aren't counted."
 msgstr "Une estimation de la proportion du vocabulaire de ce texte que vous connaissez déjà. Seul le vocabulaire est mesuré — la grammaire, le débit de parole et l'abstraction ne sont pas pris en compte."
 
+#: apps/web/src/config/react-query-config.ts
+msgid "An external service is busy right now. Please try again in a moment."
+msgstr "Un service externe est occupé pour le moment. Veuillez réessayer dans un instant."
+
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "An unexpected error occurred"
 msgstr "Une erreur inattendue s'est produite"
@@ -4848,6 +4852,10 @@ msgstr "Flou des sous-titres"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Subtitle Color"
 msgstr "Couleur des sous-titres"
+
+#: apps/web/src/config/react-query-config.ts
+msgid "Subtitle downloads are limited for today. Please try again tomorrow."
+msgstr "Les téléchargements de sous-titres sont limités pour aujourd'hui. Veuillez réessayer demain."
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Subtitle Font Family"

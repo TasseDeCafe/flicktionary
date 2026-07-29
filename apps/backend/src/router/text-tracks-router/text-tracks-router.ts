@@ -29,11 +29,18 @@ export type TextTracksRouterDependencies = {
   textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
+  downloadSrt: (fileId: number) => Promise<string>
 }
 
 export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => {
   const implementer = implement(textTracksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
-  const { contentSourcesRepository, textTracksRepository, textSegmentsRepository, processingJobsRepository } = deps
+  const {
+    contentSourcesRepository,
+    textTracksRepository,
+    textSegmentsRepository,
+    processingJobsRepository,
+    downloadSrt,
+  } = deps
 
   const router = implementer.router({
     searchOpenSubtitles: implementer.searchOpenSubtitles.handler(async ({ input }) => {
@@ -53,7 +60,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           data: { errors: [{ message: 'Content source not found' }] },
         })
       }
-      const result = await importFromOpenSubtitles(input, textTracksRepository, textSegmentsRepository)
+      const result = await importFromOpenSubtitles(input, { textTracksRepository, textSegmentsRepository, downloadSrt })
       if (!result.ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },

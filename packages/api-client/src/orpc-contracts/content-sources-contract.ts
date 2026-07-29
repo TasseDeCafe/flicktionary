@@ -35,10 +35,17 @@ const TmdbEpisodeSchema = z.object({
   stillUrl: z.string().nullable(),
 })
 
+// The procedures that call TMDB live (the searches and season/episode lookups;
+// createFromTmdb* are DB-only) answer TOO_MANY_REQUESTS with code
+// 'UPSTREAM_RATE_LIMITED' when TMDB throttles the server's IP — transient,
+// retrying shortly works.
 export const contentSourcesContract = {
   searchTmdb: oc
     .route({ method: 'GET', path: '/content-sources/tmdb/search', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ query: z.string().min(1), year: z.coerce.number().int().optional() }))
     .output(z.object({ data: z.array(TmdbMovieSchema) })),
 
@@ -59,19 +66,28 @@ export const contentSourcesContract = {
 
   searchTmdbTv: oc
     .route({ method: 'GET', path: '/content-sources/tmdb/tv/search', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ query: z.string().min(1) }))
     .output(z.object({ data: z.array(TmdbTvShowSchema) })),
 
   tmdbTvSeasons: oc
     .route({ method: 'GET', path: '/content-sources/tmdb/tv/seasons', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ tmdbId: z.coerce.number().int() }))
     .output(z.object({ data: z.array(TmdbSeasonSchema) })),
 
   tmdbTvEpisodes: oc
     .route({ method: 'GET', path: '/content-sources/tmdb/tv/episodes', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ tmdbId: z.coerce.number().int(), seasonNumber: z.coerce.number().int() }))
     .output(z.object({ data: z.array(TmdbEpisodeSchema) })),
 

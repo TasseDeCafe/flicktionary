@@ -70,6 +70,16 @@ const handleApiError = (error: unknown, meta?: QueryMeta) => {
   }
 
   if (error.code === 'TOO_MANY_REQUESTS') {
+    // Upstream limits (TMDB / OpenSubtitles throttling the backend) are not the
+    // user's doing — a specific toast beats the "slow down" rate-limit overlay.
+    if (backendErrorCode === 'UPSTREAM_QUOTA_EXCEEDED') {
+      toast.error(i18n._(msg`Subtitle downloads are limited for today. Please try again tomorrow.`))
+      return
+    }
+    if (backendErrorCode === 'UPSTREAM_RATE_LIMITED') {
+      toast.error(i18n._(msg`An external service is busy right now. Please try again in a moment.`))
+      return
+    }
     POSTHOG_EVENTS.rateLimitUser()
     if (showErrorModal) {
       useOverlayStore.getState().openOverlay(OverlayId.RATE_LIMITING)

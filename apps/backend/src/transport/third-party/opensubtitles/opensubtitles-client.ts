@@ -1,6 +1,29 @@
 import { getConfig } from '../../../config/environment-config'
+import { UpstreamRateLimitError } from '../upstream-rate-limit-error'
 
 const OPENSUBTITLES_BASE_URL = 'https://api.opensubtitles.com/api/v1'
+
+// OpenSubtitles signals limits with two distinct statuses: 429 for transient
+// request-rate throttling (any endpoint), and 406 on POST /download when the
+// daily download quota — shared across all our users via the single API key —
+// is spent. Exported so the mapping is unit-testable without stubbing fetch.
+export const classifyOpenSubtitlesFailure = (
+  label: string,
+  response: { status: number; statusText: string },
+  options: { isDownload?: boolean } = {}
+): Error => {
+  if (response.status === 429) {
+    return new UpstreamRateLimitError('opensubtitles', 'rate_limited', `OpenSubtitles ${label} rate limited (429)`)
+  }
+  if (options.isDownload && response.status === 406) {
+    return new UpstreamRateLimitError(
+      'opensubtitles',
+      'quota_exceeded',
+      'OpenSubtitles daily download quota exceeded (406)'
+    )
+  }
+  return new Error(`OpenSubtitles ${label} failed: ${response.status} ${response.statusText}`)
+}
 
 export type OpenSubtitlesTrack = {
   // The id used to download (file_id, not subtitle_id).
@@ -49,7 +72,7 @@ export const searchByTmdbId = async (tmdbId: number, language: string): Promise<
   const url = `${OPENSUBTITLES_BASE_URL}/subtitles?${params.toString()}`
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`OpenSubtitles search failed: ${response.status} ${response.statusText}`)
+    throw classifyOpenSubtitlesFailure('search', response)
   }
   const data = (await response.json()) as SearchResponse
   return data.data
@@ -84,7 +107,7 @@ export const searchEpisodeSubtitles = async (params: {
   const url = `${OPENSUBTITLES_BASE_URL}/subtitles?${query.toString()}`
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
-    throw new Error(`OpenSubtitles episode search failed: ${response.status} ${response.statusText}`)
+    throw classifyOpenSubtitlesFailure('episode search', response)
   }
   const data = (await response.json()) as SearchResponse
   return data.data
@@ -110,7 +133,7 @@ export const downloadSrtByFileId = async (fileId: number): Promise<string> => {
     body: JSON.stringify({ file_id: fileId }),
   })
   if (!linkResponse.ok) {
-    throw new Error(`OpenSubtitles download (link) failed: ${linkResponse.status} ${linkResponse.statusText}`)
+    throw classifyOpenSubtitlesFailure('download (link)', linkResponse, { isDownload: true })
   }
   const linkData = (await linkResponse.json()) as DownloadResponse
 

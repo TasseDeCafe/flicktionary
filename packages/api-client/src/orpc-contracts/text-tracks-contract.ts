@@ -20,16 +20,26 @@ const TrackImportResponseSchema = z.object({
   }),
 })
 
+// The OpenSubtitles procedures answer TOO_MANY_REQUESTS with code
+// 'UPSTREAM_RATE_LIMITED' (transient request-rate throttling — retry shortly)
+// or, on import only, 'UPSTREAM_QUOTA_EXCEEDED' (the shared daily download
+// quota is spent — retrying won't help until it resets).
 export const textTracksContract = {
   searchOpenSubtitles: oc
     .route({ method: 'GET', path: '/text-tracks/opensubtitles/search', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ tmdbId: z.coerce.number().int(), language: z.string() }))
     .output(z.object({ data: z.array(OpenSubtitlesTrackSchema) })),
 
   searchOpenSubtitlesEpisode: oc
     .route({ method: 'GET', path: '/text-tracks/opensubtitles/episode/search', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         tmdbShowId: z.coerce.number().int(),
@@ -42,7 +52,10 @@ export const textTracksContract = {
 
   importFromOpenSubtitles: oc
     .route({ method: 'POST', path: '/text-tracks/opensubtitles/import', successStatus: 201 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         contentSourceId: z.string().uuid(),
