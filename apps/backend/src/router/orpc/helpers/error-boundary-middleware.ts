@@ -1,5 +1,6 @@
 import { type AnyMiddleware, ORPCError, ValidationError } from '@orpc/server'
 import { logWithSentry } from '../../../transport/third-party/sentry/error-monitoring'
+import { UpstreamRateLimitError } from '../../../transport/third-party/upstream-rate-limit-error'
 
 // Wired into every oRPC implementer via `.use(errorBoundaryMiddleware)`. Catches any
 // thrown error that isn't an explicit oRPC error (which carries an HTTP status the
@@ -31,6 +32,29 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
         })
       }
       throw e
+    }
+    // A third-party service (TMDB / OpenSubtitles) throttled us or the shared
+    // daily quota is spent. Answer 429 — which the frontends never retry — with
+    // a machine-readable code so the client can show a real message instead of
+    // a generic failure. Still logged: quota exhaustion is the ops signal to
+    // buy a bigger tier. Falls through to 500 if the procedure's contract
+    // doesn't declare TOO_MANY_REQUESTS.
+    if (e instanceof UpstreamRateLimitError && 'TOO_MANY_REQUESTS' in errors) {
+      logWithSentry({
+        message: 'upstream rate limited',
+        params: { path: path.join('.'), service: e.service, kind: e.kind },
+        error: e,
+      })
+      throw errors.TOO_MANY_REQUESTS({
+        data: {
+          errors: [
+            {
+              code: e.kind === 'quota_exceeded' ? 'UPSTREAM_QUOTA_EXCEEDED' : 'UPSTREAM_RATE_LIMITED',
+              message: e.message,
+            },
+          ],
+        },
+      })
     }
     logWithSentry({
       message: 'unhandled handler error',

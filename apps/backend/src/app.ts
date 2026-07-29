@@ -108,6 +108,7 @@ import { LessonImportRouter } from './router/lesson-import-router/lesson-import-
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
 import { AnthropicPasses, type AnthropicPassesInterface } from './transport/third-party/anthropic/anthropic-passes'
+import { downloadSrtByFileId } from './transport/third-party/opensubtitles/opensubtitles-client'
 
 export type AppDependencies = {
   // Every LLM call goes through this seam; integration tests inject
@@ -125,6 +126,9 @@ export type AppDependencies = {
   revenuecatApi?: RevenuecatApi
   telegramApi?: TelegramApiInterface
   telegramPollingWorker?: TelegramPollingWorkerInterface
+  // Seam for the quota-counted OpenSubtitles download; integration tests inject
+  // a stub to script SRT bodies and rate-limit failures without network.
+  openSubtitlesDownloadSrt?: (fileId: number) => Promise<string>
 }
 
 export const buildApp = ({
@@ -144,6 +148,7 @@ export const buildApp = ({
   revenuecatApi = MockRevenuecatApi,
   telegramApi = MockTelegramApi(),
   telegramPollingWorker = MockTelegramPollingWorker(),
+  openSubtitlesDownloadSrt = downloadSrtByFileId,
 }: AppDependencies): Express => {
   const app: Express = express()
 
@@ -395,6 +400,7 @@ export const buildApp = ({
       textTracksRepository,
       textSegmentsRepository,
       processingJobsRepository,
+      downloadSrt: openSubtitlesDownloadSrt,
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
