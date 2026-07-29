@@ -1,6 +1,6 @@
 # DMARC tightening for flicktionary.app
 
-> **Status: proposal.** Planned DNS policy change, not yet applied. Revisit a few weeks after 2026-07-27.
+> **Status: historical.** Archived 2026-07-29 — migrated to the tracker; superseded by https://github.com/TasseDeCafe/flicktionary/issues/372.
 
 ## Current state (since 2026-07-27)
 
