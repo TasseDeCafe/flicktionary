@@ -152,6 +152,7 @@ export const UseInSentenceExercise = ({
         // keyboard-drivable; on mobile it would pop the keyboard unasked.
         autoFocus={!isMobile}
         rows={3}
+        enterKeyHint='go'
         placeholder={t`Write your sentence…`}
         className='disabled:bg-muted resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />

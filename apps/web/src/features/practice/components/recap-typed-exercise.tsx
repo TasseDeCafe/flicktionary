@@ -196,6 +196,7 @@ export const RecapTypedExercise = ({
         autoCapitalize='off'
         autoCorrect='off'
         spellCheck={false}
+        enterKeyHint='go'
         className='disabled:bg-muted rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
     </ExerciseLayout>
