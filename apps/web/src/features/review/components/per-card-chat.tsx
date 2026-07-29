@@ -250,6 +250,7 @@ export const PerCardChat = ({ cardId, sessionId, highlightId, fill = false }: Pr
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
           className='max-h-40'
+          enterKeyHint='send'
           placeholder={t`Ask anything about this term… (Enter to send, Shift+Enter for a new line)`}
           disabled={isPending}
         />

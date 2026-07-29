@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@flicktionary/ui/components/dialog'
 import { useListChatForCard, useMarkChatRead } from '../api/review-hooks'
+import { useVisualViewportPin } from '@/hooks/use-visual-viewport-pin'
 import { PerCardChat } from './per-card-chat'
 
 type ChatTarget = {
@@ -79,31 +80,9 @@ export const ChatPanel = ({
   const { t } = useLingui()
   const contentRef = useRef<HTMLDivElement>(null)
 
-  // iOS keyboard fix: a `fixed inset-0 h-dvh` sheet does NOT shrink when the
-  // on-screen keyboard opens, so the bottom-anchored input ends up hidden
-  // behind it. Track the visual viewport and pin the sheet to its height/offset
-  // so the input stays just above the keyboard. Cleared on close.
-  useEffect(() => {
-    if (!open) return
-    const vv = window.visualViewport
-    const el = contentRef.current
-    if (!vv || !el) return
-    const apply = () => {
-      el.style.height = `${vv.height}px`
-      el.style.top = `${vv.offsetTop}px`
-      el.style.bottom = 'auto'
-    }
-    apply()
-    vv.addEventListener('resize', apply)
-    vv.addEventListener('scroll', apply)
-    return () => {
-      vv.removeEventListener('resize', apply)
-      vv.removeEventListener('scroll', apply)
-      el.style.height = ''
-      el.style.top = ''
-      el.style.bottom = ''
-    }
-  }, [open])
+  // Keeps the bottom-anchored composer above the iOS on-screen keyboard —
+  // the `fixed inset-0 h-dvh` sheet doesn't shrink for it on its own.
+  useVisualViewportPin(contentRef, open)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal>

@@ -1,5 +1,6 @@
-import { type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { useVisualViewportPin } from '@/hooks/use-visual-viewport-pin'
 import { ChevronLeft, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
@@ -44,9 +45,18 @@ interface ModalScreenProps extends ModalScreenHeaderProps {
   children: ReactNode
 }
 
-export const ModalScreen = ({ onClose, closeIcon, title, rightSlot, className, children }: ModalScreenProps) => (
-  <div className={cn('bg-background flex h-dvh flex-col', className)}>
-    <ModalScreenHeader onClose={onClose} closeIcon={closeIcon} title={title} rightSlot={rightSlot} />
-    <div className='flex flex-1 flex-col overflow-hidden'>{children}</div>
-  </div>
-)
+export const ModalScreen = ({ onClose, closeIcon, title, rightSlot, className, children }: ModalScreenProps) => {
+  const rootRef = useRef<HTMLDivElement>(null)
+  // `h-dvh` tracks the layout viewport, which iOS Safari does not shrink for
+  // the on-screen keyboard — bottom-anchored CTAs inside every modal screen
+  // (wizard footers, practice check bars, sticky submit buttons) would sit
+  // behind it. The pin keeps the whole screen inside the visual viewport;
+  // `relative` gives its `top` offset something to act on.
+  useVisualViewportPin(rootRef)
+  return (
+    <div ref={rootRef} className={cn('bg-background relative flex h-dvh flex-col', className)}>
+      <ModalScreenHeader onClose={onClose} closeIcon={closeIcon} title={title} rightSlot={rightSlot} />
+      <div className='flex flex-1 flex-col overflow-hidden'>{children}</div>
+    </div>
+  )
+}

@@ -92,6 +92,7 @@ export const LoginEmailView = () => {
                 id='email'
                 name='email'
                 autoComplete='username email'
+                enterKeyHint='go'
                 autoFocus
                 placeholder={t`Email address`}
                 value={email}
