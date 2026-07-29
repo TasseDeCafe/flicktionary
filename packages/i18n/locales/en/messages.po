@@ -661,6 +661,10 @@ msgstr "An error occurred. Please try again."
 msgid "An estimate of how much of this text's vocabulary you already know. It only measures vocabulary — grammar, speech rate, and abstractness aren't counted."
 msgstr "An estimate of how much of this text's vocabulary you already know. It only measures vocabulary — grammar, speech rate, and abstractness aren't counted."
 
+#: apps/web/src/config/react-query-config.ts
+msgid "An external service is busy right now. Please try again in a moment."
+msgstr "An external service is busy right now. Please try again in a moment."
+
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "An unexpected error occurred"
 msgstr "An unexpected error occurred"
@@ -4849,6 +4853,10 @@ msgstr "Subtitle blur"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Subtitle Color"
 msgstr "Subtitle Color"
+
+#: apps/web/src/config/react-query-config.ts
+msgid "Subtitle downloads are limited for today. Please try again tomorrow."
+msgstr "Subtitle downloads are limited for today. Please try again tomorrow."
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Subtitle Font Family"
