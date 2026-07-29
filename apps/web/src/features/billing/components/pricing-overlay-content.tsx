@@ -130,7 +130,13 @@ export const PricingOverlayContent = () => {
           <Button onClick={handleCTAClick} disabled={pricingViewConfig.subscribeButton.isDisabled}>
             {pricingViewConfig.subscribeButton.text}
           </Button>
-          <Button variant='ghost' onClick={() => closeOverlay()}>
+          <Button
+            variant='ghost'
+            onClick={() => {
+              POSTHOG_EVENTS.paywallDismissed()
+              closeOverlay()
+            }}
+          >
             {t`Maybe later`}
           </Button>
         </div>

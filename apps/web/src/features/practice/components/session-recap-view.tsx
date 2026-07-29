@@ -18,6 +18,7 @@ import { buildRecapQuestions, buildRecapTerms, buildRedrillQuestion } from '../u
 import { useTermMeaning } from '../utils/use-term-meaning'
 import { ExerciseHeader } from './exercise-header'
 import { RecapMcExercise } from './recap-mc-exercise'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { RecapTypedExercise } from './recap-typed-exercise'
 
 // Zero-LLM session recap: a client-side quiz over ALL of the session's kept
@@ -100,7 +101,14 @@ const RecapQuiz = ({
     if (correct) setCorrectCount((n) => n + 1)
     else appendRedrill()
   }
-  const handleNext = () => setIndex((i) => i + 1)
+  const handleNext = () =>
+    setIndex((i) => {
+      const next = i + 1
+      if (next >= queue.length) {
+        POSTHOG_EVENTS.sessionRecapCompleted({ correct_count: correctCount, total_count: queue.length })
+      }
+      return next
+    })
   // Skip = "I don't know" without burning a guess: no reveal, no correct
   // credit, but the term comes back once like a miss.
   const handleSkip = () => {

@@ -5,6 +5,7 @@ import { isSupportedLanguageCode, type SupportedLanguageCode } from '@flicktiona
 import { LanguageOptionList } from '@/components/language-option-list'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { useCompleteOnboarding } from '@/features/sessions/api/sessions-hooks'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 const detectBrowserLanguage = (): SupportedLanguageCode => {
   if (typeof navigator === 'undefined') return 'en'
@@ -52,6 +53,7 @@ export const OnboardingView = ({ variant = 'web', onFinish }: OnboardingViewProp
   // keeps the two-step sequence intact and guarantees is_onboarded is already
   // true.
   const handleFinish = () => {
+    POSTHOG_EVENTS.onboardingCompleted()
     if (variant !== 'web') {
       onFinish?.()
       return

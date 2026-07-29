@@ -13,6 +13,7 @@ export const CheckoutSuccessView = () => {
 
   useEffect(() => {
     POSTHOG_EVENTS.viewPage()
+    POSTHOG_EVENTS.subscriptionActivated()
   }, [])
 
   return (

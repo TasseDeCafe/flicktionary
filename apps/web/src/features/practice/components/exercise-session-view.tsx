@@ -8,6 +8,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { mergePlaceholders } from './exercise-queue-merge'
 import { currentDayKey } from './composed-session-snapshot'
 import { clearExerciseSession, saveExerciseSession, type ExerciseSessionSnapshot } from './exercise-session-snapshot'
@@ -174,7 +175,17 @@ const LoadedExerciseSessionView = ({
     currentOutcomeRef.current = null
     setRestoredOutcome(null)
     setCurrentAnswered(false)
-    setIndex((i) => i + 1)
+    setIndex((i) => {
+      const next = i + 1
+      if (next >= total) {
+        POSTHOG_EVENTS.practiceSessionCompleted({
+          copy_variant: copyVariant,
+          correct_count: correctCount,
+          total_count: total,
+        })
+      }
+      return next
+    })
   }
 
   const current = queue[index] ?? null

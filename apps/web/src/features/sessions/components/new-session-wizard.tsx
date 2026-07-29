@@ -7,6 +7,7 @@ import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { LanguageOptionList } from '@/components/language-option-list'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import {
   useCreateContentSourceFromTmdb,
   useCreateContentSourceFromTmdbTv,
@@ -154,6 +155,12 @@ export const NewSessionWizard = () => {
           // existing session, with all its highlights intact.
           if (response.alreadyExisted) {
             toast.info(t`You already had a session for this — picking up where you left off.`)
+          } else {
+            POSTHOG_EVENTS.sessionCreated({
+              content_type: contentType ?? 'unknown',
+              target_language: track.language,
+              already_existed: false,
+            })
           }
           void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id }, replace: true })
         },

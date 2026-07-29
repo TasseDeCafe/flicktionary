@@ -11,7 +11,7 @@ const defaultProperties = () => ({
   domain: window.location.hostname,
 })
 
-const captureWithDefaults = (eventName: string, properties: Record<string, string> = {}) => {
+const captureWithDefaults = (eventName: string, properties: Record<string, string | number | boolean> = {}) => {
   if (!FEATURES.POSTHOG) return
   posthog.capture(eventName, { ...defaultProperties(), ...properties })
 }
@@ -49,5 +49,35 @@ export const POSTHOG_EVENTS = {
   },
   invalidTokenError: () => {
     captureWithDefaults('invalid_token_error')
+  },
+  onboardingCompleted: () => {
+    captureWithDefaults('onboarding_completed')
+  },
+  sessionCreated: (props: { content_type: string; target_language: string; already_existed: boolean }) => {
+    captureWithDefaults('session_created', props)
+  },
+  practiceLanguageSelected: (targetLanguage: string) => {
+    captureWithDefaults('practice_language_selected', { target_language: targetLanguage })
+  },
+  practiceExplainerDismissed: () => {
+    captureWithDefaults('practice_explainer_dismissed')
+  },
+  practiceSessionCompleted: (props: { copy_variant: string; correct_count: number; total_count: number }) => {
+    captureWithDefaults('practice_session_completed', props)
+  },
+  sessionRecapCompleted: (props: { correct_count: number; total_count: number }) => {
+    captureWithDefaults('session_recap_completed', props)
+  },
+  vocabularyTermSaved: (props: { target_language: string }) => {
+    captureWithDefaults('vocabulary_term_saved', props)
+  },
+  subscriptionActivated: () => {
+    captureWithDefaults('subscription_activated')
+  },
+  paywallDismissed: () => {
+    captureWithDefaults('paywall_dismissed')
+  },
+  signOut: () => {
+    captureWithDefaults('sign_out')
   },
 }

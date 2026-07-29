@@ -5,6 +5,7 @@ import { queryClient } from '@/config/react-query-config'
 import { clearSentryUser } from '@/lib/analytics/sentry-initializer'
 import { useThemeStore } from '@/stores/theme-store'
 import posthog from 'posthog-js'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 type AuthStore = {
   session: Session | null
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     set({ session: null, isLoading: false, isSigningOut: false })
     queryClient.clear()
+    POSTHOG_EVENTS.signOut()
     posthog.reset()
     window.localStorage.clear()
     // localStorage.clear() wiped the resolved-theme cache; re-write it so the
