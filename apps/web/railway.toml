@@ -6,6 +6,9 @@ builder = "railpack"
 # The production build injects PostHog chunk IDs into the bundle and uploads
 # the source maps (keyed by the git SHA), then --delete-after removes the .map
 # files and sourceMappingURL comments so maps never ship in the served bundle.
+# `pnpm --filter … exec` runs from apps/web, so posthog-cli's --directory is
+# `dist`, not `apps/web/dist` (the root-relative find below runs from the repo
+# root and does use the full path).
 buildCommand = """
 pnpm install --frozen-lockfile && \
 if [ "$RAILWAY_ENVIRONMENT_NAME" != "production" ] && [ -n "$RAILWAY_ENVIRONMENT_NAME" ]; then \
@@ -15,9 +18,9 @@ if [ "$RAILWAY_ENVIRONMENT_NAME" != "production" ] && [ -n "$RAILWAY_ENVIRONMENT
 fi && \
 pnpm turbo run build --filter=@flicktionary/web && \
 if [ "$RAILWAY_ENVIRONMENT_NAME" = "production" ] && [ -n "$POSTHOG_CLI_API_KEY" ]; then \
-  pnpm --filter @flicktionary/web exec posthog-cli sourcemap inject --directory apps/web/dist \
+  pnpm --filter @flicktionary/web exec posthog-cli sourcemap inject --directory dist \
     --release-name flicktionary-web --release-version "$RAILWAY_GIT_COMMIT_SHA" && \
-  pnpm --filter @flicktionary/web exec posthog-cli sourcemap upload --directory apps/web/dist \
+  pnpm --filter @flicktionary/web exec posthog-cli sourcemap upload --directory dist \
     --release-name flicktionary-web --release-version "$RAILWAY_GIT_COMMIT_SHA" --delete-after; \
 else \
   find apps/web/dist -name '*.map' -delete; \
