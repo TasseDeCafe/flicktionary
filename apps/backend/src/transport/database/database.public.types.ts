@@ -479,6 +479,8 @@ export type Database = {
           format_profile: string | null
           id: string
           input_hash: string
+          moderation_category: string | null
+          moderation_status: string | null
           raw_text: string
           source_title: string
           status: string
@@ -494,6 +496,8 @@ export type Database = {
           format_profile?: string | null
           id?: string
           input_hash: string
+          moderation_category?: string | null
+          moderation_status?: string | null
           raw_text: string
           source_title: string
           status?: string
@@ -509,6 +513,8 @@ export type Database = {
           format_profile?: string | null
           id?: string
           input_hash?: string
+          moderation_category?: string | null
+          moderation_status?: string | null
           raw_text?: string
           source_title?: string
           status?: string
@@ -1567,6 +1573,8 @@ export type Database = {
           hash: string
           id: string
           language: string
+          moderation_category: string | null
+          moderation_status: string | null
           profile_built_at: string | null
           profile_matched_token_count: number | null
           profile_max_segment_index: number | null
@@ -1581,6 +1589,8 @@ export type Database = {
           hash: string
           id?: string
           language: string
+          moderation_category?: string | null
+          moderation_status?: string | null
           profile_built_at?: string | null
           profile_matched_token_count?: number | null
           profile_max_segment_index?: number | null
@@ -1595,6 +1605,8 @@ export type Database = {
           hash?: string
           id?: string
           language?: string
+          moderation_category?: string | null
+          moderation_status?: string | null
           profile_built_at?: string | null
           profile_matched_token_count?: number | null
           profile_max_segment_index?: number | null

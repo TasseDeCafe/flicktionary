@@ -27,7 +27,13 @@ describe('enrichment-worker', () => {
     const rawText = `der Tisch — the table (${userId})`
     const created = await createBatch(
       { userId, targetLanguage: 'de', sourceTitle: 'Lesson notes', rawText, teacherProfileId: null },
-      { importBatchesRepository, processingJobsRepository: jobsRepository }
+      {
+        importBatchesRepository,
+        processingJobsRepository: jobsRepository,
+        anthropicPasses: MockAnthropicPasses({
+          moderationPass: vi.fn().mockResolvedValue({ verdict: 'allow' }) as never,
+        }),
+      }
     )
     if (!created.ok) throw new Error('createBatch failed')
     const batchId = created.batch.id

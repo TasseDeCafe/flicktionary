@@ -18,6 +18,7 @@ describe('highlights-router', () => {
   const testApp = buildTestApp({
     anthropicPasses: MockAnthropicPasses({
       languageDetectionPass: languageDetectionPass as never,
+      moderationPass: vi.fn().mockResolvedValue({ verdict: 'allow' }) as never,
     }),
   })
 

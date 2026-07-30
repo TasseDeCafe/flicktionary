@@ -26,6 +26,7 @@ describe('study-sessions getting-started predicate', () => {
         language: 'es',
         externalId: null,
         hash: unique,
+        moderation: null,
       })
       const inserted = await studySessionsRepository.insertStudySession({
         userId,

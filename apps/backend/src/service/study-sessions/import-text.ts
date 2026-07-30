@@ -6,8 +6,10 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
+import type { HardBlockCategory } from '../../transport/third-party/anthropic/passes/moderation-pass'
 import { parsePastedText } from '../../utils/text-paste-parser'
 import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
+import { moderateIngestText } from '../moderation/moderate-ingest-text'
 
 // languageDetectionPass reads the first ~1k chars; concatenating a few dozen
 // segments is more than enough to identify the language while keeping the
@@ -89,6 +91,7 @@ export type ImportTextResult =
       targetLanguage: string
     }
   | { ok: false; reason: 'empty' }
+  | { ok: false; reason: 'blocked'; category: HardBlockCategory }
   | { ok: false; reason: 'unsupported' }
   | { ok: false; reason: 'needs-onboarding' }
   | { ok: false; reason: 'missing-cefr'; targetLanguage: string }
@@ -97,17 +100,30 @@ export type ImportTextResult =
 // create source + track + segments + session. Idempotent by content hash, so
 // importing the same body twice resolves to the same session.
 export const importTextForUser = async (
-  input: { userId: string; text: string; title: string; sourceUrl: string | null },
+  input: {
+    userId: string
+    text: string
+    title: string
+    sourceUrl: string | null
+    surface: 'extension-import' | 'telegram'
+  },
   deps: ImportTextDependencies
 ): Promise<ImportTextResult> => {
-  const { userId, text, title, sourceUrl } = input
+  const { userId, text, title, sourceUrl, surface } = input
 
   // One segment per non-empty line, same parser the web paste wizard uses, so
   // text imported here reads identically to text pasted in the app.
   const parsed = parsePastedText(text)
   if (parsed.length === 0) return { ok: false, reason: 'empty' }
 
-  const prefs = await resolveIngestPrefs(userId, parsed, deps)
+  // Moderation covers the title too — it is user-authored and shows up in the
+  // UI and in LLM prompts. Runs alongside prefs resolution; a block outranks
+  // any prefs failure (the honest error).
+  const [prefs, moderation] = await Promise.all([
+    resolveIngestPrefs(userId, parsed, deps),
+    moderateIngestText([title, ...parsed.map((s) => s.text)].join('\n'), deps.anthropicPasses, { surface }),
+  ])
+  if (!moderation.allowed) return { ok: false, reason: 'blocked', category: moderation.category }
   if (!prefs.ok) return prefs
   const { detectedLanguage, nativeLanguage, cefrLevel } = prefs
 
@@ -128,6 +144,7 @@ export const importTextForUser = async (
     nativeLanguage,
     targetLanguage: detectedLanguage,
     cefrLevel,
+    moderation: moderation.status ? { status: moderation.status, category: moderation.category } : null,
   })
 
   void deps.usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {

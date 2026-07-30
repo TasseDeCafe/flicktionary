@@ -173,6 +173,7 @@ describe('stats repository', () => {
       language: 'es',
       externalId: null,
       hash: unique,
+      moderation: null,
     })
     const session = (await StudySessionsRepository().insertStudySession({
       userId,

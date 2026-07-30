@@ -69,6 +69,7 @@ export const textTracksContract = {
     .route({ method: 'POST', path: '/text-tracks/upload', successStatus: 201 })
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(
@@ -84,6 +85,7 @@ export const textTracksContract = {
     .route({ method: 'POST', path: '/text-tracks/paste', successStatus: 201 })
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(

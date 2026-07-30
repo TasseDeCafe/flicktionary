@@ -45,9 +45,11 @@ export const getOrCreateLessonSession = async (
   const contentSource = insertedSource[0]
   if (!contentSource) throw new Error('getOrCreateLessonSession: content source insert returned no row')
 
+  // The batch's moderation verdict (from createBatch) carries over to the
+  // track so lesson tracks are labeled like every other ingested document.
   const insertedTrack = (await tx`
-    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
-    VALUES (${contentSource.id}, 'paste', ${batch.target_language}, NULL, ${batch.input_hash})
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash, moderation_status, moderation_category)
+    VALUES (${contentSource.id}, 'paste', ${batch.target_language}, NULL, ${batch.input_hash}, ${batch.moderation_status}, ${batch.moderation_category})
     RETURNING *
   `) as DbTextTrack[]
   const track = insertedTrack[0]

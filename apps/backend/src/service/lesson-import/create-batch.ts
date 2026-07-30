@@ -5,13 +5,20 @@ import type {
   ImportBatchesRepositoryInterface,
 } from '../../transport/database/import-batches/import-batches-repository'
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+import type { HardBlockCategory } from '../../transport/third-party/anthropic/passes/moderation-pass'
+import { moderateIngestText } from '../moderation/moderate-ingest-text'
 
 export type CreateBatchDeps = {
   importBatchesRepository: ImportBatchesRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
+  anthropicPasses: AnthropicPassesInterface
 }
 
-export type CreateBatchResult = { ok: true; batch: DbImportBatch; resumed: boolean } | { ok: false; reason: 'empty' }
+export type CreateBatchResult =
+  | { ok: true; batch: DbImportBatch; resumed: boolean }
+  | { ok: false; reason: 'empty' }
+  | { ok: false; reason: 'blocked'; category: HardBlockCategory }
 
 // Create (or resume) an import draft. Identity is the sha256 of the
 // client-normalized markdown, per (user, target language): re-uploading the
@@ -38,7 +45,30 @@ export const createBatch = async (
     targetLanguage: params.targetLanguage,
     inputHash,
   })
-  if (existing) return { ok: true, batch: existing, resumed: true }
+  if (existing) {
+    // A resumed batch was normally checked at creation. NULL status means it
+    // predates moderation or was created while the classifier failed open —
+    // re-check so that gap can't be ridden forever; first verdict wins.
+    if (existing.moderation_status === null) {
+      const outcome = await moderateIngestText([params.sourceTitle, normalized].join('\n'), deps.anthropicPasses, {
+        surface: 'lesson-import',
+      })
+      if (!outcome.allowed) return { ok: false, reason: 'blocked', category: outcome.category }
+      if (outcome.status) {
+        await deps.importBatchesRepository.backfillModeration(existing.id, {
+          status: outcome.status,
+          category: outcome.category,
+        })
+      }
+    }
+    return { ok: true, batch: existing, resumed: true }
+  }
+
+  // The title is user-authored too — moderate it with the body.
+  const outcome = await moderateIngestText([params.sourceTitle, normalized].join('\n'), deps.anthropicPasses, {
+    surface: 'lesson-import',
+  })
+  if (!outcome.allowed) return { ok: false, reason: 'blocked', category: outcome.category }
 
   const inserted = await beginTx(async (tx) => {
     const batch = await deps.importBatchesRepository.insertBatch(
@@ -49,6 +79,7 @@ export const createBatch = async (
         sourceTitle: params.sourceTitle,
         rawText: normalized,
         inputHash,
+        moderation: outcome.status ? { status: outcome.status, category: outcome.category } : null,
       },
       tx
     )

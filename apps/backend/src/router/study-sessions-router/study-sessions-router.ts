@@ -18,6 +18,7 @@ import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
+import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
 import {
   computeMarkableLemmas,
@@ -678,13 +679,24 @@ export const StudySessionsRouter = (
       const userId = context.res.locals.userId
 
       const result = await importTextForUser(
-        { userId, text: input.text, title: input.title, sourceUrl: input.sourceUrl ?? null },
+        {
+          userId,
+          text: input.text,
+          title: input.title,
+          sourceUrl: input.sourceUrl ?? null,
+          surface: 'extension-import',
+        },
         importTextDeps
       )
       if (!result.ok) {
         if (result.reason === 'empty') {
           throw errors.BAD_REQUEST({
             data: { errors: [{ message: 'No readable text found to import.' }] },
+          })
+        }
+        if (result.reason === 'blocked') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
           })
         }
         throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(result) })

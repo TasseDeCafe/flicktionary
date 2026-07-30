@@ -5,6 +5,7 @@ import {
   __createUserInSupabaseAndGetHisIdAndToken,
   buildTestApp,
 } from '../../test/test-utils'
+import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { UpstreamRateLimitError } from '../../transport/third-party/upstream-rate-limit-error'
 
 const srtContent = `1
@@ -55,7 +56,14 @@ describe('text-tracks-router', () => {
 
   test('golden path: imports a subtitle, then a repeat import reuses the track without a second download', async () => {
     const downloadSrt = vi.fn().mockResolvedValue(srtContent)
-    const testApp = buildTestApp({ openSubtitlesDownloadSrt: downloadSrt })
+    // OpenSubtitles is a third-party catalog and is deliberately NOT
+    // moderated — the un-scripted vi.fn() below proves no moderation call
+    // happens on this path (fail-open would otherwise mask a regression).
+    const moderationPass = vi.fn()
+    const testApp = buildTestApp({
+      openSubtitlesDownloadSrt: downloadSrt,
+      anthropicPasses: MockAnthropicPasses({ moderationPass: moderationPass as never }),
+    })
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
     const contentSourceId = await createContentSource(testApp, token)
@@ -87,6 +95,57 @@ describe('text-tracks-router', () => {
     // The dedupe must fire BEFORE the download — this is what protects the
     // shared OpenSubtitles daily quota from repeat imports of popular titles.
     expect(downloadSrt).toHaveBeenCalledTimes(1)
+    expect(moderationPass).not.toHaveBeenCalled()
+  })
+
+  test('uploadSrt imports a benign file and rejects a hard-blocked one with CONTENT_BLOCKED', async () => {
+    const moderationPass = vi
+      .fn()
+      .mockResolvedValueOnce({ verdict: 'allow' })
+      .mockResolvedValueOnce({ verdict: 'block', category: 'sexual-explicit' })
+    const testApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({ moderationPass: moderationPass as never }),
+    })
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+    const contentSourceId = await createContentSource(testApp, token)
+
+    const allowed = await request(testApp)
+      .post('/api/v1/text-tracks/upload')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ contentSourceId, language: 'de', srtContent })
+    expect(allowed.status).toBe(201)
+    expect(allowed.body.data.segmentCount).toBe(2)
+
+    // Different cue text → different hash, so this import is NOT deduped and
+    // hits the second scripted verdict.
+    const blocked = await request(testApp)
+      .post('/api/v1/text-tracks/upload')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ contentSourceId, language: 'de', srtContent: srtContent.replace('Hallo Welt', 'Anderer Text') })
+    expect(blocked.status).toBe(422)
+    expect(blocked.body.data.errors[0]).toMatchObject({ code: 'CONTENT_BLOCKED' })
+  })
+
+  test('importFromPaste rejects hard-blocked text with CONTENT_BLOCKED and creates nothing', async () => {
+    const moderationPass = vi.fn().mockResolvedValue({ verdict: 'block', category: 'sexual-explicit' })
+    const testApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({ moderationPass: moderationPass as never }),
+    })
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+    const contentSourceId = await createContentSource(testApp, token)
+
+    const response = await request(testApp)
+      .post('/api/v1/text-tracks/paste')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({
+        contentSourceId,
+        language: 'de',
+        text: 'Dieser Text ist lang genug für die Mindestlänge des Einfüge-Imports.',
+      })
+    expect(response.status).toBe(422)
+    expect(response.body.data.errors[0]).toMatchObject({ code: 'CONTENT_BLOCKED' })
   })
 
   test('answers 429 with UPSTREAM_QUOTA_EXCEEDED when the OpenSubtitles daily quota is spent', async () => {
@@ -99,7 +158,10 @@ describe('text-tracks-router', () => {
           'OpenSubtitles daily download quota exceeded (406)'
         )
       )
-    const testApp = buildTestApp({ openSubtitlesDownloadSrt: downloadSrt })
+    const testApp = buildTestApp({
+      openSubtitlesDownloadSrt: downloadSrt,
+      anthropicPasses: MockAnthropicPasses(),
+    })
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token, referral: null })
     const contentSourceId = await createContentSource(testApp, token)

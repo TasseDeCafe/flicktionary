@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
@@ -13,11 +13,15 @@ import { UserTargetLanguagePrefsRepository } from '../../transport/database/user
 
 // Drives the oRPC contract over real HTTP through buildApp. Extraction is a
 // background job (the worker owns the LLM call — see the enrichment-worker
-// integration test), so the router surface itself is LLM-free: every method
-// on the unscripted MockAnthropicPasses would throw if a handler called one.
-// Golden path + one auth failure + one domain failure.
+// integration test); the only synchronous LLM call on this surface is the
+// moderation gate in createBatch, scripted to allow here. Golden path + one
+// auth failure + one domain failure.
 describe('lesson-import-router', () => {
-  const testApp = buildTestApp({ anthropicPasses: MockAnthropicPasses() })
+  const testApp = buildTestApp({
+    anthropicPasses: MockAnthropicPasses({
+      moderationPass: vi.fn().mockResolvedValue({ verdict: 'allow' }) as never,
+    }),
+  })
 
   const onboardedUser = async () => {
     const created = await __createUserInSupabaseAndGetHisIdAndToken()
@@ -64,6 +68,54 @@ describe('lesson-import-router', () => {
     expect(polled.status).toBe(200)
     expect(polled.body.data.batch.status).toBe('extracting')
     expect(polled.body.data.rows).toEqual([])
+  })
+
+  test('answers 422 with CONTENT_BLOCKED when moderation hard-blocks the lesson text', async () => {
+    const blockedApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({
+        moderationPass: vi.fn().mockResolvedValue({ verdict: 'block', category: 'sexual-explicit' }) as never,
+      }),
+    })
+    const { token } = await onboardedUser()
+
+    const response = await request(blockedApp)
+      .post('/api/v1/lesson-import/batches')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'de', sourceTitle: 'Lesson notes', rawText: `text (${__generateUniqueId('blocked')})` })
+
+    expect(response.status).toBe(422)
+    expect(response.body.data.errors[0]).toMatchObject({ code: 'CONTENT_BLOCKED' })
+  })
+
+  test('a batch created while moderation failed open is re-checked on resume and can be blocked', async () => {
+    // First attempt: the classifier is down → fail-open, batch created with a
+    // NULL verdict.
+    const failingPass = vi.fn().mockRejectedValue(new Error('anthropic down'))
+    const failOpenApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({ moderationPass: failingPass as never }),
+    })
+    const { token } = await onboardedUser()
+    const rawText = `der Tisch — the table (${__generateUniqueId('fail-open')})`
+
+    const created = await request(failOpenApp)
+      .post('/api/v1/lesson-import/batches')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'de', sourceTitle: 'Lesson notes', rawText })
+    expect(created.status).toBe(200)
+
+    // Resume of the same text with the classifier back: the NULL verdict is
+    // re-checked, and a block now rejects even though the batch exists.
+    const recheckApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({
+        moderationPass: vi.fn().mockResolvedValue({ verdict: 'block', category: 'sexual-explicit' }) as never,
+      }),
+    })
+    const resumed = await request(recheckApp)
+      .post('/api/v1/lesson-import/batches')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'de', sourceTitle: 'Lesson notes', rawText })
+    expect(resumed.status).toBe(422)
+    expect(resumed.body.data.errors[0]).toMatchObject({ code: 'CONTENT_BLOCKED' })
   })
 
   test('golden path: upserts and lists teacher profiles', async () => {

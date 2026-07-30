@@ -10,6 +10,8 @@ export type ImportBatchStatus = 'extracting' | 'ready' | 'failed' | 'confirmed'
 // rating-event provenance and the batch -> session pointer).
 const DRAFT_TTL_DAYS = 30
 
+export type BatchModeration = { status: 'clean' | 'flagged'; category: string | null }
+
 export type InsertBatchInput = {
   userId: string
   targetLanguage: string
@@ -17,6 +19,7 @@ export type InsertBatchInput = {
   sourceTitle: string
   rawText: string
   inputHash: string
+  moderation: BatchModeration | null
 }
 
 export type InsertBatchRowInput = {
@@ -35,7 +38,8 @@ export type InsertBatchRowInput = {
 const insertBatch = async (params: InsertBatchInput, executor: postgres.Sql = sql): Promise<DbImportBatch | null> => {
   const result = (await executor`
     INSERT INTO public.import_batches (
-      user_id, target_language, teacher_profile_id, source_title, raw_text, input_hash, status, expires_at
+      user_id, target_language, teacher_profile_id, source_title, raw_text, input_hash, status, expires_at,
+      moderation_status, moderation_category
     )
     VALUES (
       ${params.userId},
@@ -45,13 +49,25 @@ const insertBatch = async (params: InsertBatchInput, executor: postgres.Sql = sq
       ${params.rawText},
       ${params.inputHash},
       'extracting',
-      NOW() + make_interval(days => ${DRAFT_TTL_DAYS})
+      NOW() + make_interval(days => ${DRAFT_TTL_DAYS}),
+      ${params.moderation?.status ?? null},
+      ${params.moderation?.category ?? null}
     )
     ON CONFLICT (user_id, target_language, input_hash) WHERE status <> 'failed'
     DO NOTHING
     RETURNING *
   `) as DbImportBatch[]
   return result[0] ?? null
+}
+
+// NULL-repair only: fills the verdict for a batch created before the feature
+// (or during a moderation outage) without ever overwriting an existing one.
+const backfillModeration = async (batchId: string, moderation: BatchModeration): Promise<void> => {
+  await sql`
+    UPDATE public.import_batches
+    SET moderation_status = ${moderation.status}, moderation_category = ${moderation.category}
+    WHERE id = ${batchId} AND moderation_status IS NULL
+  `
 }
 
 const findByHashForUser = async (params: {
@@ -190,6 +206,7 @@ const deleteExpiredDrafts = async (): Promise<number> => {
 
 export interface ImportBatchesRepositoryInterface {
   insertBatch: (params: InsertBatchInput, executor?: postgres.Sql) => Promise<DbImportBatch | null>
+  backfillModeration: (batchId: string, moderation: BatchModeration) => Promise<void>
   findByHashForUser: (params: {
     userId: string
     targetLanguage: string
@@ -212,6 +229,7 @@ export interface ImportBatchesRepositoryInterface {
 
 export const ImportBatchesRepository = (): ImportBatchesRepositoryInterface => ({
   insertBatch,
+  backfillModeration,
   findByHashForUser,
   findByIdForUser,
   findById,

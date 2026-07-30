@@ -13,6 +13,8 @@ import { importSrt } from '../../service/text-tracks/import-srt'
 import { importFromOpenSubtitles } from '../../service/text-tracks/import-from-opensubtitles'
 import { importPastedText } from '../../service/text-tracks/import-pasted-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
+import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 const toTextTrackDto = (row: DbTextTrack) => ({
   id: row.id,
@@ -29,6 +31,7 @@ export type TextTracksRouterDependencies = {
   textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
+  anthropicPasses: AnthropicPassesInterface
   downloadSrt: (fileId: number) => Promise<string>
 }
 
@@ -39,6 +42,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
     textTracksRepository,
     textSegmentsRepository,
     processingJobsRepository,
+    anthropicPasses,
     downloadSrt,
   } = deps
 
@@ -89,9 +93,15 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           srtContent: input.srtContent,
         },
         textTracksRepository,
-        textSegmentsRepository
+        textSegmentsRepository,
+        { anthropicPasses }
       )
       if (!result.ok) {
+        if (result.reason === 'blocked') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
+          })
+        }
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
         })
@@ -110,8 +120,13 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
           data: { errors: [{ message: 'Content source not found' }] },
         })
       }
-      const result = await importPastedText(input, textTracksRepository, textSegmentsRepository)
+      const result = await importPastedText(input, textTracksRepository, textSegmentsRepository, { anthropicPasses })
       if (!result.ok) {
+        if (result.reason === 'blocked') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
+          })
+        }
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Pasted text did not contain any usable lines' }] },
         })

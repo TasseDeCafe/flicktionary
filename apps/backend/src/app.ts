@@ -407,6 +407,7 @@ export const buildApp = ({
       textTracksRepository,
       textSegmentsRepository,
       processingJobsRepository,
+      anthropicPasses,
       downloadSrt: openSubtitlesDownloadSrt,
     })
   )
@@ -560,6 +561,7 @@ export const buildApp = ({
       practiceRatingEventsRepository,
       userTargetLanguagePrefsRepository,
       usersRepository,
+      anthropicPasses,
     })
   )
   app.use(
