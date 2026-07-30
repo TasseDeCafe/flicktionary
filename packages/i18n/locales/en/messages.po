@@ -1897,10 +1897,6 @@ msgid "Failed to import into Flicktionary."
 msgstr "Failed to import into Flicktionary."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Failed to import pasted text"
-msgstr "Failed to import pasted text"
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to import subtitles"
 msgstr "Failed to import subtitles"
 
@@ -2134,7 +2130,7 @@ msgstr "Failed to set native language"
 msgid "Failed to set the reading position"
 msgstr "Failed to set the reading position"
 
-#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Failed to start the import"
 msgstr "Failed to start the import"
 
@@ -2203,7 +2199,7 @@ msgstr "Failed to update term"
 msgid "Failed to update theme"
 msgstr "Failed to update theme"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "Failed to upload subtitles"
 msgstr "Failed to upload subtitles"
 
@@ -5188,6 +5184,13 @@ msgstr "This show has no episodes."
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "This term is removed from your vocabulary. Restore it to keep practicing."
 msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
+
+#: apps/extension/src/services/flicktionary/import-text.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
+msgid "This text appears to contain explicit content and can't be imported."
+msgstr "This text appears to contain explicit content and can't be imported."
 
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "This value differs from what was originally generated."
