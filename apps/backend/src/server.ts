@@ -91,7 +91,7 @@ const startServer = async () => {
     const shutdown = (signal: NodeJS.Signals) => {
       if (isShuttingDown) return
       isShuttingDown = true
-      console.log(`Received ${signal}, shutting down gracefully`)
+      console.info(`Received ${signal}, shutting down gracefully`)
 
       // Keep-alive connections can hold close() open forever
       const forceExitTimer = setTimeout(() => {
