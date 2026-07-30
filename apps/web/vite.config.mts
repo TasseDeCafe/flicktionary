@@ -21,6 +21,12 @@ export default defineConfig({
     }),
     lingui(),
   ],
+  build: {
+    // Consumed by the PostHog source-map upload in the Railway production
+    // build (see railway.toml), which deletes the .map files after uploading
+    // so they never ship in the public artifact.
+    sourcemap: true,
+  },
   resolve: {
     tsconfigPaths: true,
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
