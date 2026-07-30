@@ -5,6 +5,7 @@ import { isSupportedLanguageCode, type SupportedLanguageCode } from '@flicktiona
 import { LanguageOptionList } from '@/components/language-option-list'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { useCompleteOnboarding } from '@/features/sessions/api/sessions-hooks'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 const detectBrowserLanguage = (): SupportedLanguageCode => {
   if (typeof navigator === 'undefined') return 'en'
@@ -33,7 +34,15 @@ export const OnboardingView = ({ variant = 'web', onFinish }: OnboardingViewProp
   const { mutate, isPending } = useCompleteOnboarding()
 
   const handleContinue = () => {
-    mutate({ nativeLanguage: language }, { onSuccess: () => setStep('welcome') })
+    mutate(
+      { nativeLanguage: language },
+      {
+        onSuccess: () => {
+          POSTHOG_EVENTS.onboardingCompleted({ variant })
+          setStep('welcome')
+        },
+      }
+    )
   }
 
   // The X leaves onboarding without completing it. It lands on More — the only

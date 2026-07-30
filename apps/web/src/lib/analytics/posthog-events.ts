@@ -1,7 +1,7 @@
 import posthog from 'posthog-js'
 import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
 
-const capture = (eventName: string, properties: Record<string, string> = {}) => {
+const capture = (eventName: string, properties: Record<string, string | number | boolean> = {}) => {
   if (!isPostHogEnabled()) return
   posthog.capture(eventName, properties)
 }
@@ -25,5 +25,57 @@ export const POSTHOG_EVENTS = {
   },
   invalidTokenError: () => {
     capture('invalid_token_error')
+  },
+  // Fired on completeOnboarding success (the moment is_onboarded flips), not on
+  // the welcome screen's "Get started" — closing the tab after step 1 still
+  // counts as onboarded. `variant` distinguishes the standalone wizard from the
+  // extension/Telegram pairing embeds.
+  onboardingCompleted: (props: { variant: 'web' | 'extensionPair' | 'telegramPair' }) => {
+    capture('onboarding_completed', props)
+  },
+  // Only genuinely new sessions — the find-or-create "already existed" path
+  // doesn't fire. `subtitle_source` is absent for pasted-text sessions.
+  sessionCreated: (props: {
+    study_session_id: string
+    content_type: 'movie' | 'tv' | 'text'
+    target_language: string
+    subtitle_source?: 'opensubtitles' | 'upload'
+  }) => {
+    capture('session_created', props)
+  },
+  // The reader's main Save lane (highlight + enrichment + card). The note-only
+  // lane deliberately doesn't count: it creates a stub with no study facets.
+  vocabularyTermSaved: (props: { target_language: string }) => {
+    capture('vocabulary_term_saved', props)
+  },
+  // Reaching the completion screen of a practice session with at least one
+  // item. `composed` is the main queue (correct_count doesn't apply: flashcard
+  // ratings aren't binary); `rehab`/`warmup` are the dedicated exercise-only
+  // sessions.
+  practiceSessionCompleted: (props: {
+    session_type: 'composed' | 'rehab' | 'warmup'
+    target_language: string
+    total_count: number
+    correct_count?: number
+    hard_count?: number
+    is_daily_mix?: boolean
+  }) => {
+    capture('practice_session_completed', props)
+  },
+  // The zero-SRS post-reading recap quiz (client-side, no FSRS writes).
+  sessionRecapCompleted: (props: { target_language: string; correct_count: number; total_count: number }) => {
+    capture('session_recap_completed', props)
+  },
+  practiceExplainerDismissed: () => {
+    capture('practice_explainer_dismissed')
+  },
+  // The paywall's explicit "Maybe later" — backdrop/escape dismissals don't
+  // count as a deliberate decline.
+  paywallDismissed: () => {
+    capture('paywall_dismissed')
+  },
+  // Captured before posthog.reset() so it still carries the identified user.
+  signOut: () => {
+    capture('sign_out')
   },
 }

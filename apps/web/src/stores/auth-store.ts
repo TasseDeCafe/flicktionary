@@ -5,6 +5,7 @@ import { queryClient } from '@/config/react-query-config'
 import { useThemeStore } from '@/stores/theme-store'
 import posthog from 'posthog-js'
 import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 type AuthStore = {
   session: Session | null
@@ -55,6 +56,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     set({ session: null, isLoading: false, isSigningOut: false })
     queryClient.clear()
+    // Captured before reset() so the event still carries the identified user
+    // (the capture queue stamps the distinct id synchronously).
+    POSTHOG_EVENTS.signOut()
     if (isPostHogEnabled()) {
       posthog.reset()
     }

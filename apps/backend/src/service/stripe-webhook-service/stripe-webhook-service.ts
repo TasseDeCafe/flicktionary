@@ -8,12 +8,19 @@ import { StripeWebhookServiceInterface } from './stripe-webhook-service-interfac
 import { AccessCacheServiceInterface } from '../long-running/subscription-cache-service/access-cache-service'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
+import { PostHog } from 'posthog-node'
+import { posthogClient as defaultPosthogClient } from '../../transport/third-party/posthog/posthog-client'
+
+// Subscription statuses that grant access — entering one of them (from no
+// subscription, or from any other status) is the activation moment.
+const ACCESS_GRANTING_STATUSES = ['trialing', 'active']
 
 export const StripeWebhookService = (
   stripeApi: StripeApi,
   stripeSubscriptionsRepository: StripeSubscriptionsRepositoryInterface,
   accessCacheService: AccessCacheServiceInterface,
-  usersRepository: UsersRepositoryInterface
+  usersRepository: UsersRepositoryInterface,
+  posthogClient: PostHog = defaultPosthogClient
 ): StripeWebhookServiceInterface => {
   const syncStripeSubscriptionWithOurDbAndCache = async (customerId: string): Promise<boolean> => {
     let subscriptions: ListStripeSubscriptionsResponse
@@ -71,7 +78,7 @@ export const StripeWebhookService = (
     const interval = plan.interval
     const interval_count = plan.interval_count
 
-    await stripeSubscriptionsRepository.upsertSubscription(
+    const previousStatus = await stripeSubscriptionsRepository.upsertSubscription(
       userId,
       id,
       status,
@@ -86,6 +93,25 @@ export const StripeWebhookService = (
       interval_count
     )
     await accessCacheService.updateForUser(userId)
+    // Server-authoritative `subscription_activated` (issue #330): emitted on
+    // the status transition into an access-granting state — never from the
+    // revisitable checkout-success page. Replays and repeat syncs see an
+    // unchanged status and stay silent; a trial converting to `active` emits
+    // again, disambiguated by `previous_status`.
+    if (ACCESS_GRANTING_STATUSES.includes(status) && previousStatus !== status) {
+      posthogClient.capture({
+        distinctId: userId,
+        event: 'subscription_activated',
+        properties: {
+          status,
+          previous_status: previousStatus,
+          interval,
+          interval_count,
+          amount,
+          currency,
+        },
+      })
+    }
     return true
   }
 

@@ -5,6 +5,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -174,6 +175,17 @@ const LoadedExerciseSessionView = ({
     currentOutcomeRef.current = null
     setRestoredOutcome(null)
     setCurrentAnswered(false)
+    // This queue never grows (placeholders swap in place), so crossing the end
+    // here is exactly the completion screen appearing. correctCount is settled:
+    // the final answer's handleAnswered ran in an earlier event.
+    if (queue.length > 0 && index + 1 >= queue.length) {
+      POSTHOG_EVENTS.practiceSessionCompleted({
+        session_type: copyVariant,
+        target_language: targetLanguage,
+        total_count: queue.length,
+        correct_count: correctCount,
+      })
+    }
     setIndex((i) => i + 1)
   }
 

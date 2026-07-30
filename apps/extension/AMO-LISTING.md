@@ -45,7 +45,7 @@ this block. Update the "Last updated" date to match the source on each change.
 ```
 Flicktionary Privacy Policy
 
-Last updated: June 3, 2026
+Last updated: July 30, 2026
 
 1. Introduction
 
@@ -55,7 +55,7 @@ Flicktionary ("we", "us") is a language-learning service consisting of the web a
 
 - Account information. Your email address and, depending on how you sign in (Google, Apple, or email), your name. Authentication is handled by our infrastructure provider Supabase; we never see or store your passwords for third-party sign-in providers.
 - Learning content. The words and phrases you save, the notes and highlights you make, the text you import or paste (for example subtitles of a video you watch or an article you import), titles and URLs of the videos and articles you save words from, your native language, the languages you study, and your proficiency levels.
-- Usage data. How you interact with the service (pages viewed, features used) collected through analytics, and diagnostic data such as error reports.
+- Usage data. How you interact with the service (pages viewed, features used) collected through analytics, and diagnostic data such as error reports. We also use session replay, which records how the app's interface is used (clicks, scrolling, navigation between screens) so we can understand and improve the experience. Replay recordings are masked by default: the text you type and the text shown on screen — including your learning content — is replaced with placeholders before the recording leaves your browser, and authentication tokens are stripped from recorded URLs.
 - Payment information. If you purchase a subscription, payment is processed by Stripe. We receive your subscription status but never see or store your card details.
 - Cookies and local storage. Used to keep you signed in and to remember your settings. We do not use advertising cookies.
 
@@ -73,7 +73,7 @@ The Flicktionary browser extension only transmits data when you explicitly use o
 
 5. Third-party service providers
 
-We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product analytics), Sentry (error monitoring), and Resend (transactional email). These providers process data only to provide their services to us and are bound by their own confidentiality and data-protection obligations. We do not sell your personal data to anyone.
+We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product analytics, session replay, and error monitoring), and Resend (transactional email). These providers process data only to provide their services to us and are bound by their own confidentiality and data-protection obligations. We do not sell your personal data to anyone.
 
 6. Transfer of data
 

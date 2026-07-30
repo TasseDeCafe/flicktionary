@@ -23,6 +23,7 @@ import { useGetSubscriptionDetails } from '@/features/billing/api/billing-hooks'
 import { useCheckoutMutation } from '@/features/checkout/api/checkout-hooks'
 import { useLingui } from '@lingui/react/macro'
 import { useTrackingStore, getHasAllowedReferral } from '@/stores/tracking-store'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 export const PricingOverlayContent = () => {
   const { t } = useLingui()
@@ -127,7 +128,13 @@ export const PricingOverlayContent = () => {
           <Button onClick={handleCTAClick} disabled={pricingViewConfig.subscribeButton.isDisabled}>
             {pricingViewConfig.subscribeButton.text}
           </Button>
-          <Button variant='ghost' onClick={() => closeOverlay()}>
+          <Button
+            variant='ghost'
+            onClick={() => {
+              POSTHOG_EVENTS.paywallDismissed()
+              closeOverlay()
+            }}
+          >
             {t`Maybe later`}
           </Button>
         </div>

@@ -29,6 +29,7 @@ import {
   type ImportedTrack,
 } from './subtitle-source-picker'
 import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 type Step =
   | 'language'
@@ -154,6 +155,13 @@ export const NewSessionWizard = () => {
           // existing session, with all its highlights intact.
           if (response.alreadyExisted) {
             toast.info(t`You already had a session for this — picking up where you left off.`)
+          } else {
+            POSTHOG_EVENTS.sessionCreated({
+              study_session_id: response.data.id,
+              content_type: contentType === 'tv' ? 'tv' : 'movie',
+              target_language: track.language,
+              ...(subtitleMode ? { subtitle_source: subtitleMode } : {}),
+            })
           }
           void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id }, replace: true })
         },

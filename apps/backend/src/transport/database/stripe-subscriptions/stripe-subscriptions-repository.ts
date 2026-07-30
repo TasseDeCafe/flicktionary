@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { beginTx, sql } from '../postgres-client'
 import { Enums, Tables } from '../database.public.types'
 
 export type DbInterval = Enums<'subscription_interval'>
@@ -34,6 +34,12 @@ const insertSubscription = async (
   `
 }
 
+// Returns the status the row had before this upsert (null when the
+// subscription is new) so the webhook sync can detect status transitions.
+// The read and the write share a transaction serialized by an advisory lock:
+// Stripe fires several events in a burst after checkout, and without the lock
+// two concurrent syncs of a brand-new subscription could both read "no row"
+// and both report an activation transition.
 const upsertSubscription = async (
   userId: string,
   stripeSubscriptionId: string,
@@ -47,31 +53,39 @@ const upsertSubscription = async (
   amount: number | null,
   interval: DbInterval,
   intervalCount: number
-): Promise<void> => {
+): Promise<string | null> => {
   const currentPeriodEndDate = new Date(currentPeriodEnd * 1000).toISOString()
   const trialEndDate = trialEnd ? new Date(trialEnd * 1000).toISOString() : null
   const eventDate = new Date(eventTimestamp * 1000).toISOString()
 
-  await sql`
-    INSERT INTO public.stripe_subscriptions
-    (user_id, stripe_subscription_id, status, current_period_end, cancel_at_period_end, trial_end, stripe_product_id, updated_at, currency, amount, interval, interval_count)
-    VALUES
-    (${userId}, ${stripeSubscriptionId}, ${status}::stripe_subscription_status,
-    ${currentPeriodEndDate}, ${cancelAtPeriodEnd}, ${trialEndDate}, ${stripeProductId}, ${eventDate},
-    ${currency}, ${amount}, ${interval}::subscription_interval, ${intervalCount})
-    ON CONFLICT (stripe_subscription_id)
-    DO UPDATE SET
-      status = EXCLUDED.status,
-      current_period_end = EXCLUDED.current_period_end,
-      cancel_at_period_end = EXCLUDED.cancel_at_period_end,
-      trial_end = EXCLUDED.trial_end,
-      stripe_product_id = EXCLUDED.stripe_product_id,
-      updated_at = EXCLUDED.updated_at,
-      currency = EXCLUDED.currency,
-      amount = EXCLUDED.amount,
-      interval = EXCLUDED.interval,
-      interval_count = EXCLUDED.interval_count
-  `
+  return await beginTx(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${stripeSubscriptionId}))`
+    const previous = await tx`
+      SELECT status FROM public.stripe_subscriptions
+      WHERE stripe_subscription_id = ${stripeSubscriptionId}
+    `
+    await tx`
+      INSERT INTO public.stripe_subscriptions
+      (user_id, stripe_subscription_id, status, current_period_end, cancel_at_period_end, trial_end, stripe_product_id, updated_at, currency, amount, interval, interval_count)
+      VALUES
+      (${userId}, ${stripeSubscriptionId}, ${status}::stripe_subscription_status,
+      ${currentPeriodEndDate}, ${cancelAtPeriodEnd}, ${trialEndDate}, ${stripeProductId}, ${eventDate},
+      ${currency}, ${amount}, ${interval}::subscription_interval, ${intervalCount})
+      ON CONFLICT (stripe_subscription_id)
+      DO UPDATE SET
+        status = EXCLUDED.status,
+        current_period_end = EXCLUDED.current_period_end,
+        cancel_at_period_end = EXCLUDED.cancel_at_period_end,
+        trial_end = EXCLUDED.trial_end,
+        stripe_product_id = EXCLUDED.stripe_product_id,
+        updated_at = EXCLUDED.updated_at,
+        currency = EXCLUDED.currency,
+        amount = EXCLUDED.amount,
+        interval = EXCLUDED.interval,
+        interval_count = EXCLUDED.interval_count
+    `
+    return previous.count > 0 ? (previous[0].status as string) : null
+  })
 }
 
 const getSubscriptionUpdatedAt = async (stripeSubscriptionId: string): Promise<number | null> => {
@@ -155,7 +169,7 @@ export interface StripeSubscriptionsRepositoryInterface {
     amount: number | null,
     interval: DbInterval,
     intervalCount: number
-  ) => Promise<void>
+  ) => Promise<string | null>
   getSubscriptionUpdatedAt: (stripeSubscriptionId: string) => Promise<number | null>
   cancelSubscription: (subscriptionId: string) => Promise<void>
   getAllSubscriptions: () => Promise<DbStripeSubscription[]>
