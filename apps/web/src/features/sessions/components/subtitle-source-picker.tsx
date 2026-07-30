@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { OptionCard, OptionCardSkeleton } from '@flicktionary/ui/components/option-card'
@@ -195,6 +196,14 @@ export const SrtUploadStep = ({ contentSourceId, defaultLanguage, onImported }: 
             language: response.data.track.language,
             segmentCount: response.data.segmentCount,
           })
+        },
+        onError: (err) => {
+          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          if (code === 'CONTENT_BLOCKED') {
+            toast.error(t`This text appears to contain explicit content and can't be imported.`)
+            return
+          }
+          toast.error(t`Failed to upload subtitles`)
         },
       }
     )

@@ -4,11 +4,12 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
 export const useCreateLessonBatch = () => {
-  const { t } = useLingui()
   return useMutation(
     orpcQuery.lessonImport.createBatch.mutationOptions({
       meta: {
-        errorMessage: t`Failed to start the import`,
+        // The wizard's own onError branches on the moderation gate's
+        // CONTENT_BLOCKED code and shows a generic toast for everything else.
+        showErrorToast: false,
       },
     })
   )

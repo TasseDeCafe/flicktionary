@@ -131,10 +131,14 @@ const finishImport = async (
     }
     // Context-menu MISSING_CEFR can't host a picker — toast copy that points the
     // user at the extension popup, where the inline picker lives.
+    // CONTENT_BLOCKED gets a localized message instead of the backend's raw
+    // English string (the moderation gate rejected the text).
     const surfaced =
       code === 'MISSING_CEFR'
         ? i18n._(msg`Open the Flicktionary extension popup to set your level for this language, then import again.`)
-        : message
+        : code === 'CONTENT_BLOCKED'
+          ? i18n._(msg`This text appears to contain explicit content and can't be imported.`)
+          : message
     await showToast(tabId, 'error', surfaced)
     return { ok: false, error: surfaced }
   }

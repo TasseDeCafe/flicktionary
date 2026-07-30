@@ -184,6 +184,14 @@ export const LessonImportWizard = () => {
           }
           void navigate({ to: '/lessons/import/$batchId', params: { batchId: batch.id }, replace: true })
         },
+        onError: (err) => {
+          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          if (code === 'CONTENT_BLOCKED') {
+            toast.error(t`This text appears to contain explicit content and can't be imported.`)
+            return
+          }
+          toast.error(t`Failed to start the import`)
+        },
       }
     )
   }
