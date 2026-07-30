@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow'
 import posthog from 'posthog-js'
 import { checkIsTestUser } from '@/utils/test-users-utils'
 import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
+import { getConfig } from '@/config/environment-config'
 
 type UserSetupGateProps = {
   children: ReactNode
@@ -44,20 +45,23 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
     }
   }, [accessToken, getOrCreateUserData, isUserSetupComplete, trackingParams])
 
-  // Test users are fully opted out of capture: filtering them out of insights
-  // would still ingest their events and replays. The opt-out persists in this
-  // browser, so a later non-test login has to explicitly opt back in.
+  // In production, test users are fully opted out of capture: filtering them
+  // out of insights would still ingest their events and replays. Development
+  // captures them normally — the DEV project's data IS test-user traffic.
+  // The opt-out persists in this browser, so a later non-test login has to
+  // explicitly opt back in.
+  const isExcludedTestUser = isTestUser && getConfig().shouldExcludeTestUsersFromAnalytics
   useEffect(() => {
     if (!isPostHogEnabled() || !email) return
-    if (isTestUser) {
+    if (isExcludedTestUser) {
       posthog.opt_out_capturing()
     } else if (posthog.has_opted_out_capturing()) {
       posthog.opt_in_capturing()
     }
-  }, [email, isTestUser])
+  }, [email, isExcludedTestUser])
 
   useEffect(() => {
-    if (isPostHogEnabled() && userId && trackingParams && !isTestUser && isUserSetupComplete) {
+    if (isPostHogEnabled() && userId && trackingParams && !isExcludedTestUser && isUserSetupComplete) {
       posthog.identify(userId, {
         $set_once: {
           referral: trackingParams.referral,
@@ -69,7 +73,7 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
         },
       })
     }
-  }, [userId, trackingParams, isTestUser, isUserSetupComplete])
+  }, [userId, trackingParams, isExcludedTestUser, isUserSetupComplete])
 
   if (isPending) {
     return null

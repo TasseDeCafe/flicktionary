@@ -19,6 +19,7 @@ const getProductionConfig = (): EnvironmentConfig => ({
   supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL,
   supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   posthogProjectToken: getPosthogProjectToken(),
+  shouldExcludeTestUsersFromAnalytics: true,
   shouldLogLocally: false,
   showDevTools: false,
   hashedEmailsOfTestUsers: parseHashedEmails(import.meta.env.VITE_HASHED_EMAILS_OF_TEST_USERS || ''),
@@ -38,6 +39,7 @@ const getDevelopmentConfig = (): EnvironmentConfig => ({
   // shown by `supabase start` command
   supabasePublishableKey: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
   posthogProjectToken: getPosthogProjectToken(),
+  shouldExcludeTestUsersFromAnalytics: false,
   shouldLogLocally: true,
   showDevTools: false,
   hashedEmailsOfTestUsers: parseHashedEmails(import.meta.env.VITE_HASHED_EMAILS_OF_TEST_USERS || ''),
@@ -64,6 +66,7 @@ const getTestConfig = (): EnvironmentConfig => ({
   supabaseProjectUrl: 'dummy-supabase-project-url',
   supabasePublishableKey: 'dummy-supabase-project-key',
   posthogProjectToken: '',
+  shouldExcludeTestUsersFromAnalytics: false,
   shouldLogLocally: true,
   showDevTools: false,
   hashedEmailsOfTestUsers: [],

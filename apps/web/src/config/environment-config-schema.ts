@@ -9,6 +9,9 @@ export const environmentConfigSchema = z.object({
   supabaseProjectUrl: z.url(),
   supabasePublishableKey: z.string().min(1),
   posthogProjectToken: FEATURES.POSTHOG ? z.string() : z.string().max(0),
+  // Production keeps test users out of PostHog entirely; development captures
+  // them so the DEV project can be used to verify the integration.
+  shouldExcludeTestUsersFromAnalytics: z.boolean(),
   shouldLogLocally: z.boolean(),
   showDevTools: z.boolean(),
   hashedEmailsOfTestUsers: z.array(z.string().min(1)),
