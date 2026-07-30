@@ -2149,10 +2149,10 @@ msgstr "Échec du démarrage de l'échauffement"
 msgid "Failed to submit answer"
 msgstr "Échec de l'envoi de la réponse"
 
-#: apps/native/src/features/admin/api/sentry-debug-hooks.ts
-#: apps/web/src/features/admin/api/sentry-debug-hooks.ts
-msgid "Failed to trigger Sentry message"
-msgstr "Échec du déclenchement du message Sentry"
+#: apps/native/src/features/admin/api/error-debug-hooks.ts
+#: apps/web/src/features/admin/api/error-debug-hooks.ts
+msgid "Failed to trigger the backend test error"
+msgstr "Échec du déclenchement de l'erreur de test du backend"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to undo"

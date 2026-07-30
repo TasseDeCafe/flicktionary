@@ -2150,10 +2150,10 @@ msgstr "Failed to start warm-up"
 msgid "Failed to submit answer"
 msgstr "Failed to submit answer"
 
-#: apps/native/src/features/admin/api/sentry-debug-hooks.ts
-#: apps/web/src/features/admin/api/sentry-debug-hooks.ts
-msgid "Failed to trigger Sentry message"
-msgstr "Failed to trigger Sentry message"
+#: apps/native/src/features/admin/api/error-debug-hooks.ts
+#: apps/web/src/features/admin/api/error-debug-hooks.ts
+msgid "Failed to trigger the backend test error"
+msgstr "Failed to trigger the backend test error"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to undo"
