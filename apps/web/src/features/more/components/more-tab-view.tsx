@@ -1,5 +1,5 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import {
   AlertOctagon,
@@ -205,6 +205,23 @@ export const MoreTabView = () => {
         />
         <MoreListRow icon={LogOut} label={t`Sign out`} onPress={handleSignOut} />
       </MoreListSection>
+
+      {/* Required verbatim by TMDB's API terms of use: movie/TV search results
+          and poster/still images come from their API. */}
+      <p className='text-muted-foreground text-center text-xs'>
+        <Trans>
+          This product uses the{' '}
+          <a
+            href='https://www.themoviedb.org'
+            target='_blank'
+            rel='noreferrer'
+            className='hover:text-foreground underline'
+          >
+            TMDB
+          </a>{' '}
+          API but is not endorsed or certified by TMDB.
+        </Trans>
+      </p>
     </PageContainer>
   )
 }
