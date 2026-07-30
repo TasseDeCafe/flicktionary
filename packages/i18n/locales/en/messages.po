@@ -5173,6 +5173,10 @@ msgstr "This hides the session from your list. Your kept vocabulary stays in you
 msgid "This is a note-only card with no flashcard data yet. Click Generate full exploration to fill its translation, definition, and examples — then you can keep it."
 msgstr "This is a note-only card with no flashcard data yet. Click Generate full exploration to fill its translation, definition, and examples — then you can keep it."
 
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "This product uses the <0>TMDB</0> API but is not endorsed or certified by TMDB."
+msgstr "This product uses the <0>TMDB</0> API but is not endorsed or certified by TMDB."
+
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
