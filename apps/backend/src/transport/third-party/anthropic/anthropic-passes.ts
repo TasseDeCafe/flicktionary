@@ -12,6 +12,7 @@ import { generateFormData } from './passes/generate-form-data'
 import { generatePracticeText } from './passes/generate-practice-text'
 import { gradeUseInSentencePass } from './passes/grade-use-in-sentence-pass'
 import { languageDetectionPass } from './passes/language-detection-pass'
+import { moderationPass } from './passes/moderation-pass'
 import { nominateCandidatesPass } from './passes/nominate-candidates-pass'
 import { verifyExercisePass } from './passes/verify-exercise-pass'
 
@@ -34,6 +35,7 @@ export type AnthropicPassesInterface = {
   generatePracticeText: typeof generatePracticeText
   gradeUseInSentencePass: typeof gradeUseInSentencePass
   languageDetectionPass: typeof languageDetectionPass
+  moderationPass: typeof moderationPass
   nominateCandidatesPass: typeof nominateCandidatesPass
   verifyExercisePass: typeof verifyExercisePass
   // Card chat builds a bespoke prompt (seeded turn, history split, edit tool)
@@ -54,6 +56,7 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   generatePracticeText,
   gradeUseInSentencePass,
   languageDetectionPass,
+  moderationPass,
   nominateCandidatesPass,
   verifyExercisePass,
   createChatCompletion: (params) => getAnthropicClient().messages.create(params),
@@ -78,6 +81,7 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   generatePracticeText: notScripted('generatePracticeText'),
   gradeUseInSentencePass: notScripted('gradeUseInSentencePass'),
   languageDetectionPass: notScripted('languageDetectionPass'),
+  moderationPass: notScripted('moderationPass'),
   nominateCandidatesPass: notScripted('nominateCandidatesPass'),
   verifyExercisePass: notScripted('verifyExercisePass'),
   createChatCompletion: notScripted('createChatCompletion'),

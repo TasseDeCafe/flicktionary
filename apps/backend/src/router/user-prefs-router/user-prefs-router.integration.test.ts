@@ -37,6 +37,7 @@ describe('user-prefs-router', async () => {
     anthropicPasses: MockAnthropicPasses({
       basicDataPass: vi.fn().mockResolvedValue([scriptedChunk]) as never,
       languageDetectionPass: vi.fn().mockResolvedValue('de') as never,
+      moderationPass: vi.fn().mockResolvedValue({ verdict: 'allow' }) as never,
     }),
   })
 
@@ -247,6 +248,7 @@ describe('user-prefs-router', async () => {
       sourceTitle: 'Lesson notes',
       rawText: `unique-${userLookupId}`,
       inputHash: `hash-${userLookupId}`,
+      moderation: null,
     })
     expect(batch).not.toBeNull()
 

@@ -13,6 +13,8 @@ import type { DbImportBatch, DbImportBatchRow } from '../../transport/database/i
 import type { FacetSkill } from '../../transport/database/study-facets/study-facets-repository'
 import type { ExtractedLessonRow } from '../../transport/third-party/anthropic/passes/extract-lesson-pass'
 import { createBatch } from '../../service/lesson-import/create-batch'
+import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import {
   confirmBatch,
   ConfirmBatchCefrNotSetError,
@@ -59,7 +61,7 @@ const toRowDto = (row: DbImportBatchRow): ImportBatchRow => {
   }
 }
 
-export const LessonImportRouter = (deps: ConfirmBatchDeps): Router => {
+export const LessonImportRouter = (deps: ConfirmBatchDeps & { anthropicPasses: AnthropicPassesInterface }): Router => {
   const implementer = implement(lessonImportContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
@@ -76,6 +78,11 @@ export const LessonImportRouter = (deps: ConfirmBatchDeps): Router => {
         deps
       )
       if (!result.ok) {
+        if (result.reason === 'blocked') {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
+          })
+        }
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'The pasted text is empty' }] } })
       }
       return { data: { batch: toBatchDto(result.batch), resumed: result.resumed } }

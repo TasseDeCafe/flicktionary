@@ -16,9 +16,11 @@ import { UserTargetLanguagePrefsRepository } from '../../transport/database/user
 // + one domain failure; exhaustive scenarios stay in the unit tests.
 describe('study-sessions-router', () => {
   const languageDetectionPass = vi.fn().mockResolvedValue('de')
+  const moderationPass = vi.fn().mockResolvedValue({ verdict: 'allow' })
   const testApp = buildTestApp({
     anthropicPasses: MockAnthropicPasses({
       languageDetectionPass: languageDetectionPass as never,
+      moderationPass: moderationPass as never,
     }),
   })
 
@@ -78,6 +80,24 @@ describe('study-sessions-router', () => {
     const listed = await request(testApp).get('/api/v1/study-sessions').set(buildAuthorizationHeaders(token))
     expect(listed.status).toBe(200)
     expect(listed.body.data.map((s: { id: string }) => s.id)).toContain(sessionId)
+  })
+
+  test('answers 422 with CONTENT_BLOCKED when moderation hard-blocks the imported text', async () => {
+    const blockedApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({
+        languageDetectionPass: vi.fn().mockResolvedValue('de') as never,
+        moderationPass: vi.fn().mockResolvedValue({ verdict: 'block', category: 'sexual-explicit' }) as never,
+      }),
+    })
+    const { token } = await onboardedUser()
+
+    const response = await request(blockedApp)
+      .post('/api/v1/study-sessions/import-text')
+      .set(buildAuthorizationHeaders(token))
+      .send({ title: 'Ein Text', text: 'Der Tisch ist groß.' })
+
+    expect(response.status).toBe(422)
+    expect(response.body.data.errors[0]).toMatchObject({ code: 'CONTENT_BLOCKED' })
   })
 
   test('reading position: advance is monotonic, the explicit set is not', async () => {

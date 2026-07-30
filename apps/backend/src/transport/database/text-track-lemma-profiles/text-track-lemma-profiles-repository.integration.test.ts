@@ -26,6 +26,7 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       language: 'ru',
       externalId: null,
       hash: unique,
+      moderation: null,
     })
     return { userId, track }
   }

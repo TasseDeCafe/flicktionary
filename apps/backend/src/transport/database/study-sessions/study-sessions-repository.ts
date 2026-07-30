@@ -1,6 +1,7 @@
 import type postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import type { TrackModeration } from '../text-tracks/text-tracks-repository'
 
 export type DbStudySession = Tables<'study_sessions'>
 export type DbTextTrack = Tables<'text_tracks'>
@@ -192,6 +193,9 @@ const completeExtensionIngest = async (
     nativeLanguage: string
     targetLanguage: string
     cefrLevel: string
+    // Only the moderated flows (extension text import, Telegram) pass a
+    // verdict; the video subtitle flows are deliberately unmoderated.
+    moderation?: TrackModeration | null
   }
 ): Promise<{
   session: DbStudySession
@@ -201,17 +205,28 @@ const completeExtensionIngest = async (
 }> => {
   const contentSource = params.contentSource
 
+  // On conflict, the first moderation verdict wins: an existing NULL status is
+  // repaired from the incoming verdict (pre-feature or failed-open track), but
+  // a non-null one is never overwritten — the category follows the same choice
+  // so the pair stays consistent.
   const insertedTrack = (await tx`
-    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash, moderation_status, moderation_category)
     VALUES (
       ${contentSource.id},
       'paste',
       ${params.subtitleLanguage},
       NULL,
-      ${params.subtitleHash}
+      ${params.subtitleHash},
+      ${params.moderation?.status ?? null},
+      ${params.moderation?.category ?? null}
     )
     ON CONFLICT (content_source_id, language, hash)
-      DO UPDATE SET hash = EXCLUDED.hash
+      DO UPDATE SET
+        moderation_status = COALESCE(public.text_tracks.moderation_status, EXCLUDED.moderation_status),
+        moderation_category = CASE
+          WHEN public.text_tracks.moderation_status IS NULL THEN EXCLUDED.moderation_category
+          ELSE public.text_tracks.moderation_category
+        END
     RETURNING *
   `) as DbTextTrack[]
   const track = insertedTrack[0]
@@ -414,6 +429,7 @@ const getOrCreateForImportedText = async (params: {
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
+  moderation: TrackModeration | null
 }): Promise<{
   session: DbStudySession
   track: DbTextTrack
@@ -453,6 +469,7 @@ const getOrCreateForImportedText = async (params: {
       nativeLanguage: params.nativeLanguage,
       targetLanguage: params.targetLanguage,
       cefrLevel: params.cefrLevel,
+      moderation: params.moderation,
     })
   })
 }
@@ -815,6 +832,7 @@ export interface StudySessionsRepositoryInterface {
     nativeLanguage: string
     targetLanguage: string
     cefrLevel: string
+    moderation: TrackModeration | null
   }) => Promise<{
     session: DbStudySession
     track: DbTextTrack

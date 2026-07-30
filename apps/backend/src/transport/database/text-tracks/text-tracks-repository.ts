@@ -4,25 +4,41 @@ import { Tables, Database } from '../database.public.types'
 export type DbTextTrack = Tables<'text_tracks'>
 export type TextTrackSource = Database['public']['Enums']['text_track_source']
 
+export type TrackModeration = { status: 'clean' | 'flagged'; category: string | null }
+
 const insertTextTrack = async (params: {
   contentSourceId: string
   source: TextTrackSource
   language: string
   externalId: string | null
   hash: string
+  moderation: TrackModeration | null
 }): Promise<DbTextTrack> => {
   const result = (await sql`
-    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash, moderation_status, moderation_category)
     VALUES (
       ${params.contentSourceId},
       ${params.source},
       ${params.language},
       ${params.externalId},
-      ${params.hash}
+      ${params.hash},
+      ${params.moderation?.status ?? null},
+      ${params.moderation?.category ?? null}
     )
     RETURNING *
   `) as DbTextTrack[]
   return result[0]!
+}
+
+// NULL-repair only: the first verdict wins, so a re-import can fill in a
+// verdict for a pre-feature or failed-open track but never overwrite one
+// (protects a 'flagged' from being downgraded by a later 'clean').
+const backfillModeration = async (trackId: string, moderation: TrackModeration): Promise<void> => {
+  await sql`
+    UPDATE public.text_tracks
+    SET moderation_status = ${moderation.status}, moderation_category = ${moderation.category}
+    WHERE id = ${trackId} AND moderation_status IS NULL
+  `
 }
 
 const findByContentSourceLanguageAndHash = async (params: {
@@ -90,7 +106,9 @@ export interface TextTracksRepositoryInterface {
     language: string
     externalId: string | null
     hash: string
+    moderation: TrackModeration | null
   }) => Promise<DbTextTrack>
+  backfillModeration: (trackId: string, moderation: TrackModeration) => Promise<void>
   findByContentSourceLanguageAndHash: (params: {
     contentSourceId: string
     language: string
@@ -109,6 +127,7 @@ export interface TextTracksRepositoryInterface {
 export const TextTracksRepository = (): TextTracksRepositoryInterface => {
   return {
     insertTextTrack,
+    backfillModeration,
     findByContentSourceLanguageAndHash,
     findByContentSourceLanguageAndExternalId,
     findById,

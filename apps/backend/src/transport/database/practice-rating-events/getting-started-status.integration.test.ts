@@ -22,6 +22,7 @@ describe('practice-rating-events getting-started predicate', () => {
       sourceTitle: 'Lesson notes',
       rawText: unique,
       inputHash: unique,
+      moderation: null,
     })
     expect(batch).not.toBeNull()
 

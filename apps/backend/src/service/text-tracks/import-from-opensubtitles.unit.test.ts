@@ -28,6 +28,8 @@ const buildTrack = (overrides: Partial<DbTextTrack> = {}): DbTextTrack => ({
   profile_max_segment_index: null,
   profile_word_token_count: null,
   profile_matched_token_count: null,
+  moderation_status: null,
+  moderation_category: null,
   ...overrides,
 })
 
@@ -37,6 +39,7 @@ const buildTextTracksRepository = (
   findByContentSourceLanguageAndHash: vi.fn().mockResolvedValue(null),
   findByContentSourceLanguageAndExternalId: vi.fn().mockResolvedValue(null),
   insertTextTrack: vi.fn(),
+  backfillModeration: vi.fn(),
   findById: vi.fn(),
   findByIdWithSourceType: vi.fn(),
   ...overrides,

@@ -96,7 +96,7 @@ export const runImportAttempt = async (
   const { telegramApi } = deps
 
   const result = await importTextForUser(
-    { userId, text, title: suggestedTitle, sourceUrl: null },
+    { userId, text, title: suggestedTitle, sourceUrl: null, surface: 'telegram' },
     {
       studySessionsRepository: deps.studySessionsRepository,
       usersRepository: deps.usersRepository,
@@ -148,6 +148,18 @@ export const runImportAttempt = async (
     await telegramApi.sendMessage({
       chatId,
       text: "Sorry, I couldn't recognize that as one of the languages Flicktionary supports yet.",
+    })
+    return
+  }
+
+  // Terminal — no pending stash: a retry would hit the same verdict.
+  if (result.reason === 'blocked') {
+    await telegramApi.sendMessage({
+      chatId,
+      text:
+        result.category === 'sexual-explicit'
+          ? "I can't import that one — it looks like explicit adult content, which Flicktionary doesn't support."
+          : "I can't import that one — it contains content Flicktionary can't accept.",
     })
     return
   }

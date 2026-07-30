@@ -29,6 +29,7 @@ type DepsOverrides = {
   cefrLevel?: string | null
   detectedLanguage?: string | null
   pendingImport?: TelegramPendingImportRecord | null
+  moderationVerdict?: { verdict: 'allow' } | { verdict: 'flag' | 'block'; category: string }
 }
 
 const buildDeps = (
@@ -40,6 +41,7 @@ const buildDeps = (
     cefrLevel = 'B1',
     detectedLanguage = 'ru',
     pendingImport = null,
+    moderationVerdict = { verdict: 'allow' },
   } = overrides
   return {
     telegramApi: MockTelegramApi(),
@@ -76,6 +78,7 @@ const buildDeps = (
     } as unknown as StudySessionsRepositoryInterface,
     anthropicPasses: MockAnthropicPasses({
       languageDetectionPass: vi.fn().mockResolvedValue(detectedLanguage),
+      moderationPass: vi.fn().mockResolvedValue(moderationVerdict) as never,
     }),
     // The profile-job gate reads the track back; null short-circuits it.
     textTracksRepository: {
@@ -269,6 +272,17 @@ describe('handleTelegramUpdate', () => {
     await handleTelegramUpdate(textUpdate(chatId, 'zzz'), deps)
     expect(deps.telegramApi.sentMessages).toHaveLength(1)
     expect(deps.telegramApi.sentMessages[0].text).toContain('languages Flicktionary supports')
+  })
+
+  test('hard-blocked content gets a terminal reply with no session and no pending stash', async () => {
+    const deps = buildDeps({ moderationVerdict: { verdict: 'block', category: 'sexual-explicit' } })
+    const chatId = freshChatId()
+    await handleTelegramUpdate(textUpdate(chatId, 'Привет мир'), deps)
+
+    expect(deps.telegramApi.sentMessages).toHaveLength(1)
+    expect(deps.telegramApi.sentMessages[0].text).toContain('explicit adult content')
+    expect(deps.studySessionsRepository.getOrCreateForImportedText).not.toHaveBeenCalled()
+    expect(deps.telegramPendingImportsRepository.upsertForChat).not.toHaveBeenCalled()
   })
 
   test('a repository error is swallowed and logged, never thrown', async () => {

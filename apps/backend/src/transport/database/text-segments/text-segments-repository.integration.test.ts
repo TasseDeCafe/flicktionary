@@ -29,6 +29,7 @@ describe('text-segments-repository integration tests', () => {
       language: 'ru',
       externalId: null,
       hash: unique,
+      moderation: null,
     })
     return track
   }

@@ -64,6 +64,7 @@ export const lessonImportContract = {
     .errors({
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
     })
     .input(
       z.object({

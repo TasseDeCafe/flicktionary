@@ -130,7 +130,12 @@ export const NewTextSessionWizard = () => {
                   setStep('cefr')
                 }
               },
-              onError: () => {
+              onError: (err) => {
+                const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+                if (code === 'CONTENT_BLOCKED') {
+                  toast.error(t`This text appears to contain explicit content and can't be imported.`)
+                  return
+                }
                 toast.error(t`Could not import the pasted text.`)
               },
             }

@@ -1174,6 +1174,12 @@ picker, so it keeps toasting — with copy pointing the user at the extension
 popup to set their level there. The import service threads a `presentation:
 'popup' | 'contextMenu'` flag so the same path can surface either way.
 
+A `422 CONTENT_BLOCKED` failure (the backend's ingestion moderation gate
+rejected the text — see READER-SPEC's "Content moderation at ingestion") maps
+to a localized toast instead of the backend's raw English message; it is
+terminal, with no retry affordance. Video subtitle ingestion is not moderated,
+so this code only appears on the article/selection import paths.
+
 ### Settings, profiles & options page
 
 The options page and the popup share `SettingsForm`. Tabs: subtitle appearance

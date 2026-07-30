@@ -193,25 +193,25 @@ export const useImportFromOpenSubtitles = () => {
   )
 }
 
+// The components own the error UX for these two (they branch on the
+// CONTENT_BLOCKED code from the moderation gate), so the global handler's
+// backend-message toast is disabled to avoid double-toasting. showErrorModal
+// stays unset: its ?? true default still gates the rate-limit overlay.
 export const useUploadSrt = () => {
-  const { t } = useLingui()
   return useMutation(
     orpcQuery.textTracks.uploadSrt.mutationOptions({
       meta: {
-        errorMessage: t`Failed to upload subtitles`,
-        showErrorModal: true,
+        showErrorToast: false,
       },
     })
   )
 }
 
 export const useImportFromPaste = () => {
-  const { t } = useLingui()
   return useMutation(
     orpcQuery.textTracks.importFromPaste.mutationOptions({
       meta: {
-        errorMessage: t`Failed to import pasted text`,
-        showErrorModal: true,
+        showErrorToast: false,
       },
     })
   )

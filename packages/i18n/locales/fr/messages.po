@@ -1896,10 +1896,6 @@ msgid "Failed to import into Flicktionary."
 msgstr "Échec de l’import dans Flicktionary."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Failed to import pasted text"
-msgstr "Échec de l'importation du texte collé"
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to import subtitles"
 msgstr "Échec de l'importation des sous-titres"
 
@@ -2133,7 +2129,7 @@ msgstr "Échec de la définition de la langue maternelle"
 msgid "Failed to set the reading position"
 msgstr "Échec de la définition de la position de lecture"
 
-#: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Failed to start the import"
 msgstr "Échec du démarrage de l'importation"
 
@@ -2202,7 +2198,7 @@ msgstr "Échec de la mise à jour du terme"
 msgid "Failed to update theme"
 msgstr "Échec de la mise à jour du thème"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "Failed to upload subtitles"
 msgstr "Échec de l'envoi des sous-titres"
 
@@ -5187,6 +5183,13 @@ msgstr "Cette série n'a aucun épisode."
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "This term is removed from your vocabulary. Restore it to keep practicing."
 msgstr "Ce terme a été supprimé de votre vocabulaire. Restaurez-le pour continuer à pratiquer."
+
+#: apps/extension/src/services/flicktionary/import-text.ts
+#: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
+msgid "This text appears to contain explicit content and can't be imported."
+msgstr "Ce texte semble contenir du contenu explicite et ne peut pas être importé."
 
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "This value differs from what was originally generated."
