@@ -7,7 +7,7 @@ import { OverlayId } from '@flicktionary/ui/components/overlay-ids'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 import { useGetSubscriptionDetails } from '@/features/billing/api/billing-hooks'
 import { useCreateCustomerPortalSession } from '@/features/billing/api/portal-session-hooks'
-import { logWithSentry } from '@/lib/analytics/log-with-sentry'
+import { logError } from '@/lib/analytics/log-error'
 import { getUserAvatarUrl, getUserEmail, getUserName, useAuthStore } from '@/stores/auth-store'
 
 const getInitials = (name: string | null, email: string | null): string => {
@@ -58,7 +58,7 @@ export const AccountPage = () => {
         toast.info(t`Please manage your subscription through the App Store or Google Play.`)
         break
       default:
-        logWithSentry({ message: 'Unexpected billing state in AccountPage', params: { subscriptionData } })
+        logError({ message: 'Unexpected billing state in AccountPage', params: { subscriptionData } })
         toast.error(t`Could not open billing settings.`)
     }
   }

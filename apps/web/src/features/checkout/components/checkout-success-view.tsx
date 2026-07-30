@@ -1,19 +1,13 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { Route as dashboardRoute } from '@/app/routes/_authenticated/_app/dashboard/index'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
 
 export const CheckoutSuccessView = () => {
   const navigate = useNavigate()
   const { t } = useLingui()
-
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
 
   return (
     <div className='flex w-full flex-1 items-center justify-center p-4'>

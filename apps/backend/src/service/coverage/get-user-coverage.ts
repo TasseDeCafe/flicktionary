@@ -4,7 +4,7 @@ import type { KnownLemmasRepositoryInterface } from '../../transport/database/kn
 import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { COVERAGE_BANDS, computeCoverage } from './coverage-math'
 
 // The whole-language coverage read behind coverage.getCoverage: one batched
@@ -143,7 +143,7 @@ export const getUserCoverage = async (
         verifiedPct,
       })
       .catch((error) => {
-        logWithSentry({
+        logError({
           message: 'coverage snapshot upsert failed',
           params: { userId: params.userId, targetLanguage: language },
           error,

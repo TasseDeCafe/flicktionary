@@ -6,7 +6,7 @@ vi.mock('./generate-form-facet-data', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./generate-form-facet-data')>()),
   generateFormFacetData: vi.fn(),
 }))
-vi.mock('../../transport/third-party/sentry/error-monitoring', () => ({
+vi.mock('../../transport/error-monitoring/error-monitoring', () => ({
   logCustomErrorMessageAndError: vi.fn(),
 }))
 

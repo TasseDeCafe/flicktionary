@@ -5,7 +5,7 @@ import cors from 'cors'
 
 import { FEATURES } from '@flicktionary/core/features'
 import { HealthCheckRouter } from './router/health-check-router/health-check-router'
-import { SentryDebugRouter } from './router/sentry-debug-router/sentry-debug-router'
+import { ErrorDebugRouter } from './router/error-debug-router/error-debug-router'
 import { DevToolsRouter } from './router/dev-tools-router/dev-tools-router'
 import { getConfig } from './config/environment-config'
 import { tokenAuthenticationMiddleware } from './middleware/token-authentication-middleware'
@@ -273,7 +273,6 @@ export const buildApp = ({
   )
   app.use(API_V1, configRouter())
   app.use(API_V1, HealthCheckRouter())
-  app.use(API_V1, SentryDebugRouter())
 
   // Apply IP-based rate limiting specifically to authentication routes
   // This is done at the app level to avoid affecting other /api/v1 routes
@@ -521,6 +520,7 @@ export const buildApp = ({
   )
   app.use(API_V1, LanguagesRouter(anthropicPasses))
   app.use(API_V1, DevToolsRouter())
+  app.use(API_V1, ErrorDebugRouter())
   app.use(
     API_V1,
     ExtensionAuthRouter(ExtensionPairNoncesRepository(), usersRepository, userTargetLanguagePrefsRepository)

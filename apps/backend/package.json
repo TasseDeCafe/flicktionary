@@ -39,7 +39,6 @@
     "dev:without-third-parties": "./scripts/dev--without-third-parties.sh",
     "dev:without-third-parties:tunnel": "scripts/dev--without-third-parties--tunnel.sh",
     "build": "scripts/build--prod.sh",
-    "sentry:prod": "scripts/sentry--prod.sh",
     "prod": "scripts/deployment/prod.sh",
     "build:and:prod": "pnpm run build && pnpm run prod",
     "check:changes": "scripts/deployment/check-backend-changes.sh"
@@ -55,9 +54,6 @@
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
-    "@sentry/cli": "catalog:",
-    "@sentry/node": "catalog:",
-    "@sentry/profiling-node": "catalog:",
     "@supabase/supabase-js": "catalog:",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "@typescript-eslint/parser": "catalog:",

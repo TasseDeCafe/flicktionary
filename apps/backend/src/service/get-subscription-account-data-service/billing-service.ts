@@ -7,7 +7,7 @@ import {
   StripeSubscriptionsRepositoryInterface,
 } from '../../transport/database/stripe-subscriptions/stripe-subscriptions-repository'
 import { RevenuecatSubscriptionsRepositoryInterface } from '../../transport/database/revenuecat-subscriptions/revenuecat-subscriptions-repository'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@flicktionary/core/constants/pricing-constants'
 import {
   GetSubscriptionInfoResponse,
@@ -101,7 +101,7 @@ export const BillingService = (
     }
 
     if (hasActiveStripeSubscription && hasActiveRevenueCatSubscription) {
-      logWithSentry({
+      logError({
         message: 'User has both stripe and revenuecat active subscriptions',
         params: { userId },
       })
@@ -124,7 +124,7 @@ export const BillingService = (
       } else if (activeRevenueCatSubscription.store == 'test_store') {
         billingPlatform = 'test_store'
       } else {
-        logWithSentry({
+        logError({
           message: 'Billing platform not supported for RevenueCat store',
           params: { store: activeRevenueCatSubscription.store },
         })

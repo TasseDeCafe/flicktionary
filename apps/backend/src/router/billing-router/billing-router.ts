@@ -3,7 +3,7 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import { logMessage } from '../../transport/third-party/sentry/error-monitoring'
+import { logMessage } from '../../transport/error-monitoring/error-monitoring'
 import type { BillingServiceInterface } from '../../service/get-subscription-account-data-service/billing-service'
 import { billingContract, GetSubscriptionInfoResponse } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 

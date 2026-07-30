@@ -1,5 +1,5 @@
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../../transport/error-monitoring/error-monitoring'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'

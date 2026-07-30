@@ -1,5 +1,3 @@
-import './transport/third-party/sentry/sentry-initializer'
-import * as Sentry from '@sentry/node'
 import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from './config/environment-config'
 import { buildApp } from './app'
@@ -24,7 +22,7 @@ import { TelegramPendingImportsRepository } from './transport/database/telegram-
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { StudySessionsRepository } from './transport/database/study-sessions/study-sessions-repository'
 import { TextTracksRepository } from './transport/database/text-tracks/text-tracks-repository'
-import { posthogClient, registerPosthogShutdownHandlers } from './transport/third-party/posthog/posthog-client'
+import { isPosthogEnabled, posthogClient, shutdownPosthogClient } from './transport/third-party/posthog/posthog-client'
 import { setupExpressErrorHandler } from 'posthog-node'
 
 console.log('The server is starting')
@@ -74,22 +72,44 @@ const startServer = async () => {
           ...(FEATURES.TELEGRAM && !isProduction() ? { telegramPollingWorker } : {}),
         })
 
-    if (FEATURES.SENTRY) {
-      Sentry.setupExpressErrorHandler(expressApp)
-    }
-    if (FEATURES.POSTHOG) {
+    if (isPosthogEnabled()) {
+      // Express swallows uncaught handler errors, so exception autocapture
+      // needs this explicit error-handler middleware.
       setupExpressErrorHandler(posthogClient, expressApp)
     }
 
     const port = getConfig().port
 
-    if (FEATURES.POSTHOG) {
-      registerPosthogShutdownHandlers()
-    }
-
-    expressApp.listen(port, () => {
+    const server = expressApp.listen(port, () => {
       console.log(`Server started in environment: ${getEnvironmentName()}`)
       console.log(`Try it on http://localhost:${port}/api/v1/database-health-check`)
+    })
+
+    // Graceful shutdown: stop accepting connections, flush PostHog, then exit.
+    // Without server.close() a Railway deploy would wait for SIGKILL.
+    let isShuttingDown = false
+    const shutdown = (signal: NodeJS.Signals) => {
+      if (isShuttingDown) return
+      isShuttingDown = true
+      console.log(`Received ${signal}, shutting down gracefully`)
+
+      // Keep-alive connections can hold close() open forever
+      const forceExitTimer = setTimeout(() => {
+        console.error('Graceful shutdown timed out, forcing exit')
+        process.exit(1)
+      }, 10_000)
+      forceExitTimer.unref()
+
+      server.close(() => {
+        void shutdownPosthogClient().finally(() => {
+          clearTimeout(forceExitTimer)
+          process.exit(0)
+        })
+      })
+      server.closeIdleConnections()
+    }
+    ;(['SIGINT', 'SIGTERM'] as const).forEach((signal) => {
+      process.once(signal, () => shutdown(signal))
     })
   } catch (error) {
     console.error('Failed to start server:', error)

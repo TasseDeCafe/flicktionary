@@ -5,7 +5,7 @@ import { TextTracksRepositoryInterface } from '../../transport/database/text-tra
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { parsePastedText } from '../../utils/text-paste-parser'
 import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
 
@@ -131,7 +131,7 @@ export const importTextForUser = async (
   })
 
   void deps.usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
-    logWithSentry({
+    logError({
       message: 'setLastTargetLanguage failed (text import)',
       params: { userId, targetLanguage: detectedLanguage },
       error,

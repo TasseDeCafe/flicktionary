@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { useLingui } from '@lingui/react/macro'
 import { Route as EmailSentRoute } from '@/app/routes/login/email/sent'
 import { Route as loginEmailRoute } from '@/app/routes/login/email/index'
@@ -34,10 +33,6 @@ export const LoginEmailSentView = () => {
   )
 
   useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
-
-  useEffect(() => {
     if (cooldownSeconds <= 0) return
     const timer = setTimeout(() => setCooldownSeconds((seconds) => seconds - 1), 1000)
     return () => clearTimeout(timer)
@@ -52,7 +47,6 @@ export const LoginEmailSentView = () => {
 
   const handleResend = () => {
     if (!emailParam) return
-    POSTHOG_EVENTS.click('resend_verification_email_button')
     sendVerificationEmail({
       email: emailParam,
       redirect,

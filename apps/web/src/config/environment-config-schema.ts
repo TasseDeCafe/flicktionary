@@ -1,23 +1,6 @@
 import { z } from 'zod'
 import { FEATURES } from '@flicktionary/core/features'
 
-const sentrySampleRate = z.number().min(0).max(1)
-
-const sentryOptionsSchema = z.object({
-  maxValueLength: z.number().int().positive(),
-  tracesSampleRate: sentrySampleRate,
-  replaysSessionSampleRate: sentrySampleRate,
-  replaysOnErrorSampleRate: sentrySampleRate,
-  // Those parameters allow for logging request and response bodies
-  networkDetailAllowUrls: z.array(z.string()),
-  networkRequestHeaders: z.array(z.string()),
-  networkResponseHeaders: z.array(z.string()),
-})
-
-const sentrySchema = FEATURES.SENTRY
-  ? z.object({ dsn: z.string().min(1), options: sentryOptionsSchema })
-  : z.object({ dsn: z.string(), options: sentryOptionsSchema })
-
 export const environmentConfigSchema = z.object({
   environmentName: z.string(),
   apiHost: z.url(),
@@ -25,8 +8,7 @@ export const environmentConfigSchema = z.object({
   domain: z.string(),
   supabaseProjectUrl: z.url(),
   supabasePublishableKey: z.string().min(1),
-  sentry: sentrySchema,
-  posthogToken: FEATURES.POSTHOG ? z.string().min(1) : z.string(),
+  posthogProjectToken: FEATURES.POSTHOG ? z.string() : z.string().max(0),
   shouldLogLocally: z.boolean(),
   showDevTools: z.boolean(),
   hashedEmailsOfTestUsers: z.array(z.string().min(1)),

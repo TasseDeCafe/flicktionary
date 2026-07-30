@@ -52,20 +52,6 @@ const productionConfig: EnvironmentConfig = {
   stripeWebhookSecret: FEATURES.STRIPE ? process.env.STRIPE_WEBHOOK_SECRET || '' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_MONTHLY_PRICE_IN_EUR_ID || '' : '',
   stripeYearlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_YEARLY_PRICE_IN_EUR_ID || '' : '',
-  sentry: FEATURES.SENTRY
-    ? {
-        dsn: process.env.SENTRY_DSN || '',
-        options: {
-          maxValueLength: 8192,
-          tracesSampleRate: 1.0,
-          profilesSampleRate: 1.0,
-          tracePropagationTargets: ['https://app.flicktionary.app', 'https://api.flicktionary.app'],
-        },
-      }
-    : {
-        dsn: '',
-        options: { maxValueLength: 8192, tracesSampleRate: 0, profilesSampleRate: 0, tracePropagationTargets: [] },
-      },
   supabaseJwksUri: process.env.SUPABASE_JWKS_URI || '',
   supabaseConnectionString: process.env.SUPABASE_CONNECTION_STRING || '',
   supabaseProjectUrl: process.env.SUPABASE_PROJECT_URL || '',
@@ -73,7 +59,7 @@ const productionConfig: EnvironmentConfig = {
   revenuecatApiKey: FEATURES.REVENUECAT ? process.env.REVENUECAT_API_KEY || '' : '',
   revenuecatProjectId: FEATURES.REVENUECAT ? process.env.REVENUECAT_PROJECT_ID || '' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? process.env.REVENUECAT_WEBHOOK_AUTH_HEADER || '' : '',
-  posthogApiKey: FEATURES.POSTHOG ? process.env.POSTHOG_API_KEY || '' : '',
+  posthogProjectToken: FEATURES.POSTHOG ? process.env.POSTHOG_PROJECT_TOKEN || '' : '',
   telegramBotToken: FEATURES.TELEGRAM ? process.env.TELEGRAM_BOT_TOKEN || '' : '',
   telegramWebhookSecret: FEATURES.TELEGRAM ? process.env.TELEGRAM_WEBHOOK_SECRET || '' : '',
   shouldRateLimit: true,
@@ -108,20 +94,6 @@ const developmentConfig: EnvironmentConfig = {
   stripeWebhookSecret: FEATURES.STRIPE ? process.env.STRIPE_WEBHOOK_SECRET || '' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_MONTHLY_PRICE_IN_EUR_ID || '' : '',
   stripeYearlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_YEARLY_PRICE_IN_EUR_ID || '' : '',
-  sentry: FEATURES.SENTRY
-    ? {
-        dsn: process.env.SENTRY_DSN || '',
-        options: {
-          maxValueLength: 8192,
-          tracesSampleRate: 1.0,
-          profilesSampleRate: 0,
-          tracePropagationTargets: ['http://localhost:5174', 'http://localhost:4003'],
-        },
-      }
-    : {
-        dsn: '',
-        options: { maxValueLength: 8192, tracesSampleRate: 0, profilesSampleRate: 0, tracePropagationTargets: [] },
-      },
   // Local development uses JWKS endpoint from local Supabase (supabase-dev)
   // This provides production parity - asymmetric JWT verification
   supabaseJwksUri: 'http://127.0.0.1:54321/auth/v1/.well-known/jwks.json',
@@ -133,7 +105,7 @@ const developmentConfig: EnvironmentConfig = {
   revenuecatApiKey: FEATURES.REVENUECAT ? process.env.REVENUECAT_API_KEY || '' : '',
   revenuecatProjectId: FEATURES.REVENUECAT ? process.env.REVENUECAT_PROJECT_ID || '' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? process.env.REVENUECAT_WEBHOOK_AUTH_HEADER || '' : '',
-  posthogApiKey: FEATURES.POSTHOG ? process.env.POSTHOG_API_KEY || '' : '',
+  posthogProjectToken: FEATURES.POSTHOG ? process.env.POSTHOG_PROJECT_TOKEN || '' : '',
   // Use a SEPARATE dev bot here (BotFather), never the prod bot: Telegram
   // rejects getUpdates polling while a webhook is registered on the same bot.
   telegramBotToken: FEATURES.TELEGRAM ? process.env.TELEGRAM_BOT_TOKEN || '' : '',
@@ -167,15 +139,6 @@ const developmentTunnelConfig: EnvironmentConfig = {
 
 const developmentWithoutThirdPartiesConfig: EnvironmentConfig = {
   ...developmentConfig,
-  sentry: {
-    dsn: 'dummySentryDsn',
-    options: {
-      maxValueLength: 8192,
-      tracesSampleRate: 0,
-      profilesSampleRate: 0,
-      tracePropagationTargets: [],
-    },
-  },
   shouldMockThirdParties: true,
   shouldSlowDownApiRoutes: false,
   telegramBotToken: 'dummyTelegramBotToken',
@@ -204,17 +167,6 @@ const testConfig: EnvironmentConfig = {
   stripeWebhookSecret: FEATURES.STRIPE ? 'dummyStripeWebhookSecret' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? 'dummyStripeMonthlyPriceInEurId' : '',
   stripeYearlyPriceInEurId: FEATURES.STRIPE ? 'dummyStripeYearlyPriceInEurId' : '',
-  sentry: {
-    // we can't pass 'dummySentryDsn' here, sentry doesn't accept that
-    // this was necessary for GRAM-1788
-    dsn: '',
-    options: {
-      maxValueLength: 8192,
-      tracesSampleRate: 0,
-      profilesSampleRate: 0,
-      tracePropagationTargets: [],
-    },
-  },
   // Tests use JWKS endpoint from local Supabase (supabase-test)
   // shown by `yarn db:test` command
   supabaseJwksUri: 'http://127.0.0.1:64321/auth/v1/.well-known/jwks.json',
@@ -226,7 +178,8 @@ const testConfig: EnvironmentConfig = {
   revenuecatApiKey: FEATURES.REVENUECAT ? 'dummyRevenuecatApiKey' : '',
   revenuecatProjectId: FEATURES.REVENUECAT ? 'dummyRevenuecatProjectId' : '',
   revenuecatWebhookAuthHeader: FEATURES.REVENUECAT ? 'dummyRevenuecatWebhookAuthHeader' : '',
-  posthogApiKey: FEATURES.POSTHOG ? 'dummyPosthogApiKey' : '',
+  // empty on purpose: an empty token keeps the PostHog client a no-op in tests
+  posthogProjectToken: '',
   telegramBotToken: FEATURES.TELEGRAM ? 'dummyTelegramBotToken' : '',
   telegramWebhookSecret: FEATURES.TELEGRAM ? 'dummyTelegramWebhookSecret' : '',
   shouldRateLimit: false,

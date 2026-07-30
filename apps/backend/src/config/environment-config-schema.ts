@@ -1,19 +1,6 @@
 import { z } from 'zod'
 import { FEATURES } from '@flicktionary/core/features'
 
-const sentrySampleRate = z.number().min(0).max(1)
-
-const sentryOptionsSchema = z.object({
-  maxValueLength: z.number().int().positive(),
-  tracesSampleRate: sentrySampleRate,
-  profilesSampleRate: sentrySampleRate,
-  tracePropagationTargets: z.array(z.url()),
-})
-
-const sentrySchema = FEATURES.SENTRY
-  ? z.object({ dsn: z.string().min(1), options: sentryOptionsSchema })
-  : z.object({ dsn: z.string(), options: sentryOptionsSchema })
-
 export const environmentConfigSchema = z.object({
   environmentName: z.string(),
   port: z.number().min(1).max(65535),
@@ -39,9 +26,9 @@ export const environmentConfigSchema = z.object({
   telegramBotToken: FEATURES.TELEGRAM ? z.string().min(1) : z.string(),
   // Sent back by Telegram as X-Telegram-Bot-Api-Secret-Token on webhook calls
   telegramWebhookSecret: FEATURES.TELEGRAM ? z.string().min(1) : z.string(),
-  posthogApiKey: FEATURES.POSTHOG ? z.string().min(1) : z.string(),
+  // An empty token is valid: it disables PostHog at runtime (tests, previews)
+  posthogProjectToken: FEATURES.POSTHOG ? z.string() : z.string().max(0),
   shouldLogRequests: z.boolean(),
-  sentry: sentrySchema,
   supabaseProjectUrl: z.string().min(1),
   supabaseSecretKey: z.string().min(1),
   // JWKS URI (asymmetric)

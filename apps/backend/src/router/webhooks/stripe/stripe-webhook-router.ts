@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { getConfig } from '../../../config/environment-config'
 import Stripe from 'stripe'
-import { logWithSentry } from '../../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../../transport/error-monitoring/error-monitoring'
 import { stripe } from '../../../transport/third-party/stripe/stripe'
 import { handleEventIdempotently } from '../../../transport/database/webhook-events/handled-stripe-events-repository'
 import { StripeWebhookServiceInterface } from '../../../service/stripe-webhook-service/stripe-webhook-service-interface'
@@ -44,7 +44,7 @@ export const stripeWebhookRouter =
       const signature = req.headers['stripe-signature'] as string
       event = stripe.webhooks.constructEvent(req.body, signature, getConfig().stripeWebhookSecret)
     } catch (error) {
-      logWithSentry({
+      logError({
         message: 'Error processing stripe webhooks',
         params: {
           event: req.body,
@@ -55,7 +55,7 @@ export const stripeWebhookRouter =
       return
     }
     if (!EVENT_TYPES_SUPPORTED_BY_US.includes(event.type)) {
-      logWithSentry({
+      logError({
         message: 'Unsupported event type',
         params: {
           event,
@@ -77,7 +77,7 @@ export const stripeWebhookRouter =
             customer: string
           }
           if (!stripeCustomerId) {
-            logWithSentry({
+            logError({
               message: 'stripeCustomerId is missing',
               params: {
                 event,
@@ -87,7 +87,7 @@ export const stripeWebhookRouter =
           const wasSyncingProcessedSuccessfully =
             await webhookService.syncStripeSubscriptionWithOurDbAndCache(stripeCustomerId)
           if (!wasSyncingProcessedSuccessfully) {
-            logWithSentry({
+            logError({
               message: 'subscription was not synced successfully',
               params: {
                 event,
@@ -98,13 +98,13 @@ export const stripeWebhookRouter =
       })
 
       if (!wasHandled) {
-        logWithSentry({
+        logError({
           message: 'Duplicate event received and skipped',
           params: { event },
         })
       }
     } catch (error) {
-      logWithSentry({
+      logError({
         message: 'Unhandled error processing Stripe webhook',
         params: { event },
         error,

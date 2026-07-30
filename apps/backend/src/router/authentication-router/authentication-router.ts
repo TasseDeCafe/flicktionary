@@ -3,7 +3,7 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getSupabase } from '../../transport/database/supabase'
 import { getConfig } from '../../config/environment-config'
 import { authenticationContract } from '@flicktionary/api-client/orpc-contracts/authentication-contract'
@@ -76,7 +76,7 @@ export const authenticationRouter = (): Router => {
         const { error } = await getSupabase().auth.signInWithOtp(params)
 
         if (error) {
-          logWithSentry({
+          logError({
             message: 'Error sending verification email',
             params: {
               email: input.email,
@@ -103,7 +103,7 @@ export const authenticationRouter = (): Router => {
           },
         }
       } catch (error) {
-        logWithSentry({
+        logError({
           message: 'Unexpected error when sending verification email',
           params: {
             email: input.email,

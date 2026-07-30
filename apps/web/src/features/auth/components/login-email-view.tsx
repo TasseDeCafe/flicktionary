@@ -1,9 +1,8 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { ChangeEvent, FormEvent, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Route as loginEmailRoute } from '@/app/routes/login/email/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { z } from 'zod'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
 import { Button } from '@flicktionary/ui/components/button'
 import { Route as loginEmailSentRoute } from '@/app/routes/login/email/sent'
 import { useSendVerificationEmail } from '@/features/auth/api/authentication-hooks'
@@ -37,10 +36,6 @@ export const LoginEmailView = () => {
     return emailSchema.safeParse(email).success
   }
 
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
-
   const { mutate: sendVerificationEmail, isPending } = useSendVerificationEmail({
     onSuccess: () => {
       navigate({ to: loginEmailSentRoute.to, search: { email, redirect } })
@@ -58,7 +53,6 @@ export const LoginEmailView = () => {
       return
     }
 
-    POSTHOG_EVENTS.click('send_verification_email_button')
     sendVerificationEmail({
       email,
       redirect,

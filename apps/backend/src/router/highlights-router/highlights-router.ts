@@ -20,7 +20,7 @@ import {
   createNoteOnlyHighlight,
   CreateNoteOnlyHighlightDependencies,
 } from '../../service/highlights/create-note-only-highlight'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { FastGloss, parseFastGlossText } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
@@ -125,7 +125,7 @@ export const HighlightsRouter = (
             runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
           })
         } catch (error) {
-          logWithSentry({
+          logError({
             message: 'enqueue seed_card_chat failed',
             params: { sessionId: input.sessionId, highlightId },
             error,
@@ -191,7 +191,7 @@ export const HighlightsRouter = (
           runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
         })
       } catch (error) {
-        logWithSentry({
+        logError({
           message: 'enqueue enrich_highlight failed',
           params: { sessionId: input.sessionId, highlightId: inserted.id },
           error,
@@ -245,7 +245,7 @@ export const HighlightsRouter = (
             runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
           })
         } catch (error) {
-          logWithSentry({
+          logError({
             message: 'enqueue seed_card_chat failed',
             params: { sessionId: input.sessionId, highlightId: input.highlightId },
             error,

@@ -5,7 +5,7 @@ import { useTrackingStore } from '@/stores/tracking-store'
 import { useShallow } from 'zustand/react/shallow'
 import posthog from 'posthog-js'
 import { checkIsTestUser } from '@/utils/test-users-utils'
-import { identifyUserWithSentry } from '@/lib/analytics/sentry-initializer'
+import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
 
 type UserSetupGateProps = {
   children: ReactNode
@@ -44,8 +44,20 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
     }
   }, [accessToken, getOrCreateUserData, isUserSetupComplete, trackingParams])
 
+  // Test users are fully opted out of capture: filtering them out of insights
+  // would still ingest their events and replays. The opt-out persists in this
+  // browser, so a later non-test login has to explicitly opt back in.
   useEffect(() => {
-    if (userId && trackingParams && !isTestUser && isUserSetupComplete) {
+    if (!isPostHogEnabled() || !email) return
+    if (isTestUser) {
+      posthog.opt_out_capturing()
+    } else if (posthog.has_opted_out_capturing()) {
+      posthog.opt_in_capturing()
+    }
+  }, [email, isTestUser])
+
+  useEffect(() => {
+    if (isPostHogEnabled() && userId && trackingParams && !isTestUser && isUserSetupComplete) {
       posthog.identify(userId, {
         $set_once: {
           referral: trackingParams.referral,
@@ -58,12 +70,6 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
       })
     }
   }, [userId, trackingParams, isTestUser, isUserSetupComplete])
-
-  useEffect(() => {
-    if (userId) {
-      identifyUserWithSentry(userId)
-    }
-  }, [userId])
 
   if (isPending) {
     return null

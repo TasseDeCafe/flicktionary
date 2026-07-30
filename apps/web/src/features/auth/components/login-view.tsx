@@ -8,7 +8,6 @@ import { AuthError } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import googleSvg from '@/assets/svg/google.svg'
 import appleSvg from '@/assets/svg/apple.svg'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Button } from '@flicktionary/ui/components/button'
 import { Mail } from 'lucide-react'
 import { FEATURES } from '@flicktionary/core/features'
@@ -31,10 +30,6 @@ export const LoginView = () => {
       window.location.assign(redirectTo)
     }
   }, [isSignedIn, redirectTo])
-
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
 
   const continueWithGoogle = async () => {
     const { error }: { error: AuthError | null } = await supabaseClient.auth.signInWithOAuth({
@@ -64,17 +59,14 @@ export const LoginView = () => {
   }
 
   const handleContinueWithGoogleClick = () => {
-    POSTHOG_EVENTS.click('continue_with_google_button')
     void continueWithGoogle()
   }
 
   const handleContinueWithAppleClick = () => {
-    POSTHOG_EVENTS.click('continue_with_apple_button')
     void continueWithApple()
   }
 
   const handleContinueWithEmailClick = () => {
-    POSTHOG_EVENTS.click('continue_with_email_button')
     navigate({ to: loginEmailRoute.to, search: { redirect } })
   }
 

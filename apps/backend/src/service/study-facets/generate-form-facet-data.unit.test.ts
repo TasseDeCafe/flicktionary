@@ -6,7 +6,7 @@ import { getLanguageMode } from '../user-prefs/language-mode'
 vi.mock('../user-prefs/language-mode', () => ({
   getLanguageMode: vi.fn(),
 }))
-vi.mock('../../transport/third-party/sentry/error-monitoring', () => ({
+vi.mock('../../transport/error-monitoring/error-monitoring', () => ({
   logCustomErrorMessageAndError: vi.fn(),
 }))
 

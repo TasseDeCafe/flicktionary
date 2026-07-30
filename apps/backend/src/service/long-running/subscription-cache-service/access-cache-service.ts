@@ -1,4 +1,4 @@
-import { logCustomErrorMessageAndError, logWithSentry } from '../../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError, logError } from '../../../transport/error-monitoring/error-monitoring'
 import {
   DbRevenueCatSubscription,
   RevenuecatSubscriptionsRepositoryInterface,
@@ -41,10 +41,10 @@ export const AccessCacheService = (
       revenuecatResult.status === 'fulfilled' ? revenuecatResult.value : []
 
     if (stripeResult.status === 'rejected') {
-      logWithSentry({ message: 'loadAllSubscriptions: stripe fetch failed', error: stripeResult.reason })
+      logError({ message: 'loadAllSubscriptions: stripe fetch failed', error: stripeResult.reason })
     }
     if (revenuecatResult.status === 'rejected') {
-      logWithSentry({ message: 'loadAllSubscriptions: revenuecat fetch failed', error: revenuecatResult.reason })
+      logError({ message: 'loadAllSubscriptions: revenuecat fetch failed', error: revenuecatResult.reason })
     }
 
     const activeStripeSubscriptions = stripeSubscriptions.filter(isStripeSubscriptionActive)
@@ -66,7 +66,7 @@ export const AccessCacheService = (
           activeUserIds.add(userId)
         }
       } catch (error) {
-        logWithSentry({ message: 'loadAllSubscriptions: recent-users fetch failed', error })
+        logError({ message: 'loadAllSubscriptions: recent-users fetch failed', error })
       }
     }
 
@@ -113,7 +113,7 @@ export const AccessCacheService = (
           ])
 
         if (stripeSubscriptions.some(isStripeSubscriptionActive) && revenueCatActiveSubscriptions.length > 0) {
-          logWithSentry({
+          logError({
             message: 'User has both stripe and revenuecat active subscriptions',
             params: {
               userId,

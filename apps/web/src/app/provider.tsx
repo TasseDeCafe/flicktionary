@@ -6,9 +6,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from '@/config/react-query-config'
 import { validateConfig } from '@/config/environment-config-validator'
 import { getConfig } from '@/config/environment-config'
-import { FEATURES } from '@flicktionary/core/features'
-import { PostHogProvider } from 'posthog-js/react'
+import { PostHogProvider } from '@posthog/react'
 import posthog from 'posthog-js'
+import { initPostHog, isPostHogEnabled } from '@/lib/analytics/posthog-init'
 import { router } from './router'
 import { SessionInitializer } from '@/features/auth/components/session-initializer'
 import { UserSetupGate } from '@/features/auth/components/user-setup-gate'
@@ -17,15 +17,10 @@ import { ExtensionInstallFactSync } from '@/features/settings/components/extensi
 
 validateConfig(getConfig())
 
-if (FEATURES.POSTHOG) {
-  posthog.init(getConfig().posthogToken, {
-    api_host: 'https://eu.i.posthog.com',
-    persistence: 'localStorage+cookie',
-  })
-}
+initPostHog()
 
 const PostHogProviderWrapper = ({ children }: { children: React.ReactNode }) =>
-  FEATURES.POSTHOG ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : <>{children}</>
+  isPostHogEnabled() ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : <>{children}</>
 
 export const App = () => {
   return (

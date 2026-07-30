@@ -1,4 +1,4 @@
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -34,7 +34,7 @@ export const ensureSessionContextBlob = async (
 
   const contentSource = await deps.contentSourcesRepository.findById(session.content_source_id)
   if (!contentSource) {
-    logWithSentry({
+    logError({
       message: 'ensureSessionContextBlob: content source not found',
       params: { sessionId: session.id },
     })

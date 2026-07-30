@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { createResponseWithOneError } from '../router/router-utils'
-import { logCustomErrorMessageAndError } from '../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../transport/error-monitoring/error-monitoring'
 import { getConfig } from '../config/environment-config'
 import { AccessCacheServiceInterface } from '../service/long-running/subscription-cache-service/access-cache-service'
 import { ORPCError } from '@orpc/server'

@@ -1,4 +1,3 @@
-import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
@@ -21,21 +20,7 @@ export default defineConfig({
       plugins: ['@lingui/babel-plugin-lingui-macro', 'babel-plugin-react-compiler'],
     }),
     lingui(),
-    sentryVitePlugin({
-      org: 'fluencist',
-      project: 'web',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      release: {
-        name: process.env.RAILWAY_GIT_COMMIT_SHA,
-      },
-      sourcemaps: {
-        filesToDeleteAfterUpload: ['./**/*.map', '.*/**/public/**/*.map', './dist/**/client/**/*.map'],
-      },
-    }),
   ],
-  build: {
-    sourcemap: true,
-  },
   resolve: {
     tsconfigPaths: true,
     extensions: ['.ts', '.tsx', '.js', '.jsx'],

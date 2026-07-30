@@ -1,6 +1,6 @@
 import { EnvironmentConfig } from '@/config/environment-config'
 import { environmentConfigSchema } from '@/config/environment-config-schema'
-import { logWithSentry } from '@/lib/analytics/log-with-sentry'
+import { logError } from '@/lib/analytics/log-error'
 
 export const validateConfig = (config: EnvironmentConfig): void => {
   const parseResult = environmentConfigSchema.safeParse(config)
@@ -10,7 +10,7 @@ export const validateConfig = (config: EnvironmentConfig): void => {
       .map((issue) => `${issue.path.join('.')} - ${issue.message}`)
       .join(', ')
 
-    logWithSentry({ message: `Environment Config Validation Error: ${errorMessages}` })
+    logError({ message: `Environment Config Validation Error: ${errorMessages}` })
     throw new Error(`Environment Config Validation Error: ${errorMessages}`)
   }
 

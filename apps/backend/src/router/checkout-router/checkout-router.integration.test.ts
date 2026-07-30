@@ -26,7 +26,7 @@ describe('Checkout Router', () => {
 
     expect(checkoutSessionResponse.status).toBe(500)
     // The boundary middleware genericizes uncaught throws to "Internal server
-    // error"; the underlying error is in Sentry. See error-boundary-middleware.ts.
+    // error"; the underlying error is in PostHog error tracking. See error-boundary-middleware.ts.
     expect(checkoutSessionResponse.body.data).toEqual({
       errors: [{ message: 'Internal server error' }],
     })

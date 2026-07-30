@@ -14,7 +14,7 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
@@ -208,7 +208,7 @@ export const StudySessionsRouter = (
       }
       // Stamp the most-recent target language so the adhoc wizard can prefill it.
       void usersRepository.setLastTargetLanguage(userId, input.targetLanguage).catch((error) => {
-        logWithSentry({
+        logError({
           message: 'setLastTargetLanguage failed',
           params: { userId, targetLanguage: input.targetLanguage },
           error,
@@ -575,7 +575,7 @@ export const StudySessionsRouter = (
       // Stamp the most-recent target language so adhoc wizards and other
       // surfaces stay coherent with what was actually studied.
       void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
-        logWithSentry({
+        logError({
           message: 'setLastTargetLanguage failed (youtube ingest)',
           params: { userId, targetLanguage: detectedLanguage },
           error,
@@ -623,7 +623,7 @@ export const StudySessionsRouter = (
         })
 
         void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
-          logWithSentry({
+          logError({
             message: 'setLastTargetLanguage failed (streaming ingest)',
             params: { userId, targetLanguage: detectedLanguage },
             error,

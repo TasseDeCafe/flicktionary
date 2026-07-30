@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { getConfig } from '../../../config/environment-config'
-import { logMessage } from '../../../transport/third-party/sentry/error-monitoring'
+import { logMessage } from '../../../transport/error-monitoring/error-monitoring'
 import { handleTelegramUpdate, TelegramBotDependencies } from '../../../service/telegram-bot/handle-telegram-update'
 import { TelegramUpdate } from '../../../transport/third-party/telegram/telegram-types'
 

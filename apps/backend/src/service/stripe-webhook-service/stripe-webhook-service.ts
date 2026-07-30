@@ -7,7 +7,7 @@ import {
 import { StripeWebhookServiceInterface } from './stripe-webhook-service-interface'
 import { AccessCacheServiceInterface } from '../long-running/subscription-cache-service/access-cache-service'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 
 export const StripeWebhookService = (
   stripeApi: StripeApi,
@@ -27,7 +27,7 @@ export const StripeWebhookService = (
         usersRepository.findUserByStripeCustomerId(customerId),
       ])
     } catch (error) {
-      logWithSentry({ message: 'syncStripeSubscription: failed to load inputs', params: { customerId }, error })
+      logError({ message: 'syncStripeSubscription: failed to load inputs', params: { customerId }, error })
       return false
     }
     if (!dbUser) {
@@ -35,7 +35,7 @@ export const StripeWebhookService = (
       return true
     }
     if (subscriptions.length === 0) {
-      logWithSentry({
+      logError({
         message: 'user has no subscription, while at least one subscription is expected',
         params: {
           customerId,

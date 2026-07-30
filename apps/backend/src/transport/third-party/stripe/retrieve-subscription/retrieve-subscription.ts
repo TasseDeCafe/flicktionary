@@ -1,5 +1,5 @@
 import { stripe } from '../stripe'
-import { logMessage } from '../../sentry/error-monitoring'
+import { logMessage } from '../../../error-monitoring/error-monitoring'
 import { RetrieveSubscriptionResponse } from '../stripe-api'
 import Stripe from 'stripe'
 
