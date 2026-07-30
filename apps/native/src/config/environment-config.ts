@@ -44,7 +44,6 @@ const getProductionConfig = (): EnvironmentConfig => ({
       },
   shouldCheckForEasUpdates: true,
   hashedEmailsOfTestUsers: parseHashedEmails(env.EXPO_PUBLIC_HASHED_EMAILS_OF_TEST_USERS),
-  // https://us.posthog.com/project/69989/settings/project
   posthogToken: FEATURES.POSTHOG ? env.EXPO_PUBLIC_POSTHOG_TOKEN : '',
   posthogHost: FEATURES.POSTHOG ? 'https://eu.i.posthog.com' : '',
 })
@@ -86,7 +85,6 @@ const getDevelopmentConfig = (): EnvironmentConfig => ({
       },
   shouldCheckForEasUpdates: false,
   hashedEmailsOfTestUsers: parseHashedEmails(env.EXPO_PUBLIC_HASHED_EMAILS_OF_TEST_USERS || ''),
-  // https://us.posthog.com/project/88845/settings/project
   posthogToken: FEATURES.POSTHOG ? env.EXPO_PUBLIC_POSTHOG_TOKEN : '',
   posthogHost: FEATURES.POSTHOG ? 'https://eu.i.posthog.com' : '',
 })

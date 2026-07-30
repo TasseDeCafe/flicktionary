@@ -1,8 +1,7 @@
-import { ComponentType, useEffect } from 'react'
+import { ComponentType } from 'react'
 import { OverlayId, URL_OVERLAY_IDS } from '@flicktionary/ui/components/overlay-ids'
 import { SomethingWentWrongOverlayContent } from './something-went-wrong-overlay-content'
 import { ResponsiveOverlay } from '@/components/ui/responsive-overlay'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { ContactUsOverlayContent } from '@/features/contact/components/contact-us-overlay-content'
 import { RateLimitingOverlayContent } from './rate-limiting-overlay-content'
 import { PricingOverlayContent } from '@/features/billing/components/pricing-overlay-content'
@@ -55,12 +54,6 @@ export const OverlayController = () => {
   const activeOverlayId = urlOverlayId ?? storeOverlayId_nonUrl
   const isOverlayVisible = !!activeOverlayId
   const ActiveOverlayContent = activeOverlayId ? OVERLAY_CONFIG[activeOverlayId as OverlayId]?.component : null
-
-  useEffect(() => {
-    if (activeOverlayId) {
-      POSTHOG_EVENTS.viewOverlay(activeOverlayId)
-    }
-  }, [activeOverlayId])
 
   const handleCloseOverlay = () => {
     if (overlayParam) {

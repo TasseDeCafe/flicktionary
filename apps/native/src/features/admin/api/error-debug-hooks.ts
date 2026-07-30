@@ -2,13 +2,13 @@ import { useMutation } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useLingui } from '@lingui/react/macro'
 
-export const useTriggerSentryMessageMutation = () => {
+export const useTriggerErrorMessageMutation = () => {
   const { t } = useLingui()
 
   return useMutation(
-    orpcQuery.sentryDebug.triggerSentryMessage.mutationOptions({
+    orpcQuery.errorDebug.triggerErrorMessage.mutationOptions({
       meta: {
-        errorMessage: t`Failed to trigger Sentry message`,
+        errorMessage: t`Failed to trigger the backend test error`,
       },
     })
   )

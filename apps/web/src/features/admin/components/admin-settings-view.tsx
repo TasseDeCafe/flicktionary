@@ -2,15 +2,15 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
-import { logWithSentry } from '@/lib/analytics/log-with-sentry.ts'
-import { useTriggerSentryMessageMutation } from '@/features/admin/api/sentry-debug-hooks.ts'
+import { logError } from '@/lib/analytics/log-error.ts'
+import { useTriggerErrorMessageMutation } from '@/features/admin/api/error-debug-hooks.ts'
 import { useAdvancePracticeClockMutation } from '@/features/admin/api/dev-tools-hooks.ts'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 
 export const AdminSettingsView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-  const triggerSentryMessageMutation = useTriggerSentryMessageMutation()
+  const triggerErrorMessageMutation = useTriggerErrorMessageMutation()
   const advancePracticeClockMutation = useAdvancePracticeClockMutation()
 
   const handleAdvancePracticeClock = async (days: number) => {
@@ -23,34 +23,33 @@ export const AdminSettingsView = () => {
     }
   }
 
-  const handleTestSentryLog = () => {
-    logWithSentry({
-      message: 'Test Sentry log from Admin Settings',
-      error: new Error('Test Sentry error from Admin Settings'),
+  const handleTestErrorLog = () => {
+    logError({
+      message: 'Test error log from Admin Settings',
+      error: new Error('Test handled error from Admin Settings'),
       params: {
         test: 'test',
         another_test: 'another_test',
       },
-      severityLevel: 'warning',
+      severity: 'warning',
     })
-    alert('Sentry test log sent!')
+    alert('Error monitoring test log sent!')
   }
 
-  const handleTestSentryError = () => {
-    alert('Unhandled error thrown and captured by Sentry!')
+  const handleTestUnhandledError = () => {
+    alert('Unhandled error thrown and captured by error monitoring!')
     throw new Error('Test unhandled error from Admin Settings')
   }
 
-  const handleTestBackendSentryMessage = async () => {
+  const handleTestBackendErrorMessage = async () => {
     try {
-      await triggerSentryMessageMutation.mutateAsync({
-        message: 'Test backend Sentry message from Admin Settings',
-        isInfoLevel: false,
+      await triggerErrorMessageMutation.mutateAsync({
+        message: 'Test backend error message from Admin Settings',
       })
-      alert('Backend Sentry test message sent!')
+      alert('Backend test error sent!')
     } catch (error) {
-      logWithSentry({ message: 'Failed to trigger backend Sentry message', error })
-      alert('Failed to send backend Sentry test message')
+      logError({ message: 'Failed to trigger the backend test error', error })
+      alert('Failed to send the backend test error')
     }
   }
 
@@ -94,33 +93,33 @@ export const AdminSettingsView = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sentry Testing</CardTitle>
+              <CardTitle>Error monitoring testing</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
               <p className='text-sm text-stone-600'>
-                Use these buttons to test Sentry error reporting in your environment.
+                Use these buttons to test PostHog error reporting in your environment.
               </p>
               <div className='flex flex-col gap-3 sm:flex-row'>
                 <Button
-                  onClick={handleTestSentryLog}
+                  onClick={handleTestErrorLog}
                   variant='outline'
                   className='border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-400/10'
                 >
-                  Test Frontend Sentry Log
+                  Test Frontend Error Log
                 </Button>
                 <Button
-                  onClick={handleTestSentryError}
+                  onClick={handleTestUnhandledError}
                   variant='outline'
                   className='border-destructive/40 hover:bg-destructive/10'
                 >
                   Test Frontend Unhandled Error
                 </Button>
                 <Button
-                  onClick={handleTestBackendSentryMessage}
+                  onClick={handleTestBackendErrorMessage}
                   variant='outline'
                   className='border-purple-300 hover:bg-purple-50'
                 >
-                  Test Backend Sentry Message
+                  Test Backend Error Message
                 </Button>
               </div>
             </CardContent>

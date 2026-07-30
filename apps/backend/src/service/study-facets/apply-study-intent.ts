@@ -2,7 +2,7 @@ import type postgres from 'postgres'
 import { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../../transport/error-monitoring/error-monitoring'
 import {
   CITATION_FORM,
   FacetSkill,

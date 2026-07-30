@@ -1,4 +1,4 @@
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../../transport/error-monitoring/error-monitoring'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'

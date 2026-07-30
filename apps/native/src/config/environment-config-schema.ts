@@ -33,8 +33,10 @@ export const environmentConfigSchema = z.object({
   sentry: sentrySchema,
   shouldCheckForEasUpdates: z.boolean(),
   hashedEmailsOfTestUsers: z.array(z.string().min(1)),
-  posthogToken: FEATURES.POSTHOG ? z.string().min(1) : z.string(),
-  posthogHost: FEATURES.POSTHOG ? z.string().min(1) : z.string(),
+  // An empty token keeps PostHog disabled on native even while the web app
+  // uses it: native enablement (SDK update, replay config) is deliberate later work
+  posthogToken: z.string(),
+  posthogHost: z.string(),
 })
 
 const processEnvSchema = z.object({

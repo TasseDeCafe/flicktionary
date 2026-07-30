@@ -1,6 +1,6 @@
 import { Router, type NextFunction, type Request, type Response } from 'express'
 import { implement } from '@orpc/server'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { insertRemoval, updateRemovalSuccess } from '../../transport/database/removals/removals-repository'
 import { rateLimit } from 'express-rate-limit'
 import { getConfig } from '../../config/environment-config'
@@ -69,7 +69,7 @@ export const removalsRouter = (
         try {
           await stripeApi.cancelSubscription(latestSubscription.stripe_subscription_id)
         } catch (error) {
-          logWithSentry({
+          logError({
             message: 'account removal: failed to cancel stripe subscription',
             params: { userId },
             error,
@@ -89,7 +89,7 @@ export const removalsRouter = (
 
       const isSuccessfullyRemovedFromAuthUsers = await authUsersRepository.removeUserFromAuthUsers(userId)
       if (!isSuccessfullyRemovedFromAuthUsers) {
-        logWithSentry({
+        logError({
           message: 'account removal: failed to remove user from authUsers',
           params: { userId },
         })
@@ -107,7 +107,7 @@ export const removalsRouter = (
 
       const wasInsertToRemovalsSuccessful = await updateRemovalSuccess(removalId, true)
       if (!wasInsertToRemovalsSuccessful) {
-        logWithSentry({
+        logError({
           message: 'account removal: failed to insert removal success',
           params: { userId, removalId },
         })

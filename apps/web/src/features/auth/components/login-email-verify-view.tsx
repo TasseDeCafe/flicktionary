@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabaseClient } from '@/lib/transport/supabase-client.ts'
 import { Route as dashboardRoute } from '@/app/routes/_authenticated/_app/dashboard/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
@@ -26,10 +26,6 @@ export const LoginEmailVerifyView = () => {
   const redirectParam = searchParams.get('redirect')
   const redirectTo =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : null
-
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
 
   const { mutate: verifyOtp, isPending } = useMutation({
     mutationFn: async () => {
@@ -69,12 +65,10 @@ export const LoginEmailVerifyView = () => {
   })
 
   const handleVerifyEmailClick = () => {
-    POSTHOG_EVENTS.click('verify_email_button')
     verifyOtp()
   }
 
   const handleReturnToAuth = () => {
-    POSTHOG_EVENTS.click('return_to_auth_button')
     navigate({ to: loginRoute.to, replace: true })
   }
 

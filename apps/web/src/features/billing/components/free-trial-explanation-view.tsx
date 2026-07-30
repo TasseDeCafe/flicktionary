@@ -1,5 +1,3 @@
-import { useEffect } from 'react'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
 import { Route as checkoutSuccessRoute } from '@/app/routes/_authenticated/pricing/checkout-success'
 import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/pricing/free-trial-explanation'
 import { NUMBER_OF_DAYS_IN_FREE_TRIAL, REFUND_PERIOD_IN_DAYS } from '@flicktionary/core/constants/pricing-constants.ts'
@@ -26,12 +24,7 @@ export const FreeTrialExplanationView = () => {
   const { mutate, isPending: isPendingCheckoutMutation } = useCheckoutMutation()
   const { planInterval } = freeTrialExplanationRoute.useSearch()
 
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
   const handleClick = () => {
-    POSTHOG_EVENTS.click('subscribe_button')
-
     mutate({
       successPathAndHash: checkoutSuccessRoute.to,
       cancelPathAndHash: `${freeTrialExplanationRoute.to}?planInterval=${planInterval}`,

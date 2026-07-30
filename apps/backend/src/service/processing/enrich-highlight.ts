@@ -1,4 +1,4 @@
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
@@ -54,7 +54,7 @@ export const enrichHighlight = async (
 
   const session = await studySessionsRepository.findByIdForUser(sessionId, userId)
   if (!session) {
-    logWithSentry({ message: 'enrichHighlight: session not found', params: { sessionId, userId } })
+    logError({ message: 'enrichHighlight: session not found', params: { sessionId, userId } })
     return 'cancelled'
   }
 
@@ -73,7 +73,7 @@ export const enrichHighlight = async (
     studySessionsRepository,
   })
   if (!contextBlob) {
-    logWithSentry({ message: 'enrichHighlight: content source not found', params: { sessionId } })
+    logError({ message: 'enrichHighlight: content source not found', params: { sessionId } })
     return 'cancelled'
   }
 
@@ -202,7 +202,7 @@ export const enrichHighlight = async (
         )
       }
     } else if (!parsedIntent.success) {
-      logWithSentry({
+      logError({
         message: 'enrichHighlight: unparseable study_intent, skipping',
         params: { highlightId },
       })

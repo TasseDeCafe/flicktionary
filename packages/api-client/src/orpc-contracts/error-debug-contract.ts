@@ -1,19 +1,20 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 
-export const SENTRY_DEBUG_TRIGGER_MESSAGE_PATH = '/debugging/sentry/trigger-message' as const
+export const ERROR_DEBUG_TRIGGER_MESSAGE_PATH = '/debugging/error-monitoring/trigger-message' as const
 
-export const sentryDebugContract = {
-  triggerSentryMessage: oc
+// Admin-only smoke test for backend error monitoring: triggers a handled
+// error log so the capture pipeline can be verified end to end.
+export const errorDebugContract = {
+  triggerErrorMessage: oc
     .route({
       method: 'POST',
-      path: SENTRY_DEBUG_TRIGGER_MESSAGE_PATH,
+      path: ERROR_DEBUG_TRIGGER_MESSAGE_PATH,
       successStatus: 200,
     })
     .input(
       z.object({
         message: z.string(),
-        isInfoLevel: z.boolean().optional(),
       })
     )
     .output(

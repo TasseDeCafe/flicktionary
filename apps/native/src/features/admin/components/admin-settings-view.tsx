@@ -6,11 +6,11 @@ import { useLingui } from '@lingui/react/macro'
 import { BigCard } from '@/components/ui/big-card'
 import { SettingsItem } from '@/components/ui/settings-item'
 import { logWithSentry } from '@/lib/analytics/log-with-sentry'
-import { useTriggerSentryMessageMutation } from '@/features/admin/api/sentry-debug-hooks'
+import { useTriggerErrorMessageMutation } from '@/features/admin/api/error-debug-hooks'
 
 export const AdminSettingsView = () => {
   const { t } = useLingui()
-  const triggerSentryMessageMutation = useTriggerSentryMessageMutation()
+  const triggerErrorMessageMutation = useTriggerErrorMessageMutation()
 
   const handleTestSentryLog = () => {
     logWithSentry(
@@ -34,9 +34,8 @@ export const AdminSettingsView = () => {
 
   const handleTestBackendSentryMessage = async () => {
     try {
-      await triggerSentryMessageMutation.mutateAsync({
-        message: 'Test backend Sentry message from Admin Settings (Native)',
-        isInfoLevel: false,
+      await triggerErrorMessageMutation.mutateAsync({
+        message: 'Test backend error message from Admin Settings (Native)',
       })
       Alert.alert('Success', 'Backend Sentry test message sent!')
     } catch (error) {

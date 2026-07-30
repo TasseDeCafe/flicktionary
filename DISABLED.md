@@ -76,14 +76,15 @@ The dev workflow (`pnpm dev:tunnel`, `pnpm ios:emulator`, etc.) still works with
 
 `packages/core/src/features.ts` controls these. Flip a flag to `true` and the corresponding init / providers / env config wake up across all apps. Current state for the prototype:
 
-| Flag          | State   | What it gates                                                                              |
-| ------------- | ------- | ------------------------------------------------------------------------------------------ |
-| `SENTRY`      | `false` | Sentry init + logging in web/native/landing-page/backend; env schema relaxed when off      |
-| `POSTHOG`     | `false` | PostHog init, event capture, providers across all apps                                     |
-| `STRIPE`      | `false` | Stripe billing (web)                                                                       |
-| `REVENUECAT`  | `false` | RevenueCat in-app purchases (native)                                                       |
-| `GOOGLE_AUTH` | `true`  | Google Sign-In via Supabase Auth                                                           |
-| `APPLE_AUTH`  | `false` | Apple Sign-In (native)                                                                     |
+| Flag          | State   | What it gates                                                                                                          |
+| ------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `SENTRY`      | `false` | Sentry init + logging in the native app only — web and backend now use PostHog and their Sentry code paths are deleted |
+| `POSTHOG`     | `true`  | PostHog analytics/replay/error tracking in web + backend; native stays off via an empty `EXPO_PUBLIC_POSTHOG_TOKEN`    |
+| `STRIPE`      | `true`  | Stripe billing (web)                                                                                                   |
+| `REVENUECAT`  | `true`  | RevenueCat in-app purchases (native)                                                                                   |
+| `GOOGLE_AUTH` | `true`  | Google Sign-In via Supabase Auth                                                                                       |
+| `APPLE_AUTH`  | `false` | Apple Sign-In (native)                                                                                                 |
+| `TELEGRAM`    | `true`  | Telegram bot import                                                                                                    |
 
 The wiring pattern (from the original template handoff): guard at function entry (`if (!FEATURES.X) return`), nullable / no-op clients, schema relaxation (`z.string()` instead of `z.string().min(1)` when off), and ternaries in environment configs that supply empty defaults so env vars aren't required.
 
@@ -92,4 +93,4 @@ The wiring pattern (from the original template handoff): guard at function entry
 - **Backend (`apps/backend`)** — Flicktionary will use it for the LLM-call endpoint and Supabase queries.
 - **TanStack Router / Query, oRPC, Zustand, Lingui, Tailwind, Radix** — keeping them in the web app; they're light and the cost of ripping them out and re-adding later is higher than the cost of keeping them.
 - **Native app (`apps/native`)** — left in place but cannot push to production until the items above are restored. Runtime `EasUpdateGate` + `expo-updates` are still there but no-op since `updates.url` is gone.
-- **Backend GitHub workflows** (`.github/workflows/backend-sentry.yaml`) — still active. Disable or delete if you don't want the backend deploying. (`push-migrations.yaml` was deleted: Supabase's GitHub integration points at `apps/backend/supabase/migrations` directly and auto-applies on merge to main.)
+- **Backend GitHub workflows** — `backend-ci.yaml` runs the backend suite on pushes to `main`. (`push-migrations.yaml` was deleted: Supabase's GitHub integration points at `apps/backend/supabase/migrations` directly and auto-applies on merge to main.)

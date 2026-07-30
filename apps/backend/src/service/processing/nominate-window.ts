@@ -1,4 +1,4 @@
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { NominatedSpan } from '../../transport/third-party/anthropic/passes/nominate-candidates-pass'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -58,7 +58,7 @@ export const nominateWindow = async (
 
   const session = await studySessionsRepository.findByIdForUser(sessionId, userId)
   if (!session) {
-    logWithSentry({ message: 'nominateWindow: session not found', params: { sessionId, userId } })
+    logError({ message: 'nominateWindow: session not found', params: { sessionId, userId } })
     return
   }
 
@@ -84,7 +84,7 @@ export const nominateWindow = async (
   if (!contextBlob) {
     const contentSource = await contentSourcesRepository.findById(session.content_source_id)
     if (!contentSource) {
-      logWithSentry({ message: 'nominateWindow: content source not found', params: { sessionId } })
+      logError({ message: 'nominateWindow: content source not found', params: { sessionId } })
       await finish()
       return
     }

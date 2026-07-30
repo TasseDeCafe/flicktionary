@@ -1,4 +1,4 @@
-import { logCustomErrorMessageAndError } from '../../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../../../transport/error-monitoring/error-monitoring'
 import { handleTelegramUpdate, TelegramBotDependencies } from '../../telegram-bot/handle-telegram-update'
 
 export interface TelegramPollingWorkerInterface {

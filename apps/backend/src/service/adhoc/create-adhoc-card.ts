@@ -8,7 +8,7 @@ import { UserLookupsRepositoryInterface } from '../../transport/database/user-lo
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { logCustomErrorMessageAndError } from '../../transport/error-monitoring/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import {
   bindChunksToSingleHighlight,

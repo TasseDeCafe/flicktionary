@@ -27,7 +27,7 @@ vi.mock('../study-facets/apply-study-intent', () => ({
   applyStudyIntent: vi.fn().mockResolvedValue({ applied: true, formFacetTargets: [] }),
   generateStudyIntentFormData: vi.fn().mockResolvedValue(undefined),
 }))
-vi.mock('../../transport/third-party/sentry/error-monitoring', () => ({
+vi.mock('../../transport/error-monitoring/error-monitoring', () => ({
   logCustomErrorMessageAndError: vi.fn(),
 }))
 

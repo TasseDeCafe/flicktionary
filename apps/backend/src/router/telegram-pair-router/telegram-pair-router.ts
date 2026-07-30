@@ -4,7 +4,7 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { telegramPairContract } from '@flicktionary/api-client/orpc-contracts/telegram-pair-contract'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { resumePendingImportForChat, TelegramBotDependencies } from '../../service/telegram-bot/handle-telegram-update'
 
 export const TelegramPairRouter = (deps: TelegramBotDependencies): Router => {
@@ -35,7 +35,7 @@ export const TelegramPairRouter = (deps: TelegramBotDependencies): Router => {
           text: 'Connected! I will reply with a reading link whenever you send me a text.',
         })
         .catch((error) => {
-          logWithSentry({
+          logError({
             message: 'Telegram pairing confirmation message failed',
             params: { userId },
             error,
@@ -54,7 +54,7 @@ export const TelegramPairRouter = (deps: TelegramBotDependencies): Router => {
       // Fire-and-forget: the resume runs a language-detection LLM call and
       // replies in Telegram; the web page only needs to know it was kicked off.
       void resumePendingImportForChat(chatId, deps).catch((error) => {
-        logWithSentry({
+        logError({
           message: 'Telegram pending import resume failed',
           params: { userId },
           error,

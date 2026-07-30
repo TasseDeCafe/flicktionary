@@ -2,9 +2,9 @@ import { create } from 'zustand'
 import { Session } from '@supabase/supabase-js'
 import { supabaseClient } from '@/lib/transport/supabase-client'
 import { queryClient } from '@/config/react-query-config'
-import { clearSentryUser } from '@/lib/analytics/sentry-initializer'
 import { useThemeStore } from '@/stores/theme-store'
 import posthog from 'posthog-js'
+import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
 
 type AuthStore = {
   session: Session | null
@@ -44,7 +44,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   signOut: async (onComplete) => {
     set({ isLoading: true, isSigningOut: true })
-    clearSentryUser()
 
     try {
       // supabase signs you out of all devices by default
@@ -56,7 +55,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     set({ session: null, isLoading: false, isSigningOut: false })
     queryClient.clear()
-    posthog.reset()
+    if (isPostHogEnabled()) {
+      posthog.reset()
+    }
     window.localStorage.clear()
     // localStorage.clear() wiped the resolved-theme cache; re-write it so the
     // next load doesn't flash. The DB value re-applies on next sign-in.

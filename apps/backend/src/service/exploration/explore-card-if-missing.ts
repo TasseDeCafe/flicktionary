@@ -1,4 +1,4 @@
-import { logWithSentry, logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { logError, logCustomErrorMessageAndError } from '../../transport/error-monitoring/error-monitoring'
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -162,7 +162,7 @@ export const exploreCardIfMissing = async (
         sense: enrichedSense,
       })
       if (!result.ok) {
-        logWithSentry({
+        logError({
           message: 'exploreCardIfMissing: rename collision, keeping original key',
           params: {
             cardId,
@@ -199,7 +199,7 @@ export const exploreCardIfMissing = async (
         )
       }
     } catch (warnErr) {
-      logWithSentry({ message: 'exploreCardIfMissing: failed to append warning', error: warnErr })
+      logError({ message: 'exploreCardIfMissing: failed to append warning', error: warnErr })
     }
     return 'failed'
   }

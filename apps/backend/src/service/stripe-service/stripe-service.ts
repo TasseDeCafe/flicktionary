@@ -1,4 +1,4 @@
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { StripeApi, StripeCustomerId } from '../../transport/third-party/stripe/stripe-api'
 import { getConfig } from '../../config/environment-config'
 import { getDiscountsForReferral } from '@flicktionary/core/constants/referral-constants'
@@ -29,7 +29,7 @@ export const StripeService = (
   ): Promise<string | null> => {
     const user: DbUser | null = await usersRepository.findUserByUserId(userId)
     if (!user) {
-      logWithSentry({
+      logError({
         message: 'createCheckoutSession - user not found for userId',
         params: {
           userId,
@@ -49,7 +49,7 @@ export const StripeService = (
         freshlyCreatedCustomerId
       )
       if (!hasUpdatedUserStripeCustomerId) {
-        logWithSentry({
+        logError({
           message: 'createCheckoutSession - Stripe customer could not be updated for userId',
           params: {
             userId,
@@ -82,7 +82,7 @@ export const StripeService = (
 
     const priceId: string | null = getPriceId(planInterval)
     if (!priceId) {
-      logWithSentry({
+      logError({
         message: 'price id could not be chosen',
         params: {
           planInterval,

@@ -20,7 +20,7 @@ import type { WiktionaryMatchRepositoryInterface } from '../../transport/databas
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import type { CheckpointSenseItem } from '../../transport/third-party/anthropic/passes/checkpoint-sense-pass'
 import { applyTermRating, type WithTransaction } from '../practice/rate-term'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import {
   findMweCandidates,
   foldSelectionTokens,
@@ -207,7 +207,7 @@ const confirmMweCandidates = async (
     })
     return candidates.filter((_, index) => verdicts[index]?.occurs === true)
   } catch (error) {
-    logWithSentry({ message: 'checkpointMwePass failed; dropping MWE candidates', params: {}, error })
+    logError({ message: 'checkpointMwePass failed; dropping MWE candidates', params: {}, error })
     return []
   }
 }
@@ -244,7 +244,7 @@ const resolveMultiSenseMatches = async (
     const picks = await deps.anthropicPasses.checkpointSensePass({ targetLanguage, items })
     pickedIds = new Set(picks.flatMap((p) => (p.pickedUserLookupId ? [p.pickedUserLookupId] : [])))
   } catch (error) {
-    logWithSentry({ message: 'checkpointSensePass failed; dropping multi-sense headwords', params: {}, error })
+    logError({ message: 'checkpointSensePass failed; dropping multi-sense headwords', params: {}, error })
     pickedIds = new Set()
   }
   return matched.filter((m) => !multiSenseHeadwords.has(m.row.lookup.headword) || pickedIds.has(m.row.lookup.id))

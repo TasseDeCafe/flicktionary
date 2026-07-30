@@ -1,7 +1,7 @@
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 
 export type EnsureTrackLemmaProfileJobDependencies = {
   textTracksRepository: TextTracksRepositoryInterface
@@ -30,7 +30,7 @@ export const ensureTrackLemmaProfileJob = async (
       userId: params.userId,
     })
   } catch (error) {
-    logWithSentry({
+    logError({
       message: 'ensureTrackLemmaProfileJob failed',
       params: { textTrackId: params.textTrackId, userId: params.userId },
       error,

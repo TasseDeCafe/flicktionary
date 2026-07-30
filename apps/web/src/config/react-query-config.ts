@@ -12,7 +12,7 @@ import {
 } from '@flicktionary/api-client/utils/orpc-error-utils'
 import { toast } from 'sonner'
 import { QueryMeta } from '@/types/hook-types'
-import { logWithSentry } from '@/lib/analytics/log-with-sentry'
+import { logError } from '@/lib/analytics/log-error'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 import { Route as pricingRoute } from '@/app/routes/_authenticated/pricing/index'
@@ -114,7 +114,7 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       const meta = query.meta
 
-      logWithSentry({
+      logError({
         message: `QueryKey ${JSON.stringify(query.queryKey)} failed`,
         error,
         params: {
@@ -144,7 +144,7 @@ export const queryClient = new QueryClient({
       handleApiError(error, meta)
 
       if (!isExpectedValidationError(error)) {
-        logWithSentry({
+        logError({
           message: `MutationKey ${JSON.stringify(mutation.options.mutationKey)} failed`,
           error,
           params: {

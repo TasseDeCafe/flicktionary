@@ -3,9 +3,9 @@ import { HandledRevenuecatEventsRepository } from '../../../transport/database/w
 import { getConfig } from '../../../config/environment-config'
 import {
   logCustomErrorMessageAndError,
-  logWithSentry,
+  logError,
   logMessage,
-} from '../../../transport/third-party/sentry/error-monitoring'
+} from '../../../transport/error-monitoring/error-monitoring'
 import { AuthUsersRepository } from '../../../transport/database/auth-users/auth-users-repository'
 import { RevenuecatServiceInterface } from '../../../service/revenuecat-service/revenuecat-service-interface'
 
@@ -42,7 +42,7 @@ export const revenuecatWebhookRouter = (
       const userExists = await authUsersRepository.findUserById(relevantUserId)
 
       if (!userExists) {
-        logWithSentry({
+        logError({
           message: `Skipping RevenueCat webhook for non-existent user ${relevantUserId} from event ${event.id}. User may have been deleted or this could be stale data.`,
           params: {
             relevantUserId,

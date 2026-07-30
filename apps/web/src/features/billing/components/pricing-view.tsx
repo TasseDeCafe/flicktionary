@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { getConfig } from '@/config/environment-config.ts'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
 import { Route as dashboardRoute } from '@/app/routes/_authenticated/_app/dashboard/index'
 import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/pricing/free-trial-explanation'
 import { Route as checkoutSuccessRoute } from '@/app/routes/_authenticated/pricing/checkout-success'
@@ -13,7 +12,7 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Badge } from '@flicktionary/ui/components/badge'
 import { getPricingViewConfig, PricingViewConfig } from '../utils/pricing-view-utils'
 import { toast } from 'sonner'
-import { logWithSentry } from '@/lib/analytics/log-with-sentry.ts'
+import { logError } from '@/lib/analytics/log-error.ts'
 import { useNavigate } from '@tanstack/react-router'
 import { PlanInterval } from '@flicktionary/core/constants/pricing-constants.ts'
 import { PlanType } from '@flicktionary/api-client/orpc-contracts/billing-contract'
@@ -32,7 +31,6 @@ export const PricingView = () => {
   const navigate = useNavigate()
 
   const handlePlanOptionClick = (planType: PlanType) => {
-    POSTHOG_EVENTS.clickPlan('plan_radio_button', planType)
     if (isPremiumUser) {
       if (planType === 'free_trial') {
         toast.info(t`You have already used your free trial.`)
@@ -75,7 +73,6 @@ export const PricingView = () => {
   const isPremiumUser = !!subscriptionData?.isPremiumUser
 
   const handleCTAClick = () => {
-    POSTHOG_EVENTS.click('subscribe_button')
     if (isPremiumUser) {
       if (subscriptionData?.billingPlatform === 'stripe') {
         const currentPath = location.pathname + location.search
@@ -84,7 +81,7 @@ export const PricingView = () => {
         if (subscriptionData?.revenueCatDetails?.managementUrl) {
           window.location.href = subscriptionData.revenueCatDetails.managementUrl
         } else {
-          logWithSentry({
+          logError({
             message: 'Unexpected billing state in PricingScreen, no management url',
             params: { subscriptionData },
           })
@@ -103,7 +100,6 @@ export const PricingView = () => {
   }
 
   const handleGoPracticeNowClick = () => {
-    POSTHOG_EVENTS.click('go_practice_now_button')
     navigate({ to: dashboardRoute.to })
   }
 
@@ -113,10 +109,6 @@ export const PricingView = () => {
     await signOut(() => navigate({ to: '/login' }))
     toast.success(t`Signed out successfully`)
   }
-
-  useEffect(() => {
-    POSTHOG_EVENTS.viewPage()
-  }, [])
 
   const pricingViewConfig: PricingViewConfig = getPricingViewConfig({
     isPendingMutation: isPendingCheckoutMutation || isCustomerPortalMutationPending,

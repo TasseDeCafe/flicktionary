@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from '@flicktionary/ui/components/radio-gr
 import { Label } from '@flicktionary/ui/components/label'
 import { Badge } from '@flicktionary/ui/components/badge'
 import { getConfig } from '@/config/environment-config'
-import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/pricing/free-trial-explanation'
 import { Route as checkoutSuccessRoute } from '@/app/routes/_authenticated/pricing/checkout-success'
 import { Route as pricingRoute } from '@/app/routes/_authenticated/pricing/index'
@@ -33,7 +32,6 @@ export const PricingOverlayContent = () => {
   const closeOverlay = useCloseOverlay()
 
   const handlePlanOptionClick = (planType: PlanType) => {
-    POSTHOG_EVENTS.clickPlan('plan_radio_button', planType)
     if (isPremiumUser) {
       if (planType === 'free_trial') {
         toast.info(t`You have already used your free trial.`)
@@ -68,7 +66,6 @@ export const PricingOverlayContent = () => {
   const isPremiumUser = !!subscriptionData?.isPremiumUser
 
   const handleCTAClick = () => {
-    POSTHOG_EVENTS.click('subscribe_button')
     if (hasAllowedReferral || getConfig().featureFlags.isCreditCardRequiredForAll()) {
       closeOverlay()
       navigate({ to: freeTrialExplanationRoute.to, search: { planInterval: clickedPlan as 'month' | 'year' } })

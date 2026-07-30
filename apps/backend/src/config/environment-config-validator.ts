@@ -1,7 +1,7 @@
 import { getEnvironmentName, isProduction, SupportedEnvironments } from '../utils/environment-utils'
 import { parseEmails } from './environment-config-utils'
 import { EnvironmentConfig, environmentConfigSchema } from './environment-config-schema'
-import { logMessageWithSentry } from '../transport/third-party/sentry/log-message-with-sentry'
+import { logMessage } from '../transport/error-monitoring/error-monitoring'
 
 export const validateConfig = (config: EnvironmentConfig): void => {
   if (!Object.values(SupportedEnvironments).includes(getEnvironmentName() as SupportedEnvironments)) {
@@ -12,7 +12,7 @@ export const validateConfig = (config: EnvironmentConfig): void => {
     const errorMessages = parseResult.error.issues
       .map((issue) => `${issue.path.join('.')} - ${issue.message}`)
       .join(', ')
-    logMessageWithSentry(`Environment Config Validation Error: ${errorMessages}`)
+    logMessage(`Environment Config Validation Error: ${errorMessages}`)
   }
   // we'd like to be informed if we input non email values in doppler
   // using this inside production config validation was not possible, because it was creating a nasty circular dependency
@@ -20,7 +20,7 @@ export const validateConfig = (config: EnvironmentConfig): void => {
   if (isProduction()) {
     const { invalidEmails } = parseEmails(process.env.USERS_WITH_FREE_ACCESS || '')
     if (invalidEmails.length > 0) {
-      logMessageWithSentry(`Invalid emails: ${invalidEmails.join(',')}`)
+      logMessage(`Invalid emails: ${invalidEmails.join(',')}`)
     }
   }
   console.log('Environment Config validation success')

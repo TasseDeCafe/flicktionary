@@ -6,14 +6,17 @@ const POSTHOG_HOST = 'https://eu.i.posthog.com'
 
 const noopClient = {
   capture: () => {},
+  captureException: () => {},
   shutdown: async () => {},
-  shutdownAsync: async () => {},
 } as unknown as PostHog
 
+// An empty token disables PostHog entirely: automated tests and Railway
+// PR/ephemeral previews simply don't define POSTHOG_PROJECT_TOKEN.
+export const isPosthogEnabled = (): boolean => FEATURES.POSTHOG && Boolean(getConfig().posthogProjectToken)
+
 const createPosthogClient = (): PostHog => {
-  if (!FEATURES.POSTHOG) return noopClient
-  const config = getConfig()
-  return new PostHog(config.posthogApiKey, {
+  if (!isPosthogEnabled()) return noopClient
+  return new PostHog(getConfig().posthogProjectToken, {
     host: POSTHOG_HOST,
     enableExceptionAutocapture: true,
   })
@@ -21,29 +24,10 @@ const createPosthogClient = (): PostHog => {
 
 export const posthogClient = createPosthogClient()
 
-let hasRegisteredShutdownHandlers = false
-
-const shutdownPosthogClient = async (): Promise<void> => {
+export const shutdownPosthogClient = async (): Promise<void> => {
   try {
     await posthogClient.shutdown()
   } catch (error) {
     console.warn('Failed to shutdown PostHog client gracefully', error)
   }
-}
-
-export const registerPosthogShutdownHandlers = (): void => {
-  if (hasRegisteredShutdownHandlers) {
-    return
-  }
-
-  hasRegisteredShutdownHandlers = true
-
-  process.once('beforeExit', () => {
-    void shutdownPosthogClient()
-  })
-  ;['SIGINT', 'SIGTERM'].forEach((signal) => {
-    process.once(signal as NodeJS.Signals, () => {
-      void shutdownPosthogClient()
-    })
-  })
 }

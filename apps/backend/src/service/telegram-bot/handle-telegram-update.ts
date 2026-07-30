@@ -10,7 +10,7 @@ import { TelegramPendingImportsRepositoryInterface } from '../../transport/datab
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
-import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { TelegramApiInterface } from '../../transport/third-party/telegram/telegram-api'
 import {
   TelegramCallbackQuery,
@@ -320,7 +320,7 @@ export const handleTelegramUpdate = async (update: TelegramUpdate, deps: Telegra
     }
   } catch (error) {
     // Never log message bodies — they are private user content.
-    logWithSentry({
+    logError({
       message: 'Failed to handle Telegram update',
       params: {
         updateId: update.update_id,

@@ -1,10 +1,10 @@
 import { type AnyMiddleware, ORPCError, ValidationError } from '@orpc/server'
-import { logWithSentry } from '../../../transport/third-party/sentry/error-monitoring'
+import { logError } from '../../../transport/error-monitoring/error-monitoring'
 import { UpstreamRateLimitError } from '../../../transport/third-party/upstream-rate-limit-error'
 
 // Wired into every oRPC implementer via `.use(errorBoundaryMiddleware)`. Catches any
 // thrown error that isn't an explicit oRPC error (which carries an HTTP status the
-// handler chose deliberately), logs it to Sentry with the request's userId already
+// handler chose deliberately), logs it to PostHog error tracking with the request's userId already
 // bound via AsyncLocalStorage, and rethrows as a generic INTERNAL_SERVER_ERROR.
 //
 // Handlers no longer need their own try/catch for translating unknown failures.
@@ -14,7 +14,7 @@ import { UpstreamRateLimitError } from '../../../transport/third-party/upstream-
 // Special case: oRPC's input/output validators wrap Zod issues inside an
 // ORPCError whose `cause` is a `ValidationError`. The wire response only
 // surfaces a generic "validation failed" message, which is impossible to
-// debug from the frontend. We log the issues locally + to Sentry before
+// debug from the frontend. We log the issues locally + to error tracking before
 // rethrowing so a `pnpm dev` terminal shows what field and what reason.
 export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, path }) => {
   try {
@@ -25,7 +25,7 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
         const procedure = path.join('.')
 
         console.error(`[orpc validation] ${procedure} ${e.message}\n` + JSON.stringify(e.cause.issues, null, 2))
-        logWithSentry({
+        logError({
           message: 'orpc validation failed',
           params: { path: procedure, message: e.message, issues: e.cause.issues },
           error: e.cause,
@@ -40,7 +40,7 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
     // buy a bigger tier. Falls through to 500 if the procedure's contract
     // doesn't declare TOO_MANY_REQUESTS.
     if (e instanceof UpstreamRateLimitError && 'TOO_MANY_REQUESTS' in errors) {
-      logWithSentry({
+      logError({
         message: 'upstream rate limited',
         params: { path: path.join('.'), service: e.service, kind: e.kind },
         error: e,
@@ -56,7 +56,7 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
         },
       })
     }
-    logWithSentry({
+    logError({
       message: 'unhandled handler error',
       params: { path: path.join('.') },
       error: e,

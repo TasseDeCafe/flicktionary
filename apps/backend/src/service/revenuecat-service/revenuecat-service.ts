@@ -1,7 +1,7 @@
 import { RevenuecatServiceInterface } from './revenuecat-service-interface'
 import { AccessCacheServiceInterface } from '../long-running/subscription-cache-service/access-cache-service'
 import { RevenuecatApi } from '../../transport/third-party/revenuecat/revenuecat-api'
-import { logMessage } from '../../transport/third-party/sentry/error-monitoring'
+import { logMessage } from '../../transport/error-monitoring/error-monitoring'
 import { RevenuecatSubscriptionsRepositoryInterface } from '../../transport/database/revenuecat-subscriptions/revenuecat-subscriptions-repository'
 
 export const RevenuecatService = (

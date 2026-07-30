@@ -6,7 +6,7 @@ import { checkoutContract } from './checkout-contract'
 import { portalSessionContract } from './portal-session-contract'
 import { removalsContract } from './removals-contract'
 import { healthCheckContract } from './health-check-contract'
-import { sentryDebugContract } from './sentry-debug-contract'
+import { errorDebugContract } from './error-debug-contract'
 import { devToolsContract } from './dev-tools-contract'
 import { configContract } from './config-contract'
 import { contentSourcesContract } from './content-sources-contract'
@@ -38,7 +38,7 @@ export const rootOrpcContract = {
   portalSession: portalSessionContract,
   removals: removalsContract,
   healthCheck: healthCheckContract,
-  sentryDebug: sentryDebugContract,
+  errorDebug: errorDebugContract,
   devTools: devToolsContract,
   config: configContract,
   contentSources: contentSourcesContract,
