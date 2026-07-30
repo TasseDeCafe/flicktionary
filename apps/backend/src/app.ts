@@ -109,6 +109,8 @@ import { ImportBatchesRepository } from './transport/database/import-batches/imp
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
 import { AnthropicPasses, type AnthropicPassesInterface } from './transport/third-party/anthropic/anthropic-passes'
 import { downloadSrtByFileId } from './transport/third-party/opensubtitles/opensubtitles-client'
+import { PostHog } from 'posthog-node'
+import { posthogClient as defaultPosthogClient } from './transport/third-party/posthog/posthog-client'
 
 export type AppDependencies = {
   // Every LLM call goes through this seam; integration tests inject
@@ -129,6 +131,10 @@ export type AppDependencies = {
   // Seam for the quota-counted OpenSubtitles download; integration tests inject
   // a stub to script SRT bodies and rate-limit failures without network.
   openSubtitlesDownloadSrt?: (fileId: number) => Promise<string>
+  // Product-event capture seam (the real client is a no-op when the PostHog
+  // token is empty, i.e. in tests); integration tests inject a recording fake
+  // to assert on captured events.
+  posthogClient?: PostHog
 }
 
 export const buildApp = ({
@@ -149,6 +155,7 @@ export const buildApp = ({
   telegramApi = MockTelegramApi(),
   telegramPollingWorker = MockTelegramPollingWorker(),
   openSubtitlesDownloadSrt = downloadSrtByFileId,
+  posthogClient = defaultPosthogClient,
 }: AppDependencies): Express => {
   const app: Express = express()
 
@@ -174,7 +181,8 @@ export const buildApp = ({
       stripeApi,
       stripeSubscriptionsRepository,
       accessCache,
-      usersRepository
+      usersRepository,
+      posthogClient
     )
 
     // Stripe webhooks route - should be before the json parser

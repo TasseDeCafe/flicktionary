@@ -61,7 +61,7 @@ describe('Subscription Repository Integration Tests', () => {
     it('should insert a new subscription when it does not exist', async () => {
       const { id: testUserId } = await __createUserInSupabaseAndGetHisIdAndToken()
 
-      await repository.upsertSubscription(
+      const previousStatus = await repository.upsertSubscription(
         testUserId,
         stripeSubscriptionId,
         'active',
@@ -76,6 +76,7 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
+      expect(previousStatus).toBeNull()
       const upsertedSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(upsertedSubscription).not.toBeNull()
       const subscription = upsertedSubscription as DbStripeSubscription
@@ -114,7 +115,7 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      await repository.upsertSubscription(
+      const previousStatus = await repository.upsertSubscription(
         testUserId,
         stripeSubscriptionId,
         'past_due',
@@ -129,6 +130,7 @@ describe('Subscription Repository Integration Tests', () => {
         2
       )
 
+      expect(previousStatus).toBe('active')
       const updatedSubscription = await repository.findSubscriptionByStripeSubscriptionId(stripeSubscriptionId)
       expect(updatedSubscription).not.toBeNull()
       const subscription = updatedSubscription as DbStripeSubscription
