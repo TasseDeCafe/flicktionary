@@ -13,7 +13,7 @@ import Base from '../layouts/Base.astro'
   <main class='mx-auto max-w-3xl space-y-8 px-6 py-12 text-gray-800'>
     <header class='space-y-2'>
       <h1 class='text-3xl font-bold'>Flicktionary Privacy Policy</h1>
-      <p class='text-sm text-gray-500'>Last updated: June 3, 2026</p>
+      <p class='text-sm text-gray-500'>Last updated: July 30, 2026</p>
     </header>
 
     <section class='space-y-3'>
@@ -41,7 +41,11 @@ import Base from '../layouts/Base.astro'
         </li>
         <li>
           <strong>Usage data.</strong> How you interact with the service (pages viewed, features used) collected through
-          analytics, and diagnostic data such as error reports.
+          analytics, and diagnostic data such as error reports. We also use session replay, which records how the
+          app&rsquo;s interface is used (clicks, scrolling, navigation between screens) so we can understand and improve
+          the experience. Replay recordings are masked by default: the text you type and the text shown on screen
+          &mdash; including your learning content &mdash; is replaced with placeholders before the recording leaves your
+          browser, and authentication tokens are stripped from recorded URLs.
         </li>
         <li>
           <strong>Payment information.</strong> If you purchase a subscription, payment is processed by Stripe. We
@@ -85,7 +89,7 @@ import Base from '../layouts/Base.astro'
       <p>
         We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and
         hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product
-        analytics), Sentry (error monitoring), and Resend (transactional email). These providers process data only to
+        analytics, session replay, and error monitoring), and Resend (transactional email). These providers process data only to
         provide their services to us and are bound by their own confidentiality and data-protection obligations. We do
         not sell your personal data to anyone.
       </p>
