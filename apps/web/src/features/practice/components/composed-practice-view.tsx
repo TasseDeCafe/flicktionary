@@ -9,6 +9,7 @@ import { Kbd } from '@flicktionary/ui/components/kbd'
 import { RATE_VALUES, RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import type {
@@ -358,22 +359,40 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
   const activeHintDisplayed = activeHint != null && activeHint.item === current
 
-  const advance = () => {
+  // One completion event per session, even if a failed rating's retry copy
+  // re-extends the queue after the completion screen already appeared.
+  const completionCapturedRef = useRef(false)
+  // `queuedRedrillCount` lets handleRate signal a redrill appended in the same
+  // render (invisible to this closure's `queue`) so the completion capture
+  // doesn't fire while the session is about to continue.
+  const advanceBy = (queuedRedrillCount: number) => {
     setRevealed(false)
     setCurrentAnswered(false)
     setActiveHint(null)
     setHintOutcome(null)
     setIndex((i) => i + 1)
     indexRef.current += 1
+    // Crossing into the completion screen — an empty compose (nothing served)
+    // never advances, so it never counts as a completed session.
+    const totalCount = (queue?.length ?? 0) + queuedRedrillCount
+    if (totalCount > 0 && indexRef.current >= totalCount && !completionCapturedRef.current) {
+      completionCapturedRef.current = true
+      POSTHOG_EVENTS.practiceSessionCompleted({
+        session_type: 'composed',
+        target_language: targetLanguage,
+        total_count: totalCount,
+        hard_count: sessionHardRef.current.size,
+        is_daily_mix: mixChain != null,
+      })
+    }
   }
+  const advance = () => advanceBy(0)
 
   const handleRate = (rating: RateValue) => {
     const item = queue?.[index]
     if (!item || item.type !== 'flashcard') return
     const { card } = item
     const pool = poolForCard(card)
-
-    advance()
 
     if (rating === 'again' || rating === 'hard') {
       sessionHardRef.current.add(card.userLookupId)
@@ -386,6 +405,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     const redrill: ComposedQueueItem | null =
       rating === 'again' ? { type: 'flashcard', card, retryCount: item.retryCount, requeuedForAgain: true } : null
     if (redrill) setQueue((q) => (q ? [...q, redrill] : q))
+    advanceBy(redrill ? 1 : 0)
     const dropRedrill = () => {
       if (!redrill) return
       setQueue((q) => {

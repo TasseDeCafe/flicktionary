@@ -7,6 +7,7 @@ import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
 import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Button } from '@flicktionary/ui/components/button'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
@@ -431,6 +432,7 @@ export const SessionGlossSheet = ({
     try {
       const created = await createHighlight(args)
       setHighlightId(created.data.id)
+      POSTHOG_EVENTS.vocabularyTermSaved({ target_language: targetLanguage })
       // A committed note seeds the chat once — lock the editor (matches the
       // note-only lane). An empty save leaves it editable.
       if (args.chatSeedPrompt) setLocalNoteSaved(true)
@@ -441,7 +443,7 @@ export const SessionGlossSheet = ({
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, isSaving, createHighlight, buildCreateArgs])
+  }, [selection, highlightId, isSaving, createHighlight, buildCreateArgs, targetLanguage])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point

@@ -11,6 +11,7 @@ import { useAddAccountFlag, useGetUserPrefs } from '@/features/sessions/api/sess
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { plannedTotal } from '../utils/daily-mix'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 // One-time "How practice works" explainer; dismissing it records the
 // practice_explainer_dismissed account flag so it never returns on any device.
@@ -118,7 +119,12 @@ export const PracticeLandingView = () => {
               intro returns once the explainer is dismissed so the page never
               shows both. */}
           {showExplainer ? (
-            <HowPracticeWorksCard onDismiss={() => addFlag.mutate({ flag: 'practice_explainer_dismissed' })} />
+            <HowPracticeWorksCard
+              onDismiss={() => {
+                POSTHOG_EVENTS.practiceExplainerDismissed()
+                addFlag.mutate({ flag: 'practice_explainer_dismissed' })
+              }}
+            />
           ) : (
             explainerResolved && (
               <p className='text-muted-foreground text-sm'>

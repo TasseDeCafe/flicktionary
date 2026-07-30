@@ -9,6 +9,7 @@ import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
@@ -89,23 +90,38 @@ const RecapQuiz = ({
   const total = queue.length
 
   // One retry per missed (or skipped) term, in the other form, at the end of
-  // the queue. A redrill that misses again is not re-appended.
-  const appendRedrill = () => {
+  // the queue. A redrill that misses again is not re-appended. Returns whether
+  // a retry was actually queued — handleSkip's completion check can't see the
+  // same-render append in its `queue` closure.
+  const appendRedrill = (): boolean => {
     if (current && !current.isRedrill) {
       const redrill = buildRedrillQuestion(current.term, terms, current.kind)
       setQueue((prev) => [...prev, redrill])
+      return true
     }
+    return false
   }
   const handleAnswered = (correct: boolean) => {
     if (correct) setCorrectCount((n) => n + 1)
     else appendRedrill()
   }
-  const handleNext = () => setIndex((i) => i + 1)
+  // Crossing past the final question is the "Recap done!" screen appearing.
+  const advanceTowards = (totalCount: number) => {
+    if (index + 1 >= totalCount) {
+      POSTHOG_EVENTS.sessionRecapCompleted({
+        target_language: targetLanguage,
+        correct_count: correctCount,
+        total_count: totalCount,
+      })
+    }
+    setIndex((i) => i + 1)
+  }
+  const handleNext = () => advanceTowards(queue.length)
   // Skip = "I don't know" without burning a guess: no reveal, no correct
   // credit, but the term comes back once like a miss.
   const handleSkip = () => {
-    appendRedrill()
-    handleNext()
+    const appendedRedrill = appendRedrill()
+    advanceTowards(queue.length + (appendedRedrill ? 1 : 0))
   }
 
   // Live questions run their own hotkeys inside the recap exercise components;
