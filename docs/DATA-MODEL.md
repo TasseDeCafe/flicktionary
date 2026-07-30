@@ -45,6 +45,12 @@ text_track
   profile_max_segment_index int?   -- built_at doubles as "profile exists";
   profile_word_token_count int?    -- segment count + max index are the
   profile_matched_token_count int? -- staleness check
+  moderation_status   'clean' | 'flagged' | null -- ingestion moderation verdict
+                                   -- (null = pre-feature / unchecked / failed-open;
+                                   -- blocked content is never inserted)
+  moderation_category text?        -- set iff status='flagged'; pair enforced by an
+                                   -- IS TRUE-wrapped CHECK (the bare OR would pass
+                                   -- UNKNOWN for a (null, category) pair)
   created_at          timestamptz
 
 text_segment
@@ -430,6 +436,10 @@ import_batches                       -- lesson-import extraction drafts. Idempot
   raw_text            text          -- the client-normalized markdown, verbatim
   input_hash          text          -- sha256 of raw_text; the batch identity
   status              'extracting' | 'ready' | 'failed' | 'confirmed'
+  moderation_status   'clean' | 'flagged' | null -- same semantics + pair CHECK as
+  moderation_category text?         -- text_track; checked at createBatch, re-checked
+                                    -- on resume while null, copied to the lesson
+                                    -- track at confirm
   format_profile      text?         -- the extractor's inferred conventions; the
                                     -- user can save it as a teacher profile
   study_session_id    uuid? -> study_session.id (ON DELETE SET NULL; set at confirm)
