@@ -87,6 +87,9 @@ catalogs:
     '@orpc/tanstack-query':
       specifier: 1.14.8
       version: 1.14.8
+    '@posthog/cli':
+      specifier: 0.9.2
+      version: 0.9.2
     '@posthog/react':
       specifier: 1.10.3
       version: 1.10.3
@@ -1398,6 +1401,9 @@ importers:
       '@orpc/tanstack-query':
         specifier: 'catalog:'
         version: 1.14.8(@orpc/client@1.14.8)(@tanstack/query-core@5.101.2)
+      '@posthog/cli':
+        specifier: 'catalog:'
+        version: 0.9.2
       '@posthog/react':
         specifier: 'catalog:'
         version: 1.10.3(@types/react@19.2.17)(posthog-js@1.408.2)(react@19.2.7)
@@ -4479,6 +4485,11 @@ packages:
 
   '@posthog/browser-common@0.2.5':
     resolution: {integrity: sha512-g95viLlEqPl92+ar3hEzlQbPqKB0Hp7AoYVaEmvXdjUiYfG3XP+qwzPRFmULNEGLDMSKL7T+MFHvs2/EswcE+g==}
+
+  '@posthog/cli@0.9.2':
+    resolution: {integrity: sha512-vnUT8K0UwFIeYt2Su1BVzjNm5JBWihxGve6V8I6ZsUvbtCf1zPEXmGtQD1Nrelgk5tl9xVuTXPhYv3heG7027g==}
+    engines: {node: '>=14.14', npm: '>=6'}
+    hasBin: true
 
   '@posthog/core@1.24.4':
     resolution: {integrity: sha512-S+TolwBHSSJz7WWtgaELQWQqXviSm3uf1e+qorWUts0bZcgPwWzhnmhCUZAhvn0NVpTQHDJ3epv+hHbPLl5dHg==}
@@ -16534,6 +16545,10 @@ snapshots:
     dependencies:
       '@posthog/core': 1.45.3
       '@posthog/types': 1.399.0
+
+  '@posthog/cli@0.9.2':
+    dependencies:
+      detect-libc: 2.1.2
 
   '@posthog/core@1.24.4':
     dependencies:

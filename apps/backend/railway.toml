@@ -3,8 +3,11 @@ builder = "railpack"
 buildCommand = "pnpm install --frozen-lockfile && pnpm turbo run build --filter=@flicktionary/backend"
 
 [deploy]
-# For PR previews, WEB_URL is set dynamically. For production, set via Doppler.
-startCommand = "sh -c 'export SENTRY_RELEASE=\"$RAILWAY_GIT_COMMIT_SHA\" && if [ \"$RAILWAY_ENVIRONMENT_NAME\" != \"production\" ] && [ -n \"$RAILWAY_ENVIRONMENT_NAME\" ]; then export WEB_URL=\"https://flicktionaryweb-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app\"; fi && NODE_ENV=production node --enable-source-maps apps/backend/dist/apps/backend/src/index.js'"
+# For PR previews, WEB_URL is set dynamically and the PostHog token is blanked
+# (an empty token disables capture). For production, both come via Doppler.
+# --enable-source-maps resolves backend stack traces at runtime from the .map
+# files shipped in dist, so backend errors don't need a source-map upload.
+startCommand = "sh -c 'if [ \"$RAILWAY_ENVIRONMENT_NAME\" != \"production\" ] && [ -n \"$RAILWAY_ENVIRONMENT_NAME\" ]; then export WEB_URL=\"https://flicktionaryweb-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app\"; export POSTHOG_PROJECT_TOKEN=\"\"; fi && NODE_ENV=production node --enable-source-maps apps/backend/dist/apps/backend/src/index.js'"
 healthcheckPath = "/api/v1/health-check"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"

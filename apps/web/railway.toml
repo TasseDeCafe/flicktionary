@@ -1,12 +1,27 @@
 [build]
 builder = "railpack"
+# Preview environments blank the PostHog token: previews build in production
+# mode, so the Railway environment — not the Vite mode — is what decides that
+# no analytics are captured there.
+# The production build injects PostHog chunk IDs into the bundle and uploads
+# the source maps (keyed by the git SHA), then --delete-after removes the .map
+# files and sourceMappingURL comments so maps never ship in the served bundle.
 buildCommand = """
 pnpm install --frozen-lockfile && \
 if [ "$RAILWAY_ENVIRONMENT_NAME" != "production" ] && [ -n "$RAILWAY_ENVIRONMENT_NAME" ]; then \
   export VITE_API_HOST="https://flicktionarybackend-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app"; \
-  echo "Preview build: VITE_API_HOST=$VITE_API_HOST"; \
+  export VITE_POSTHOG_PROJECT_TOKEN=""; \
+  echo "Preview build: VITE_API_HOST=$VITE_API_HOST, PostHog disabled"; \
 fi && \
-pnpm turbo run build --filter=@flicktionary/web
+pnpm turbo run build --filter=@flicktionary/web && \
+if [ "$RAILWAY_ENVIRONMENT_NAME" = "production" ] && [ -n "$POSTHOG_CLI_API_KEY" ]; then \
+  pnpm --filter @flicktionary/web exec posthog-cli sourcemap inject --directory apps/web/dist \
+    --release-name flicktionary-web --release-version "$RAILWAY_GIT_COMMIT_SHA" && \
+  pnpm --filter @flicktionary/web exec posthog-cli sourcemap upload --directory apps/web/dist \
+    --release-name flicktionary-web --release-version "$RAILWAY_GIT_COMMIT_SHA" --delete-after; \
+else \
+  find apps/web/dist -name '*.map' -delete; \
+fi
 """
 
 [deploy]
