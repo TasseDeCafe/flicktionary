@@ -1942,13 +1942,33 @@ const listCandidateFormsForChunk = async (userLookupId: string): Promise<string[
   return rows.map((r) => r.surface_form)
 }
 
-// Case-insensitive substring filter across headword/translation/definition.
-// `%` and `_` in user input retain LIKE-pattern semantics — acceptable for
-// the v1 search bar; if it becomes a footgun we can escape later.
+// Below this word_similarity() score a candidate is not considered a match.
+// pg_trgm's own default threshold is 0.6, but a single-letter typo in a
+// five-letter word scores 0.5 (word_similarity('vixin','vixen')), so 0.6
+// rejects exactly the typos the fuzzy search exists to catch; 0.45 admits
+// them with a little margin. Pinned by the search integration tests, so
+// tuning it is a one-line change plus test expectations.
+const SEARCH_WORD_SIMILARITY_THRESHOLD = 0.45
+
+// LIKE pattern metacharacters in user input are matched literally.
+const escapeLikePattern = (q: string): string => q.replace(/[\\%_]/g, (char) => `\\${char}`)
+
+// Accent- and case-insensitive substring filter across headword/translation/
+// definition, with trigram typo tolerance on the same fields. unaccent and
+// pg_trgm live in the extensions schema — calls are schema-qualified rather
+// than relying on search_path. Search only filters; the caller's sort keeps
+// ordering.
 const buildSearchClause = (q: string | null) => {
   if (!q || q.length === 0) return sql``
-  const pattern = `%${q}%`
-  return sql`AND (ul.headword ILIKE ${pattern} OR ul.translation ILIKE ${pattern} OR ul.definition ILIKE ${pattern})`
+  const pattern = `%${escapeLikePattern(q)}%`
+  return sql`AND (
+    extensions.unaccent(ul.headword) ILIKE extensions.unaccent(${pattern})
+    OR extensions.unaccent(ul.translation) ILIKE extensions.unaccent(${pattern})
+    OR extensions.unaccent(ul.definition) ILIKE extensions.unaccent(${pattern})
+    OR extensions.word_similarity(extensions.unaccent(${q}), extensions.unaccent(ul.headword)) >= ${SEARCH_WORD_SIMILARITY_THRESHOLD}
+    OR extensions.word_similarity(extensions.unaccent(${q}), extensions.unaccent(ul.translation)) >= ${SEARCH_WORD_SIMILARITY_THRESHOLD}
+    OR extensions.word_similarity(extensions.unaccent(${q}), extensions.unaccent(ul.definition)) >= ${SEARCH_WORD_SIMILARITY_THRESHOLD}
+  )`
 }
 
 // Vocabulary "Skills" filter tokens → the study_facets.skill they match. The
