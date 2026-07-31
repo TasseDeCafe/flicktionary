@@ -631,18 +631,6 @@ export const useListSegmentsByTrack = (textTrackId: string | null) => {
   )
 }
 
-export const useSearchSegments = (textTrackId: string | null, query: string, enabled: boolean) => {
-  const { t } = useLingui()
-  return useQuery(
-    orpcQuery.textSegments.search.queryOptions({
-      input: { textTrackId: textTrackId ?? '', q: query },
-      select: (response) => response.data,
-      enabled: enabled && !!textTrackId && query.length > 0,
-      meta: { errorMessage: t`Search failed` },
-    })
-  )
-}
-
 export const useListHighlightsBySession = (sessionId: string) => {
   const { t } = useLingui()
   return useQuery(

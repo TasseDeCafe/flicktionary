@@ -74,18 +74,6 @@ const listFirstByTrackId = async (textTrackId: string, limit: number): Promise<D
   `) as DbTextSegment[]
 }
 
-const searchInTrack = async (textTrackId: string, language: string, query: string): Promise<DbTextSegment[]> => {
-  const cfg = resolveRegconfig(language)
-  return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
-    FROM public.text_segments
-    WHERE text_track_id = ${textTrackId}
-      AND tsv @@ plainto_tsquery(${cfg}::regconfig, ${query})
-    ORDER BY index ASC
-    LIMIT 200
-  `) as DbTextSegment[]
-}
-
 const findById = async (id: string): Promise<DbTextSegment | null> => {
   const result = (await sql`
     SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
@@ -205,7 +193,6 @@ export interface TextSegmentsRepositoryInterface {
   bulkInsertSegments: (textTrackId: string, segments: SegmentInsertInput[]) => Promise<void>
   listByTrackId: (textTrackId: string) => Promise<DbTextSegment[]>
   listFirstByTrackId: (textTrackId: string, limit: number) => Promise<DbTextSegment[]>
-  searchInTrack: (textTrackId: string, language: string, query: string) => Promise<DbTextSegment[]>
   findById: (id: string) => Promise<DbTextSegment | null>
   listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
   listPageAfterIndex: (params: {
@@ -233,7 +220,6 @@ export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {
     bulkInsertSegments,
     listByTrackId,
     listFirstByTrackId,
-    searchInTrack,
     findById,
     listByIndexRange,
     listPageAfterIndex,

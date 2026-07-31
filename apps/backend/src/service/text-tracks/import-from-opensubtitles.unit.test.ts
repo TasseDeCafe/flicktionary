@@ -51,7 +51,6 @@ const buildTextSegmentsRepository = (
   bulkInsertSegments: vi.fn(),
   listByTrackId: vi.fn(),
   listFirstByTrackId: vi.fn(),
-  searchInTrack: vi.fn(),
   findById: vi.fn(),
   listByIndexRange: vi.fn(),
   listPageAfterIndex: vi.fn(),

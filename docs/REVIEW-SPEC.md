@@ -40,9 +40,14 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   sheet offers a third upgrade path: its stub state's **Save** runs
   `highlights.saveWord` → the normal `enrich_highlight` pipeline (see
   `docs/READER-SPEC.md` → note-only stub state).
-- Filter and search across the single list. There is no bulk Keep all / Reject
-  all and no generic card-status mutation: cards keep themselves once they gain
-  basic data, so the only user-driven transition is `cards.removeFromSession`.
+- Filter and search across the single list — including the still-enriching
+  placeholder rows, matched on their highlight's selection text. Matching uses
+  the shared fuzzy matcher (`@flicktionary/core/utils/search-match`: case-,
+  accent- and hyphen-insensitive substring plus one-typo tolerance for words of
+  4+ letters) against the surface form and headword independently. There is no
+  bulk Keep all / Reject all and no generic card-status mutation: cards keep
+  themselves once they gain basic data, so the only user-driven transition is
+  `cards.removeFromSession`.
 - Reader-saved highlights materialize as `needs_data` cards (the enrichment job
   inserts cards in `needs_data`; user highlights bypass the CEFR floor) and then
   auto-keep once basic data lands. Vocabulary membership and the recognition

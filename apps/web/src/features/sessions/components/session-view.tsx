@@ -8,6 +8,7 @@ import { Bookmark, ChevronDown, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
+import { createSearchMatcher, normalizeForSearch } from '@flicktionary/core/utils/search-match'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
@@ -22,7 +23,6 @@ import {
   useGetStudySession,
   useGetUserPrefs,
   useListSegmentsByTrack,
-  useSearchSegments,
   useListHighlightsBySession,
   useListGhostsBySession,
   useMarkKnownPreview,
@@ -99,8 +99,18 @@ export const SessionView = () => {
   const isSearching = debouncedSearch.length > 0
 
   const { data: allSegments, isLoading: isSegmentsLoading } = useListSegmentsByTrack(trackId)
-  const { data: searchSegments } = useSearchSegments(trackId, debouncedSearch, isSearching)
-  const visibleSegments = isSearching ? (searchSegments ?? []) : (allSegments ?? [])
+  // Search is fully client-side (the whole track is already loaded). Segment
+  // text is normalized once per track — not per keystroke — because extension
+  // tracks can reach 10k segments.
+  const normalizedSegmentTexts = useMemo(
+    () => (allSegments ?? []).map((s) => normalizeForSearch(s.text)),
+    [allSegments]
+  )
+  const visibleSegments = useMemo(() => {
+    if (!isSearching) return allSegments ?? []
+    const matcher = createSearchMatcher(debouncedSearch)
+    return (allSegments ?? []).filter((_, i) => matcher.matchesNormalized(normalizedSegmentTexts[i]!))
+  }, [isSearching, debouncedSearch, allSegments, normalizedSegmentTexts])
 
   const { data: highlights } = useListHighlightsBySession(sessionId)
   const { data: userPrefs } = useGetUserPrefs()
