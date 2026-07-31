@@ -51,7 +51,14 @@ export const contentSourcesContract = {
 
   createFromTmdb: oc
     .route({ method: 'POST', path: '/content-sources/tmdb', successStatus: 201 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      // 'GUEST_SOURCE_LIMIT_REACHED' in errors[0].code: an anonymous user hit
+      // the per-guest source-creation cap — the web app shows the
+      // create-account (save-progress) prompt. Same on every source-creating
+      // procedure.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         tmdbId: z.number().int(),
@@ -93,7 +100,10 @@ export const contentSourcesContract = {
 
   createFromTmdbTv: oc
     .route({ method: 'POST', path: '/content-sources/tmdb/tv', successStatus: 201 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         tmdbShowId: z.number().int(),
@@ -111,7 +121,10 @@ export const contentSourcesContract = {
 
   createText: oc
     .route({ method: 'POST', path: '/content-sources/text', successStatus: 201 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         title: z.string().min(1).max(200),

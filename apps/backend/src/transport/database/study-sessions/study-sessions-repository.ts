@@ -2,6 +2,7 @@ import type postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import type { TrackModeration } from '../text-tracks/text-tracks-repository'
+import { assertGuestSessionQuota, assertGuestSourceQuota } from '../guests/guest-source-quota'
 
 export type DbStudySession = Tables<'study_sessions'>
 export type DbTextTrack = Tables<'text_tracks'>
@@ -30,28 +31,34 @@ const insertStudySession = async (params: {
   targetLanguage: string
   cefrLevel: string
 }): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
-  const inserted = (await sql`
-    INSERT INTO public.study_sessions (
-      user_id, content_source_id, text_track_id,
-      native_language, target_language, cefr_level
-    )
-    SELECT
-      ${params.userId},
-      ${params.contentSourceId},
-      ${params.textTrackId},
-      ${params.nativeLanguage},
-      ${params.targetLanguage},
-      ${params.cefrLevel}
-    WHERE EXISTS (
-      SELECT 1
-      FROM public.text_tracks
-      WHERE id = ${params.textTrackId}
-        AND content_source_id = ${params.contentSourceId}
-    )
-    ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
-      DO NOTHING
-    RETURNING *
-  `) as DbStudySession[]
+  const inserted = await beginTx(async (tx) => {
+    // A session is how a globally-deduped movie/TV source enters a guest's
+    // library — the quota is enforced here, atomically with the insert
+    // (already-attached sources re-resolve freely via the conflict clause).
+    await assertGuestSessionQuota(params.userId, params.contentSourceId, tx)
+    return (await tx`
+      INSERT INTO public.study_sessions (
+        user_id, content_source_id, text_track_id,
+        native_language, target_language, cefr_level
+      )
+      SELECT
+        ${params.userId},
+        ${params.contentSourceId},
+        ${params.textTrackId},
+        ${params.nativeLanguage},
+        ${params.targetLanguage},
+        ${params.cefrLevel}
+      WHERE EXISTS (
+        SELECT 1
+        FROM public.text_tracks
+        WHERE id = ${params.textTrackId}
+          AND content_source_id = ${params.contentSourceId}
+      )
+      ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
+        DO NOTHING
+      RETURNING *
+    `) as DbStudySession[]
+  })
   const insertedSession = inserted[0]
   if (insertedSession) return { session: insertedSession, alreadyExisted: false }
 
@@ -324,6 +331,19 @@ const getOrCreateForYoutubeVideo = async (params: {
       videoTitle: params.videoTitle,
       videoUrl: params.videoUrl,
     }
+    // Guest quota: a probe miss (mirroring the upsert's conflict key below)
+    // means a new source; a hit re-checks at the session level, so re-opening
+    // a video whose session is still live stays free at the cap while
+    // re-ingesting one whose session was deleted takes a slot again.
+    const existingSource = (await tx`
+      SELECT id FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type = 'youtube'
+        AND metadata->>'youtubeVideoId' = ${params.youtubeVideoId}
+      LIMIT 1
+    `) as { id: string }[]
+    if (existingSource[0]) await assertGuestSessionQuota(params.userId, existingSource[0].id, tx)
+    else await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
@@ -381,6 +401,17 @@ const getOrCreateForStreamingVideo = async (params: {
       videoTitle: params.videoTitle,
       videoUrl: params.videoUrl,
     }
+    // Same guest-quota probe as the YouTube flow, keyed on the streaming
+    // conflict key (user, contentHash).
+    const existingSource = (await tx`
+      SELECT id FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type = 'streaming'
+        AND metadata->>'contentHash' = ${params.contentHash}
+      LIMIT 1
+    `) as { id: string }[]
+    if (existingSource[0]) await assertGuestSessionQuota(params.userId, existingSource[0].id, tx)
+    else await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
@@ -441,6 +472,19 @@ const getOrCreateForImportedText = async (params: {
       contentHash: params.contentHash,
       sourceUrl: params.sourceUrl,
     }
+    // Guest-quota probe on the imported-text conflict key (user, contentHash
+    // across both 'article' and 'text'): re-importing a body whose session is
+    // still live resolves freely at the cap; a new body (or one whose session
+    // was deleted) takes a slot.
+    const existingSource = (await tx`
+      SELECT id FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type IN ('article', 'text')
+        AND metadata->>'contentHash' = ${params.contentHash}
+      LIMIT 1
+    `) as { id: string }[]
+    if (existingSource[0]) await assertGuestSessionQuota(params.userId, existingSource[0].id, tx)
+    else await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (

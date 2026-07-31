@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { AlertTriangle, ChevronDown, Sparkles, Trophy } from 'lucide-react'
 import { toast } from 'sonner'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import type { ImportBatchRow } from '@flicktionary/api-client/orpc-contracts/lesson-import-contract'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
@@ -116,6 +117,8 @@ export const LessonImportConfirmView = () => {
             setCefrNeeded(true)
             return
           }
+          // The central handler already opens the create-account prompt.
+          if (code === ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED) return
           toast.error(t`Failed to add the cards`)
         },
       }

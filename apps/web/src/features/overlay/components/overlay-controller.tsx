@@ -6,6 +6,7 @@ import { ContactUsOverlayContent } from '@/features/contact/components/contact-u
 import { RateLimitingOverlayContent } from './rate-limiting-overlay-content'
 import { PricingOverlayContent } from '@/features/billing/components/pricing-overlay-content'
 import { DeleteAccountOverlayContent } from '@/features/removals/components/delete-account-overlay-content'
+import { GuestSourceLimitOverlayContent } from '@/features/auth/components/guest-source-limit-overlay-content'
 import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 import { useRouter } from '@tanstack/react-router'
@@ -30,6 +31,9 @@ const OVERLAY_CONFIG: Record<OverlayId, OverlayConfig> = {
   },
   [OverlayId.DELETE_ACCOUNT]: {
     component: DeleteAccountOverlayContent,
+  },
+  [OverlayId.GUEST_SOURCE_LIMIT]: {
+    component: GuestSourceLimitOverlayContent,
   },
 }
 

@@ -17,6 +17,7 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
@@ -697,6 +698,18 @@ export const StudySessionsRouter = (
         if (result.reason === 'blocked') {
           throw errors.UNPROCESSABLE_ENTITY({
             data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
+          })
+        }
+        if (result.reason === 'guest-limit') {
+          throw errors.FORBIDDEN({
+            data: {
+              errors: [
+                {
+                  code: ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED,
+                  message: `Guest accounts can add up to ${result.limit} content sources — create a free account to keep going`,
+                },
+              ],
+            },
           })
         }
         throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(result) })

@@ -4,6 +4,7 @@ export const OverlayId = {
   RATE_LIMITING: 'rate-limiting',
   PRICING: 'pricing',
   DELETE_ACCOUNT: 'delete-account',
+  GUEST_SOURCE_LIMIT: 'guest-source-limit',
 } as const
 
 export type OverlayId = (typeof OverlayId)[keyof typeof OverlayId]

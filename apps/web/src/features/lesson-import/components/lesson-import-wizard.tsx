@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ArrowRight, FileSpreadsheet, Languages, LoaderCircle, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Checkbox } from '@flicktionary/ui/components/checkbox'
@@ -190,6 +191,8 @@ export const LessonImportWizard = () => {
             toast.error(t`This text appears to contain explicit content and can't be imported.`)
             return
           }
+          // The central handler already opens the create-account prompt.
+          if (code === ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED) return
           toast.error(t`Failed to start the import`)
         },
       }

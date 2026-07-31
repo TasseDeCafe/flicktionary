@@ -1,5 +1,6 @@
 import { createHash } from 'crypto'
 import { beginTx } from '../../transport/database/postgres-client'
+import { assertGuestLessonBatchQuota, assertGuestSourceQuota } from '../../transport/database/guests/guest-source-quota'
 import type {
   DbImportBatch,
   ImportBatchesRepositoryInterface,
@@ -46,6 +47,7 @@ export const createBatch = async (
     inputHash,
   })
   if (existing) {
+    // Resuming an existing draft is free — the quota below gates NEW drafts.
     // A resumed batch was normally checked at creation. NULL status means it
     // predates moderation or was created while the classifier failed open —
     // re-check so that gap can't be ridden forever; first verdict wins.
@@ -63,6 +65,15 @@ export const createBatch = async (
     }
     return { ok: true, batch: existing, resumed: true }
   }
+
+  // Guests are gated BEFORE the moderation call and the extraction enqueue —
+  // drafts run LLM extraction before any source exists, so without this a
+  // guest could queue unlimited extraction jobs while consuming zero library
+  // slots. Both checks throw GuestSourceLimitError (mapped to the typed 403
+  // by the error boundary): a full library means confirm would fail anyway,
+  // and the pending-draft bound stops zero-slot spam.
+  await assertGuestSourceQuota(params.userId)
+  await assertGuestLessonBatchQuota(params.userId)
 
   // The title is user-authored too — moderate it with the body.
   const outcome = await moderateIngestText([params.sourceTitle, normalized].join('\n'), deps.anthropicPasses, {

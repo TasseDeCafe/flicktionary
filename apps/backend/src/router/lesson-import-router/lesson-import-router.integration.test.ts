@@ -7,6 +7,9 @@ import {
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
+import { __getAnonymousSupabaseToken } from '../../test/test-utils'
+import { getConfig } from '../../config/environment-config'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -155,5 +158,42 @@ describe('lesson-import-router', () => {
       .send({ decisions: [] })
 
     expect(confirmed.status).toBe(409)
+  })
+})
+
+// Drafts run LLM extraction before any source exists, so guests are bounded
+// to maxSourcesPerGuest live drafts at createBatch — before the moderation
+// call and the extraction enqueue. Resuming an existing draft stays free.
+describe('lesson-import-router guest draft bound', () => {
+  const guestApp = buildTestApp({
+    isGuestModeEnabled: true,
+    anthropicPasses: MockAnthropicPasses({
+      moderationPass: vi.fn().mockResolvedValue({ verdict: 'allow' }) as never,
+    }),
+  })
+  const limit = getConfig().maxSourcesPerGuest
+
+  const createBatch = (token: string, rawText: string) =>
+    request(guestApp)
+      .post('/api/v1/lesson-import/batches')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'de', sourceTitle: 'Lesson notes', rawText })
+
+  test('a guest is capped at the draft bound; resuming an existing draft stays free', async () => {
+    const { token } = await __getAnonymousSupabaseToken()
+
+    const texts = Array.from({ length: limit }, () => `der Tisch — the table (${__generateUniqueId('guest-lesson')})`)
+    for (const rawText of texts) {
+      const response = await createBatch(token, rawText)
+      expect(response.status).toBe(200)
+    }
+
+    const rejected = await createBatch(token, `die Katze — the cat (${__generateUniqueId('guest-lesson')})`)
+    expect(rejected.status).toBe(403)
+    expect(rejected.body.data.errors[0].code).toBe(ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED)
+
+    const resumed = await createBatch(token, texts[0]!)
+    expect(resumed.status).toBe(200)
+    expect(resumed.body.data.resumed).toBe(true)
   })
 })

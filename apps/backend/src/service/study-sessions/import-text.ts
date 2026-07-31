@@ -7,6 +7,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import type { HardBlockCategory } from '../../transport/third-party/anthropic/passes/moderation-pass'
+import { GuestSourceLimitError } from '../../transport/database/guests/guest-source-quota'
 import { parsePastedText } from '../../utils/text-paste-parser'
 import { ensureTrackLemmaProfileJob } from '../lemma-profiles/ensure-profile-job'
 import { moderateIngestText } from '../moderation/moderate-ingest-text'
@@ -95,6 +96,10 @@ export type ImportTextResult =
   | { ok: false; reason: 'unsupported' }
   | { ok: false; reason: 'needs-onboarding' }
   | { ok: false; reason: 'missing-cefr'; targetLanguage: string }
+  // Anonymous user at the per-guest source cap and this body is new (an
+  // idempotent re-import of existing content succeeds instead). Callers point
+  // the user at account creation.
+  | { ok: false; reason: 'guest-limit'; limit: number }
 
 // One-shot text ingestion: parse → detect language → resolve prefs → get or
 // create source + track + segments + session. Idempotent by content hash, so
@@ -133,19 +138,28 @@ export const importTextForUser = async (
     .update(parsed.map((s) => `|${s.text}`).join('\n'))
     .digest('hex')
 
-  const { session, track, contentSource, segments } = await deps.studySessionsRepository.getOrCreateForImportedText({
-    userId,
-    type: sourceUrl ? 'article' : 'text',
-    title,
-    sourceUrl,
-    contentHash,
-    language: detectedLanguage,
-    segments: parsed,
-    nativeLanguage,
-    targetLanguage: detectedLanguage,
-    cefrLevel,
-    moderation: moderation.status ? { status: moderation.status, category: moderation.category } : null,
-  })
+  let ingested
+  try {
+    ingested = await deps.studySessionsRepository.getOrCreateForImportedText({
+      userId,
+      type: sourceUrl ? 'article' : 'text',
+      title,
+      sourceUrl,
+      contentHash,
+      language: detectedLanguage,
+      segments: parsed,
+      nativeLanguage,
+      targetLanguage: detectedLanguage,
+      cefrLevel,
+      moderation: moderation.status ? { status: moderation.status, category: moderation.category } : null,
+    })
+  } catch (error) {
+    // Surfaced as a discriminated result like every other outcome here, so the
+    // extension route and the Telegram bot each map it to their own surface.
+    if (error instanceof GuestSourceLimitError) return { ok: false, reason: 'guest-limit', limit: error.limit }
+    throw error
+  }
+  const { session, track, contentSource, segments } = ingested
 
   void deps.usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
     logError({

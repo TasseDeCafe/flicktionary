@@ -1,6 +1,7 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import {
   ERROR_CODE_FOR_GUEST_ACCESS_DISABLED,
+  ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED,
   ERROR_CODE_FOR_INVALID_TOKEN,
   ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED,
 } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
@@ -30,6 +31,12 @@ import { msg, t } from '@lingui/core/macro'
 // PostHog exception tracking either.
 const isGuestAccessDisabledError = (error: unknown) =>
   error instanceof ORPCError && getBackendErrorCode(error) === ERROR_CODE_FOR_GUEST_ACCESS_DISABLED
+
+// A guest hitting the per-guest source cap is the expected conversion moment,
+// not a failure — it gets the create-account prompt and stays out of error
+// tracking.
+const isGuestSourceLimitError = (error: unknown) =>
+  error instanceof ORPCError && getBackendErrorCode(error) === ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED
 
 const handleGenericApiError = (meta?: QueryMeta) => {
   const showErrorToast = meta?.showErrorToast ?? true
@@ -66,6 +73,12 @@ const handleApiError = (error: unknown, meta?: QueryMeta) => {
   }
 
   if (error.code === 'FORBIDDEN') {
+    if (backendErrorCode === ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED) {
+      POSTHOG_EVENTS.guestSourceLimitReached()
+      useOverlayStore.getState().openOverlay(OverlayId.GUEST_SOURCE_LIMIT)
+      return
+    }
+
     if (backendErrorCode === ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED) {
       POSTHOG_EVENTS.showPaywallToUser()
       if (typeof window !== 'undefined') {
@@ -166,7 +179,7 @@ export const queryClient = new QueryClient({
 
       handleApiError(error, meta)
 
-      if (!isExpectedValidationError(error) && !isGuestAccessDisabledError(error)) {
+      if (!isExpectedValidationError(error) && !isGuestAccessDisabledError(error) && !isGuestSourceLimitError(error)) {
         logError({
           message: `MutationKey ${JSON.stringify(mutation.options.mutationKey)} failed`,
           error,

@@ -152,6 +152,16 @@ export const runImportAttempt = async (
     return
   }
 
+  // Terminal — the guest must convert on the web before importing more. The
+  // link lands in the browser that holds their guest session.
+  if (result.reason === 'guest-limit') {
+    await telegramApi.sendMessage({
+      chatId,
+      text: `You're on a guest account, which can add up to ${result.limit} texts. Create a free account at ${getConfig().webUrl}/save-progress to keep importing — everything you've saved carries over.`,
+    })
+    return
+  }
+
   // Terminal — no pending stash: a retry would hit the same verdict.
   if (result.reason === 'blocked') {
     await telegramApi.sendMessage({
