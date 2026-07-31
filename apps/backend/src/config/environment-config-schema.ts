@@ -34,10 +34,10 @@ export const environmentConfigSchema = z.object({
   // too. Supabase-side anonymous sign-ins stay permanently enabled; this flag
   // is the only thing ever toggled.
   isGuestModeEnabled: z.boolean(),
-  // Cap on an anonymous (guest) user's source LIBRARY — sources they created
-  // plus globally-deduped ones they attached via a session
-  // (MAX_SOURCES_PER_GUEST in Doppler). Wallet protection: sources feed the
-  // LLM enrichment pipeline and there is no other per-user quota.
+  // Cap on an anonymous (guest) user's source LIBRARY — the distinct
+  // non-adhoc sources they hold a live session on — and on their live lesson
+  // drafts (MAX_SOURCES_PER_GUEST in Doppler). Wallet protection: sources
+  // feed the LLM enrichment pipeline and there is no other per-user quota.
   maxSourcesPerGuest: z.number().int().min(0),
   supabaseProjectUrl: z.string().min(1),
   supabaseSecretKey: z.string().min(1),
