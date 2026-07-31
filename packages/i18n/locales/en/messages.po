@@ -1396,6 +1396,10 @@ msgstr "Create a free account, then start pairing again from the extension popup
 msgid "Create account"
 msgstr "Create account"
 
+#: apps/web/src/features/auth/components/guest-sign-out-confirm-overlay.tsx
+msgid "Create account first"
+msgstr "Create account first"
+
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "Create account to save your progress"
 msgstr "Create account to save your progress"
@@ -4673,6 +4677,14 @@ msgstr "Sign in with Flicktionary"
 msgid "Sign out"
 msgstr "Sign out"
 
+#: apps/web/src/features/auth/components/guest-sign-out-confirm-overlay.tsx
+msgid "Sign out anyway"
+msgstr "Sign out anyway"
+
+#: apps/web/src/features/auth/components/guest-sign-out-confirm-overlay.tsx
+msgid "Sign out of your guest session?"
+msgstr "Sign out of your guest session?"
+
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "Sign up"
 msgstr "Sign up"
@@ -4690,6 +4702,10 @@ msgstr "Signed out successfully"
 #: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signing in…"
 msgstr "Signing in…"
+
+#: apps/web/src/features/auth/components/guest-sign-out-confirm-overlay.tsx
+msgid "Signing out…"
+msgstr "Signing out…"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Singular-only"
@@ -5198,6 +5214,10 @@ msgstr "There was an error sending the verification email. Please try again."
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
+
+#: apps/web/src/features/auth/components/guest-sign-out-confirm-overlay.tsx
+msgid "There's no way to sign back in to a guest session. If you sign out now, everything you've saved — sessions, vocabulary, and practice progress — will be permanently lost. Create a free account first to keep it."
+msgstr "There's no way to sign back in to a guest session. If you sign out now, everything you've saved — sessions, vocabulary, and practice progress — will be permanently lost. Create a free account first to keep it."
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "These saved words appeared in what you just read. Mark them as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
