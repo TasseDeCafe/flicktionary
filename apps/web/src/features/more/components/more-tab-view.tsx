@@ -34,6 +34,7 @@ import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-s
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
 import { MoreListSection } from './more-list-section'
 import { MoreListRow } from './more-list-row'
+import { GuestSaveProgressBanner } from '@/features/auth/components/guest-save-progress-banner'
 
 export const MoreTabView = () => {
   const { t } = useLingui()
@@ -105,6 +106,8 @@ export const MoreTabView = () => {
           </Button>
         </div>
       )}
+
+      <GuestSaveProgressBanner />
 
       <MoreListSection title={t`General`}>
         <MoreListRow

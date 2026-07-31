@@ -8,7 +8,7 @@ import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 import { useGetSubscriptionDetails } from '@/features/billing/api/billing-hooks'
 import { useCreateCustomerPortalSession } from '@/features/billing/api/portal-session-hooks'
 import { logError } from '@/lib/analytics/log-error'
-import { getUserAvatarUrl, getUserEmail, getUserName, useAuthStore } from '@/stores/auth-store'
+import { getIsAnonymous, getUserAvatarUrl, getUserEmail, getUserName, useAuthStore } from '@/stores/auth-store'
 
 const getInitials = (name: string | null, email: string | null): string => {
   if (name) {
@@ -29,6 +29,7 @@ export const AccountPage = () => {
   const userEmail = useAuthStore(getUserEmail)
   const userName = useAuthStore(getUserName)
   const avatarUrl = useAuthStore(getUserAvatarUrl)
+  const isAnonymous = useAuthStore(getIsAnonymous)
   const openOverlay = useOverlayStore((state) => state.openOverlay)
 
   const { data: subscriptionData, isLoading: isSubscriptionLoading } = useGetSubscriptionDetails()
@@ -77,23 +78,35 @@ export const AccountPage = () => {
             {avatarUrl ? (
               <img src={avatarUrl} alt={t`Avatar`} className='h-full w-full object-cover' />
             ) : (
-              <span className='text-xl font-semibold'>{getInitials(userName, userEmail)}</span>
+              <span className='text-xl font-semibold'>{getInitials(isAnonymous ? t`Guest` : userName, userEmail)}</span>
             )}
           </div>
           <div className='min-w-0'>
-            <h2 className='truncate text-xl font-bold'>{userName ?? t`User`}</h2>
-            <p className='text-muted-foreground truncate text-sm'>{userEmail}</p>
+            <h2 className='truncate text-xl font-bold'>{isAnonymous ? t`Guest` : (userName ?? t`User`)}</h2>
+            <p className='text-muted-foreground truncate text-sm'>{isAnonymous ? t`No account yet` : userEmail}</p>
           </div>
         </div>
 
-        <button
-          onClick={handleBillingClick}
-          disabled={isSubscriptionLoading || isCustomerPortalPending}
-          className='bg-card hover:bg-accent flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left disabled:opacity-50'
-        >
-          <span className='font-medium'>{getBillingLabel()}</span>
-          <ChevronRight className='text-muted-foreground h-5 w-5' />
-        </button>
+        {/* A guest has no email, so billing can't work; the useful action is
+            converting to a permanent account first. */}
+        {isAnonymous ? (
+          <button
+            onClick={() => navigate({ to: '/save-progress' })}
+            className='bg-card hover:bg-accent active:bg-accent/80 flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors'
+          >
+            <span className='font-medium'>{t`Create account to save your progress`}</span>
+            <ChevronRight className='text-muted-foreground h-5 w-5' />
+          </button>
+        ) : (
+          <button
+            onClick={handleBillingClick}
+            disabled={isSubscriptionLoading || isCustomerPortalPending}
+            className='bg-card hover:bg-accent flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left disabled:opacity-50'
+          >
+            <span className='font-medium'>{getBillingLabel()}</span>
+            <ChevronRight className='text-muted-foreground h-5 w-5' />
+          </button>
+        )}
       </div>
     </ModalScreen>
   )

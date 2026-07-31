@@ -10,6 +10,7 @@ import { ShowGroupCard } from '@/features/sessions/components/show-group-card'
 import { SessionRemoveDialog } from '@/features/sessions/components/session-remove-dialog'
 import { SessionsEmptyState } from '@/features/sessions/components/sessions-empty-state'
 import { GettingStartedChecklist } from '@/features/sessions/components/getting-started-checklist'
+import { GuestSaveProgressBanner } from '@/features/auth/components/guest-save-progress-banner'
 import { CoverageCard } from '@/features/coverage/components/coverage-card'
 import { useQualifyingCoverage } from '@/features/coverage/api/coverage-hooks'
 import { ActivityCalendarCard } from './activity-calendar-card'
@@ -46,6 +47,8 @@ export const DashboardView = () => {
     <PageContainer width='wide'>
       <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{dateLabel}</div>
       <h1 className='text-2xl font-bold'>{t`Dashboard`}</h1>
+
+      <GuestSaveProgressBanner className='mt-4' />
 
       <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
 

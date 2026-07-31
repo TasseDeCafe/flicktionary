@@ -78,4 +78,12 @@ export const POSTHOG_EVENTS = {
   signOut: () => {
     capture('sign_out')
   },
+  // Guest → account conversion funnel: the confirmation email went out…
+  guestConversionEmailSent: () => {
+    capture('guest_conversion_email_sent')
+  },
+  // …and the anonymous account became a permanent one (same user id).
+  guestConvertedToAccount: (method: 'email' | 'google') => {
+    capture('guest_converted_to_account', { method })
+  },
 }

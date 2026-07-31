@@ -9,10 +9,16 @@ import { useMutation } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 
 // the user lands here after clicking on the magic link in the email.
-// The email template is defined:
-// dev:        backend/supabase/supabase-dev/supabase/templates/magic-link-verification.html
-// dev-tunnel: backend/supabase/supabase-dev/supabase/templates/magic-link-verification.html
+// The email templates are defined:
+// dev:        backend/supabase/supabase-dev/supabase/templates/*.html
+// dev-tunnel: backend/supabase/supabase-dev-tunnel/supabase/templates/*.html
 // prod:       https://supabase.com/dashboard/project/<project-id>/auth/templates
+//
+// Two flows share this page, distinguished by the `type` the template stamps:
+// - magiclink: the normal email sign-in link
+// - email_change: a guest confirming the email that converts their anonymous
+//   account into a permanent one (save-progress-view.tsx) — verifying keeps
+//   the same user id, so everything they saved carries over.
 export const LoginEmailVerifyView = () => {
   const { t } = useLingui()
 
@@ -21,6 +27,7 @@ export const LoginEmailVerifyView = () => {
 
   const searchParams = new URLSearchParams(location.search)
   const hash = searchParams.get('token_hash')
+  const otpType = searchParams.get('type') === 'email_change' ? 'email_change' : 'magiclink'
   // Only allow same-origin relative paths (e.g. /extension-pair?nonce=...) to avoid an open redirect
   // after authentication. Anything else falls back to the default destination.
   const redirectParam = searchParams.get('redirect')
@@ -44,13 +51,16 @@ export const LoginEmailVerifyView = () => {
         POSTHOG_EVENTS.noTokenHashProvided()
         throw new Error('No token hash provided')
       }
-      const { error } = await supabaseClient.auth.verifyOtp({ token_hash: hash, type: 'magiclink' })
+      const { error } = await supabaseClient.auth.verifyOtp({ token_hash: hash, type: otpType })
       if (error) {
         POSTHOG_EVENTS.magicLinkFailureOrExpiration()
         throw new Error('token verification failed')
       }
     },
     onSuccess: () => {
+      if (otpType === 'email_change') {
+        POSTHOG_EVENTS.guestConvertedToAccount('email')
+      }
       if (redirectTo) {
         // redirectTo may include a query string (e.g. the pairing nonce), which navigate({ to }) does
         // not parse — use a hard navigation to preserve it and let the auth guard re-run with the session.
@@ -81,6 +91,11 @@ export const LoginEmailVerifyView = () => {
               <h1 className='text-2xl font-semibold tracking-tight'>{t`Link expired or invalid`}</h1>
               <p className='text-muted-foreground'>{t`Please request a new verification link.`}</p>
             </>
+          ) : otpType === 'email_change' ? (
+            <>
+              <h1 className='text-2xl font-semibold tracking-tight'>{t`Confirm your email`}</h1>
+              <p className='text-muted-foreground'>{t`Click the button below to confirm your email and save your account.`}</p>
+            </>
           ) : (
             <>
               <h1 className='text-2xl font-semibold tracking-tight'>{t`Verify your email`}</h1>
@@ -97,7 +112,7 @@ export const LoginEmailVerifyView = () => {
             </Button>
           ) : (
             <Button size='xl' className='w-full' onClick={handleVerifyEmailClick} disabled={isPending}>
-              {isPending ? t`Verifying...` : t`Verify`}
+              {isPending ? t`Verifying...` : otpType === 'email_change' ? t`Confirm` : t`Verify`}
             </Button>
           )}
         </div>

@@ -78,7 +78,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
 }))
 
 export const getIsSignedIn = (state: AuthStore) => !!state.session?.access_token
-export const getUserEmail = (state: AuthStore) => state.session?.user?.user_metadata?.email ?? ''
+// Prefer the verified top-level email: a guest converted via
+// updateUser({ email }) never gets user_metadata.email written.
+export const getUserEmail = (state: AuthStore) =>
+  state.session?.user?.email || (state.session?.user?.user_metadata?.email ?? '')
 export const getUserName = (state: AuthStore) => state.session?.user?.user_metadata?.name ?? ''
 export const getUserId = (state: AuthStore) => state.session?.user?.id ?? ''
 export const getIsAnonymous = (state: AuthStore) => state.session?.user?.is_anonymous ?? false
