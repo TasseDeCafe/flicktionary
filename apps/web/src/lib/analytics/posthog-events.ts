@@ -91,4 +91,15 @@ export const POSTHOG_EVENTS = {
   guestConvertedToAccount: (method: 'email' | 'google') => {
     capture('guest_converted_to_account', { method })
   },
+  // Invisible Turnstile couldn't produce a token (or GoTrue rejected one), so
+  // the visitor was silently downgraded to the /login redirect. For
+  // server_rejected, `code` carries the GoTrue error code: 'captcha_failed'
+  // means a secret/rollout problem, anything else is a rate limit or outage
+  // masquerading — don't diagnose captcha from the reason alone.
+  guestCaptchaFailed: (
+    reason: 'script_blocked' | 'challenge_failed' | 'timeout' | 'server_rejected',
+    props?: { code: string }
+  ) => {
+    capture('guest_captcha_failed', { reason, ...props })
+  },
 }
