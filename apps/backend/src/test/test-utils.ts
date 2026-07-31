@@ -26,7 +26,7 @@ export const buildTestApp = (overrides: Partial<AppDependencies> = {}): Express 
 
 // Path to the signing key used by the test Supabase instance
 // you can regenerate this key with supabase gen signing-key
-const SIGNING_KEY_PATH = path.join(__dirname, '../../supabase/supabase-test/supabase/signing_key.json')
+export const SIGNING_KEY_PATH = path.join(__dirname, '../../supabase/supabase-test/supabase/signing_key.json')
 
 const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Promise<string> => {
   const supabaseClaims: SupabaseClaims = {

@@ -12,6 +12,10 @@ export interface SupabaseClaims {
   // Present on tokens minted by Supabase anonymous sign-ins. Anonymous users
   // have no email and their metadata can be empty, hence the optional fields.
   is_anonymous?: boolean
+  // GoTrue mints this from the verified auth.users.email ("" for anonymous
+  // users). It is the only email a guest converted via updateUser({ email })
+  // carries — conversion never writes user_metadata.
+  email?: string
   user_metadata?: {
     name?: string
     full_name?: string
@@ -44,8 +48,13 @@ export const tokenAuthenticationMiddleware =
     } else {
       try {
         const decoded = await verifySupabaseToken(token)
-        const { sub, is_anonymous: isAnonymous = false, user_metadata = {} } = decoded
-        const { name, full_name, email, avatar_url } = user_metadata
+        const { sub, is_anonymous: isAnonymous = false, email: verifiedEmail, user_metadata = {} } = decoded
+        const { name, full_name, email: metadataEmail, avatar_url } = user_metadata
+        // Prefer the verified top-level claim: user_metadata is user-writable
+        // (any client can call updateUser({ data })), and a guest converted to
+        // a permanent account has an email only in the top-level claim. The
+        // metadata fallback covers tokens that omit the claim.
+        const email = verifiedEmail || metadataEmail
 
         // The kill switch locks out existing guest sessions too: the token is
         // cryptographically valid, but anonymous access is administratively off.

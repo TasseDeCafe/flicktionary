@@ -30,6 +30,7 @@ import { Route as AuthenticatedRedirectToCheckOutPlanIntervalRouteImport } from 
 import { Route as AuthenticatedProfileDangerZoneRouteImport } from './routes/_authenticated/profile/danger-zone'
 import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './routes/_authenticated/pricing/free-trial-explanation'
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
+import { Route as AuthenticatedAppSaveProgressRouteImport } from './routes/_authenticated/_app/save-progress'
 import { Route as AuthenticatedAppOnboardingRouteImport } from './routes/_authenticated/_app/onboarding'
 import { Route as AuthenticatedAppVocabularyIndexRouteImport } from './routes/_authenticated/_app/vocabulary/index'
 import { Route as AuthenticatedAppStatsIndexRouteImport } from './routes/_authenticated/_app/stats/index'
@@ -168,6 +169,12 @@ const AuthenticatedPricingCheckoutSuccessRoute =
     id: '/pricing/checkout-success',
     path: '/pricing/checkout-success',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppSaveProgressRoute =
+  AuthenticatedAppSaveProgressRouteImport.update({
+    id: '/save-progress',
+    path: '/save-progress',
+    getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppOnboardingRoute =
   AuthenticatedAppOnboardingRouteImport.update({
@@ -345,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/save-progress': typeof AuthenticatedAppSaveProgressRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -393,6 +401,7 @@ export interface FileRoutesByTo {
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/save-progress': typeof AuthenticatedAppSaveProgressRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -444,6 +453,7 @@ export interface FileRoutesById {
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/_authenticated/_app/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/_authenticated/_app/save-progress': typeof AuthenticatedAppSaveProgressRoute
   '/_authenticated/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/_authenticated/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/_authenticated/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/account/removed'
     | '/login/'
     | '/onboarding'
+    | '/save-progress'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/account/removed'
     | '/login'
     | '/onboarding'
+    | '/save-progress'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -592,6 +604,7 @@ export interface FileRouteTypes {
     | '/account/removed'
     | '/login/'
     | '/_authenticated/_app/onboarding'
+    | '/_authenticated/_app/save-progress'
     | '/_authenticated/pricing/checkout-success'
     | '/_authenticated/pricing/free-trial-explanation'
     | '/_authenticated/profile/danger-zone'
@@ -792,6 +805,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingCheckoutSuccessRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_app/save-progress': {
+      id: '/_authenticated/_app/save-progress'
+      path: '/save-progress'
+      fullPath: '/save-progress'
+      preLoaderRoute: typeof AuthenticatedAppSaveProgressRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/onboarding': {
       id: '/_authenticated/_app/onboarding'
       path: '/onboarding'
@@ -986,6 +1006,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
+  AuthenticatedAppSaveProgressRoute: typeof AuthenticatedAppSaveProgressRoute
   AuthenticatedAppCoverageLangRoute: typeof AuthenticatedAppCoverageLangRoute
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
   AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
@@ -1016,6 +1037,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
+  AuthenticatedAppSaveProgressRoute: AuthenticatedAppSaveProgressRoute,
   AuthenticatedAppCoverageLangRoute: AuthenticatedAppCoverageLangRoute,
   AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
   AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
