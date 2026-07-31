@@ -48,6 +48,7 @@ describe('getActivity', () => {
       removeUserFromAuthUsers: async () => true,
       findUserById: async () => null,
       getJoinedDay: async () => (overrides && 'joinedDay' in overrides ? overrides.joinedDay! : '2026-06-01'),
+      deleteStaleAnonymousUsers: async () => 0,
     }
     return { statsRepository, authUsersRepository }
   }

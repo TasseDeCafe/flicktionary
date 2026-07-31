@@ -12,6 +12,8 @@ import { RevenuecatSubscriptionsRepository } from './transport/database/revenuec
 import { UsersRepository } from './transport/database/users/users-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { EnrichmentWorker } from './service/long-running/enrichment-worker/enrichment-worker'
+import { AnonymousCleanupWorker } from './service/long-running/anonymous-cleanup-worker/anonymous-cleanup-worker'
+import { buildAuthUsersRepository } from './transport/database/auth-users/auth-users-repository'
 import { buildProcessingDependencies } from './service/processing/processing-dependencies'
 import { AnthropicPasses } from './transport/third-party/anthropic/anthropic-passes'
 import { TelegramApi } from './transport/third-party/telegram/telegram-api'
@@ -40,6 +42,10 @@ const startServer = async () => {
       usersRepository
     )
     const enrichmentWorker = EnrichmentWorker(ProcessingJobsRepository(), buildProcessingDependencies())
+    const anonymousCleanupWorker = AnonymousCleanupWorker(buildAuthUsersRepository(), {
+      intervalDays: getConfig().anonCleanupIntervalDays,
+      retentionDays: getConfig().anonRetentionDays,
+    })
 
     const telegramApi = TelegramApi()
     // Dev transport only: production receives updates via the webhook, and
@@ -64,6 +70,7 @@ const startServer = async () => {
           revenuecatSubscriptionsRepository: revenueCatSubscriptionsRepository,
           accessCache,
           enrichmentWorker,
+          anonymousCleanupWorker,
           usersWithFreeAccess: getConfig().usersWithFreeAccess,
           resendApi: RealResendApi,
           ...(FEATURES.STRIPE ? { stripeApi: RealStripeApi } : {}),
