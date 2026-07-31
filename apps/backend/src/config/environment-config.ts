@@ -34,6 +34,16 @@ const isGuestModeEnabled = process.env.GUEST_MODE_ENABLED === 'true'
 const parsedMaxSourcesPerGuest = parseInt(process.env.MAX_SOURCES_PER_GUEST || '3', 10)
 const maxSourcesPerGuest = Number.isNaN(parsedMaxSourcesPerGuest) ? 3 : parsedMaxSourcesPerGuest
 
+const parsePositiveInt = (raw: string | undefined, fallback: number): number => {
+  const parsed = parseInt(raw || '', 10)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+// Stale-guest cleanup sweep (anonymous-cleanup-worker): how often to sweep,
+// and how old a never-converted guest account must be before deletion.
+const anonCleanupIntervalDays = parsePositiveInt(process.env.ANON_CLEANUP_INTERVAL_DAYS, 7)
+const anonRetentionDays = parsePositiveInt(process.env.ANON_RETENTION_DAYS, 30)
+
 // Browser extension origins. We allow any chrome- or moz-extension origin during
 // development; once we have stable published extension IDs the patterns can be
 // tightened to those specific IDs. The cors package treats string values
@@ -82,6 +92,8 @@ const productionConfig: EnvironmentConfig = {
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
   maxSourcesPerGuest,
+  anonCleanupIntervalDays,
+  anonRetentionDays,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -132,6 +144,8 @@ const developmentConfig: EnvironmentConfig = {
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
   maxSourcesPerGuest,
+  anonCleanupIntervalDays,
+  anonRetentionDays,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -210,6 +224,8 @@ const testConfig: EnvironmentConfig = {
   // Static: the quota guard only fires for users flagged is_anonymous in
   // auth.users, so regular test fixtures never hit it.
   maxSourcesPerGuest: 3,
+  anonCleanupIntervalDays: 7,
+  anonRetentionDays: 30,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,

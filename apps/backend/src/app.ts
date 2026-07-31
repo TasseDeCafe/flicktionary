@@ -87,6 +87,10 @@ import {
   EnrichmentWorkerInterface,
   MockEnrichmentWorker,
 } from './service/long-running/enrichment-worker/enrichment-worker'
+import {
+  AnonymousCleanupWorkerInterface,
+  MockAnonymousCleanupWorker,
+} from './service/long-running/anonymous-cleanup-worker/anonymous-cleanup-worker'
 import { PracticeRouter } from './router/practice-router/practice-router'
 import { LanguagesRouter } from './router/languages-router/languages-router'
 import { ExtensionAuthRouter } from './router/extension-auth-router/extension-auth-router'
@@ -122,6 +126,7 @@ export type AppDependencies = {
   usersRepository?: UsersRepositoryInterface
   accessCache?: AccessCacheServiceInterface
   enrichmentWorker?: EnrichmentWorkerInterface
+  anonymousCleanupWorker?: AnonymousCleanupWorkerInterface
   usersWithFreeAccess?: string[]
   resendApi?: ResendApi
   stripeApi?: StripeApi
@@ -151,6 +156,7 @@ export const buildApp = ({
     UsersRepository()
   ),
   enrichmentWorker = MockEnrichmentWorker(),
+  anonymousCleanupWorker = MockAnonymousCleanupWorker(),
   usersWithFreeAccess = [],
   resendApi = MockResendApi,
   stripeApi = MockStripeApi,
@@ -585,6 +591,7 @@ export const buildApp = ({
 
   accessCache.initialize()
   enrichmentWorker.initialize()
+  anonymousCleanupWorker.initialize()
   telegramPollingWorker.initialize()
 
   return app

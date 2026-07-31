@@ -39,6 +39,11 @@ export const environmentConfigSchema = z.object({
   // drafts (MAX_SOURCES_PER_GUEST in Doppler). Wallet protection: sources
   // feed the LLM enrichment pipeline and there is no other per-user quota.
   maxSourcesPerGuest: z.number().int().min(0),
+  // Stale-guest cleanup sweep (ANON_CLEANUP_INTERVAL_DAYS /
+  // ANON_RETENTION_DAYS in Doppler, defaults 7 / 30): sweep cadence and the
+  // minimum age of a never-converted guest account before deletion.
+  anonCleanupIntervalDays: z.number().int().positive(),
+  anonRetentionDays: z.number().int().positive(),
   supabaseProjectUrl: z.string().min(1),
   supabaseSecretKey: z.string().min(1),
   // JWKS URI (asymmetric)

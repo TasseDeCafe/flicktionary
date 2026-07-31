@@ -7,6 +7,7 @@ export interface AuthUsersRepository {
   removeUserFromAuthUsers: (userId: string) => Promise<boolean>
   findUserById: (id: string) => Promise<AuthUser | null>
   getJoinedDay: (id: string) => Promise<string | null>
+  deleteStaleAnonymousUsers: (retentionDays: number) => Promise<number>
 }
 
 export const buildAuthUsersRepository = (): AuthUsersRepository => {
@@ -46,9 +47,23 @@ export const buildAuthUsersRepository = (): AuthUsersRepository => {
     return result[0]?.joined_day ?? null
   }
 
+  // Guest accounts that never converted: signing in with an email flips
+  // is_anonymous to false, so converted accounts can never match. All app
+  // data goes with the auth row via public.users.id → auth.users(id)
+  // ON DELETE CASCADE. Supabase itself never cleans anonymous users up.
+  const deleteStaleAnonymousUsers = async (retentionDays: number): Promise<number> => {
+    const result = await sql`
+      DELETE FROM auth.users
+      WHERE is_anonymous IS TRUE
+        AND created_at < NOW() - make_interval(days => ${retentionDays})
+    `
+    return result.count
+  }
+
   return {
     removeUserFromAuthUsers,
     findUserById,
     getJoinedDay,
+    deleteStaleAnonymousUsers,
   }
 }
