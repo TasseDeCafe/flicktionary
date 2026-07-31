@@ -1037,21 +1037,21 @@ export type Database = {
       removals: {
         Row: {
           created_at: string
-          email: string
+          email: string | null
           id: string
           user_id: string
           was_successful: boolean
         }
         Insert: {
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           user_id: string
           was_successful?: boolean
         }
         Update: {
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           user_id?: string
           was_successful?: boolean

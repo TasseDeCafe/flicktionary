@@ -3,7 +3,7 @@ import { Tables } from '../database.public.types'
 
 export type __DbRemoval = Tables<'removals'>
 
-export const insertRemoval = async (userId: string, email: string, wasSuccessful: boolean): Promise<string> => {
+export const insertRemoval = async (userId: string, email: string | null, wasSuccessful: boolean): Promise<string> => {
   const result = await sql`
     INSERT INTO public.removals (user_id, email, was_successful)
     VALUES (${userId}, ${email}, ${wasSuccessful})
