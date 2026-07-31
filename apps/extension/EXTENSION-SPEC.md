@@ -239,7 +239,11 @@ instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
-settings export.
+settings export. Minting the session requires an email on file, so a web
+session that is a **guest (anonymous) account** cannot pair: the page skips the
+mint entirely and shows a "create a free account" card linking to
+`/save-progress` (and the backend's `mintSession` rejects email-less users as a
+backstop).
 
 The pairing tab is closed by a **signal**, not a timer. The page can't close
 itself (`window.close()` only works on script-opened windows — the extension

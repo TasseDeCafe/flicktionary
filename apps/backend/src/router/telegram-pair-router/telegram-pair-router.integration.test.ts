@@ -4,6 +4,7 @@ import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
   __generateUniqueTelegramChatId,
+  __getAnonymousSupabaseToken,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
@@ -45,6 +46,24 @@ describe('telegram-pair-router', () => {
 
     const secondClaim = await claimRequest(testApp, token, nonce)
     expect(secondClaim.status).toBe(400)
+  })
+
+  it('rejects an anonymous (guest) claim without burning the nonce', async () => {
+    // Anonymous tokens only pass the auth middleware with the kill switch on;
+    // pin it so this test doesn't depend on the test environment's env var.
+    const testApp = buildTestApp({ telegramApi: MockTelegramApi(), isGuestModeEnabled: true })
+    const { token: guestToken } = await __getAnonymousSupabaseToken()
+    const nonce = await TelegramPairNoncesRepository().getOrCreateForChat(freshChatId(), null, 3600)
+
+    const guestClaim = await claimRequest(testApp, guestToken, nonce)
+    expect(guestClaim.status).toBe(400)
+    expect(guestClaim.body.data.errors[0].message).toBe('Create an account before connecting Telegram')
+
+    // The guard fires before the nonce is claimed, so a real account that
+    // follows the same link after converting can still pair.
+    const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+    expect((await claimRequest(testApp, token, nonce)).status).toBe(200)
   })
 
   it('rejects an expired nonce', async () => {

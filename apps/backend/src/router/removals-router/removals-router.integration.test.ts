@@ -6,6 +6,7 @@ import {
   __createUserInSupabaseAndGetHisIdAndToken,
   __generateUniqueEmail,
   __generateUniqueId,
+  __getAnonymousSupabaseToken,
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
@@ -75,6 +76,26 @@ describe('removals-router', () => {
       expect(removalResponse.status).toBe(200)
       expect(await authUsersRepository.findUserById(userId)).toBeNull()
       expect(removals).toHaveLength(1)
+      expect(removals[0].was_successful).toBe(true)
+    })
+
+    test('anonymous (guest) user with no email can remove their account', async () => {
+      // Anonymous tokens only pass the auth middleware with the kill switch on;
+      // pin it so this test doesn't depend on the test environment's env var.
+      const testApp = buildTestApp({ isGuestModeEnabled: true })
+      const { token, id: userId } = await __getAnonymousSupabaseToken()
+      await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+
+      const removalResponse = await request(testApp)
+        .post('/api/v1/removals')
+        .send({ type: 'account' })
+        .set(buildAuthorizationHeaders(token))
+
+      const removals = (await __selectAllRemovals()).filter((removal) => removal.user_id === userId)
+      expect(removalResponse.status).toBe(200)
+      expect(await authUsersRepository.findUserById(userId)).toBeNull()
+      expect(removals).toHaveLength(1)
+      expect(removals[0].email).toBeNull()
       expect(removals[0].was_successful).toBe(true)
     })
 

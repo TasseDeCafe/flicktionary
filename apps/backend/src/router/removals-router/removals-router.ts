@@ -45,7 +45,8 @@ export const removalsRouter = (
     postRemoval: implementer.postRemoval.handler(async ({ context, errors }) => {
       const { res } = context
       const userId = res.locals.userId
-      const userEmail = res.locals.email
+      // Anonymous users have no email; the removals audit row records NULL.
+      const userEmail = res.locals.email ?? null
 
       const dbUser = await usersRepository.findUserByUserId(userId)
       if (!dbUser) {

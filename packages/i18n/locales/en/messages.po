@@ -1381,7 +1381,17 @@ msgstr "Covers recognition and production combined."
 msgid "Create a free account"
 msgstr "Create a free account"
 
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "Create a free account, then send the bot another message to get a fresh link."
+msgstr "Create a free account, then send the bot another message to get a fresh link."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Create a free account, then start pairing again from the extension popup."
+msgstr "Create a free account, then start pairing again from the extension popup."
+
 #: apps/web/src/features/auth/components/guest-save-progress-banner.tsx
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
 msgid "Create account"
 msgstr "Create account"
 
@@ -6022,6 +6032,14 @@ msgstr "You're browsing as a guest — everything you save lives only in this br
 #: apps/web/src/features/auth/components/guest-save-progress-banner.tsx
 msgid "You're browsing as a guest — everything you save lives only in this browser. Create a free account to keep it."
 msgstr "You're browsing as a guest — everything you save lives only in this browser. Create a free account to keep it."
+
+#: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
+msgid "You're browsing as a guest, and connecting Telegram needs an account."
+msgstr "You're browsing as a guest, and connecting Telegram needs an account."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "You're browsing as a guest, and pairing the extension needs an account."
+msgstr "You're browsing as a guest, and pairing the extension needs an account."
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"

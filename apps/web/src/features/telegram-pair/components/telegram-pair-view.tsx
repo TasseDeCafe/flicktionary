@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
+import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 import {
   useClaimTelegramPairMutation,
   useCompleteTelegramPendingMutation,
@@ -13,7 +15,12 @@ type Status = 'pairing' | 'paired' | 'error'
 
 export const TelegramPairView = () => {
   const { t } = useLingui()
+  const navigate = useNavigate()
   const { nonce } = useSearch({ from: '/_authenticated/telegram-pair' })
+  // Telegram sign-in links are minted from the account's email, so pairing an
+  // anonymous (email-less) account would only produce broken bot links — send
+  // guests to the account-conversion flow instead of claiming the nonce.
+  const isAnonymous = useAuthStore(getIsAnonymous)
   const claimMutation = useClaimTelegramPairMutation()
   const claimRef = useRef(claimMutation.mutateAsync)
   claimRef.current = claimMutation.mutateAsync
@@ -38,6 +45,10 @@ export const TelegramPairView = () => {
   // identity when UserUiPrefsSync activates the user's locale right after
   // boot, and an effect keyed on it would cancel the in-flight claim.
   useEffect(() => {
+    // isAnonymous is session-stable (conversion navigates away), so it can't
+    // cancel an in-flight claim the way `t` did.
+    if (isAnonymous) return
+
     let cancelled = false
     const run = async () => {
       try {
@@ -53,7 +64,7 @@ export const TelegramPairView = () => {
     return () => {
       cancelled = true
     }
-  }, [nonce])
+  }, [nonce, isAnonymous])
 
   const prefsQuery = useGetUserPrefs()
   const prefs = prefsQuery.data
@@ -80,6 +91,27 @@ export const TelegramPairView = () => {
           setOnboardingDone(true)
         }}
       />
+    )
+  }
+
+  if (isAnonymous) {
+    return (
+      <main className='flex flex-1 justify-center overflow-y-auto p-4'>
+        <div className='w-full max-w-md'>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t`Connect Telegram`}</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-3 text-sm text-stone-700'>
+              <p>{t`You're browsing as a guest, and connecting Telegram needs an account.`}</p>
+              <p>{t`Create a free account, then send the bot another message to get a fresh link.`}</p>
+              <Button type='button' size='sm' onClick={() => navigate({ to: '/save-progress' })}>
+                {t`Create account`}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     )
   }
 

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
+import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 import { useMintExtensionSessionMutation } from '@/features/extension-pair/api/extension-auth-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { OnboardingView } from '@/features/onboarding/components/onboarding-view'
@@ -18,7 +19,12 @@ const FINISHED_SOURCE = 'flicktionary-extension-pair-finished'
 
 export const ExtensionPairView = () => {
   const { t } = useLingui()
+  const navigate = useNavigate()
   const { nonce } = useSearch({ from: '/_authenticated/extension-pair' })
+  // Minting an extension session requires an email on file (the backend
+  // generates a magic link from it), so guests can't pair — send them to the
+  // account-conversion flow instead of letting the mint fail.
+  const isAnonymous = useAuthStore(getIsAnonymous)
   const mintSessionMutation = useMintExtensionSessionMutation()
   const mintRef = useRef(mintSessionMutation.mutateAsync)
   mintRef.current = mintSessionMutation.mutateAsync
@@ -47,6 +53,10 @@ export const ExtensionPairView = () => {
   // anything, so the page hung on "Pairing..." forever whenever the prefs
   // response beat the mint. Translated fallbacks live at render time instead.
   useEffect(() => {
+    // isAnonymous is session-stable (conversion navigates away), so it can't
+    // cancel an in-flight mint the way `t` did.
+    if (isAnonymous) return
+
     let cancelled = false
     let extensionResponded = false
     let timeoutHandle: number | undefined
@@ -102,7 +112,7 @@ export const ExtensionPairView = () => {
       window.removeEventListener('message', onAck)
       if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
     }
-  }, [nonce])
+  }, [nonce, isAnonymous])
 
   // Read prefs to decide post-pairing routing. NOT added to the mint effect's
   // deps (it is deliberately keyed on `nonce` only — see the comment above);
@@ -125,6 +135,27 @@ export const ExtensionPairView = () => {
   // button.
   if (status === 'sent' && prefs && !prefs.isOnboarded) {
     return <OnboardingView variant='extensionPair' onFinish={postFinishedOnce} />
+  }
+
+  if (isAnonymous) {
+    return (
+      <main className='flex flex-1 justify-center overflow-y-auto p-4'>
+        <div className='w-full max-w-md'>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t`Pair the Flicktionary extension`}</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-3 text-sm text-stone-700'>
+              <p>{t`You're browsing as a guest, and pairing the extension needs an account.`}</p>
+              <p>{t`Create a free account, then start pairing again from the extension popup.`}</p>
+              <Button type='button' size='sm' onClick={() => navigate({ to: '/save-progress' })}>
+                {t`Create account`}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    )
   }
 
   // Manual fallback shown when the tab can no longer auto-close itself: a

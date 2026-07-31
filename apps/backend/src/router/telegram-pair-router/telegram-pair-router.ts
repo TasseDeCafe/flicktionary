@@ -14,6 +14,15 @@ export const TelegramPairRouter = (deps: TelegramBotDependencies): Router => {
     claim: implementer.claim.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
 
+      // Telegram sign-in links are minted from the account's email, so pairing
+      // an anonymous (email-less) account would only produce broken bot links.
+      // The web page blocks guests before claiming; this is the backstop.
+      if (context.res.locals.isAnonymous) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Create an account before connecting Telegram' }] },
+        })
+      }
+
       const result = await deps.telegramPairNoncesRepository.claimAndPair(input.nonce, userId)
       if (!result.ok) {
         if (result.reason === 'user-missing') {
