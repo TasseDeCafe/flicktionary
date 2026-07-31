@@ -9,7 +9,6 @@ import {
   DbContentSource,
 } from '../../transport/database/content-sources/content-sources-repository'
 import { searchMovies, searchTvShows, getTvSeasons, getTvEpisodes } from '../../transport/third-party/tmdb/tmdb-client'
-import { assertGuestSourceQuota } from '../../transport/database/guests/guest-source-quota'
 
 const pad2 = (n: number): string => String(n).padStart(2, '0')
 
@@ -48,7 +47,6 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
       if (existing) {
         return { data: toContentSourceDto(existing) }
       }
-      await assertGuestSourceQuota(userId)
       const inserted = await contentSourcesRepository.insertContentSource({
         type: 'movie',
         title: input.title,
@@ -81,16 +79,6 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
 
     createFromTmdbTv: implementer.createFromTmdbTv.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      // Episodes are globally deduped: reusing one another user already added
-      // is not creation, so the guest quota only applies on a probe miss.
-      const existingEpisode = await contentSourcesRepository.findTvEpisode({
-        tmdbShowId: input.tmdbShowId,
-        seasonNumber: input.seasonNumber,
-        episodeNumber: input.episodeNumber,
-      })
-      if (!existingEpisode) {
-        await assertGuestSourceQuota(userId)
-      }
       const contentSource = await contentSourcesRepository.getOrCreateTvEpisode({
         title: tvEpisodeTitle(input.showTitle, input.seasonNumber, input.episodeNumber, input.episodeTitle),
         language: input.language,
@@ -111,7 +99,6 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
 
     createText: implementer.createText.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      await assertGuestSourceQuota(userId)
       const inserted = await contentSourcesRepository.insertContentSource({
         type: 'text',
         title: input.title,

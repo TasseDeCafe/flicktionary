@@ -18,7 +18,6 @@ import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
-import { assertGuestSessionQuota } from '../../transport/database/guests/guest-source-quota'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
@@ -181,10 +180,6 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      // Globally-deduped movie/TV sources are "added" by attaching a session,
-      // not by creating a row — this is where they consume a guest library
-      // slot (sources already in the library re-attach freely).
-      await assertGuestSessionQuota(userId, input.contentSourceId)
       const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: input.targetLanguage,

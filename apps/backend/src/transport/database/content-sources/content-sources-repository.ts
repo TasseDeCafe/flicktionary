@@ -1,6 +1,7 @@
 import postgres from 'postgres'
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import { assertGuestSourceQuota } from '../guests/guest-source-quota'
 
 export type DbContentSource = Tables<'content_sources'>
 export type ContentSourceType = Database['public']['Enums']['content_source_type']
@@ -14,18 +15,23 @@ const insertContentSource = async (params: {
   metadata: ContentSourceMetadata
   createdByUserId: string | null
 }): Promise<DbContentSource> => {
-  const result = (await sql`
-    INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
-    VALUES (
-      ${params.type},
-      ${params.title},
-      ${params.language},
-      ${sql.json(params.metadata)},
-      ${params.createdByUserId}
-    )
-    RETURNING *
-  `) as DbContentSource[]
-  return result[0]!
+  // Transaction so the guest quota check and the insert commit atomically —
+  // the guard serializes concurrent guest creations on an advisory xact lock.
+  return await beginTx(async (tx) => {
+    if (params.createdByUserId) await assertGuestSourceQuota(params.createdByUserId, tx)
+    const result = (await tx`
+      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+      VALUES (
+        ${params.type},
+        ${params.title},
+        ${params.language},
+        ${tx.json(params.metadata)},
+        ${params.createdByUserId}
+      )
+      RETURNING *
+    `) as DbContentSource[]
+    return result[0]!
+  })
 }
 
 const findById = async (id: string): Promise<DbContentSource | null> => {
@@ -44,49 +50,47 @@ const findByTmdbId = async (tmdbId: number): Promise<DbContentSource | null> => 
   return result[0] ?? null
 }
 
-// Existence probe for the guest source quota: mirrors getOrCreateTvEpisode's
-// conflict key so the router can tell reuse (always allowed) from creation.
-const findTvEpisode = async (params: {
-  tmdbShowId: number
-  seasonNumber: number
-  episodeNumber: number
-}): Promise<DbContentSource | null> => {
-  const result = (await sql`
-    SELECT * FROM public.content_sources
-    WHERE type = 'tv'
-      AND metadata->>'tmdbShowId' = ${String(params.tmdbShowId)}
-      AND metadata->>'seasonNumber' = ${String(params.seasonNumber)}
-      AND metadata->>'episodeNumber' = ${String(params.episodeNumber)}
-    LIMIT 1
-  `) as DbContentSource[]
-  return result[0] ?? null
-}
-
 const getOrCreateTvEpisode = async (params: {
   title: string
   language: string
   metadata: ContentSourceMetadata
   createdByUserId: string | null
 }): Promise<DbContentSource> => {
-  const result = (await sql`
-    INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
-    VALUES (
-      'tv',
-      ${params.title},
-      ${params.language},
-      ${sql.json(params.metadata)},
-      ${params.createdByUserId}
-    )
-    ON CONFLICT (
-      (metadata ->> 'tmdbShowId'),
-      (metadata ->> 'seasonNumber'),
-      (metadata ->> 'episodeNumber')
-    )
-    WHERE type = 'tv'
-    DO UPDATE SET title = public.content_sources.title
-    RETURNING *
-  `) as DbContentSource[]
-  return result[0]!
+  return await beginTx(async (tx) => {
+    // Episodes are globally deduped: reusing one another user already added is
+    // not creation, so the guest quota only applies when the probe (mirroring
+    // the upsert's conflict key below) misses.
+    if (params.createdByUserId) {
+      const existing = await tx`
+        SELECT 1 FROM public.content_sources
+        WHERE type = 'tv'
+          AND metadata->>'tmdbShowId' = ${String(params.metadata.tmdbShowId)}
+          AND metadata->>'seasonNumber' = ${String(params.metadata.seasonNumber)}
+          AND metadata->>'episodeNumber' = ${String(params.metadata.episodeNumber)}
+        LIMIT 1
+      `
+      if (existing.length === 0) await assertGuestSourceQuota(params.createdByUserId, tx)
+    }
+    const result = (await tx`
+      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+      VALUES (
+        'tv',
+        ${params.title},
+        ${params.language},
+        ${tx.json(params.metadata)},
+        ${params.createdByUserId}
+      )
+      ON CONFLICT (
+        (metadata ->> 'tmdbShowId'),
+        (metadata ->> 'seasonNumber'),
+        (metadata ->> 'episodeNumber')
+      )
+      WHERE type = 'tv'
+      DO UPDATE SET title = public.content_sources.title
+      RETURNING *
+    `) as DbContentSource[]
+    return result[0]!
+  })
 }
 
 export interface ContentSourcesRepositoryInterface {
@@ -99,11 +103,6 @@ export interface ContentSourcesRepositoryInterface {
   }) => Promise<DbContentSource>
   findById: (id: string) => Promise<DbContentSource | null>
   findByTmdbId: (tmdbId: number) => Promise<DbContentSource | null>
-  findTvEpisode: (params: {
-    tmdbShowId: number
-    seasonNumber: number
-    episodeNumber: number
-  }) => Promise<DbContentSource | null>
   getOrCreateTvEpisode: (params: {
     title: string
     language: string
@@ -117,7 +116,6 @@ export const ContentSourcesRepository = (): ContentSourcesRepositoryInterface =>
     insertContentSource,
     findById,
     findByTmdbId,
-    findTvEpisode,
     getOrCreateTvEpisode,
   }
 }

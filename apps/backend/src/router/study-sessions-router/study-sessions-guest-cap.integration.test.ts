@@ -79,6 +79,25 @@ describe('study-sessions-router guest library cap', () => {
     expect(afterDelete.status).toBe(201)
   })
 
+  test('concurrent attaches cannot race past the cap', async () => {
+    const { id: creatorId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const { token: guestToken } = await __getAnonymousSupabaseToken()
+
+    const episodes: { sourceId: string; trackId: string }[] = []
+    for (let i = 0; i < limit + 3; i++) {
+      episodes.push(await insertForeignSourceWithTrack(creatorId))
+    }
+
+    // The quota takes a per-user advisory lock inside the insert transaction,
+    // so a parallel burst admits exactly `limit` sessions — without it, every
+    // request could read a below-cap count and slip through.
+    const responses = await Promise.all(
+      episodes.map((episode) => createSession(guestToken, episode.sourceId, episode.trackId))
+    )
+    const statuses = responses.map((response) => response.status).sort((a, b) => a - b)
+    expect(statuses).toEqual([...Array(limit).fill(201), ...Array(3).fill(403)])
+  })
+
   test('a regular account attaches without limit', async () => {
     const { id: creatorId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
