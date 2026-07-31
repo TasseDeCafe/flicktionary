@@ -193,8 +193,8 @@ const listHeadwordSensesForLanguage = async (userId: string, targetLanguage: str
 // segments for `textTrackId` — bounded by source vocabulary, not user vocab.
 //
 // Mechanism: aggregate the track's text into one tsvector using the
-// per-language regconfig (the same one the text_segments_set_tsv trigger
-// uses), then keep user_lookups rows where plainto_tsquery(headword) matches.
+// per-language regconfig, then keep user_lookups rows where
+// plainto_tsquery(headword) matches.
 //
 // `plainto_tsquery` parses multi-word headwords as ANDed lexemes after
 // stopword removal, which is liberal (false positives only). False negatives
