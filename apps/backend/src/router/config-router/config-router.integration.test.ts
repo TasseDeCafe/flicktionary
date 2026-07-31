@@ -18,4 +18,18 @@ describe('config-router', () => {
     expect(responseOff.status).toBe(200)
     expect(responseOff.body.data.isGuestModeEnabled).toBe(false)
   })
+
+  test('serves the captcha sitekey, null when captcha is off', async () => {
+    const appWithCaptcha = buildTestApp({ captchaSiteKey: '1x00000000000000000000BB' })
+    const responseWithCaptcha = await request(appWithCaptcha).get('/api/v1/config')
+
+    expect(responseWithCaptcha.status).toBe(200)
+    expect(responseWithCaptcha.body.data.captchaSiteKey).toBe('1x00000000000000000000BB')
+
+    const appWithoutCaptcha = buildTestApp()
+    const responseWithoutCaptcha = await request(appWithoutCaptcha).get('/api/v1/config')
+
+    expect(responseWithoutCaptcha.status).toBe(200)
+    expect(responseWithoutCaptcha.body.data.captchaSiteKey).toBeNull()
+  })
 })

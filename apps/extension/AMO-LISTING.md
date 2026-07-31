@@ -45,7 +45,7 @@ this block. Update the "Last updated" date to match the source on each change.
 ```
 Flicktionary Privacy Policy
 
-Last updated: July 30, 2026
+Last updated: July 31, 2026
 
 1. Introduction
 
@@ -73,7 +73,7 @@ The Flicktionary browser extension only transmits data when you explicitly use o
 
 5. Third-party service providers
 
-We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product analytics, session replay, and error monitoring), and Resend (transactional email). These providers process data only to provide their services to us and are bound by their own confidentiality and data-protection obligations. We do not sell your personal data to anyone.
+We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product analytics, session replay, and error monitoring), Resend (transactional email), and Cloudflare (whose Turnstile service protects sign-up against automated abuse; its processing for this purpose is described in the Cloudflare Turnstile Privacy Addendum: https://www.cloudflare.com/turnstile-privacy-policy/). These providers process data only to provide their services to us and are bound by their own confidentiality and data-protection obligations. We do not sell your personal data to anyone.
 
 6. Transfer of data
 

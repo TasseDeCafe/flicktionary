@@ -4,6 +4,8 @@ import { queryClient } from '@/config/react-query-config'
 import { useAuthStore } from '@/stores/auth-store'
 import { useTrackingStore } from '@/stores/tracking-store'
 import { detectBrowserLanguage } from '@/utils/browser-language-utils'
+import { getCaptchaToken } from '@/features/auth/api/turnstile'
+import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 
 // Zero-friction landing: a first-time visitor hitting a protected route gets
 // an anonymous Supabase account instead of the login page. The flag comes
@@ -17,8 +19,30 @@ export const tryGuestSignIn = async (): Promise<boolean> => {
     if (!data.isGuestModeEnabled) {
       return false
     }
-    const { data: signInData, error } = await supabaseClient.auth.signInAnonymously()
+    // Non-null sitekey means Supabase-side captcha protection is on: fetch an
+    // invisible Turnstile token or downgrade this visitor to the /login
+    // redirect. The downgrade is deliberately silent — a first-time visitor
+    // doesn't know guest mode exists, so a login wall reads as normal while
+    // an error would read as broken.
+    let captchaToken: string | undefined
+    if (data.captchaSiteKey) {
+      const captchaResult = await getCaptchaToken(data.captchaSiteKey)
+      if ('failure' in captchaResult) {
+        POSTHOG_EVENTS.guestCaptchaFailed(captchaResult.failure)
+        return false
+      }
+      captchaToken = captchaResult.token
+    }
+    const { data: signInData, error } = await supabaseClient.auth.signInAnonymously(
+      captchaToken ? { options: { captchaToken } } : undefined
+    )
     if (error || !signInData.session) {
+      if (data.captchaSiteKey && error) {
+        // GoTrue refused the sign-in despite a token: 'captcha_failed' means
+        // a wrong secret / spent token / botched rollout order; other codes
+        // are rate limits or outages, not captcha.
+        POSTHOG_EVENTS.guestCaptchaFailed('server_rejected', { code: error.code ?? 'unknown' })
+      }
       return false
     }
     // The onAuthStateChange listener also picks this up, but the router

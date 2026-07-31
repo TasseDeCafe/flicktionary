@@ -8,7 +8,7 @@ import {
   isTest,
 } from '../utils/environment-utils'
 import { FEATURES } from '@flicktionary/core/features'
-import { parseEmails } from './environment-config-utils'
+import { parseEmails, resolveCaptchaSiteKey } from './environment-config-utils'
 import { EnvironmentConfig } from './environment-config-schema'
 
 const parseAutoSeedPattern = (raw: string | undefined): RegExp | null => {
@@ -26,6 +26,10 @@ const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'f
 // Guest kill switch: defaults to off, so a missing Doppler var can never open
 // guest access by accident.
 const isGuestModeEnabled = process.env.GUEST_MODE_ENABLED === 'true'
+
+// Captcha lever for anonymous sign-in (see the schema comment). Resolved
+// through a pure helper so the enabled-without-sitekey throw is unit-testable.
+const captchaSiteKey = resolveCaptchaSiteKey(process.env)
 
 // Guest source cap: tunable without a code change (see the schema comment).
 // A malformed value falls back to the default instead of parsing to NaN —
@@ -91,6 +95,7 @@ const productionConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
+  captchaSiteKey,
   maxSourcesPerGuest,
   anonCleanupIntervalDays,
   anonRetentionDays,
@@ -143,6 +148,10 @@ const developmentConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
+  // Cloudflare's always-pass invisible test sitekey, paired with the test
+  // secret in the local stacks' [auth.captcha]: dev exercises the full token
+  // path on every guest sign-in so the emergency lever can't rot untested.
+  captchaSiteKey: '1x00000000000000000000BB',
   maxSourcesPerGuest,
   anonCleanupIntervalDays,
   anonRetentionDays,
@@ -221,6 +230,8 @@ const testConfig: EnvironmentConfig = {
   // Integration tests toggle the flag per-app through AppDependencies instead
   // of this static config.
   isGuestModeEnabled: false,
+  // Same seam: config-router tests inject a non-null sitekey per-app.
+  captchaSiteKey: null,
   // Static: the quota guard only fires for users flagged is_anonymous in
   // auth.users, so regular test fixtures never hit it.
   maxSourcesPerGuest: 3,

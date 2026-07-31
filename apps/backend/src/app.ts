@@ -143,6 +143,10 @@ export type AppDependencies = {
   // Guest kill switch (GUEST_MODE_ENABLED); injectable so integration tests
   // can exercise both the open and locked-out branches.
   isGuestModeEnabled?: boolean
+  // Turnstile sitekey served to the web app (CAPTCHA_ENABLED +
+  // TURNSTILE_SITE_KEY); injectable so config-router tests can exercise the
+  // non-null passthrough the static test config never produces.
+  captchaSiteKey?: string | null
 }
 
 export const buildApp = ({
@@ -166,6 +170,7 @@ export const buildApp = ({
   openSubtitlesDownloadSrt = downloadSrtByFileId,
   posthogClient = defaultPosthogClient,
   isGuestModeEnabled = getConfig().isGuestModeEnabled,
+  captchaSiteKey = getConfig().captchaSiteKey,
 }: AppDependencies): Express => {
   const app: Express = express()
 
@@ -289,7 +294,7 @@ export const buildApp = ({
     revenuecatSubscriptionsRepository,
     revenuecatService
   )
-  app.use(API_V1, configRouter(isGuestModeEnabled))
+  app.use(API_V1, configRouter({ isGuestModeEnabled, captchaSiteKey }))
   app.use(API_V1, HealthCheckRouter())
 
   // Apply IP-based rate limiting specifically to authentication routes
@@ -327,7 +332,7 @@ export const buildApp = ({
   }
 
   app.use(API_V1, removalsRouter(authUsersRepository, usersRepository, stripeApi, stripeSubscriptionsRepository))
-  app.use(API_V1, UserRouter(usersRepository))
+  app.use(API_V1, UserRouter(usersRepository, posthogClient))
   app.use(API_V1, BillingRouter(billingService, usersWithFreeAccess))
   if (FEATURES.STRIPE) {
     app.use(API_V1, PortalSessionRouter(usersRepository, stripeApi))

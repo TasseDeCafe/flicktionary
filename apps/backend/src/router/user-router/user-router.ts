@@ -7,6 +7,7 @@ import { DbUser, UsersRepositoryInterface } from '../../transport/database/users
 import { processReferral } from './user-router-utils'
 import { userContract } from '@flicktionary/api-client/orpc-contracts/user-contract'
 import { getConfig } from '../../config/environment-config'
+import { type PostHog } from 'posthog-node'
 
 const buildSeedFromEmail = (
   email: string | undefined
@@ -18,7 +19,7 @@ const buildSeedFromEmail = (
   return { nativeLanguage: devAutoSeedNativeLanguage, isOnboarded: true }
 }
 
-export const UserRouter = (usersRepository: UsersRepositoryInterface): Router => {
+export const UserRouter = (usersRepository: UsersRepositoryInterface, posthogClient: PostHog): Router => {
   const implementer = implement(userContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
@@ -72,6 +73,13 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
           },
           seed
         )
+        // Server-authoritative guest-creation counter (the abuse-volume alert
+        // keys on it): a scripted attacker POSTing /signup directly never runs
+        // our client JS, but extracting anything of value requires calling the
+        // backend with the guest JWT, which lands here exactly once per guest.
+        if (context.res.locals.isAnonymous) {
+          posthogClient.capture({ distinctId: userId, event: 'guest_provisioned' })
+        }
         return {
           data: {
             referral: referral ?? null,

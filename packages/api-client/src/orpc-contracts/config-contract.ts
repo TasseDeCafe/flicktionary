@@ -19,6 +19,10 @@ export const configContract = {
           // auto-sign visitors in anonymously — toggling the Doppler var needs
           // no web redeploy.
           isGuestModeEnabled: z.boolean(),
+          // Non-null when Supabase captcha protection is on: the web app must
+          // fetch an invisible Turnstile token with this sitekey and pass it
+          // to signInAnonymously. Null means skip Turnstile entirely.
+          captchaSiteKey: z.string().nullable(),
         }),
       })
     ),

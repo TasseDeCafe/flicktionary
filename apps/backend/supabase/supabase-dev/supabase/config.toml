@@ -90,6 +90,18 @@ enable_anonymous_sign_ins = true
 
 signing_keys_path = "./signing_key.json"
 
+# Permanently on in dev, paired with the always-pass Cloudflare TEST secret
+# (public by design) and the test sitekey hardcoded in the backend's dev
+# config: every local guest sign-in exercises the full Turnstile token path,
+# so the prod emergency lever (CAPTCHA_ENABLED + supabase-prod's
+# [auth.captcha] pushed as config-as-code) can't rot untested. Only the
+# anonymous /signup flow is affected — every other auth
+# flow the app uses rides captcha-exempt endpoints (see issue #391).
+[auth.captcha]
+enabled = true
+provider = "turnstile"
+secret = "1x0000000000000000000000000000000AA"
+
 [auth.email]
 # Allow/disallow new user signups via email to your project.
 enable_signup = true

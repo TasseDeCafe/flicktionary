@@ -34,6 +34,15 @@ export const environmentConfigSchema = z.object({
   // too. Supabase-side anonymous sign-ins stay permanently enabled; this flag
   // is the only thing ever toggled.
   isGuestModeEnabled: z.boolean(),
+  // Captcha escalation lever (CAPTCHA_ENABLED + TURNSTILE_SITE_KEY in
+  // Doppler): non-null tells the web app to fetch an invisible Turnstile
+  // token before signInAnonymously. Mirrors the GoTrue-side [auth.captcha]
+  // block in supabase-prod/supabase/config.toml (config-as-code, applied via
+  // db:prod:config:push) — flip both together, this flag first (see the
+  // runbook in issue #391). Independent from isGuestModeEnabled: that one is
+  // the nuclear option that also locks out existing guest sessions; this one
+  // only adds friction to creating new ones.
+  captchaSiteKey: z.string().min(1).nullable(),
   // Cap on an anonymous (guest) user's source LIBRARY — the distinct
   // non-adhoc sources they hold a live session on — and on their live lesson
   // drafts (MAX_SOURCES_PER_GUEST in Doppler). Wallet protection: sources

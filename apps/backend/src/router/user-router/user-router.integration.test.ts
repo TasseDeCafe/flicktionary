@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import request from 'supertest'
+import { type PostHog } from 'posthog-node'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
@@ -7,6 +8,14 @@ import {
   buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
+
+const buildRecordingPosthogClient = () => {
+  const captured: { distinctId: string; event: string }[] = []
+  const client = {
+    capture: (payload: { distinctId: string; event: string }) => captured.push(payload),
+  } as unknown as PostHog
+  return { captured, client }
+}
 
 describe('users-router', async () => {
   const testApp = buildTestApp()
@@ -96,6 +105,36 @@ describe('users-router', async () => {
         .set(buildAuthorizationHeaders(token))
         .send({ referral: null, nativeLanguage: 'xx' })
       expect(createResponse.status).toBe(400)
+    })
+
+    test('captures guest_provisioned exactly once, and never for regular users', async () => {
+      const { captured, client } = buildRecordingPosthogClient()
+      const capturingApp = buildTestApp({ isGuestModeEnabled: true, posthogClient: client })
+
+      const { token, id: guestId } = await __getAnonymousSupabaseToken()
+      const firstResponse = await request(capturingApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null })
+      expect(firstResponse.status).toBe(200)
+
+      // The repeat call finds the existing row and must not double-count.
+      const repeatResponse = await request(capturingApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null })
+      expect(repeatResponse.status).toBe(200)
+
+      const { token: regularToken } = await __createUserInSupabaseAndGetHisIdAndToken()
+      const regularResponse = await request(capturingApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(regularToken))
+        .send({ referral: null })
+      expect(regularResponse.status).toBe(200)
+
+      const guestEvents = captured.filter((event) => event.event === 'guest_provisioned')
+      expect(guestEvents).toHaveLength(1)
+      expect(guestEvents[0].distinctId).toBe(guestId)
     })
 
     test('does not skip onboarding for regular users sending a native language', async () => {
