@@ -81,8 +81,9 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
-# Allow/disallow testing manual linking of accounts
-enable_manual_linking = false
+# Manual identity linking powers guest -> account conversion: the web app calls
+# supabase.auth.linkIdentity() on an anonymous session to attach a Google login.
+enable_manual_linking = true
 # Anonymous (guest) sign-ins stay permanently on at the Supabase layer; the
 # actual door is the backend's GUEST_MODE_ENABLED kill switch.
 enable_anonymous_sign_ins = true
@@ -95,8 +96,11 @@ enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
-# If enabled, users-router need to confirm their email address before signing in.
-enable_confirmations = false
+# Maps to GoTrue MAILER_AUTOCONFIRM (inverted). Must stay enabled: with
+# autoconfirm on, updateUser({ email }) — the guest -> account conversion —
+# applies the address instantly without proving the guest owns it. Magic-link
+# sign-in is unaffected (its OTP email is itself the verification).
+enable_confirmations = true
 
 # Uncomment to customize email template
 # [auth.email.template.invite]]
