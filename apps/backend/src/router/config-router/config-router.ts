@@ -10,7 +10,7 @@ const CONFIG = {
   lowestSupportedVersionAndroid: '0.0.1',
 }
 
-export const configRouter = (): Router => {
+export const configRouter = (isGuestModeEnabled: boolean): Router => {
   const implementer = implement(configContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
@@ -19,6 +19,7 @@ export const configRouter = (): Router => {
         data: {
           lowestSupportedVersionIos: CONFIG.lowestSupportedVersionIos,
           lowestSupportedVersionAndroid: CONFIG.lowestSupportedVersionAndroid,
+          isGuestModeEnabled,
         },
       }
     }),

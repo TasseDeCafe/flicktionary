@@ -123,6 +123,9 @@ export const signSupabaseToken = async (claims: SupabaseClaims, signingKeyPath: 
     const token = await new SignJWT({
       sub: claims.sub,
       user_metadata: claims.user_metadata,
+      // Only stamped when the caller mints a guest token — Supabase omits the
+      // claim entirely on pre-anonymous-auth tokens, so tests mirror that.
+      ...(claims.is_anonymous !== undefined ? { is_anonymous: claims.is_anonymous } : {}),
     })
       .setProtectedHeader({ alg: 'ES256', kid })
       .setIssuedAt()

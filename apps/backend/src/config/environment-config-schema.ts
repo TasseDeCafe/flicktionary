@@ -29,6 +29,11 @@ export const environmentConfigSchema = z.object({
   // An empty token is valid: it disables PostHog at runtime (tests, previews)
   posthogProjectToken: FEATURES.POSTHOG ? z.string() : z.string().max(0),
   shouldLogRequests: z.boolean(),
+  // Guest kill switch (GUEST_MODE_ENABLED in Doppler): when off, the backend
+  // rejects JWTs carrying is_anonymous, locking out existing guest sessions
+  // too. Supabase-side anonymous sign-ins stay permanently enabled; this flag
+  // is the only thing ever toggled.
+  isGuestModeEnabled: z.boolean(),
   supabaseProjectUrl: z.string().min(1),
   supabaseSecretKey: z.string().min(1),
   // JWKS URI (asymmetric)
