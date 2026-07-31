@@ -21,7 +21,8 @@ import { useCreateCustomerPortalSession } from '@/features/billing/api/portal-se
 import { useCheckoutMutation } from '@/features/checkout/api/checkout-hooks'
 import { useLingui } from '@lingui/react/macro'
 import { useTrackingStore, getHasAllowedReferral } from '@/stores/tracking-store'
-import { useAuthStore } from '@/stores/auth-store'
+import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
+import { GuestSignOutConfirmOverlay } from '@/features/auth/components/guest-sign-out-confirm-overlay'
 
 export const PricingView = () => {
   const { t } = useLingui()
@@ -104,10 +105,24 @@ export const PricingView = () => {
   }
 
   const signOut = useAuthStore((state) => state.signOut)
+  const isAnonymous = useAuthStore(getIsAnonymous)
+  const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
-  const handleSignOut = async () => {
+  const performSignOut = async () => {
+    setIsSigningOut(true)
     await signOut(() => navigate({ to: '/login' }))
     toast.success(t`Signed out successfully`)
+  }
+
+  // A guest has no way to sign back in, so their sign-out goes through a
+  // confirmation that pushes the save-progress conversion flow first.
+  const handleSignOut = () => {
+    if (isAnonymous) {
+      setIsSignOutConfirmOpen(true)
+      return
+    }
+    void performSignOut()
   }
 
   const pricingViewConfig: PricingViewConfig = getPricingViewConfig({
@@ -172,6 +187,13 @@ export const PricingView = () => {
         <LogOut size={16} />
         {t`Sign out`}
       </Button>
+
+      <GuestSignOutConfirmOverlay
+        open={isSignOutConfirmOpen}
+        onOpenChange={setIsSignOutConfirmOpen}
+        isSigningOut={isSigningOut}
+        onSignOutAnyway={() => void performSignOut()}
+      />
     </div>
   )
 }

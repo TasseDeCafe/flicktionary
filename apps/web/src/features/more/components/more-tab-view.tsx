@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
@@ -20,7 +21,7 @@ import { PageContainer } from '@/components/page-container'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { i18nConfig } from '@flicktionary/i18n/i18n-config'
 import { findSupportedLanguage } from '@flicktionary/core/constants/supported-languages'
-import { getUserEmail, useAuthStore } from '@/stores/auth-store'
+import { getIsAnonymous, getUserEmail, useAuthStore } from '@/stores/auth-store'
 import { useThemeStore, type ThemePref } from '@/stores/theme-store'
 import { activateLocale, resolveUiLocale } from '@/lib/i18n/i18n'
 import { checkIsTestUser } from '@/utils/test-users-utils'
@@ -35,6 +36,7 @@ import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/da
 import { MoreListSection } from './more-list-section'
 import { MoreListRow } from './more-list-row'
 import { GuestSaveProgressBanner } from '@/features/auth/components/guest-save-progress-banner'
+import { GuestSignOutConfirmOverlay } from '@/features/auth/components/guest-sign-out-confirm-overlay'
 
 export const MoreTabView = () => {
   const { t } = useLingui()
@@ -69,9 +71,24 @@ export const MoreTabView = () => {
     saveUiLanguage({ uiLanguage: value })
   }
 
-  const handleSignOut = async () => {
+  const isAnonymous = useAuthStore(getIsAnonymous)
+  const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const performSignOut = async () => {
+    setIsSigningOut(true)
     await signOut(() => navigate({ to: '/login' }))
     toast.success(t`Signed out successfully`)
+  }
+
+  // A guest has no way to sign back in, so their sign-out goes through a
+  // confirmation that pushes the save-progress conversion flow first.
+  const handleSignOut = () => {
+    if (isAnonymous) {
+      setIsSignOutConfirmOpen(true)
+      return
+    }
+    void performSignOut()
   }
 
   // Contact-us is opened by toggling an `overlay=contact-us` search param;
@@ -208,6 +225,13 @@ export const MoreTabView = () => {
         />
         <MoreListRow icon={LogOut} label={t`Sign out`} onPress={handleSignOut} />
       </MoreListSection>
+
+      <GuestSignOutConfirmOverlay
+        open={isSignOutConfirmOpen}
+        onOpenChange={setIsSignOutConfirmOpen}
+        isSigningOut={isSigningOut}
+        onSignOutAnyway={() => void performSignOut()}
+      />
 
       {/* Required verbatim by TMDB's API terms of use: movie/TV search results
           and poster/still images come from their API. */}
