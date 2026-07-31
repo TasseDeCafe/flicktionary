@@ -1,5 +1,19 @@
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
+# Source of truth for the HOSTED prod project's configuration
+# (uynwhkflqmryzkenccmd). Applied with `supabase config push` — via
+# `pnpm --filter @flicktionary/backend db:prod:config:push` or the
+# prod-config-push workflow on merge to main. This local stack is never
+# started; the ports and other local-only keys below are inert.
+#
+# Sharp edges of `config push` (learned the hard way — see the
+# supabase-config-push-auto-confirm incident, 2026-07-31):
+#   - It AUTO-CONFIRMS in non-interactive/agent environments. Treat any push
+#     as a deploy, never as a dry-run. `supabase link` diffs read-only.
+#   - Absent keys are pushed as CLI DEFAULTS, not "leave unchanged" — every
+#     remote-relevant value must be stated explicitly in this file.
+#   - `env(VAR)` with an unset variable pushes the literal string. This file
+#     must therefore contain NO env() references; the push script enforces it.
+#   - Secret fields set to "" are skipped, leaving the stored secret
+#     untouched. Secrets are set once in the dashboard and never live here.
 project_id = "supabase-prod"
 
 [api]
@@ -8,7 +22,7 @@ enabled = true
 port = 44321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. public and storage are always included.
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "graphql_public"]
 # Extra schemas to add to the search_path of every request. public is always included.
 extra_search_path = ["public", "extensions"]
 # The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
@@ -22,7 +36,7 @@ port = 44322
 shadow_port = 44320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
-major_version = 15
+major_version = 17
 
 [db.pooler]
 enabled = false
@@ -68,10 +82,11 @@ file_size_limit = "50MiB"
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# in emails ({{ .SiteURL }} in templates, and the fallback redirect when a
+# sign-in request carries no redirectTo).
+site_url = "https://app.flicktionary.app"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["https://app.flicktionary.app/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -101,19 +116,51 @@ double_confirm_changes = true
 # applies the address instantly without proving the guest owns it. Magic-link
 # sign-in is unaffected (its OTP email is itself the verification).
 enable_confirmations = true
+# Explicit because `config push` treats absent keys as "use the CLI default"
+# (6-digit codes, 1s resend throttle) and would overwrite the remote values.
+otp_length = 8
+max_frequency = "1m0s"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+[auth.mfa]
+max_enrolled_factors = 10
+
+# Explicit for the same reason: the CLI default (false) would disable TOTP
+# enrollment on the hosted project.
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.email.template.magic_link]
+subject = "flicktionary.app Sign In Link"
+content_path = "./supabase/templates/magic-link-verification.html"
+
+# Sent when a user changes (or, for anonymous guests, first sets) their email
+# via supabase.auth.updateUser({ email }) — the guest -> account conversion flow.
+[auth.email.template.email_change]
+subject = "flicktionary.app Email Confirmation"
+content_path = "./supabase/templates/email-change-verification.html"
+
+# Invisible Turnstile on the anonymous /signup flow only — every other auth
+# flow rides captcha-exempt endpoints (see issue
+# https://github.com/TasseDeCafe/flicktionary/issues/391). This is the
+# emergency abuse lever, off by default. To flip it on: the Turnstile secret
+# must already be stored on the hosted project (set it once in the dashboard's
+# captcha settings during Cloudflare setup — the empty string below means
+# "leave the stored secret untouched", so pushes never clear it), then set
+# enabled = true here, push, and flip CAPTCHA_ENABLED in Doppler so the web
+# app starts requesting challenges.
+[auth.captcha]
+enabled = false
+provider = "turnstile"
+secret = ""
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = true
+enable_signup = false
 # If enabled, users-router need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users-router
-template = "Your code is {{ .Code }} ."
+template = "Your code is {{ .Code }}"
 
 # Use pre-defined map of phone number to OTP for testing.
 [auth.sms.test_otp]
@@ -130,30 +177,31 @@ template = "Your code is {{ .Code }} ."
 enabled = false
 account_sid = ""
 message_service_sid = ""
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+auth_token = ""
 
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `slack`, `spotify`, `workos`, `zoom`.
 [auth.external.apple]
-enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID)"
-# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead.
-# We do not need to add this secret, because we are signing in with Apple natively on iOS.
-secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
-# Overrides the default auth redirectUrl.
-redirect_uri = "env(SUPABASE_AUTH_EXTERNAL_APPLE_REDIRECT_URI_TUNNEL)"
+# Apple sign-in is not configured on the hosted project (native iOS is out of
+# scope for now); keep disabled so `config push` doesn't turn it on.
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
 # or any other third-party OIDC providers.
 url = ""
 
 [auth.external.google]
 enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
-secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# The OAuth client id is public (it appears in every consent redirect).
+client_id = "174431187657-b7pi6udnt9uu1r8b10tchj8bd8ffml7t.apps.googleusercontent.com"
+# Empty means "leave the secret stored on the hosted project untouched" —
+# `config push` skips secret fields with no local value. Never put an env()
+# here that could resolve empty: that would wipe the stored secret.
+secret = ""
 # Overrides the default auth redirectUrl.
 redirect_uri = "http://localhost:54321/auth/v1/callback"
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
@@ -169,16 +217,3 @@ port = 44327
 vector_port = 44328
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
-
-# Experimental features may be deprecated any time
-[experimental]
-# Configures Postgres storage engine to use OrioleDB (S3)
-orioledb_version = ""
-# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
-s3_host = "env(S3_HOST)"
-# Configures S3 bucket region, eg. us-east-1
-s3_region = "env(S3_REGION)"
-# Configures AWS_ACCESS_KEY_ID for S3 bucket
-s3_access_key = "env(S3_ACCESS_KEY)"
-# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
-s3_secret_key = "env(S3_SECRET_KEY)"

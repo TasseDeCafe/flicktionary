@@ -1,0 +1,36 @@
+# Applies the prod Supabase config on merge to main, mirroring how the
+# Supabase GitHub integration already applies migrations (Settings ->
+# Integrations on the hosted project). Path-filtered so it only runs when the
+# prod config or the email templates actually change.
+#
+# Auth: the SUPABASE_ACCESS_TOKEN repo secret — a personal access token from
+# https://supabase.com/dashboard/account/tokens.
+name: prod-config-push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/backend/supabase/supabase-prod/supabase/config.toml
+      - apps/backend/supabase/supabase-prod/supabase/templates/**
+  workflow_dispatch:
+
+jobs:
+  push-config:
+    name: Push prod Supabase config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          # Pinned to the locally-used CLI version; bump alongside local updates.
+          version: 2.109.1
+
+      # The script re-checks the no-env() guard and pushes with an explicit
+      # --project-ref, so it needs no `supabase link` state.
+      - name: Push config
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: apps/backend/scripts/db--prod--config-push.sh
