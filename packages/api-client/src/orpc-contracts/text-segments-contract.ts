@@ -13,15 +13,6 @@ export const textSegmentsContract = {
     .input(z.object({ textTrackId: z.string().uuid() }))
     .output(z.object({ data: z.array(TextSegmentSchema) })),
 
-  search: oc
-    .route({ method: 'GET', path: '/text-tracks/{textTrackId}/segments/search', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ textTrackId: z.string().uuid(), q: z.string().min(1) }))
-    .output(z.object({ data: z.array(TextSegmentSchema) })),
-
   getWindow: oc
     .route({ method: 'GET', path: '/text-tracks/{textTrackId}/segments/window', successStatus: 200 })
     .errors({

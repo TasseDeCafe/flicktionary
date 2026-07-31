@@ -7,6 +7,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
+import { createSearchMatcher } from '@flicktionary/core/utils/search-match'
 import { buildSessionListItems } from '../utils/session-list-items'
 import { SessionCard, SessionCardSkeleton } from './session-card'
 import { ShowGroupCard } from './show-group-card'
@@ -29,7 +30,7 @@ export const SessionsListView = () => {
   // Filter/sort state lives in the URL (see the route's search schema); search
   // text is transient local state, debounced before it narrows the list.
   const [searchInput, setSearchInput] = useState('')
-  const debouncedSearch = useDebouncedValue(searchInput.trim().toLowerCase(), 250)
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
   const filter: TypeFilter = search.type ?? 'all'
   const sort: SessionsSort = search.sort ?? 'newest'
 
@@ -52,10 +53,11 @@ export const SessionsListView = () => {
 
   const filtered = useMemo(() => {
     const all = data ?? []
+    const matcher = createSearchMatcher(debouncedSearch)
     return all.filter((s) => {
       if (filter !== 'all' && s.contentSourceType !== filter) return false
       if (lang !== undefined && s.targetLanguage !== lang) return false
-      if (debouncedSearch !== '' && !(s.contentSourceTitle ?? '').toLowerCase().includes(debouncedSearch)) return false
+      if (!matcher.matches(s.contentSourceTitle ?? '')) return false
       return true
     })
   }, [data, filter, lang, debouncedSearch])

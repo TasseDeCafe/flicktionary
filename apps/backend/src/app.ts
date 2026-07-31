@@ -415,7 +415,7 @@ export const buildApp = ({
       downloadSrt: openSubtitlesDownloadSrt,
     })
   )
-  app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
+  app.use(API_V1, TextSegmentsRouter(textSegmentsRepository, studySessionsRepository))
   const wiktionaryMatchRepository = WiktionaryMatchRepository()
   const knownLemmasRepository = KnownLemmasRepository()
   const checkpointDependencies = {

@@ -4306,10 +4306,6 @@ msgstr "Dites-le à voix haute"
 msgid "Scope"
 msgstr "Portée"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Search failed"
-msgstr "Échec de la recherche"
-
 #: apps/web/src/components/language-option-list.tsx
 msgid "Search languages…"
 msgstr "Rechercher des langues…"

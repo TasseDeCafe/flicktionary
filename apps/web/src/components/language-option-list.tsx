@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
+import { createSearchMatcher } from '@flicktionary/core/utils/search-match'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 
@@ -19,15 +20,12 @@ export const LanguageOptionList = ({ value, onChange, showSearch = true, exclude
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    // Accent-insensitive with typo tolerance, so "espanol" or "portugues"
+    // finds Español/Português without the diacritics.
+    const matcher = createSearchMatcher(query)
     const matches = SUPPORTED_LANGUAGES.filter((lang) => {
       if (excludeCodes?.includes(lang.code)) return false
-      if (!q) return true
-      return (
-        lang.code.toLowerCase().includes(q) ||
-        lang.name.toLowerCase().includes(q) ||
-        lang.nativeName.toLowerCase().includes(q)
-      )
+      return matcher.matches(lang.code) || matcher.matches(lang.name) || matcher.matches(lang.nativeName)
     })
     if (!pinnedCode) return matches
     const pinnedIndex = matches.findIndex((lang) => lang.code === pinnedCode)

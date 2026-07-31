@@ -4307,10 +4307,6 @@ msgstr "Say it out loud"
 msgid "Scope"
 msgstr "Scope"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Search failed"
-msgstr "Search failed"
-
 #: apps/web/src/components/language-option-list.tsx
 msgid "Search languages…"
 msgstr "Search languages…"

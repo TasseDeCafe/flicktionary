@@ -19,14 +19,14 @@ import {
 import { useListCardsBySession, useRemoveCardFromSession } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { createSearchMatcher, type SearchMatcher } from '@flicktionary/core/utils/search-match'
 import { SessionVocabularyRow, EnrichingRow, SessionVocabularyRowSkeleton } from './session-vocabulary-row'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
-const matchesSearch = (card: Card, q: string): boolean => {
-  if (!q) return true
-  const haystack = `${card.surfaceForm} ${card.chunk.headword}`.toLowerCase()
-  return haystack.includes(q.toLowerCase())
-}
+// Fields are matched independently so a query can't spuriously span the
+// surface-form/headword boundary.
+const matchesSearch = (card: Card, matcher: SearchMatcher): boolean =>
+  matcher.matches(card.surfaceForm) || matcher.matches(card.chunk.headword)
 
 export const SessionVocabularyView = () => {
   const { t } = useLingui()
@@ -73,10 +73,12 @@ export const SessionVocabularyView = () => {
   // `removed` never shows — and because Remove flips status in place (the
   // optimistic cache mutates rather than dropping the row), removing a row moves
   // it to `removed` and this filter drops it immediately.
+  const searchMatcher = useMemo(() => createSearchMatcher(debouncedSearch), [debouncedSearch])
+
   const visibleCards = useMemo(() => {
     const all = cards ?? []
-    return all.filter((c) => (c.status === 'kept' || c.status === 'needs_data') && matchesSearch(c, debouncedSearch))
-  }, [cards, debouncedSearch])
+    return all.filter((c) => (c.status === 'kept' || c.status === 'needs_data') && matchesSearch(c, searchMatcher))
+  }, [cards, searchMatcher])
 
   const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
 
@@ -97,7 +99,7 @@ export const SessionVocabularyView = () => {
     const activeSet = new Set(processingStatus?.enrichingHighlightIds ?? [])
     const failedSet = new Set(processingStatus?.failedHighlightIds ?? [])
     return (highlights ?? [])
-      .filter((h) => !cardHighlightIds.has(h.id))
+      .filter((h) => !cardHighlightIds.has(h.id) && searchMatcher.matches(h.selectionText))
       .map((h): { id: string; surfaceForm: string; status: 'enriching' | 'failed' | 'missing' } => {
         // Until the processing-status query has returned, we don't yet know
         // whether an uncarded highlight is enqueued or genuinely not started —
@@ -110,7 +112,7 @@ export const SessionVocabularyView = () => {
             : 'missing'
         return { id: h.id, surfaceForm: h.selectionText, status }
       })
-  }, [highlights, cards, processingStatus, isProcessingStatusLoading])
+  }, [highlights, cards, processingStatus, isProcessingStatusLoading, searchMatcher])
 
   // Restores scroll position when the container remounts (e.g. focus-view
   // round-trip). Resets when search changes so a stale offset from a different
