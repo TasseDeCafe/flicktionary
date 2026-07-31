@@ -49,7 +49,11 @@ const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Prom
 // gets a throwaway unique email that the anonymous-shaped JWT never carries.
 // The admin API also can't flag the row anonymous, so the column is set
 // directly — checks that read auth.users.is_anonymous (the guest source
-// quota) must see what signInAnonymously would have written.
+// quota) must see what signInAnonymously would have written. Flagging the row
+// also makes the fixture sweepable: deleteStaleAnonymousUsers deletes
+// is_anonymous rows past the retention window, so on the shared never-reset
+// test DB these fixtures are reaped once they age past it (the sweep's
+// integration test tolerates that — no live test references them by then).
 export const __getAnonymousSupabaseToken = async (): Promise<{ id: string; token: string }> => {
   const { data, error } = await getSupabase().auth.admin.createUser({
     email: __generateUniqueEmail(),
