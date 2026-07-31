@@ -761,6 +761,7 @@ msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez maintenant commencer l’extraction."
 
 #: apps/web/src/features/auth/components/login-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Authentication failed"
 msgstr "Échec de l'authentification"
 
@@ -998,6 +999,10 @@ msgstr "Vérifier"
 msgid "Check your email"
 msgstr "Vérifiez votre e-mail"
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Check your inbox"
+msgstr "Vérifiez votre boîte de réception"
+
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "Checking app version..."
 msgstr "Vérification de la version de l'application..."
@@ -1059,6 +1064,10 @@ msgstr "Cliquez sur l'<0/> <1>épingle</1> à côté de Flicktionary."
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Click the <0>puzzle icon</0> at the top right of your browser toolbar."
 msgstr "Cliquez sur l'<0>icône puzzle</0> en haut à droite de la barre d'outils de votre navigateur."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx
+msgid "Click the button below to confirm your email and save your account."
+msgstr "Cliquez sur le bouton ci-dessous pour confirmer votre adresse e-mail et enregistrer votre compte."
 
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx
 msgid "Click the button below to finish signing in."
@@ -1133,6 +1142,7 @@ msgid "Condensed playback: On"
 msgstr "Lecture condensée : Activée"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Confirm"
 msgstr "Confirmer"
@@ -1144,6 +1154,10 @@ msgstr "Confirmer la suppression"
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "Confirm you understood what you read — words you already know may be waiting."
 msgstr "Confirmez que vous avez compris ce que vous avez lu — des mots que vous connaissez déjà pourraient être en attente."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx
+msgid "Confirm your email"
+msgstr "Confirmez votre adresse e-mail"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Conjunction"
@@ -1175,6 +1189,7 @@ msgstr "Contexte (facultatif)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
@@ -1200,11 +1215,13 @@ msgstr "Continuer avec Apple"
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/native/src/features/auth/components/login-view.tsx
 #: apps/web/src/features/auth/components/login-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Continue with Email"
 msgstr "Continuer avec l'adresse e-mail"
 
 #: apps/native/src/features/auth/components/login-view.tsx
 #: apps/web/src/features/auth/components/login-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Continue with Google"
 msgstr "Continuer avec Google"
 
@@ -1222,6 +1239,10 @@ msgstr "Impossible de charger automatiquement les sous-titres dans la langue pr�
 #: apps/extension/src/controllers/video-overlay-controller.ts
 msgid "Could not collect reviews. Try again."
 msgstr "Impossible de collecter les révisions. Réessayez."
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Could not connect your Google account. Please try again."
+msgstr "Impossible de connecter votre compte Google. Veuillez réessayer."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts
 msgid "Could not display payment options at this time."
@@ -1299,6 +1320,10 @@ msgstr "Impossible d'enregistrer le mot."
 msgid "Could not save your level. Please try again."
 msgstr "Impossible d'enregistrer votre niveau. Veuillez réessayer."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Could not send the confirmation email. Please try again."
+msgstr "Impossible d'envoyer l'e-mail de confirmation. Veuillez réessayer."
+
 #: apps/native/src/features/auth/components/user-setup-gate.tsx
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
@@ -1351,6 +1376,18 @@ msgstr "Comptage des mots…"
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Covers recognition and production combined."
 msgstr "Couvre reconnaissance et production combinées."
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Create a free account"
+msgstr "Créer un compte gratuit"
+
+#: apps/web/src/features/auth/components/guest-save-progress-banner.tsx
+msgid "Create account"
+msgstr "Créer un compte"
+
+#: apps/web/src/features/more/components/account-page.tsx
+msgid "Create account to save your progress"
+msgstr "Créer un compte pour enregistrer votre progression"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Create an account (or sign in) here in the web app."
@@ -1646,6 +1683,7 @@ msgstr "Email"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Email address"
 msgstr "Adresse email"
 
@@ -2414,6 +2452,10 @@ msgstr "Pour commencer"
 msgid "Give me three more example sentences using it."
 msgstr "Donne-moi trois autres exemples de phrases l'utilisant."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Go back"
+msgstr "Retour"
+
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "Go Back"
 msgstr "Retour"
@@ -2466,6 +2508,10 @@ msgstr "Grammaire"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Grammar notes"
 msgstr "Notes grammaticales"
+
+#: apps/web/src/features/more/components/account-page.tsx
+msgid "Guest"
+msgstr "Invité"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "haben"
@@ -2922,6 +2968,10 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Log in"
+msgstr "Se connecter"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Looking up and saving words"
 msgstr "Rechercher et enregistrer des mots"
@@ -3184,6 +3234,10 @@ msgstr "Mois suivant"
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Nice!"
 msgstr "Super !"
+
+#: apps/web/src/features/more/components/account-page.tsx
+msgid "No account yet"
+msgstr "Aucun compte pour le moment"
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "No active tab to import from."
@@ -3495,6 +3549,10 @@ msgstr "Paraphrase contextuelle optionnelle dans la langue cible."
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Note optionnelle pour le LLM (qu'est-ce qui vous confond précisément ?)"
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "or"
+msgstr "ou"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Other"
 msgstr "Autre"
@@ -3685,6 +3743,7 @@ msgstr "Veuillez choisir un fichier .srt."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Please enter a valid email address"
 msgstr "Veuillez entrer une adresse email valide"
 
@@ -4107,8 +4166,13 @@ msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Resend email"
 msgstr "Renvoyer l'e-mail"
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Resend email ({cooldownSeconds}s)"
+msgstr "Renvoyer l'e-mail ({cooldownSeconds}s)"
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Resend email in {cooldownSeconds}s"
@@ -4242,6 +4306,10 @@ msgstr "Enregistrer dans le vocabulaire"
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Save your first terms"
 msgstr "Enregistrez vos premiers termes"
+
+#: apps/web/src/features/auth/components/guest-save-progress-banner.tsx
+msgid "Save your progress"
+msgstr "Enregistrer votre progression"
 
 #: apps/web/src/features/stats/components/daily-activity-charts.tsx
 msgid "saved"
@@ -4429,6 +4497,7 @@ msgstr "Envoi de l'email"
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
+#: apps/web/src/features/auth/components/save-progress-view.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 msgid "Sending..."
@@ -5151,6 +5220,10 @@ msgstr "Cette carte a été notée comme oubliée — elle reviendra plus tôt e
 msgid "This connection link has already been used or has expired."
 msgstr "Ce lien de connexion a déjà été utilisé ou a expiré."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "This email or Google account already belongs to another Flicktionary account. Log in to it instead — your guest progress can't be transferred."
+msgstr "Cette adresse e-mail ou ce compte Google appartient déjà à un autre compte Flicktionary. Connectez-vous plutôt à ce compte — votre progression en tant qu'invité ne peut pas être transférée."
+
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/review/components/per-form-card-editor.tsx
 msgid "This form needs data before you can study it."
@@ -5270,6 +5343,10 @@ msgstr "Activer/désactiver la piste de sous-titres 3 dans la vidéo"
 #: apps/extension/common/components/VideoOverlay.tsx
 msgid "Toggle subtitles"
 msgstr "Activer les sous-titres"
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Too many attempts — please wait a moment before trying again."
+msgstr "Trop de tentatives — veuillez patienter un instant avant de réessayer."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx
 msgid "Too Many Requests"
@@ -5535,6 +5612,10 @@ msgstr "Utilisez « {term} » dans une phrase"
 msgid "Use a .md, .txt, or .xlsx file."
 msgstr "Utilisez un fichier .md, .txt ou .xlsx."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Use a different email"
+msgstr "Utiliser une autre adresse e-mail"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Use a subtitle file you already have."
 msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
@@ -5724,6 +5805,10 @@ msgstr "Nous n'avons pas pu lire ces notes"
 msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "Nous n'avons pas reçu de réponse de l'extension Flicktionary sur cet appareil."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "We sent a confirmation link to {email}. Open it to finish creating your account."
+msgstr "Nous avons envoyé un lien de confirmation à {email}. Ouvrez-le pour finaliser la création de votre compte."
+
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
 msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est détectée automatiquement à partir du contenu du fichier."
@@ -5875,6 +5960,10 @@ msgstr "Hier"
 msgid "You already had a session for this — picking up where you left off."
 msgstr "Vous aviez déjà une session pour cela — reprise là où vous vous êtes arrêté."
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "You already have an account"
+msgstr "Vous avez déjà un compte"
+
 #: apps/native/src/features/profile/components/profile-view.tsx
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "You are a special user with free access. You have no active subscription."
@@ -5925,6 +6014,14 @@ msgstr "Vous êtes à jour — rien de nouveau à collecter."
 msgid "You're all set"
 msgstr "Vous êtes prêt"
 
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "You're browsing as a guest — everything you save lives only in this browser and is lost if its data is cleared. Add an email or Google account to keep your progress."
+msgstr "Vous naviguez en tant qu'invité — tout ce que vous enregistrez existe uniquement dans ce navigateur et sera perdu si ses données sont effacées. Ajoutez une adresse e-mail ou un compte Google pour conserver votre progression."
+
+#: apps/web/src/features/auth/components/guest-save-progress-banner.tsx
+msgid "You're browsing as a guest — everything you save lives only in this browser. Create a free account to keep it."
+msgstr "Vous naviguez en tant qu'invité — tout ce que vous enregistrez n'existe que dans ce navigateur. Créez un compte gratuit pour le conserver."
+
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"
 msgstr "Vous avez atteint la fin"
@@ -5941,6 +6038,10 @@ msgstr "Votre niveau de {pendingLanguageName}"
 #: apps/web/src/features/removals/api/removals-hooks.ts
 msgid "Your account has been deleted successfully."
 msgstr "Votre compte a été supprimé avec succès."
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Your account now works on any device — sign in with the same method next time."
+msgstr "Votre compte fonctionne maintenant sur n'importe quel appareil — connectez-vous avec la même méthode la prochaine fois."
 
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Your answer will appear in this card's chat."
@@ -5977,6 +6078,10 @@ msgstr "Votre prochain exercice est encore en cours de préparation — il appar
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Your next session"
 msgstr "Votre prochaine session"
+
+#: apps/web/src/features/auth/components/save-progress-view.tsx
+msgid "Your progress is saved"
+msgstr "Votre progression est sauvegardée"
 
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Your reading position changed — try again"
