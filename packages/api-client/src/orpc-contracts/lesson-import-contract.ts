@@ -65,6 +65,11 @@ export const lessonImportContract = {
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': anonymous user with a full library or
+      // too many pending drafts (extraction runs before any source exists) —
+      // the web app shows the create-account prompt. Resuming an existing
+      // draft is never blocked.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
     })
     .input(
       z.object({
