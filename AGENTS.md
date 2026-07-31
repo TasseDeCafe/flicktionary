@@ -150,7 +150,7 @@ Rules:
 
 # Local database & migrations
 
-When the user refers to their "local DB", they mean the **dev-tunnel** instance (`postgresql://postgres:postgres@127.0.0.1:34322/postgres` — port `34322`, not the default), started with `pnpm db:dev:tunnel` and reset with `pnpm db:reset`. `supabase-dev` is the remote dev environment. Always prefix Supabase CLI commands with `doppler run --`.
+When the user refers to their "local DB", they mean the **dev-tunnel** instance (`postgresql://postgres:postgres@127.0.0.1:34322/postgres` — port `34322`, not the default), started with `pnpm db:dev:tunnel` and reset with `pnpm db:reset`. `supabase-dev` is also a local stack (the non-tunnelled one) — the only hosted Supabase project is prod, so dashboard-side settings exist only there. Always prefix Supabase CLI commands with `doppler run --`.
 
 Hard rules (the full workflow — creating migrations, regenerating types, Doppler details — lives in the **`db-migrations` skill**; use it for any schema change):
 
