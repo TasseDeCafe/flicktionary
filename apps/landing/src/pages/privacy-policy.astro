@@ -13,7 +13,7 @@ import Base from '../layouts/Base.astro'
   <main class='mx-auto max-w-3xl space-y-8 px-6 py-12 text-gray-800'>
     <header class='space-y-2'>
       <h1 class='text-3xl font-bold'>Flicktionary Privacy Policy</h1>
-      <p class='text-sm text-gray-500'>Last updated: July 30, 2026</p>
+      <p class='text-sm text-gray-500'>Last updated: July 31, 2026</p>
     </header>
 
     <section class='space-y-3'>
@@ -89,9 +89,15 @@ import Base from '../layouts/Base.astro'
       <p>
         We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and
         hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product
-        analytics, session replay, and error monitoring), and Resend (transactional email). These providers process data only to
-        provide their services to us and are bound by their own confidentiality and data-protection obligations. We do
-        not sell your personal data to anyone.
+        analytics, session replay, and error monitoring), Resend (transactional email), and Cloudflare (whose Turnstile
+        service protects sign-up against automated abuse; its processing for this purpose is described in the
+        <a
+          href='https://www.cloudflare.com/turnstile-privacy-policy/'
+          class='underline'
+          target='_blank'
+          rel='noopener noreferrer'>Cloudflare Turnstile Privacy Addendum</a
+        >). These providers process data only to provide their services to us and are bound by their own
+        confidentiality and data-protection obligations. We do not sell your personal data to anyone.
       </p>
     </section>
 
