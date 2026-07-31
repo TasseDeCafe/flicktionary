@@ -158,8 +158,10 @@ export const chunksContract = {
         sort: ChunksSortSchema.default('recent'),
         cursor: z.string().nullable().optional(),
         limit: z.coerce.number().int().min(1).max(200).default(50),
-        // Optional case-insensitive substring filter applied across headword,
-        // translation, and definition. Empty string is treated as no filter.
+        // Optional accent- and case-insensitive substring filter applied
+        // across headword, translation, and definition, with trigram typo
+        // tolerance (pg_trgm word_similarity) on the same fields. Empty
+        // string is treated as no filter.
         q: z.string().optional(),
         // Skill-membership filter, a comma-separated list of VOCAB_FILTER_SKILLS
         // tokens (e.g. "production,pronunciation"). OR within the set. Sent as a
