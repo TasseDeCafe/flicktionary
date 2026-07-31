@@ -78,6 +78,11 @@ export const POSTHOG_EVENTS = {
   signOut: () => {
     capture('sign_out')
   },
+  // Top of the guest → account conversion funnel: the guest hit the
+  // per-guest source cap and was shown the create-account prompt.
+  guestSourceLimitReached: () => {
+    capture('guest_source_limit_reached')
+  },
   // Guest → account conversion funnel: the confirmation email went out…
   guestConversionEmailSent: () => {
     capture('guest_conversion_email_sent')
