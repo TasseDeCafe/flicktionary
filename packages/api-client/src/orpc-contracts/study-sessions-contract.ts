@@ -47,6 +47,11 @@ export const studySessionsContract = {
     .route({ method: 'POST', path: '/study-sessions', successStatus: 201 })
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': anonymous user attaching a session to a
+      // source that would exceed their library cap (globally-deduped movie/TV
+      // sources consume a slot here, not at row creation) — the web app shows
+      // the create-account prompt.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(
@@ -516,6 +521,10 @@ export const studySessionsContract = {
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': anonymous user at the per-guest
+      // source-creation cap and this video is new to their library —
+      // re-opening an already-ingested one still succeeds.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(
@@ -560,6 +569,8 @@ export const studySessionsContract = {
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': see findOrCreateForYoutubeVideo.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(
@@ -636,6 +647,10 @@ export const studySessionsContract = {
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': anonymous user at the per-guest
+      // source-creation cap and this body is new — re-importing existing
+      // content still resolves to its session.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(

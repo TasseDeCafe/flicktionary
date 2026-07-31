@@ -1,4 +1,5 @@
 import type postgres from 'postgres'
+import { assertGuestSourceQuota } from '../../transport/database/guests/guest-source-quota'
 import type { Tables } from '../../transport/database/database.public.types'
 import type { DbImportBatch } from '../../transport/database/import-batches/import-batches-repository'
 import type { DbStudySession, DbTextTrack } from '../../transport/database/study-sessions/study-sessions-repository'
@@ -36,6 +37,10 @@ export const getOrCreateLessonSession = async (
       if (track[0]) return { session: existing[0], track: track[0] }
     }
   }
+
+  // Every confirmed batch creates a fresh source (no dedup), so the guest
+  // quota always applies here; the throw rolls back the confirm transaction.
+  await assertGuestSourceQuota(userId, tx)
 
   const insertedSource = (await tx`
     INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)

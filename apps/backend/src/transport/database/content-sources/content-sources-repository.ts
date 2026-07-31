@@ -44,6 +44,24 @@ const findByTmdbId = async (tmdbId: number): Promise<DbContentSource | null> => 
   return result[0] ?? null
 }
 
+// Existence probe for the guest source quota: mirrors getOrCreateTvEpisode's
+// conflict key so the router can tell reuse (always allowed) from creation.
+const findTvEpisode = async (params: {
+  tmdbShowId: number
+  seasonNumber: number
+  episodeNumber: number
+}): Promise<DbContentSource | null> => {
+  const result = (await sql`
+    SELECT * FROM public.content_sources
+    WHERE type = 'tv'
+      AND metadata->>'tmdbShowId' = ${String(params.tmdbShowId)}
+      AND metadata->>'seasonNumber' = ${String(params.seasonNumber)}
+      AND metadata->>'episodeNumber' = ${String(params.episodeNumber)}
+    LIMIT 1
+  `) as DbContentSource[]
+  return result[0] ?? null
+}
+
 const getOrCreateTvEpisode = async (params: {
   title: string
   language: string
@@ -81,6 +99,11 @@ export interface ContentSourcesRepositoryInterface {
   }) => Promise<DbContentSource>
   findById: (id: string) => Promise<DbContentSource | null>
   findByTmdbId: (tmdbId: number) => Promise<DbContentSource | null>
+  findTvEpisode: (params: {
+    tmdbShowId: number
+    seasonNumber: number
+    episodeNumber: number
+  }) => Promise<DbContentSource | null>
   getOrCreateTvEpisode: (params: {
     title: string
     language: string
@@ -94,6 +117,7 @@ export const ContentSourcesRepository = (): ContentSourcesRepositoryInterface =>
     insertContentSource,
     findById,
     findByTmdbId,
+    findTvEpisode,
     getOrCreateTvEpisode,
   }
 }

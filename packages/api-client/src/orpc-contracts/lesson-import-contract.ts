@@ -98,6 +98,10 @@ export const lessonImportContract = {
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       // Not in 'ready' state: double-submit, still extracting, or failed.
       CONFLICT: { status: 409, data: BackendErrorResponseSchema },
+      // 'GUEST_SOURCE_LIMIT_REACHED': anonymous user at the per-guest
+      // source-creation cap (every confirmed batch creates a source) — the web
+      // app shows the create-account prompt.
+      FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       // Missing user prefs, discriminated by `errors[0].code`:
       // `native_language_not_set` (finish onboarding first) or `cefr_not_set`
       // (client shows a CEFR picker for `errors[0].targetLanguage`, then

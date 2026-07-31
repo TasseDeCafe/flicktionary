@@ -17,6 +17,8 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
+import { assertGuestSessionQuota } from '../../transport/database/guests/guest-source-quota'
 import { importTextForUser, resolveIngestPrefs } from '../../service/study-sessions/import-text'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
@@ -179,6 +181,10 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
+      // Globally-deduped movie/TV sources are "added" by attaching a session,
+      // not by creating a row — this is where they consume a guest library
+      // slot (sources already in the library re-attach freely).
+      await assertGuestSessionQuota(userId, input.contentSourceId)
       const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: input.targetLanguage,
@@ -697,6 +703,18 @@ export const StudySessionsRouter = (
         if (result.reason === 'blocked') {
           throw errors.UNPROCESSABLE_ENTITY({
             data: { errors: [{ code: 'CONTENT_BLOCKED', message: blockedContentMessage(result.category) }] },
+          })
+        }
+        if (result.reason === 'guest-limit') {
+          throw errors.FORBIDDEN({
+            data: {
+              errors: [
+                {
+                  code: ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED,
+                  message: `Guest accounts can add up to ${result.limit} content sources — create a free account to keep going`,
+                },
+              ],
+            },
           })
         }
         throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(result) })

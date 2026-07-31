@@ -2,6 +2,7 @@ import type postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import type { TrackModeration } from '../text-tracks/text-tracks-repository'
+import { assertGuestSourceQuota } from '../guests/guest-source-quota'
 
 export type DbStudySession = Tables<'study_sessions'>
 export type DbTextTrack = Tables<'text_tracks'>
@@ -324,6 +325,17 @@ const getOrCreateForYoutubeVideo = async (params: {
       videoTitle: params.videoTitle,
       videoUrl: params.videoUrl,
     }
+    // Guest source quota applies only when this ingest would CREATE the source
+    // — re-opening an already-ingested video must keep working at the cap. The
+    // probe mirrors the upsert's conflict key below.
+    const existingSource = await tx`
+      SELECT 1 FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type = 'youtube'
+        AND metadata->>'youtubeVideoId' = ${params.youtubeVideoId}
+      LIMIT 1
+    `
+    if (existingSource.length === 0) await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
@@ -381,6 +393,16 @@ const getOrCreateForStreamingVideo = async (params: {
       videoTitle: params.videoTitle,
       videoUrl: params.videoUrl,
     }
+    // Same guest-quota probe as the YouTube flow, keyed on the streaming
+    // conflict key (user, contentHash).
+    const existingSource = await tx`
+      SELECT 1 FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type = 'streaming'
+        AND metadata->>'contentHash' = ${params.contentHash}
+      LIMIT 1
+    `
+    if (existingSource.length === 0) await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
@@ -441,6 +463,17 @@ const getOrCreateForImportedText = async (params: {
       contentHash: params.contentHash,
       sourceUrl: params.sourceUrl,
     }
+    // Guest-quota probe on the imported-text conflict key (user, contentHash
+    // across both 'article' and 'text'): re-importing the same body at the cap
+    // must still resolve to the existing session.
+    const existingSource = await tx`
+      SELECT 1 FROM public.content_sources
+      WHERE created_by_user_id = ${params.userId}
+        AND type IN ('article', 'text')
+        AND metadata->>'contentHash' = ${params.contentHash}
+      LIMIT 1
+    `
+    if (existingSource.length === 0) await assertGuestSourceQuota(params.userId, tx)
     const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (

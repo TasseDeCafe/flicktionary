@@ -1,4 +1,5 @@
 import { SupabaseClaims } from '../middleware/token-authentication-middleware'
+import { sql } from '../transport/database/postgres-client'
 import { getSupabase } from '../transport/database/supabase'
 import { signSupabaseToken } from '../utils/jwt-verification-utils'
 import { Express } from 'express'
@@ -46,6 +47,9 @@ const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Prom
 // because public.users.id has a foreign key to it (signInAnonymously creates
 // one in production); the admin API can't create email-less users, so the row
 // gets a throwaway unique email that the anonymous-shaped JWT never carries.
+// The admin API also can't flag the row anonymous, so the column is set
+// directly — checks that read auth.users.is_anonymous (the guest source
+// quota) must see what signInAnonymously would have written.
 export const __getAnonymousSupabaseToken = async (): Promise<{ id: string; token: string }> => {
   const { data, error } = await getSupabase().auth.admin.createUser({
     email: __generateUniqueEmail(),
@@ -55,6 +59,7 @@ export const __getAnonymousSupabaseToken = async (): Promise<{ id: string; token
     throw new Error('Failed to create user in supabase: ' + error.message)
   }
   const id = data?.user?.id || ''
+  await sql`UPDATE auth.users SET is_anonymous = true WHERE id = ${id}`
   const token = await signSupabaseToken({ sub: id, is_anonymous: true, user_metadata: {} }, SIGNING_KEY_PATH)
   return { id, token }
 }

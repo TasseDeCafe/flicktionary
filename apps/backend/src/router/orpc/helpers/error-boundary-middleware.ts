@@ -1,5 +1,7 @@
 import { type AnyMiddleware, ORPCError, ValidationError } from '@orpc/server'
+import { ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import { logError } from '../../../transport/error-monitoring/error-monitoring'
+import { GuestSourceLimitError } from '../../../transport/database/guests/guest-source-quota'
 import { UpstreamRateLimitError } from '../../../transport/third-party/upstream-rate-limit-error'
 
 // Wired into every oRPC implementer via `.use(errorBoundaryMiddleware)`. Catches any
@@ -32,6 +34,14 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
         })
       }
       throw e
+    }
+    // An anonymous user hit the per-guest content-source cap. An expected
+    // business outcome, not an ops failure — no logError. Falls through to 500
+    // if the procedure's contract doesn't declare FORBIDDEN.
+    if (e instanceof GuestSourceLimitError && 'FORBIDDEN' in errors) {
+      throw errors.FORBIDDEN({
+        data: { errors: [{ code: ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED, message: e.message }] },
+      })
     }
     // A third-party service (TMDB / OpenSubtitles) throttled us or the shared
     // daily quota is spent. Answer 429 — which the frontends never retry — with

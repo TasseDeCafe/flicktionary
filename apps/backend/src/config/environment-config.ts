@@ -27,6 +27,9 @@ const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'f
 // guest access by accident.
 const isGuestModeEnabled = process.env.GUEST_MODE_ENABLED === 'true'
 
+// Guest source cap: tunable without a code change (see the schema comment).
+const maxSourcesPerGuest = parseInt(process.env.MAX_SOURCES_PER_GUEST || '3', 10)
+
 // Browser extension origins. We allow any chrome- or moz-extension origin during
 // development; once we have stable published extension IDs the patterns can be
 // tightened to those specific IDs. The cors package treats string values
@@ -74,6 +77,7 @@ const productionConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
+  maxSourcesPerGuest,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -123,6 +127,7 @@ const developmentConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   isGuestModeEnabled,
+  maxSourcesPerGuest,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -198,6 +203,9 @@ const testConfig: EnvironmentConfig = {
   // Integration tests toggle the flag per-app through AppDependencies instead
   // of this static config.
   isGuestModeEnabled: false,
+  // Static: the quota guard only fires for users flagged is_anonymous in
+  // auth.users, so regular test fixtures never hit it.
+  maxSourcesPerGuest: 3,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
