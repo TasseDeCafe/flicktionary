@@ -24,6 +24,7 @@
     "db:dev:tunnel:wipe": "./scripts/db--dev-tunnel--wipe.sh",
     "db:dev:tunnel:migrate": "./scripts/db--dev-tunnel--migrate.sh",
     "db:dev:tunnel:gen-types": "./scripts/db--dev-tunnel--gen-types.sh",
+    "db:prod:config:push": "./scripts/db--prod--config-push.sh",
     "preview-emails": "email dev --dir emails",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
