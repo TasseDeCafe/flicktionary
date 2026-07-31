@@ -1377,6 +1377,7 @@ msgstr "Comptage des mots…"
 msgid "Covers recognition and production combined."
 msgstr "Couvre reconnaissance et production combinées."
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Create a free account"
 msgstr "Créer un compte gratuit"
@@ -2523,6 +2524,10 @@ msgstr "Notes grammaticales"
 msgid "Guest"
 msgstr "Invité"
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
+msgid "Guest browsing includes a few sources to try Flicktionary. Create a free account to keep adding — everything you've saved carries over."
+msgstr "La navigation en tant qu'invité inclut quelques sources pour essayer Flicktionary. Créez un compte gratuit pour continuer à en ajouter — tout ce que vous avez enregistré sera conservé."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "haben"
 msgstr "haben"
@@ -3357,6 +3362,7 @@ msgstr "Normal"
 msgid "not available"
 msgstr "non disponible"
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "Not now"
 msgstr "Pas maintenant"
@@ -6039,6 +6045,10 @@ msgstr "Vous naviguez en tant qu'invité et la connexion à Telegram nécessite 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "You're browsing as a guest, and pairing the extension needs an account."
 msgstr "Vous naviguez en tant qu'invité et l'appairage de l'extension nécessite un compte."
+
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
+msgid "You've filled your guest library"
+msgstr "Vous avez rempli votre bibliothèque d'invité"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"

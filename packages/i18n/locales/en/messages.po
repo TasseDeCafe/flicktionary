@@ -1377,6 +1377,7 @@ msgstr "Counting words…"
 msgid "Covers recognition and production combined."
 msgstr "Covers recognition and production combined."
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Create a free account"
 msgstr "Create a free account"
@@ -2524,6 +2525,10 @@ msgstr "Grammar notes"
 msgid "Guest"
 msgstr "Guest"
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
+msgid "Guest browsing includes a few sources to try Flicktionary. Create a free account to keep adding — everything you've saved carries over."
+msgstr "Guest browsing includes a few sources to try Flicktionary. Create a free account to keep adding — everything you've saved carries over."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "haben"
 msgstr "haben"
@@ -3358,6 +3363,7 @@ msgstr "Normal"
 msgid "not available"
 msgstr "not available"
 
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "Not now"
 msgstr "Not now"
@@ -6040,6 +6046,10 @@ msgstr "You're browsing as a guest, and connecting Telegram needs an account."
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "You're browsing as a guest, and pairing the extension needs an account."
 msgstr "You're browsing as a guest, and pairing the extension needs an account."
+
+#: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
+msgid "You've filled your guest library"
+msgstr "You've filled your guest library"
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"
