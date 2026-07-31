@@ -1,17 +1,12 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { useNavigate } from '@tanstack/react-router'
-import { isSupportedLanguageCode, type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
+import { type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
 import { LanguageOptionList } from '@/components/language-option-list'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { useCompleteOnboarding } from '@/features/sessions/api/sessions-hooks'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
-
-const detectBrowserLanguage = (): SupportedLanguageCode => {
-  if (typeof navigator === 'undefined') return 'en'
-  const raw = navigator.language?.split('-')[0]?.toLowerCase()
-  return raw && isSupportedLanguageCode(raw) ? raw : 'en'
-}
+import { detectBrowserLanguage } from '@/utils/browser-language-utils'
 
 type Step = 'pick' | 'welcome'
 

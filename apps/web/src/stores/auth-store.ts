@@ -6,6 +6,7 @@ import { useThemeStore } from '@/stores/theme-store'
 import posthog from 'posthog-js'
 import { isPostHogEnabled } from '@/lib/analytics/posthog-init'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
+import { hasReturningUserMarker, setReturningUserMarker } from '@/features/auth/utils/returning-user-marker'
 
 type AuthStore = {
   session: Session | null
@@ -45,6 +46,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   signOut: async (onComplete) => {
     set({ isLoading: true, isSigningOut: true })
+    const wasReturningUser = hasReturningUserMarker()
 
     try {
       // supabase signs you out of all devices by default
@@ -66,6 +68,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
     // localStorage.clear() wiped the resolved-theme cache; re-write it so the
     // next load doesn't flash. The DB value re-applies on next sign-in.
     useThemeStore.getState().recache()
+    // Same for the returning-user marker: a signed-out real user must keep
+    // landing on /login, not get silently switched to a fresh guest account.
+    if (wasReturningUser) {
+      setReturningUserMarker()
+    }
     onComplete?.()
   },
 }))
@@ -74,5 +81,6 @@ export const getIsSignedIn = (state: AuthStore) => !!state.session?.access_token
 export const getUserEmail = (state: AuthStore) => state.session?.user?.user_metadata?.email ?? ''
 export const getUserName = (state: AuthStore) => state.session?.user?.user_metadata?.name ?? ''
 export const getUserId = (state: AuthStore) => state.session?.user?.id ?? ''
+export const getIsAnonymous = (state: AuthStore) => state.session?.user?.is_anonymous ?? false
 export const getAccessToken = (state: AuthStore) => state.session?.access_token ?? ''
 export const getUserAvatarUrl = (state: AuthStore) => state.session?.user?.user_metadata?.avatar_url ?? ''
