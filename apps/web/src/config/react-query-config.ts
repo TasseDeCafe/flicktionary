@@ -1,5 +1,6 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import {
+  ERROR_CODE_FOR_GUEST_ACCESS_DISABLED,
   ERROR_CODE_FOR_INVALID_TOKEN,
   ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED,
 } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
@@ -16,11 +17,19 @@ import { logError } from '@/lib/analytics/log-error'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 import { Route as pricingRoute } from '@/app/routes/_authenticated/pricing/index'
+import { Route as loginRoute } from '@/app/routes/login/index'
+import { useAuthStore } from '@/stores/auth-store'
 import { USER_FACING_ERROR_CODE } from '@flicktionary/core/constants/user-facing-error-code'
 import { OverlayId } from '@flicktionary/ui/components/overlay-ids'
 import { ORPCError } from '@orpc/contract'
 import { i18n } from '@/lib/i18n/i18n'
 import { msg, t } from '@lingui/core/macro'
+
+// An administrative lock-out (guest kill switch flipped off), not an error:
+// handleApiError signs the guest out silently, so it must not reach Sentry or
+// PostHog exception tracking either.
+const isGuestAccessDisabledError = (error: unknown) =>
+  error instanceof ORPCError && getBackendErrorCode(error) === ERROR_CODE_FOR_GUEST_ACCESS_DISABLED
 
 const handleGenericApiError = (meta?: QueryMeta) => {
   const showErrorToast = meta?.showErrorToast ?? true
@@ -88,6 +97,18 @@ const handleApiError = (error: unknown, meta?: QueryMeta) => {
   }
 
   if (error.code === 'UNAUTHORIZED') {
+    if (backendErrorCode === ERROR_CODE_FOR_GUEST_ACCESS_DISABLED) {
+      // The guest kill switch was flipped off while this guest session was
+      // live. That's an administrative lock-out, not an error state: silently
+      // clear the session and land on /login. Parallel queries all fail with
+      // this code at once, so guard against re-entrant sign-outs.
+      const { isSigningOut, signOut } = useAuthStore.getState()
+      if (!isSigningOut && typeof window !== 'undefined') {
+        void signOut(() => window.location.assign(loginRoute.to))
+      }
+      return
+    }
+
     if (backendErrorCode === ERROR_CODE_FOR_INVALID_TOKEN) {
       POSTHOG_EVENTS.invalidTokenError()
       if (showErrorModal) {
@@ -114,15 +135,17 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       const meta = query.meta
 
-      logError({
-        message: `QueryKey ${JSON.stringify(query.queryKey)} failed`,
-        error,
-        params: {
-          queryKey: JSON.stringify(query.queryKey),
-          meta,
-          orpc: error instanceof ORPCError ? buildOrpcErrorContext(error) : undefined,
-        },
-      })
+      if (!isGuestAccessDisabledError(error)) {
+        logError({
+          message: `QueryKey ${JSON.stringify(query.queryKey)} failed`,
+          error,
+          params: {
+            queryKey: JSON.stringify(query.queryKey),
+            meta,
+            orpc: error instanceof ORPCError ? buildOrpcErrorContext(error) : undefined,
+          },
+        })
+      }
 
       handleApiError(error, meta)
     },
@@ -143,7 +166,7 @@ export const queryClient = new QueryClient({
 
       handleApiError(error, meta)
 
-      if (!isExpectedValidationError(error)) {
+      if (!isExpectedValidationError(error) && !isGuestAccessDisabledError(error)) {
         logError({
           message: `MutationKey ${JSON.stringify(mutation.options.mutationKey)} failed`,
           error,

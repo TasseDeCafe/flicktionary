@@ -135,6 +135,9 @@ export type AppDependencies = {
   // token is empty, i.e. in tests); integration tests inject a recording fake
   // to assert on captured events.
   posthogClient?: PostHog
+  // Guest kill switch (GUEST_MODE_ENABLED); injectable so integration tests
+  // can exercise both the open and locked-out branches.
+  isGuestModeEnabled?: boolean
 }
 
 export const buildApp = ({
@@ -156,6 +159,7 @@ export const buildApp = ({
   telegramPollingWorker = MockTelegramPollingWorker(),
   openSubtitlesDownloadSrt = downloadSrtByFileId,
   posthogClient = defaultPosthogClient,
+  isGuestModeEnabled = getConfig().isGuestModeEnabled,
 }: AppDependencies): Express => {
   const app: Express = express()
 
@@ -279,7 +283,7 @@ export const buildApp = ({
     revenuecatSubscriptionsRepository,
     revenuecatService
   )
-  app.use(API_V1, configRouter())
+  app.use(API_V1, configRouter(isGuestModeEnabled))
   app.use(API_V1, HealthCheckRouter())
 
   // Apply IP-based rate limiting specifically to authentication routes
@@ -304,7 +308,7 @@ export const buildApp = ({
     app.use(API_V1, TelegramAuthRouter(TelegramAuthNoncesRepository(), authUsersRepository))
   }
 
-  app.use(tokenAuthenticationMiddleware)
+  app.use(tokenAuthenticationMiddleware({ isGuestModeEnabled }))
 
   if (getConfig().shouldRateLimit) {
     const tenMinutes = 10 * 60

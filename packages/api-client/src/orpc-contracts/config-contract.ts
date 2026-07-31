@@ -15,6 +15,10 @@ export const configContract = {
         data: z.object({
           lowestSupportedVersionIos: z.string(),
           lowestSupportedVersionAndroid: z.string(),
+          // Served pre-auth so the web app can decide at runtime whether to
+          // auto-sign visitors in anonymously — toggling the Doppler var needs
+          // no web redeploy.
+          isGuestModeEnabled: z.boolean(),
         }),
       })
     ),

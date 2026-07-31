@@ -3,6 +3,7 @@ import { getSupabase } from '../transport/database/supabase'
 import { signSupabaseToken } from '../utils/jwt-verification-utils'
 import { Express } from 'express'
 import path from 'path'
+import { randomUUID } from 'node:crypto'
 import request from 'supertest'
 import { AppDependencies, buildApp } from '../app'
 import { MockStripeApi, StripeApi } from '../transport/third-party/stripe/stripe-api'
@@ -39,6 +40,16 @@ const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Prom
     },
   }
   return await signSupabaseToken(supabaseClaims, SIGNING_KEY_PATH)
+}
+
+// Anonymous (guest) tokens carry is_anonymous and empty metadata, mirroring
+// what Supabase mints on signInAnonymously(). No auth.users row is created:
+// the token-authentication middleware only verifies the signature, and guest
+// flows create their public.users row through the API like everyone else.
+export const __getAnonymousSupabaseToken = async (): Promise<{ id: string; token: string }> => {
+  const id = randomUUID()
+  const token = await signSupabaseToken({ sub: id, is_anonymous: true, user_metadata: {} }, SIGNING_KEY_PATH)
+  return { id, token }
 }
 
 export type IdAndToken = {

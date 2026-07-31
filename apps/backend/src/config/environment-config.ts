@@ -23,6 +23,10 @@ const parseAutoSeedPattern = (raw: string | undefined): RegExp | null => {
 const devAutoSeedEmailPattern = parseAutoSeedPattern(process.env.DEV_AUTOSEED_EMAIL_PATTERN)
 const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'fr'
 
+// Guest kill switch: defaults to off, so a missing Doppler var can never open
+// guest access by accident.
+const isGuestModeEnabled = process.env.GUEST_MODE_ENABLED === 'true'
+
 // Browser extension origins. We allow any chrome- or moz-extension origin during
 // development; once we have stable published extension IDs the patterns can be
 // tightened to those specific IDs. The cors package treats string values
@@ -69,6 +73,7 @@ const productionConfig: EnvironmentConfig = {
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
+  isGuestModeEnabled,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -117,6 +122,7 @@ const developmentConfig: EnvironmentConfig = {
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
+  isGuestModeEnabled,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
@@ -189,6 +195,9 @@ const testConfig: EnvironmentConfig = {
   emailsOfTestUsers: [],
   devAutoSeedEmailPattern: null,
   devAutoSeedNativeLanguage: 'fr',
+  // Integration tests toggle the flag per-app through AppDependencies instead
+  // of this static config.
+  isGuestModeEnabled: false,
   featureFlags: {
     isCreditCardRequiredForAll: () => false,
     shouldAppBeFreeForEveryone: () => true,
