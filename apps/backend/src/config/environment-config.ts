@@ -28,7 +28,11 @@ const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'f
 const isGuestModeEnabled = process.env.GUEST_MODE_ENABLED === 'true'
 
 // Guest source cap: tunable without a code change (see the schema comment).
-const maxSourcesPerGuest = parseInt(process.env.MAX_SOURCES_PER_GUEST || '3', 10)
+// A malformed value falls back to the default instead of parsing to NaN —
+// config validation only logs, and `count >= NaN` is always false, which
+// would silently disable the cap.
+const parsedMaxSourcesPerGuest = parseInt(process.env.MAX_SOURCES_PER_GUEST || '3', 10)
+const maxSourcesPerGuest = Number.isNaN(parsedMaxSourcesPerGuest) ? 3 : parsedMaxSourcesPerGuest
 
 // Browser extension origins. We allow any chrome- or moz-extension origin during
 // development; once we have stable published extension IDs the patterns can be
