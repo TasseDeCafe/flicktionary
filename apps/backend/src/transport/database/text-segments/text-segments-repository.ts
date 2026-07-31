@@ -11,16 +11,14 @@ export type SegmentInsertInput = {
   endMs: number | null
 }
 
-// Languages whose Postgres regconfigs we use for FTS query parsing.
+// Languages whose Postgres regconfigs we use for FTS query parsing — consumed
+// by the sense-relevance prefilter in user-lookups, which builds its
+// tsvectors on the fly from segment text.
 // Limited to SUPPORTED_LANGUAGES entries that have a built-in Snowball stemmer
 // shipped with Postgres — see the authoritative list in the Postgres source:
 // https://github.com/postgres/postgres/blob/master/src/backend/snowball/Makefile
 // Languages outside this set (zh, bn, ur, ja, sw, mr, te, vi, ko) need external
 // tokenizer extensions and fall back to 'simple' so exact-token lookups still work.
-// To add support for a new language, update BOTH this map AND the
-// text_segments_set_tsv() trigger in the schema migration (they must mirror each
-// other exactly), then ship a migration that re-runs CREATE OR REPLACE FUNCTION
-// and rebuilds tsv for any pre-existing rows in the newly-supported language.
 const LANGUAGE_TO_REGCONFIG: Record<string, string> = {
   en: 'english',
   hi: 'hindi',
@@ -55,7 +53,7 @@ const bulkInsertSegments = async (textTrackId: string, segments: SegmentInsertIn
 
 const listByTrackId = async (textTrackId: string): Promise<DbTextSegment[]> => {
   return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${textTrackId}
     ORDER BY index ASC
@@ -66,7 +64,7 @@ const listByTrackId = async (textTrackId: string): Promise<DbTextSegment[]> => {
 // blob generation, without loading the whole track (matters for long reads).
 const listFirstByTrackId = async (textTrackId: string, limit: number): Promise<DbTextSegment[]> => {
   return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${textTrackId}
     ORDER BY index ASC
@@ -76,7 +74,7 @@ const listFirstByTrackId = async (textTrackId: string, limit: number): Promise<D
 
 const findById = async (id: string): Promise<DbTextSegment | null> => {
   const result = (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments WHERE id = ${id}
   `) as DbTextSegment[]
   return result[0] ?? null
@@ -91,7 +89,7 @@ const listByIndexRange = async (
   endIndex: number
 ): Promise<DbTextSegment[]> => {
   return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${textTrackId}
       AND index BETWEEN ${startIndex} AND ${endIndex}
@@ -112,7 +110,7 @@ const listPageAfterIndex = async (params: {
   toIndexInclusive?: number
 }): Promise<DbTextSegment[]> => {
   return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${params.textTrackId}
       AND index > ${params.afterIndex ?? -1}
@@ -147,7 +145,7 @@ const getSegmentStats = async (textTrackId: string): Promise<{ segmentCount: num
 
 const listAroundIndex = async (textTrackId: string, centerIndex: number, radius: number): Promise<DbTextSegment[]> => {
   return (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${textTrackId}
       AND index BETWEEN ${centerIndex - radius} AND ${centerIndex + radius}
@@ -182,7 +180,7 @@ const appendSegmentAtomic = async (
         ${params.startMs},
         ${params.endMs}
       FROM public.text_segments WHERE text_track_id = ${params.textTrackId}
-      RETURNING id, text_track_id, index, text, start_ms, end_ms, tsv
+      RETURNING id, text_track_id, index, text, start_ms, end_ms
     `) as DbTextSegment[]
     return result[0]!
   }

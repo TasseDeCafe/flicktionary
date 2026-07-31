@@ -254,7 +254,7 @@ const completeExtensionIngest = async (
   }
 
   const segments = (await tx`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${track.id}
     ORDER BY index ASC
@@ -530,7 +530,7 @@ const findForVideo = async (params: {
   if (!session) return null
 
   const segments = (await sql`
-    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    SELECT id, text_track_id, index, text, start_ms, end_ms
     FROM public.text_segments
     WHERE text_track_id = ${track.id}
     ORDER BY index ASC

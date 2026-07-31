@@ -1506,7 +1506,6 @@ export type Database = {
           start_ms: number | null
           text: string
           text_track_id: string
-          tsv: unknown
         }
         Insert: {
           end_ms?: number | null
@@ -1515,7 +1514,6 @@ export type Database = {
           start_ms?: number | null
           text: string
           text_track_id: string
-          tsv?: unknown
         }
         Update: {
           end_ms?: number | null
@@ -1524,7 +1522,6 @@ export type Database = {
           start_ms?: number | null
           text?: string
           text_track_id?: string
-          tsv?: unknown
         }
         Relationships: [
           {

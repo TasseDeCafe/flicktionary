@@ -60,7 +60,6 @@ text_segment
   text                text
   start_ms            int?         -- null for non-timed sources (books)
   end_ms              int?
-  tsv                 tsvector     -- for full-text search
 
 study_session
   id                  uuid pk
