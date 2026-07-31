@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from 'react'
 import { useCreateOrUpdateUser, useIsUserSetupComplete } from '@/features/user/api/user-hooks'
-import { getAccessToken, getUserEmail, getUserId, useAuthStore } from '@/stores/auth-store'
+import { getAccessToken, getIsAnonymous, getUserEmail, getUserId, useAuthStore } from '@/stores/auth-store'
+import { detectBrowserLanguage } from '@/utils/browser-language-utils'
 import { useTrackingStore } from '@/stores/tracking-store'
 import { useShallow } from 'zustand/react/shallow'
 import posthog from 'posthog-js'
@@ -17,6 +18,7 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
   const isUserSetupComplete = useIsUserSetupComplete()
   const userId = useAuthStore(getUserId)
   const email = useAuthStore(getUserEmail)
+  const isAnonymous = useAuthStore(getIsAnonymous)
   const isTestUser = checkIsTestUser(email)
 
   const trackingParams = useTrackingStore(
@@ -41,9 +43,12 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
         utmCampaign: trackingParams.utmCampaign,
         utmTerm: trackingParams.utmTerm,
         utmContent: trackingParams.utmContent,
+        // Guests skip the onboarding wizard, so provisioning seeds their
+        // native language from the browser locale instead.
+        nativeLanguage: isAnonymous ? detectBrowserLanguage() : undefined,
       })
     }
-  }, [accessToken, getOrCreateUserData, isUserSetupComplete, trackingParams])
+  }, [accessToken, getOrCreateUserData, isAnonymous, isUserSetupComplete, trackingParams])
 
   // In production, test users are fully opted out of capture: filtering them
   // out of insights would still ingest their events and replays. Development
@@ -62,18 +67,23 @@ export const UserSetupGate = ({ children }: UserSetupGateProps) => {
 
   useEffect(() => {
     if (isPostHogEnabled() && userId && trackingParams && !isExcludedTestUser && isUserSetupComplete) {
-      posthog.identify(userId, {
-        $set_once: {
+      // identify(id, $set, $set_once): is_guest lets funnels filter anonymous
+      // drive-by accounts; the attribution props are set-once so a later visit
+      // can't overwrite the original acquisition source.
+      posthog.identify(
+        userId,
+        { is_guest: isAnonymous },
+        {
           referral: trackingParams.referral,
           utm_source: trackingParams.utmSource,
           utm_medium: trackingParams.utmMedium,
           utm_campaign: trackingParams.utmCampaign,
           utm_term: trackingParams.utmTerm,
           utm_content: trackingParams.utmContent,
-        },
-      })
+        }
+      )
     }
-  }, [userId, trackingParams, isExcludedTestUser, isUserSetupComplete])
+  }, [userId, trackingParams, isAnonymous, isExcludedTestUser, isUserSetupComplete])
 
   if (isPending) {
     return null

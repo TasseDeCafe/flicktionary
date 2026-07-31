@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
+import { useIsUserSetupComplete } from '@/features/user/api/user-hooks'
 import { useThemeStore } from '@/stores/theme-store'
 import { activateLocale, resolveUiLocale } from '@/lib/i18n/i18n'
 
@@ -14,13 +15,18 @@ import { activateLocale, resolveUiLocale } from '@/lib/i18n/i18n'
  */
 export const UserUiPrefsSync = () => {
   const isSignedIn = useAuthStore(getIsSignedIn)
+  const isUserSetupComplete = useIsUserSetupComplete()
   const setThemePref = useThemeStore((state) => state.setPref)
 
   // Deliberately not useGetUserPrefs(): that hook takes no options and
-  // logged-out users must not fire an unauthed getPrefs.
+  // logged-out users must not fire an unauthed getPrefs. Waiting for user
+  // setup (UserSetupGate's putUser) matters too: this component mounts
+  // outside the auth gates, and a getPrefs fired before the users row exists
+  // caches a "not onboarded" default under the shared query key — which
+  // would bounce a freshly provisioned guest into the onboarding wizard.
   const { data: prefs } = useQuery(
     orpcQuery.userPrefs.getPrefs.queryOptions({
-      enabled: isSignedIn,
+      enabled: isSignedIn && isUserSetupComplete,
       select: (response) => response.data,
     })
   )

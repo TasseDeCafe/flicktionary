@@ -83,6 +83,9 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
+# Anonymous (guest) sign-ins stay permanently on at the Supabase layer; the
+# actual door is the backend's GUEST_MODE_ENABLED kill switch.
+enable_anonymous_sign_ins = true
 
 signing_keys_path = "./signing_key.json"
 

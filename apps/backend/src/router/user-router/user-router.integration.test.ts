@@ -3,6 +3,8 @@ import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
+  __getAnonymousSupabaseToken,
+  buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
 
@@ -48,6 +50,67 @@ describe('users-router', async () => {
       utmCampaign: null,
       utmTerm: null,
       utmContent: null,
+    })
+  })
+
+  describe('guest (anonymous) provisioning', () => {
+    // Anonymous tokens only pass the auth middleware with the kill switch on;
+    // pin it so these tests don't depend on the test environment's env var.
+    const guestApp = buildTestApp({ isGuestModeEnabled: true })
+
+    test('seeds the sent native language and completes onboarding', async () => {
+      const { token } = await __getAnonymousSupabaseToken()
+
+      const createResponse = await request(guestApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null, nativeLanguage: 'fr' })
+      expect(createResponse.status).toBe(200)
+
+      const prefsResponse = await request(guestApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+      expect(prefsResponse.status).toBe(200)
+      expect(prefsResponse.body.data.nativeLanguage).toBe('fr')
+      expect(prefsResponse.body.data.isOnboarded).toBe(true)
+    })
+
+    test('falls back to English when no native language is sent', async () => {
+      const { token } = await __getAnonymousSupabaseToken()
+
+      const createResponse = await request(guestApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null })
+      expect(createResponse.status).toBe(200)
+
+      const prefsResponse = await request(guestApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+      expect(prefsResponse.status).toBe(200)
+      expect(prefsResponse.body.data.nativeLanguage).toBe('en')
+      expect(prefsResponse.body.data.isOnboarded).toBe(true)
+    })
+
+    test('rejects an unsupported native language', async () => {
+      const { token } = await __getAnonymousSupabaseToken()
+
+      const createResponse = await request(guestApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null, nativeLanguage: 'xx' })
+      expect(createResponse.status).toBe(400)
+    })
+
+    test('does not skip onboarding for regular users sending a native language', async () => {
+      const { token } = await __createUserInSupabaseAndGetHisIdAndToken()
+
+      const createResponse = await request(guestApp)
+        .put('/api/v1/users/me')
+        .set(buildAuthorizationHeaders(token))
+        .send({ referral: null, nativeLanguage: 'fr' })
+      expect(createResponse.status).toBe(200)
+
+      const prefsResponse = await request(guestApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+      expect(prefsResponse.status).toBe(200)
+      expect(prefsResponse.body.data.nativeLanguage).toBeNull()
+      expect(prefsResponse.body.data.isOnboarded).toBe(false)
     })
   })
 

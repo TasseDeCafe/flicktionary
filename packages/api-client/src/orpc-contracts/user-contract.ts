@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
+import { supportedLanguageCodeSchema } from '@flicktionary/core/constants/supported-languages'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 
 export const USER_PATH = '/users/me' as const
@@ -56,6 +57,11 @@ export const userContract = {
         utmCampaign: z.string().nullable().optional(),
         utmTerm: z.string().nullable().optional(),
         utmContent: z.string().nullable().optional(),
+        // Browser-detected native language, sent only for anonymous (guest)
+        // sessions: guests skip the onboarding wizard, so provisioning seeds
+        // native_language + is_onboarded from this instead. Ignored for
+        // regular users, whose onboarding sets the value explicitly.
+        nativeLanguage: supportedLanguageCodeSchema.optional(),
       })
     )
     .output(

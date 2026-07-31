@@ -47,13 +47,19 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
 
     putUser: implementer.putUser.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const { referral, utmSource, utmMedium, utmCampaign, utmTerm, utmContent } = input
+      const { referral, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, nativeLanguage } = input
 
       const dbUser: DbUser | null = await usersRepository.findUserByUserId(userId)
 
       if (!dbUser) {
         const processedReferral = processReferral(referral)
-        const seed = buildSeedFromEmail(context.res.locals.email)
+        // Guests never see the onboarding wizard: seed the browser-detected
+        // native language (defaulting to English) and mark them onboarded so
+        // the web app's onboarding gate lets them straight through. They can
+        // change the language later in settings.
+        const seed = context.res.locals.isAnonymous
+          ? { nativeLanguage: nativeLanguage ?? 'en', isOnboarded: true }
+          : buildSeedFromEmail(context.res.locals.email)
         await usersRepository.insertUser(
           userId,
           processedReferral,

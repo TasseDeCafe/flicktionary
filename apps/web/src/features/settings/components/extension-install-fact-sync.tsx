@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { getUserId, useAuthStore } from '@/stores/auth-store'
+import { useIsUserSetupComplete } from '@/features/user/api/user-hooks'
 import { useExtensionDetected } from '@/lib/extension/use-extension-detected'
 import { shouldRecordExtensionInstall } from '../utils/extension-install-sync'
 
@@ -16,13 +17,18 @@ import { shouldRecordExtensionInstall } from '../utils/extension-install-sync'
  */
 export const ExtensionInstallFactSync = () => {
   const userId = useAuthStore(getUserId)
+  const isUserSetupComplete = useIsUserSetupComplete()
   const detection = useExtensionDetected()
 
   // Deliberately not useGetUserPrefs(): that hook takes no options and
-  // logged-out users must not fire an unauthed getPrefs.
+  // logged-out users must not fire an unauthed getPrefs. Waiting for user
+  // setup (UserSetupGate's putUser) matters too: this component mounts
+  // outside the auth gates, and a getPrefs fired before the users row exists
+  // caches a "not onboarded" default under the shared query key — which
+  // would bounce a freshly provisioned guest into the onboarding wizard.
   const { data: prefs } = useQuery(
     orpcQuery.userPrefs.getPrefs.queryOptions({
-      enabled: userId !== '',
+      enabled: userId !== '' && isUserSetupComplete,
       select: (response) => response.data,
     })
   )
