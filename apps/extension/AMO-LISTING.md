@@ -83,13 +83,15 @@ Your information may be transferred to and processed on servers located outside 
 
 We may disclose your personal data where required to do so by law or in response to valid requests by public authorities.
 
+Some content you add can be shared with other Flicktionary users in the public content catalog: YouTube videos and imported articles are shared automatically after an automated content check, and pasted texts only when you explicitly opt in. Sharing publishes the content's title and lets other users study its text; it never includes your name, email, notes, or learning data. You can unshare your content at any time from the app, which removes it from the catalog — copies other users already added to their libraries remain with them.
+
 8. Security
 
 We use industry-standard measures to protect your data, including encryption in transit, access controls, and monitoring. No method of transmission or storage is 100% secure, but we work to protect your personal data proportionately to its sensitivity.
 
 9. Data retention
 
-We retain your data for as long as your account exists or as needed to provide the service and comply with our legal obligations. When you delete your account, your personal data is permanently removed.
+We retain your data for as long as your account exists or as needed to provide the service and comply with our legal obligations. When you delete your account, your personal data is permanently removed. If you chose to share content publicly, deleting your account removes it from the public catalog, but copies that other users already added to their own libraries remain with them.
 
 10. Your rights
 
