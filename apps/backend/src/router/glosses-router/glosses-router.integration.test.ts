@@ -3,6 +3,8 @@ import request from 'supertest'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
+  __getAnonymousSupabaseToken,
+  buildAuthorizationHeaders,
   buildTestApp,
 } from '../../test/test-utils'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
@@ -61,6 +63,35 @@ describe('glosses-router', () => {
       contextLine: 'Der Tisch ist groß.',
       selectionText: 'Tisch',
     })
+  })
+
+  test('golden path for a guest: an anonymous user provisioned via putUser can gloss', async () => {
+    // Anonymous tokens only pass the auth middleware with the kill switch on;
+    // pin it so the test doesn't depend on the environment's default.
+    const guestApp = buildTestApp({
+      anthropicPasses: MockAnthropicPasses({
+        fastGlossPass: fastGlossPass as never,
+        languageDetectionPass: languageDetectionPass as never,
+      }),
+      isGuestModeEnabled: true,
+    })
+    const { token } = await __getAnonymousSupabaseToken()
+
+    // The extension's guest mint provisions through the same endpoint: the
+    // isAnonymous branch seeds the native language and marks onboarding done.
+    const provisionResponse = await request(guestApp)
+      .put('/api/v1/users/me')
+      .set(buildAuthorizationHeaders(token))
+      .send({ referral: null, nativeLanguage: 'en' })
+    expect(provisionResponse.status).toBe(200)
+
+    const response = await request(guestApp)
+      .post('/api/v1/glosses/fast-gloss')
+      .set(buildAuthorizationHeaders(token))
+      .send({ selectionText: 'Tisch', contextLine: 'Der Tisch ist groß.', targetLanguage: 'de' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.gloss).toBe('the table')
   })
 
   test('returns 400 when the user has no native language yet', async () => {

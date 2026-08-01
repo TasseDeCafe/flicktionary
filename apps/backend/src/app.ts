@@ -329,6 +329,19 @@ export const buildApp = ({
         keyGenerator: (_req: Request, res: Response) => String(res.locals.userId ?? 'unknown-authenticated-user'),
       })
     )
+    // Runaway-loop guard for the LLM-backed stateless gloss (a hover-scanning
+    // power user peaks at ~30-45 req/min; each request costs up to two Haiku
+    // calls when language detection runs). NOT an abuse boundary: the per-user
+    // bucket resets with a freshly minted guest account — the durable controls
+    // are the global IP limiters, the guest_provisioned volume alert, captcha,
+    // and the guest kill switch.
+    const oneMinute = 60
+    app.use(
+      createRateLimitMiddleware(60, oneMinute, {
+        skip: (req: Request) => req.path !== `${API_V1}/glosses/fast-gloss`,
+        keyGenerator: (_req: Request, res: Response) => String(res.locals.userId ?? 'unknown-authenticated-user'),
+      })
+    )
   }
 
   app.use(API_V1, removalsRouter(authUsersRepository, usersRepository, stripeApi, stripeSubscriptionsRepository))
