@@ -9,7 +9,6 @@ import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/cove
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useSharedContentList } from '../api/explore-hooks'
 import { ExploreCard, ExploreCardSkeleton } from './explore-card'
-import { useAddSharedEntry } from './use-add-shared-entry'
 
 // The shared-content catalog. An overflow tab view: its own desktop sidebar
 // entry, Dashboard stays highlighted on mobile. The language chips double as
@@ -21,7 +20,6 @@ export const ExploreView = () => {
   const { lang } = useSearch({ from: '/_authenticated/_app/explore/' })
   const { data: entries, isLoading } = useSharedContentList()
   const { data: prefs } = useGetUserPrefs()
-  const { addEntry, addingEntryId, cefrDialog } = useAddSharedEntry()
 
   const languages = useMemo(() => [...new Set((entries ?? []).map((entry) => entry.language))].sort(), [entries])
 
@@ -74,11 +72,9 @@ export const ExploreView = () => {
             </p>
           )}
           {visible.map((entry) => (
-            <ExploreCard key={entry.id} entry={entry} onAdd={addEntry} isAdding={addingEntryId === entry.id} />
+            <ExploreCard key={entry.id} entry={entry} />
           ))}
         </div>
-
-        {cefrDialog}
       </PageContainer>
     </>
   )

@@ -336,6 +336,10 @@ msgstr "<0>Sessions</0> — chaque vidéo que vous avez regardée et article que
 msgid "<0>Vocabulary</0> — all your saved words and phrases in one place."
 msgstr "<0>Vocabulaire</0> — tous vos mots et expressions sauvegardés en un seul endroit."
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "~{wordCount} words · {lineCount} lines"
+msgstr "~{wordCount} mots · {lineCount} lignes"
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "€{monthlyPriceFormatted}/month"
 msgstr "{monthlyPriceFormatted} €/mois"
@@ -440,10 +444,6 @@ msgstr "Activité"
 msgid "Activity, streak, and coverage"
 msgstr "Activité, série et couverture"
 
-#: apps/web/src/features/explore/components/explore-card.tsx
-msgid "Add \"{entryTitle}\" to your library"
-msgstr "Ajouter « {entryTitle} » à votre bibliothèque"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
 msgstr "Ajouter {newCount} cartes"
@@ -509,6 +509,10 @@ msgstr "Ajouter une traduction"
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "Added"
 msgstr "Ajouté"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Adding..."
+msgstr "Ajout en cours..."
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Adding…"
@@ -844,6 +848,10 @@ msgstr "Retour au texte actuel"
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Back to dashboard"
 msgstr "Retour au tableau de bord"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Back to Explore"
+msgstr "Retour à Explorer"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Back to forms"
@@ -3538,6 +3546,10 @@ msgstr "Une petite chose avant de commencer : épinglez Flicktionary pour qu'il 
 msgid "Only production practice — flashcards and exercises."
 msgstr "Seulement pratique de production — cartes et exercices."
 
+#: apps/web/src/features/explore/components/explore-card.tsx
+msgid "Open \"{entryTitle}\""
+msgstr "Ouvrir « {entryTitle} »"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Open a video on a supported platform. On YouTube, subtitles load automatically in the video's own language; on other platforms, a dialog asks which subtitle track to load the first time, and your last-used language loads automatically after that. You can also load your own subtitle file by drag-and-dropping it onto the video."
 msgstr "Ouvrez une vidéo sur une plateforme prise en charge. Sur YouTube, les sous-titres se chargent automatiquement dans la langue de la vidéo ; sur d'autres plateformes, une boîte de dialogue demande quelle piste de sous-titres charger la première fois, et votre dernière langue utilisée se charge automatiquement par la suite. Vous pouvez également charger votre propre fichier de sous-titres en le glissant-déposant sur la vidéo."
@@ -4299,6 +4311,10 @@ msgstr "Repris ici"
 msgid "Retry"
 msgstr "Réessayer"
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Retrying..."
+msgstr "Nouvelle tentative..."
+
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx
 msgid "Return to Login"
 msgstr "Retour à la connexion"
@@ -4688,6 +4704,10 @@ msgstr "Partager pour explorer"
 msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
 msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Shared content"
+msgstr "Contenu partagé"
+
 #: apps/web/src/features/explore/components/explore-view.tsx
 msgid "Shared content from the community"
 msgstr "Contenu partagé par la communauté"
@@ -4882,6 +4902,10 @@ msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Démarrer une session film ou série"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Start reading"
+msgstr "Commencer la lecture"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Start session"
@@ -5338,6 +5362,10 @@ msgstr "Cette carte a été notée comme oubliée — elle reviendra plus tôt e
 msgid "This connection link has already been used or has expired."
 msgstr "Ce lien de connexion a déjà été utilisé ou a expiré."
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "This content is no longer shared."
+msgstr "Ce contenu n'est plus partagé."
+
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "This email or Google account already belongs to another Flicktionary account. Log in to it instead — your guest progress can't be transferred."
 msgstr "Cette adresse e-mail ou ce compte Google appartient déjà à un autre compte Flicktionary. Connectez-vous plutôt à ce compte — votre progression en tant qu'invité ne peut pas être transférée."
@@ -5550,6 +5578,7 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle la
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
@@ -5918,6 +5947,10 @@ msgstr "Regarder des vidéos"
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "We couldn't create an exercise for “{headword}”."
 msgstr "Nous n'avons pas pu créer un exercice pour \"{headword}\"."
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "We couldn't load this content."
+msgstr "Nous n'avons pas pu charger ce contenu."
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "We couldn't load your vocabulary coverage."

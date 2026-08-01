@@ -336,6 +336,10 @@ msgstr "<0>Sessions</0> — every video you watched and article you imported, wi
 msgid "<0>Vocabulary</0> — all your saved words and phrases in one place."
 msgstr "<0>Vocabulary</0> — all your saved words and phrases in one place."
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "~{wordCount} words · {lineCount} lines"
+msgstr "~{wordCount} words · {lineCount} lines"
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "€{monthlyPriceFormatted}/month"
 msgstr "€{monthlyPriceFormatted}/month"
@@ -440,10 +444,6 @@ msgstr "Activity"
 msgid "Activity, streak, and coverage"
 msgstr "Activity, streak, and coverage"
 
-#: apps/web/src/features/explore/components/explore-card.tsx
-msgid "Add \"{entryTitle}\" to your library"
-msgstr "Add \"{entryTitle}\" to your library"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
 msgstr "Add {newCount} cards"
@@ -509,6 +509,10 @@ msgstr "Add translation"
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "Added"
 msgstr "Added"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Adding..."
+msgstr "Adding..."
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Adding…"
@@ -844,6 +848,10 @@ msgstr "Back to current text"
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Back to dashboard"
 msgstr "Back to dashboard"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Back to Explore"
+msgstr "Back to Explore"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Back to forms"
@@ -3539,6 +3547,10 @@ msgstr "One quick thing before you start: pin Flicktionary so it's always one cl
 msgid "Only production practice — flashcards and exercises."
 msgstr "Only production practice — flashcards and exercises."
 
+#: apps/web/src/features/explore/components/explore-card.tsx
+msgid "Open \"{entryTitle}\""
+msgstr "Open \"{entryTitle}\""
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Open a video on a supported platform. On YouTube, subtitles load automatically in the video's own language; on other platforms, a dialog asks which subtitle track to load the first time, and your last-used language loads automatically after that. You can also load your own subtitle file by drag-and-dropping it onto the video."
 msgstr "Open a video on a supported platform. On YouTube, subtitles load automatically in the video's own language; on other platforms, a dialog asks which subtitle track to load the first time, and your last-used language loads automatically after that. You can also load your own subtitle file by drag-and-dropping it onto the video."
@@ -4300,6 +4312,10 @@ msgstr "Resumed here"
 msgid "Retry"
 msgstr "Retry"
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Retrying..."
+msgstr "Retrying..."
+
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx
 msgid "Return to Login"
 msgstr "Return to Login"
@@ -4689,6 +4705,10 @@ msgstr "Share to Explore"
 msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
 msgstr "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Shared content"
+msgstr "Shared content"
+
 #: apps/web/src/features/explore/components/explore-view.tsx
 msgid "Shared content from the community"
 msgstr "Shared content from the community"
@@ -4883,6 +4903,10 @@ msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "Start reading"
+msgstr "Start reading"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Start session"
@@ -5339,6 +5363,10 @@ msgstr "This card was rated as forgotten — it will come back for review sooner
 msgid "This connection link has already been used or has expired."
 msgstr "This connection link has already been used or has expired."
 
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "This content is no longer shared."
+msgstr "This content is no longer shared."
+
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "This email or Google account already belongs to another Flicktionary account. Log in to it instead — your guest progress can't be transferred."
 msgstr "This email or Google account already belongs to another Flicktionary account. Log in to it instead — your guest progress can't be transferred."
@@ -5551,6 +5579,7 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get sta
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
@@ -5919,6 +5948,10 @@ msgstr "Watching videos"
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "We couldn't create an exercise for “{headword}”."
 msgstr "We couldn't create an exercise for “{headword}”."
+
+#: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
+msgid "We couldn't load this content."
+msgstr "We couldn't load this content."
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "We couldn't load your vocabulary coverage."

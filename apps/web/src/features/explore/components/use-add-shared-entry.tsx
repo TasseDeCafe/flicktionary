@@ -1,28 +1,32 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { ORPCError } from '@orpc/contract'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
+import { orpcQuery } from '@/lib/transport/orpc-client'
 import { detectBrowserLanguage } from '@/utils/browser-language-utils'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { useAddSharedEntryToLibrary } from '../api/explore-hooks'
 import type { ExploreEntry } from './explore-card'
 
-// The one-tap add flow shared by the Explore page and the dashboard section:
-// ensure a CEFR pref exists for the entry's language (dialog on first contact
-// with a language — this doubles as the guest's lightweight onboarding), add,
-// and land in the reader. Render `cefrDialog` next to the cards.
+// The detail screen's add flow: ensure a CEFR pref exists for the entry's
+// language (dialog on first contact with a language — this doubles as the
+// guest's lightweight onboarding), add, and land in the reader. Render
+// `cefrDialog` next to the CTA.
 export const useAddSharedEntry = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: addToLibrary } = useAddSharedEntryToLibrary()
   const [cefrTarget, setCefrTarget] = useState<ExploreEntry | null>(null)
-  const [addingEntryId, setAddingEntryId] = useState<string | null>(null)
+  const [isAdding, setIsAdding] = useState(false)
 
   const runAdd = (entry: ExploreEntry) => {
-    setAddingEntryId(entry.id)
+    setIsAdding(true)
     addToLibrary(
       { entryId: entry.id, nativeLanguage: prefs?.nativeLanguage ?? detectBrowserLanguage() },
       {
@@ -30,9 +34,23 @@ export const useAddSharedEntry = () => {
           if (response.alreadyExisted) {
             toast.info(t`You already had a session for this — picking up where you left off.`)
           }
-          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
+          // Flow completion: replacing the detail screen's history entry means
+          // back from the reader returns to the catalog, not to a screen whose
+          // CTA was just consumed.
+          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id }, replace: true })
         },
-        onSettled: () => setAddingEntryId(null),
+        onError: (error) => {
+          // The entry can die between the detail fetch and the tap (owner
+          // unshared, admin removed). The global handler swallows NOT_FOUND
+          // silently, so refetch the detail — its 404 flips the view to the
+          // "no longer shared" state instead of a CTA that does nothing.
+          if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
+            void queryClient.invalidateQueries({
+              queryKey: orpcQuery.sharedContent.get.key({ input: { entryId: entry.id } }),
+            })
+          }
+        },
+        onSettled: () => setIsAdding(false),
       }
     )
   }
@@ -68,5 +86,5 @@ export const useAddSharedEntry = () => {
     />
   )
 
-  return { addEntry, addingEntryId, cefrDialog }
+  return { addEntry, isAdding, cefrDialog }
 }

@@ -283,7 +283,10 @@ export const useRemoveStudySession = () => {
         ]),
       onError: (_error, _variables, context) => context?.rollback(),
       meta: {
-        invalidates: [orpcQuery.studySessions.list.key()],
+        // Removing an owner's session auto-unshares its Explore entry
+        // server-side, so the catalog (and the dashboard featured section
+        // reading it) must drop the dead card too.
+        invalidates: [orpcQuery.studySessions.list.key(), orpcQuery.sharedContent.list.key()],
         successMessage: t`Session removed`,
         errorMessage: t`Failed to remove session`,
         showErrorModal: true,
