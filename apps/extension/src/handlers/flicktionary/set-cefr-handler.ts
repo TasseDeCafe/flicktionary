@@ -2,7 +2,7 @@ import type { Browser } from 'wxt/browser'
 import type { Command, Message, SetFlicktionaryCefrMessage, SetFlicktionaryCefrResponse } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { getFullAccountFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
 import { activateBackgroundLocale } from '../../services/activate-background-locale'
 import { i18n } from '../../ui/lingui'
@@ -30,7 +30,7 @@ export default class SetFlicktionaryCefrHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        const auth = await getFlicktionaryAuth()
+        const auth = await getFullAccountFlicktionaryAuth()
         if (!auth) {
           sendResponse({ success: false, error: i18n._(msg`Sign in to Flicktionary to set your level.`) })
           return

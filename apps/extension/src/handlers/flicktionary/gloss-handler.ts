@@ -1,7 +1,13 @@
 import type { Browser } from 'wxt/browser'
 import type { Command, Message, FlicktionaryGlossMessage, FlicktionaryGlossResponse } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import {
+  ERROR_CODE_FOR_GUEST_ACCESS_DISABLED,
+  ERROR_CODE_FOR_INVALID_TOKEN,
+} from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
+import { clearFlicktionaryAuth, getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { ensureFlicktionaryAuth } from '../../services/flicktionary/guest-session'
+import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { getFlicktionaryTargetLanguage } from '../../services/flicktionary/flicktionary-target-language'
 import { activateBackgroundLocale } from '../../services/activate-background-locale'
@@ -29,7 +35,10 @@ export default class FlicktionaryGlossHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        const auth = await getFlicktionaryAuth()
+        // Mints an anonymous guest session on the fly when unpaired — gloss is
+        // the one feature guests get. Null (guest mode off, captcha armed,
+        // mint failure) falls back to the signed-out message.
+        const auth = await ensureFlicktionaryAuth()
         if (!auth) {
           sendResponse({ error: i18n._(msg`Sign in to Flicktionary to translate.`) })
           return
@@ -61,9 +70,20 @@ export default class FlicktionaryGlossHandler {
           ipaLemma: data.ipaLemma,
         })
       } catch (error) {
-        sendResponse({
-          error: error instanceof Error ? error.message : 'Could not fetch a translation.',
-        })
+        const apiError = extractFlicktionaryApiError(error, i18n._(msg`Could not fetch a translation.`))
+        // A dead guest session (kill switch flipped, or the cleanup worker
+        // deleted the account while the access token was still fresh) is
+        // cleared so the overlay flips to signed-out — the config gate in
+        // ensureFlicktionaryAuth prevents a re-mint loop.
+        if (apiError.code === ERROR_CODE_FOR_GUEST_ACCESS_DISABLED || apiError.code === ERROR_CODE_FOR_INVALID_TOKEN) {
+          const auth = await getFlicktionaryAuth()
+          if (auth?.isGuest) {
+            await clearFlicktionaryAuth()
+          }
+          sendResponse({ error: i18n._(msg`Sign in to Flicktionary to translate.`) })
+          return
+        }
+        sendResponse({ error: apiError.message })
       }
     })()
 

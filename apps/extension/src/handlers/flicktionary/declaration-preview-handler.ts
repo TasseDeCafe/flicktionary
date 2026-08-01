@@ -7,7 +7,7 @@ import type {
   Message,
 } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { getFullAccountFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import {
   resolveExistingFlicktionarySession,
@@ -45,7 +45,7 @@ export default class DeclarationPreviewHandler {
 
     void (async () => {
       try {
-        const auth = await getFlicktionaryAuth()
+        const auth = await getFullAccountFlicktionaryAuth()
         if (!auth) {
           if (message.readOnly) {
             // Passive probe: no chip will render this, keep it silent.

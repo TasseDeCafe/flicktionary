@@ -16,7 +16,7 @@
 import { AsbplayerSettings, SettingsProvider, ThemeType } from '@asbplayer-fork/common/settings'
 import { ExtensionSettingsStorage } from '../extension-settings-storage'
 import { getFlicktionaryApiClient } from './flicktionary-api-client'
-import { getFlicktionaryAuth, onFlicktionaryAuthChange } from './auth-storage'
+import { getFullAccountFlicktionaryAuth, onFlicktionaryAuthChange } from './auth-storage'
 
 type UserPrefs = Awaited<ReturnType<ReturnType<typeof getFlicktionaryApiClient>['userPrefs']['getPrefs']>>['data']
 
@@ -42,7 +42,7 @@ export const invalidateUiPrefsSnapshot = (): void => {
 export const getUiPrefsSnapshot = (): Promise<UserPrefs | null> => {
   if (prefsPromise === undefined) {
     prefsPromise = (async () => {
-      const auth = await getFlicktionaryAuth()
+      const auth = await getFullAccountFlicktionaryAuth()
       if (!auth) return null
       try {
         const { data } = await getFlicktionaryApiClient().userPrefs.getPrefs()
@@ -95,7 +95,7 @@ export const pushUiPrefs = (changed: Partial<AsbplayerSettings>): void => {
     return
   }
   void (async () => {
-    const auth = await getFlicktionaryAuth()
+    const auth = await getFullAccountFlicktionaryAuth()
     if (!auth) return
     const client = getFlicktionaryApiClient()
     if (changed.themeType !== undefined) {

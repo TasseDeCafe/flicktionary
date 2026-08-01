@@ -9,6 +9,7 @@ import {
   setFlicktionaryPairedTabId,
 } from '../../services/flicktionary/pairing-nonce-storage'
 import { reconcileUiPrefsOnPairing } from '../../services/flicktionary/ui-prefs-sync'
+import { clearFlicktionarySessionCache } from '../../services/flicktionary/youtube-session-cache'
 
 interface FlicktionaryPairMessage extends Message {
   command: 'flicktionary-pair'
@@ -73,7 +74,12 @@ export default class FlicktionaryPairHandler {
           refresh_token: data.session.refresh_token,
           expires_at: data.session.expires_at ?? undefined,
           user: { id: data.user.id, email: data.user.email ?? msg.email },
+          isGuest: false,
         })
+        // The session cache is keyed by video content, not by account — cached
+        // session/segment ids from the previous identity (a guest, or another
+        // paired account) must not leak into the new account's save path.
+        await clearFlicktionarySessionCache()
         // Pairing happens via the web page → this background handler while the
         // popup is typically closed, so the UI-prefs reconcile lives here (NOT
         // in the popup's auth-change listener). Fire-and-forget: pairing

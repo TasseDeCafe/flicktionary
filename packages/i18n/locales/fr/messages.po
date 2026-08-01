@@ -622,6 +622,11 @@ msgstr "Autoriser le glisser-déposer de fichiers de sous-titres"
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Already have an account? <0>Sign in</0>"
+msgstr "Vous avez déjà un compte ? <0>Se connecter</0>"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Already in your vocabulary"
 msgstr "Déjà dans votre vocabulaire"
@@ -1260,6 +1265,10 @@ msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregist
 msgid "Could not fetch a translation right now."
 msgstr "Impossible de récupérer une traduction pour le moment."
 
+#: apps/extension/src/handlers/flicktionary/gloss-handler.ts
+msgid "Could not fetch a translation."
+msgstr "Impossible de récupérer une traduction."
+
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Could not find a readable article on this page."
 msgstr "Impossible de trouver un article lisible sur cette page."
@@ -1407,6 +1416,11 @@ msgstr "Créer un compte pour enregistrer votre progression"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Create an account (or sign in) here in the web app."
 msgstr "Créez un compte (ou connectez-vous) ici dans l'application web."
+
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Create free account"
+msgstr "Créer un compte gratuit"
 
 #. placeholder {0}: customStyle.key
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
@@ -3366,6 +3380,7 @@ msgstr "Normal"
 msgid "not available"
 msgstr "non disponible"
 
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "Not now"
@@ -4322,6 +4337,10 @@ msgstr "Enregistrez les termes que vous rencontrez"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
+
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Save words with a free account"
+msgstr "Enregistrer des mots avec un compte gratuit"
 
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Save your first terms"
@@ -5454,6 +5473,10 @@ msgstr "Langue de traduction"
 msgid "Translation lookup and save action for the selected text."
 msgstr "Recherche de traduction et action de sauvegarde pour le texte sélectionné."
 
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Translations are free to use. Create a Flicktionary account to save words from your videos and practice them later."
+msgstr "Les traductions sont gratuites. Créez un compte Flicktionary pour sauvegarder les mots de vos vidéos et les réviser plus tard."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Troubleshooting"
 msgstr "Dépannage"
@@ -5685,6 +5708,10 @@ msgstr "Guide d'utilisation"
 #: apps/web/src/features/user/api/user-hooks.ts
 msgid "User setup complete"
 msgstr "Configuration de l'utilisateur terminée"
+
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+msgid "Using Flicktionary as a guest — translations only."
+msgstr "Utilisation de Flicktionary en tant qu'invité — traductions uniquement."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Verb"

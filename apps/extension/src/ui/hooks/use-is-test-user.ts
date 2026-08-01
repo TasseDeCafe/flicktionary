@@ -13,7 +13,7 @@ export const useIsTestUser = (): boolean => {
   useEffect(() => {
     let active = true
 
-    const resolve = async (email: string | undefined) => {
+    const resolve = async (email: string | null | undefined) => {
       const result = email ? await checkIsTestUser(email) : false
       if (active) setIsTestUser(result)
     }

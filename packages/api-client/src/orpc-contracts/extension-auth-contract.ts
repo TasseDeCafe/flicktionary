@@ -6,7 +6,9 @@ const BootstrapPrefsSchema = z.object({
   primaryTargetLanguage: z.string().nullable(),
   nativeLanguage: z.string().nullable(),
   cefrLevel: z.string().nullable(),
-  email: z.string().email(),
+  // Null for anonymous guest sessions (the extension mints those for
+  // gloss-only access); a paired account always has an email.
+  email: z.string().nullable(),
   isOnboarded: z.boolean(),
 })
 
