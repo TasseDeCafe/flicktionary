@@ -1260,6 +1260,10 @@ msgstr "Could not fetch a gloss. The highlight is still saved."
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
+#: apps/extension/src/handlers/flicktionary/gloss-handler.ts
+msgid "Could not fetch a translation."
+msgstr "Could not fetch a translation."
+
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Could not find a readable article on this page."
 msgstr "Could not find a readable article on this page."
@@ -1407,6 +1411,11 @@ msgstr "Create account to save your progress"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Create an account (or sign in) here in the web app."
 msgstr "Create an account (or sign in) here in the web app."
+
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Create free account"
+msgstr "Create free account"
 
 #. placeholder {0}: customStyle.key
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
@@ -3367,6 +3376,7 @@ msgstr "Normal"
 msgid "not available"
 msgstr "not available"
 
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "Not now"
@@ -4323,6 +4333,10 @@ msgstr "Save the terms you meet"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
+
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Save words with a free account"
+msgstr "Save words with a free account"
 
 #: apps/web/src/features/sessions/components/getting-started-checklist.tsx
 msgid "Save your first terms"
@@ -5455,6 +5469,10 @@ msgstr "Translation language"
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Translations are free to use. Create a Flicktionary account to save words from your videos and practice them later."
+msgstr "Translations are free to use. Create a Flicktionary account to save words from your videos and practice them later."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Troubleshooting"
 msgstr "Troubleshooting"
@@ -5686,6 +5704,10 @@ msgstr "User Guide"
 #: apps/web/src/features/user/api/user-hooks.ts
 msgid "User setup complete"
 msgstr "User setup complete"
+
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+msgid "Using Flicktionary as a guest — translations only."
+msgstr "Using Flicktionary as a guest — translations only."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Verb"
