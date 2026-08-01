@@ -13,6 +13,7 @@ import { GettingStartedChecklist } from '@/features/sessions/components/getting-
 import { GuestSaveProgressBanner } from '@/features/auth/components/guest-save-progress-banner'
 import { CoverageCard } from '@/features/coverage/components/coverage-card'
 import { useQualifyingCoverage } from '@/features/coverage/api/coverage-hooks'
+import { useActivity } from '@/features/stats/api/stats-hooks'
 import { ActivityCalendarCard } from './activity-calendar-card'
 import { DailyMixBanner } from './daily-mix-banner'
 import { DashboardCarousel } from './dashboard-carousel'
@@ -27,6 +28,7 @@ export const DashboardView = () => {
   const { t, i18n } = useLingui()
   const { data, isLoading } = useListStudySessions()
   const { qualifying: qualifyingCoverage, isLoading: isCoverageLoading } = useQualifyingCoverage()
+  const { data: activity, isLoading: isActivityLoading } = useActivity()
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
 
   const recentItems = useMemo(
@@ -44,6 +46,9 @@ export const DashboardView = () => {
 
   const dateLabel = i18n.date(new Date(), { weekday: 'long', month: 'short', day: 'numeric' })
 
+  const showCoverageSlide = isCoverageLoading || qualifyingCoverage.length > 0
+  const showActivitySlide = isActivityLoading || (activity?.activeDays.length ?? 0) > 0
+
   return (
     <PageContainer width='wide'>
       <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{dateLabel}</div>
@@ -57,22 +62,29 @@ export const DashboardView = () => {
 
       <DailyMixBanner />
 
-      {/* Mirrors the Recent header row; the cards' own mt-4 would double the
-          header→content gap, so -mb-2 nets the same 8px as Recent's mt-2. */}
-      <div className='mt-6 -mb-2 flex items-baseline justify-end'>
-        <SeeMoreLink to='/stats'>{t`More stats`}</SeeMoreLink>
-      </div>
-      {/* Both cards carry their own top margin, so the carousel needs none.
-          The coverage slide exists only while its data might qualify —
-          during load the card shows its own skeleton; once resolved, a user
-          with no qualifying language (fresh account, or a language without a
-          lemma_ranks build) gets no blank slide and no stray page dot. */}
-      <DashboardCarousel
-        slides={[
-          ...(isCoverageLoading || qualifyingCoverage.length > 0 ? [<CoverageCard key='coverage' />] : []),
-          <ActivityCalendarCard key='activity' />,
-        ]}
-      />
+      {/* Each slide exists only while its data might qualify — during load the
+          card shows its own skeleton; once resolved, a fresh account (no
+          qualifying coverage language, no activity ever) gets no blank slide
+          and no stray page dot. An account with zero all-time activity hides
+          the calendar entirely: the Getting-started checklist owns new-user
+          coaching, and the calendar's zero-state nudge stays reachable on
+          /stats. With both slides absent the header row hides too. */}
+      {(showCoverageSlide || showActivitySlide) && (
+        <>
+          {/* Mirrors the Recent header row; the cards' own mt-4 would double the
+              header→content gap, so -mb-2 nets the same 8px as Recent's mt-2. */}
+          <div className='mt-6 -mb-2 flex items-baseline justify-end'>
+            <SeeMoreLink to='/stats'>{t`More stats`}</SeeMoreLink>
+          </div>
+          {/* Both cards carry their own top margin, so the carousel needs none. */}
+          <DashboardCarousel
+            slides={[
+              ...(showCoverageSlide ? [<CoverageCard key='coverage' />] : []),
+              ...(showActivitySlide ? [<ActivityCalendarCard key='activity' />] : []),
+            ]}
+          />
+        </>
+      )}
 
       <div className='mt-6 flex items-baseline justify-between'>
         <h2 className='text-base font-semibold'>{t`Recent`}</h2>
