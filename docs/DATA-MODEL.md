@@ -45,12 +45,36 @@ text_track
   profile_max_segment_index int?   -- built_at doubles as "profile exists";
   profile_word_token_count int?    -- segment count + max index are the
   profile_matched_token_count int? -- staleness check
-  moderation_status   'clean' | 'flagged' | null -- ingestion moderation verdict
+  moderation_status   'clean' | 'flagged' | 'blocked' | null -- moderation verdict
                                    -- (null = pre-feature / unchecked / failed-open;
-                                   -- blocked content is never inserted)
-  moderation_category text?        -- set iff status='flagged'; pair enforced by an
-                                   -- IS TRUE-wrapped CHECK (the bare OR would pass
-                                   -- UNKNOWN for a (null, category) pair)
+                                   -- gated ingest surfaces reject hard-blocked
+                                   -- content before insert — 'blocked' exists only
+                                   -- for tracks moderated AFTER ingest at share
+                                   -- time (YouTube): never publishable, private
+                                   -- study unaffected)
+  moderation_category text?        -- set iff status='flagged'/'blocked'; pair
+                                   -- enforced by an IS TRUE-wrapped CHECK (the bare
+                                   -- OR would pass UNKNOWN for a (null, category) pair)
+  created_at          timestamptz
+
+shared_content_entry               -- public Explore catalog (docs/READER-SPEC.md
+                                   -- "Shared content (Explore)"); one row per
+                                   -- published track, kept forever as opt-out
+                                   -- marker / admin tombstone
+  id                  uuid pk
+  content_source_id   uuid         -- composite FK (content_source_id, text_track_id)
+  text_track_id       uuid unique  --   -> text_track (content_source_id, id), so the
+                                   --   track provably belongs to the source
+  canonical_key       text         -- cross-user identity: 'youtube:{videoId}' or
+                                   -- 'hash:{track sha256}'; one LIVE entry per key
+                                   -- (partial unique index)
+  language            text
+  shared_by_user_id   uuid?        -- FK auth.users, SET NULL on account deletion
+  featured            bool         -- admin flag; featured entries surface on the
+                                   -- dashboard section, feed orders featured-first
+  unshared_at         timestamptz? -- owner opt-out (upserted pre-publish to win races)
+  removed_at          timestamptz? -- admin tombstone; blocks re-share of this
+  removed_reason      text         --   content permanently (pair-CHECKed)
   created_at          timestamptz
 
 text_segment
