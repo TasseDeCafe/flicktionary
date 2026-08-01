@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
+import { Checkbox } from '@flicktionary/ui/components/checkbox'
+import { Label } from '@flicktionary/ui/components/label'
+import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import {
@@ -43,6 +46,12 @@ export const NewTextSessionWizard = () => {
   const [contentSourceId, setContentSourceId] = useState<string | null>(null)
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
+  // Explore opt-in — rides session creation (not the track import) so an
+  // abandoned wizard never publishes anything. Guests can't share, so they
+  // never see the checkbox.
+  const isAnonymous = useAuthStore(getIsAnonymous)
+  const [shareToExplore, setShareToExplore] = useState(false)
+
   const [step, setStep] = useState<Step>('paste')
 
   // Auto-suggest a title from the paste until the user edits the title field —
@@ -80,6 +89,7 @@ export const NewTextSessionWizard = () => {
         nativeLanguage,
         targetLanguage: track.language,
         cefrLevel,
+        shareToExplore: shareToExplore && !isAnonymous ? true : undefined,
       },
       {
         onSuccess: (response) => {
@@ -210,6 +220,25 @@ export const NewTextSessionWizard = () => {
         setLanguageTouched={setLanguageTouched}
         disabled={isPaseSubmitting}
       />
+      {!isAnonymous && (
+        <div className='mt-4 flex items-start gap-3'>
+          <Checkbox
+            id='share-to-explore'
+            checked={shareToExplore}
+            onCheckedChange={(next) => setShareToExplore(next === true)}
+            disabled={isPaseSubmitting}
+            className='mt-0.5'
+          />
+          <div className='flex flex-col gap-0.5'>
+            <Label htmlFor='share-to-explore' className='cursor-pointer'>
+              {t`Share to Explore`}
+            </Label>
+            <p className='text-muted-foreground text-sm'>
+              {t`Publish this text to the public catalog so others can study it — don't share private or copyrighted content.`}
+            </p>
+          </div>
+        </div>
+      )}
     </WizardShell>
   )
 }

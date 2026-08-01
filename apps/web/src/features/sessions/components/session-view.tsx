@@ -1348,6 +1348,7 @@ export const SessionView = () => {
         open={actionsOpen}
         onOpenChange={setActionsOpen}
         sessionTitle={sourceTitle}
+        textTrackId={session.textTrackId}
         onRequestRemove={() => {
           setActionsOpen(false)
           setRemoveOpen(true)

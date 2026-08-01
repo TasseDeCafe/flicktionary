@@ -8,6 +8,7 @@ import {
   ChartColumn,
   CircleHelp,
   Clapperboard,
+  Compass,
   Home,
   MoreHorizontal,
   Plus,
@@ -17,7 +18,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { MainActionOverlay } from './main-action-overlay'
 
 type NavItem = {
-  to: '/dashboard' | '/sessions' | '/practice' | '/vocabulary' | '/stats' | '/more'
+  to: '/dashboard' | '/sessions' | '/explore' | '/practice' | '/vocabulary' | '/stats' | '/more'
   label: string
   icon: LucideIcon
   matchPrefixes: string[]
@@ -49,6 +50,7 @@ export const SidebarNav = () => {
   const items: NavItem[] = [
     { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard'] },
     { to: '/sessions', label: t`Sessions`, icon: Clapperboard, matchPrefixes: ['/sessions'] },
+    { to: '/explore', label: t`Explore`, icon: Compass, matchPrefixes: ['/explore'] },
     { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
     { to: '/vocabulary', label: t`Vocabulary`, icon: BookOpen, matchPrefixes: ['/vocabulary'] },
     { to: '/stats', label: t`Stats`, icon: ChartColumn, matchPrefixes: ['/stats'] },

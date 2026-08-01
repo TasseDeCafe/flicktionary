@@ -2,55 +2,63 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@flicktionary/ui/components/dialog'
-import { Label } from '@flicktionary/ui/components/label'
-import { RadioGroup, RadioGroupItem } from '@flicktionary/ui/components/radio-group'
-
-type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
-
-const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+import {
+  ResponsiveOverlay,
+  OverlayContent,
+  OverlayDescription,
+  OverlayHeader,
+  OverlayTitle,
+} from '@/components/ui/responsive-overlay'
+import { CefrStep } from './cefr-step'
+import type { CefrLevel } from '../constants/cefr'
 
 type Props = {
   open: boolean
   targetLanguage: string
+  isSubmitting?: boolean
   onSubmit: (level: CefrLevel) => void
   onCancel: () => void
 }
 
-export const CefrPromptDialog = ({ open, targetLanguage, onSubmit, onCancel }: Props) => {
+// The standalone CEFR ask for flows without a wizard step to host CefrStep —
+// e.g. adding shared content in a language the user has no prefs row for yet.
+// Same OptionCard body as the wizards, so the choice looks identical wherever
+// it is made.
+export const CefrPromptDialog = ({ open, targetLanguage, isSubmitting, onSubmit, onCancel }: Props) => {
   const { t } = useLingui()
-  const [level, setLevel] = useState<CefrLevel>('B1')
+  const [level, setLevel] = useState<CefrLevel | null>(null)
   const languageName = getLanguageName(targetLanguage)
 
   return (
-    <Dialog
+    <ResponsiveOverlay
       open={open}
       onOpenChange={(next) => {
         if (!next) onCancel()
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t`Your level in ${languageName}`}</DialogTitle>
-        </DialogHeader>
-        <p className='text-muted-foreground text-sm'>
-          {t`This calibrates the difficult-words pass and the depth of explanations.`}
-        </p>
-        <RadioGroup value={level} onValueChange={(v) => setLevel(v as CefrLevel)}>
-          {LEVELS.map((lvl) => (
-            <div key={lvl} className='flex items-center gap-2 rounded-md border p-3'>
-              <RadioGroupItem value={lvl} id={`cefr-${lvl}`} />
-              <Label htmlFor={`cefr-${lvl}`} className='cursor-pointer'>
-                {lvl}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-        <DialogFooter>
-          <Button variant='outline' onClick={onCancel}>{t`Cancel`}</Button>
-          <Button onClick={() => onSubmit(level)}>{t`Save`}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <OverlayContent className='h-[85svh] sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:overflow-y-auto'>
+        <OverlayHeader>
+          {/* CefrStep renders the visible heading; the overlay title is for
+              the accessibility tree only. */}
+          <OverlayTitle className='sr-only'>{t`Your level in ${languageName}`}</OverlayTitle>
+          <OverlayDescription className='sr-only'>
+            {t`Pick your level so content and explanations match it.`}
+          </OverlayDescription>
+        </OverlayHeader>
+        <div className='flex flex-col gap-4 overflow-y-auto px-4 pb-4'>
+          <CefrStep targetLanguage={targetLanguage} value={level} onChange={setLevel} />
+          <Button
+            size='xl'
+            className='w-full'
+            disabled={!level || isSubmitting}
+            onClick={() => {
+              if (level) onSubmit(level)
+            }}
+          >
+            {isSubmitting ? t`Saving…` : t`Continue`}
+          </Button>
+        </div>
+      </OverlayContent>
+    </ResponsiveOverlay>
   )
 }
