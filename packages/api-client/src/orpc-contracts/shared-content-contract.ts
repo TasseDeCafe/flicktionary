@@ -18,6 +18,15 @@ export const SharedContentEntrySchema = z.object({
   createdAt: z.string(),
 })
 
+// The full-text preview behind a catalog card: same public posture as the
+// list entry (no source/track UUIDs), plus the track's complete text so users
+// can read what something is before adding it. Word count / reading time are
+// derived client-side (language-aware segmentation lives there already).
+export const SharedContentEntryDetailSchema = SharedContentEntrySchema.extend({
+  text: z.string(),
+  segmentCount: z.number().int(),
+})
+
 export const SharedContentShareStateSchema = z.enum(['shared', 'not-shared', 'not-shareable'])
 
 export const AdminSharedContentEntrySchema = SharedContentEntrySchema.extend({
@@ -42,6 +51,19 @@ export const sharedContentContract = {
       })
     )
     .output(z.object({ data: z.array(SharedContentEntrySchema) })),
+
+  // The '/detail' suffix (rather than a bare GET /shared-content/{entryId})
+  // keeps the param path from competing with the static GET
+  // /shared-content/share-state route, mirroring the '/{entryId}/add' shape.
+  get: oc
+    .route({ method: 'GET', path: '/shared-content/{entryId}/detail', successStatus: 200 })
+    .errors({
+      // Unknown id, or the entry is no longer live (unshared/removed).
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ entryId: z.string().uuid() }))
+    .output(z.object({ data: SharedContentEntryDetailSchema })),
 
   addToLibrary: oc
     .route({ method: 'POST', path: '/shared-content/{entryId}/add', successStatus: 201 })

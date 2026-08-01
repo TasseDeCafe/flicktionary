@@ -51,10 +51,11 @@ describe('shared-content-router', () => {
     expect(sourceResponse.status).toBe(201)
     const contentSourceId = sourceResponse.body.data.id as string
 
+    const pasteText = uniquePasteText()
     const trackResponse = await request(testApp)
       .post('/api/v1/text-tracks/paste')
       .set(buildAuthorizationHeaders(token))
-      .send({ contentSourceId, language, text: uniquePasteText() })
+      .send({ contentSourceId, language, text: pasteText })
     expect(trackResponse.status).toBe(201)
     const textTrackId = trackResponse.body.data.track.id as string
 
@@ -70,7 +71,7 @@ describe('shared-content-router', () => {
         shareToExplore,
       })
     expect(sessionResponse.status).toBe(201)
-    return { contentSourceId, textTrackId, sessionId: sessionResponse.body.data.id as string }
+    return { contentSourceId, textTrackId, sessionId: sessionResponse.body.data.id as string, pasteText }
   }
 
   const listEntries = async (token: string, language: string) => {
@@ -123,6 +124,43 @@ describe('shared-content-router', () => {
     expect(toggleOn.status).toBe(200)
     expect(toggleOn.body.data.state).toBe('shared')
     expect((await listEntries(owner.token, language)).length).toBe(1)
+  })
+
+  test('detail: full text for any authenticated user while live, 404 once unshared', async () => {
+    const owner = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token: owner.token, referral: null })
+    const language = uniqueLanguage()
+    const { textTrackId, pasteText } = await createSharedPasteSession(owner.token, language, true)
+    await expect.poll(async () => (await listEntries(owner.token, language)).length, { timeout: 5000 }).toBe(1)
+    const [entry] = await listEntries(owner.token, language)
+
+    const unauthenticated = await request(testApp)
+      .get(`/api/v1/shared-content/${entry!.id}/detail`)
+      .set({ Authorization: 'Bearer wrong-token' })
+    expect(unauthenticated.status).toBe(401)
+
+    // A stranger — no session on the track — reads the full text pre-add.
+    const reader = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token: reader.token, referral: null })
+    const detail = await request(testApp)
+      .get(`/api/v1/shared-content/${entry!.id}/detail`)
+      .set(buildAuthorizationHeaders(reader.token))
+    expect(detail.status).toBe(200)
+    expect(detail.body.data.id).toBe(entry!.id)
+    expect(detail.body.data.language).toBe(language)
+    expect(detail.body.data.segmentCount).toBeGreaterThanOrEqual(1)
+    expect(detail.body.data.text).toContain(pasteText)
+
+    // Owner unshares → the retained entry id stops resolving.
+    const toggleOff = await request(testApp)
+      .put('/api/v1/shared-content/share-state')
+      .set(buildAuthorizationHeaders(owner.token))
+      .send({ textTrackId, shared: false })
+    expect(toggleOff.status).toBe(200)
+    const dead = await request(testApp)
+      .get(`/api/v1/shared-content/${entry!.id}/detail`)
+      .set(buildAuthorizationHeaders(reader.token))
+    expect(dead.status).toBe(404)
   })
 
   test('addToLibrary: golden path, idempotence, missing CEFR, dead entry, guest cap', async () => {

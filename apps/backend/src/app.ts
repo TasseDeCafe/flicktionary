@@ -517,6 +517,7 @@ export const buildApp = ({
       textTracksRepository,
       usersRepository,
       targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
+      textSegmentsRepository,
       publishDeps: sharedContentPublishDeps,
     })
   )
