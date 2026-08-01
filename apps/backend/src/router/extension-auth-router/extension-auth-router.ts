@@ -74,7 +74,8 @@ export const ExtensionAuthRouter = (
 
     bootstrapPrefs: implementer.bootstrapPrefs.handler(async ({ context }) => {
       const userId = context.res.locals.userId
-      const email = (context.res.locals.email as string | undefined) ?? ''
+      // Anonymous guest sessions have no email; the contract exposes null.
+      const email = (context.res.locals.email as string | undefined) || null
 
       const [nativeLanguage, isOnboarded, lastTargetLanguage, targetPrefs] = await Promise.all([
         usersRepository.getNativeLanguage(userId),
