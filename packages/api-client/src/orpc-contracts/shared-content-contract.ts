@@ -18,10 +18,25 @@ export const SharedContentEntrySchema = z.object({
   createdAt: z.string(),
 })
 
+export const SharedContentEntryStatusSchema = z.enum(['live', 'unshared', 'removed'])
+
+// The full-text preview behind a catalog card: same public posture as the
+// list entry (no source/track UUIDs), plus the track's complete text so users
+// can read what something is before adding it. Word count / reading time are
+// derived client-side (language-aware segmentation lives there already).
+// Non-admins only ever receive live entries (status 'live', removedReason
+// null); admins get non-live entries too so moderation isn't blind.
+export const SharedContentEntryDetailSchema = SharedContentEntrySchema.extend({
+  text: z.string(),
+  segmentCount: z.number().int(),
+  status: SharedContentEntryStatusSchema,
+  removedReason: z.string().nullable(),
+})
+
 export const SharedContentShareStateSchema = z.enum(['shared', 'not-shared', 'not-shareable'])
 
 export const AdminSharedContentEntrySchema = SharedContentEntrySchema.extend({
-  status: z.enum(['live', 'unshared', 'removed']),
+  status: SharedContentEntryStatusSchema,
   contentSourceId: z.string().uuid(),
   textTrackId: z.string().uuid(),
   canonicalKey: z.string(),
@@ -42,6 +57,19 @@ export const sharedContentContract = {
       })
     )
     .output(z.object({ data: z.array(SharedContentEntrySchema) })),
+
+  // The '/detail' suffix (rather than a bare GET /shared-content/{entryId})
+  // keeps the param path from competing with the static GET
+  // /shared-content/share-state route, mirroring the '/{entryId}/add' shape.
+  get: oc
+    .route({ method: 'GET', path: '/shared-content/{entryId}/detail', successStatus: 200 })
+    .errors({
+      // Unknown id, or the entry is no longer live (unshared/removed).
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ entryId: z.string().uuid() }))
+    .output(z.object({ data: SharedContentEntryDetailSchema })),
 
   addToLibrary: oc
     .route({ method: 'POST', path: '/shared-content/{entryId}/add', successStatus: 201 })
@@ -93,7 +121,10 @@ export const sharedContentContract = {
       FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({}))
+    // The filter is server-side (WHERE before LIMIT): client-side filtering
+    // over the flat latest-N would silently lose older unshared/removed
+    // entries once the catalog outgrows the cap.
+    .input(z.object({ status: SharedContentEntryStatusSchema.optional() }))
     .output(z.object({ data: z.array(AdminSharedContentEntrySchema) })),
 
   adminRemove: oc

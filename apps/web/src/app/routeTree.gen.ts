@@ -44,6 +44,7 @@ import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_a
 import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
 import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
+import { Route as AuthenticatedAppExploreEntryIdRouteImport } from './routes/_authenticated/_app/explore/$entryId'
 import { Route as AuthenticatedAppCoverageLangRouteImport } from './routes/_authenticated/_app/coverage/$lang'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppLessonsImportIndexRouteImport } from './routes/_authenticated/_app/lessons/import/index'
@@ -255,6 +256,12 @@ const AuthenticatedAppMoreAccountRoute =
     path: '/more/account',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppExploreEntryIdRoute =
+  AuthenticatedAppExploreEntryIdRouteImport.update({
+    id: '/explore/$entryId',
+    path: '/explore/$entryId',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppCoverageLangRoute =
   AuthenticatedAppCoverageLangRouteImport.update({
     id: '/coverage/$lang',
@@ -369,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
   '/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
+  '/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
@@ -419,6 +427,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof AuthenticatedPricingIndexRoute
   '/login/email': typeof LoginEmailIndexRoute
   '/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
+  '/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
@@ -472,6 +481,7 @@ export interface FileRoutesById {
   '/_authenticated/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
   '/_authenticated/_app/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
+  '/_authenticated/_app/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/_authenticated/_app/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/pricing/'
     | '/login/email/'
     | '/coverage/$lang'
+    | '/explore/$entryId'
     | '/more/account'
     | '/more/languages'
     | '/sessions/new'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/login/email'
     | '/coverage/$lang'
+    | '/explore/$entryId'
     | '/more/account'
     | '/more/languages'
     | '/sessions/new'
@@ -626,6 +638,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pricing/'
     | '/login/email/'
     | '/_authenticated/_app/coverage/$lang'
+    | '/_authenticated/_app/explore/$entryId'
     | '/_authenticated/_app/more/account'
     | '/_authenticated/_app/more/languages'
     | '/_authenticated/_app/sessions/new'
@@ -916,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMoreAccountRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/explore/$entryId': {
+      id: '/_authenticated/_app/explore/$entryId'
+      path: '/explore/$entryId'
+      fullPath: '/explore/$entryId'
+      preLoaderRoute: typeof AuthenticatedAppExploreEntryIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/coverage/$lang': {
       id: '/_authenticated/_app/coverage/$lang'
       path: '/coverage/$lang'
@@ -1028,6 +1048,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
   AuthenticatedAppSaveProgressRoute: typeof AuthenticatedAppSaveProgressRoute
   AuthenticatedAppCoverageLangRoute: typeof AuthenticatedAppCoverageLangRoute
+  AuthenticatedAppExploreEntryIdRoute: typeof AuthenticatedAppExploreEntryIdRoute
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
   AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
   AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
@@ -1060,6 +1081,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
   AuthenticatedAppSaveProgressRoute: AuthenticatedAppSaveProgressRoute,
   AuthenticatedAppCoverageLangRoute: AuthenticatedAppCoverageLangRoute,
+  AuthenticatedAppExploreEntryIdRoute: AuthenticatedAppExploreEntryIdRoute,
   AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
   AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
   AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,

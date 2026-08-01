@@ -20,11 +20,23 @@ declare module '@tanstack/react-query' {
        * web-query-hooks skill.
        */
       invalidates?: readonly QueryKey[]
+      /**
+       * A NOT_FOUND response is an expected race the caller handles (e.g.
+       * adding a shared entry that was unshared mid-preview) — skip
+       * error-tracking for it. Other error codes still log.
+       */
+      expectedNotFound?: boolean
     }
     queryMeta: {
       showErrorToast?: boolean
       errorMessage?: string
       showErrorModal?: boolean
+      /**
+       * A NOT_FOUND response is a state this query's view renders (e.g. a
+       * dead shared-content deep link), not a defect — skip error-tracking
+       * for it. Other error codes still log.
+       */
+      expectedNotFound?: boolean
     }
   }
 }

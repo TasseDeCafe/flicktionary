@@ -6,7 +6,6 @@ import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 import { useSharedContentList } from '@/features/explore/api/explore-hooks'
 import { ExploreCard, ExploreCardSkeleton } from '@/features/explore/components/explore-card'
-import { useAddSharedEntry } from '@/features/explore/components/use-add-shared-entry'
 
 // How many featured entries the dashboard previews; the full catalog lives on
 // /explore.
@@ -27,7 +26,6 @@ type Props = {
 export const ExploreFeaturedSection = ({ sessionCount, sessionsLoaded }: Props) => {
   const { t, i18n } = useLingui()
   const { data: entries, isLoading } = useSharedContentList()
-  const { addEntry, addingEntryId, cefrDialog } = useAddSharedEntry()
   const [selected, setSelected] = useState<string | null>(null)
 
   const featured = useMemo(() => (entries ?? []).filter((entry) => entry.featured), [entries])
@@ -61,10 +59,9 @@ export const ExploreFeaturedSection = ({ sessionCount, sessionsLoaded }: Props) 
       <div className='mt-2 grid grid-cols-1 gap-3 md:grid-cols-2'>
         {isLoading && <SkeletonList count={2} renderItem={() => <ExploreCardSkeleton />} />}
         {visible.map((entry) => (
-          <ExploreCard key={entry.id} entry={entry} onAdd={addEntry} isAdding={addingEntryId === entry.id} />
+          <ExploreCard key={entry.id} entry={entry} />
         ))}
       </div>
-      {cefrDialog}
     </div>
   )
 }

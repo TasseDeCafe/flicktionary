@@ -148,7 +148,10 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       const meta = query.meta
 
-      if (!isGuestAccessDisabledError(error)) {
+      const isExpectedNotFound =
+        (meta?.expectedNotFound ?? false) && error instanceof ORPCError && error.code === 'NOT_FOUND'
+
+      if (!isGuestAccessDisabledError(error) && !isExpectedNotFound) {
         logError({
           message: `QueryKey ${JSON.stringify(query.queryKey)} failed`,
           error,
@@ -179,7 +182,15 @@ export const queryClient = new QueryClient({
 
       handleApiError(error, meta)
 
-      if (!isExpectedValidationError(error) && !isGuestAccessDisabledError(error) && !isGuestSourceLimitError(error)) {
+      const isExpectedNotFound =
+        (meta?.expectedNotFound ?? false) && error instanceof ORPCError && error.code === 'NOT_FOUND'
+
+      if (
+        !isExpectedValidationError(error) &&
+        !isGuestAccessDisabledError(error) &&
+        !isGuestSourceLimitError(error) &&
+        !isExpectedNotFound
+      ) {
         logError({
           message: `MutationKey ${JSON.stringify(mutation.options.mutationKey)} failed`,
           error,
