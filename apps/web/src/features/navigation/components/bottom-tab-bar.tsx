@@ -37,7 +37,7 @@ export const BottomTabBar = () => {
   // (the iOS More-tab convention): Sessions is Dashboard's drill-in, Stats is
   // reached from More. The views render a MobileBackLink to the same parent.
   const tabs: TabConfig[] = [
-    { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard', '/sessions'] },
+    { to: '/dashboard', label: t`Dashboard`, icon: Home, matchPrefixes: ['/dashboard', '/sessions', '/explore'] },
     { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
     { to: '/vocabulary', label: t`Vocabulary`, icon: BookOpen, matchPrefixes: ['/vocabulary'] },
     { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more', '/stats'] },

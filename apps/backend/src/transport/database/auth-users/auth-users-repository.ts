@@ -8,6 +8,7 @@ export interface AuthUsersRepository {
   findUserById: (id: string) => Promise<AuthUser | null>
   getJoinedDay: (id: string) => Promise<string | null>
   deleteStaleAnonymousUsers: (retentionDays: number) => Promise<number>
+  isAnonymous: (userId: string) => Promise<boolean>
 }
 
 export const buildAuthUsersRepository = (): AuthUsersRepository => {
@@ -60,10 +61,21 @@ export const buildAuthUsersRepository = (): AuthUsersRepository => {
     return result.count
   }
 
+  // Authoritative guest check (DB, not the JWT claim): covers surfaces with no
+  // JWT and reflects guest conversion before the token refreshes. A missing
+  // row reads as anonymous — never treat a deleted user as a full account.
+  const isAnonymous = async (userId: string): Promise<boolean> => {
+    const result = (await sql`
+      SELECT u.is_anonymous FROM auth.users u WHERE u.id = ${userId}
+    `) as unknown as Array<{ is_anonymous: boolean | null }>
+    return result[0]?.is_anonymous !== false
+  }
+
   return {
     removeUserFromAuthUsers,
     findUserById,
     getJoinedDay,
     deleteStaleAnonymousUsers,
+    isAnonymous,
   }
 }

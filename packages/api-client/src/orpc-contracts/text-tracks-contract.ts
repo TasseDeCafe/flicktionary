@@ -53,6 +53,7 @@ export const textTracksContract = {
   importFromOpenSubtitles: oc
     .route({ method: 'POST', path: '/text-tracks/opensubtitles/import', successStatus: 201 })
     .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       TOO_MANY_REQUESTS: { status: 429, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })

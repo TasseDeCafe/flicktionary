@@ -16,6 +16,7 @@ import { useQualifyingCoverage } from '@/features/coverage/api/coverage-hooks'
 import { ActivityCalendarCard } from './activity-calendar-card'
 import { DailyMixBanner } from './daily-mix-banner'
 import { DashboardCarousel } from './dashboard-carousel'
+import { ExploreFeaturedSection } from './explore-featured-section'
 
 // The dashboard previews this many recent rows; the full list lives on /sessions.
 const RECENT_COUNT = 12
@@ -51,6 +52,8 @@ export const DashboardView = () => {
       <GuestSaveProgressBanner className='mt-4' />
 
       <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
+
+      <ExploreFeaturedSection sessionCount={data?.length ?? 0} sessionsLoaded={!isLoading} />
 
       <DailyMixBanner />
 

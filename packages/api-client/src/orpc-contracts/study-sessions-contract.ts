@@ -61,6 +61,10 @@ export const studySessionsContract = {
         nativeLanguage: z.string(),
         targetLanguage: z.string(),
         cefrLevel: z.string(),
+        // Paste-wizard "Share to Explore" opt-in. Publishing hangs off session
+        // creation (not track import) so an abandoned wizard can never leave
+        // public content with no owning session to manage it from.
+        shareToExplore: z.boolean().optional(),
       })
     )
     // Find-or-create: re-creating over the same (track, target language)

@@ -37,6 +37,14 @@ import {
   type CheckpointDependencies,
 } from '../../service/checkpoint/collect-checkpoint'
 import { undoCheckpoint } from '../../service/checkpoint/undo-checkpoint'
+import {
+  autoShareInBackground,
+  publishIfEligible,
+  recheckTitleForSharedSource,
+  type PublishSharedContentDeps,
+} from '../../service/shared-content/publish-shared-content'
+import type { SharedContentEntriesRepositoryInterface } from '../../transport/database/shared-content-entries/shared-content-entries-repository'
+import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { assertKnownBacklog, listBacklogClaims, undoKnownAssertions } from '../../service/checkpoint/assert-known'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
@@ -67,7 +75,7 @@ const toSegmentDto = (row: DbTextSegment) => ({
   endMs: row.end_ms,
 })
 
-const toStudySessionDto = (row: DbStudySessionWithSource) => ({
+export const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   id: row.id,
   userId: row.user_id,
   contentSourceId: row.content_source_id,
@@ -92,6 +100,12 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   episodeTitle: readMetaString(row.content_source_metadata, 'episodeTitle'),
 })
 
+export type SharedContentHookDeps = {
+  sharedContentEntriesRepository: SharedContentEntriesRepositoryInterface
+  contentSourcesRepository: ContentSourcesRepositoryInterface
+  publishDeps: PublishSharedContentDeps
+}
+
 export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
@@ -102,7 +116,8 @@ export const StudySessionsRouter = (
   anthropicPasses: AnthropicPassesInterface,
   checkpointDependencies: CheckpointDependencies,
   markKnownDependencies: MarkRemainingKnownDependencies,
-  difficultyDependencies: SessionDifficultiesDependencies
+  difficultyDependencies: SessionDifficultiesDependencies,
+  sharedContentDeps: SharedContentHookDeps
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -180,6 +195,27 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
+      // Movie/TV sources are global by design; every other source is reachable
+      // only by its owner or through a live Explore entry. Before the catalog,
+      // personal source/track UUIDs never left their owner, so possession
+      // implied ownership — the catalog hands those UUIDs to strangers, and
+      // this check keeps unshared/removed content unreachable through them.
+      const source = await sharedContentDeps.contentSourcesRepository.findById(input.contentSourceId)
+      const trackNotFoundError = () =>
+        errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Text track not found for content source' }] },
+        })
+      if (!source) throw trackNotFoundError()
+      const isGlobalType = source.type === 'movie' || source.type === 'tv'
+      if (!isGlobalType && source.created_by_user_id !== userId) {
+        const entry = await sharedContentDeps.sharedContentEntriesRepository.findByTextTrackId(input.textTrackId)
+        const isLiveSharedTrack =
+          entry !== null &&
+          entry.content_source_id === source.id &&
+          entry.unshared_at === null &&
+          entry.removed_at === null
+        if (!isLiveSharedTrack) throw trackNotFoundError()
+      }
       const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: input.targetLanguage,
@@ -216,6 +252,21 @@ export const StudySessionsRouter = (
           error,
         })
       })
+      // The paste-wizard opt-in: publish only now that the session exists (so
+      // the share toggle has a surface to live on). Quiet best-effort — the
+      // toggle shows the real state.
+      if (input.shareToExplore) {
+        void publishIfEligible(
+          { contentSourceId: input.contentSourceId, textTrackId: input.textTrackId, userId, trigger: 'user' },
+          sharedContentDeps.publishDeps
+        ).catch((error) => {
+          logError({
+            message: 'opt-in share publish failed',
+            params: { userId, contentSourceId: input.contentSourceId },
+            error,
+          })
+        })
+      }
       return { data: toStudySessionDto(enriched), alreadyExisted: inserted.alreadyExisted }
     }),
 
@@ -591,6 +642,19 @@ export const StudySessionsRouter = (
         { textTracksRepository, processingJobsRepository }
       )
 
+      // Explore catalog upkeep, both quiet and off the request path: the fence
+      // re-checks the (always-overwritten) source title when the source has
+      // live entries; the auto-share no-ops for everything but a first
+      // successful publish.
+      recheckTitleForSharedSource(
+        { contentSourceId: contentSource.id, title: input.videoTitle },
+        sharedContentDeps.publishDeps
+      )
+      autoShareInBackground(
+        { contentSourceId: contentSource.id, textTrackId: track.id, userId },
+        sharedContentDeps.publishDeps
+      )
+
       return {
         data: {
           sessionId: session.id,
@@ -715,6 +779,17 @@ export const StudySessionsRouter = (
         throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(result) })
       }
 
+      // URL-imported articles auto-share ('text' selections stay opt-in — the
+      // policy sorts that out); the fence covers title rewrites on re-import.
+      recheckTitleForSharedSource(
+        { contentSourceId: result.contentSourceId, title: input.title },
+        sharedContentDeps.publishDeps
+      )
+      autoShareInBackground(
+        { contentSourceId: result.contentSourceId, textTrackId: result.textTrackId, userId },
+        sharedContentDeps.publishDeps
+      )
+
       return {
         data: {
           sessionId: result.sessionId,
@@ -733,6 +808,12 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
+      // The session is the owner's only surface for the Explore share toggle,
+      // so its content must never stay public without it. Unshare first and
+      // awaited: whichever step fails, the surviving state is safe (an
+      // unshared entry with the session still alive keeps the toggle; the
+      // reverse — deleted session, live entry — can never happen).
+      await sharedContentDeps.sharedContentEntriesRepository.unshareLiveForUserAndTrack(userId, session.text_track_id)
       const ok = await studySessionsRepository.softDelete(input.sessionId, userId)
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({

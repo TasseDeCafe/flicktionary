@@ -6,7 +6,16 @@ import type {
 } from '../../transport/third-party/anthropic/passes/moderation-pass'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 
-export type IngestModerationSurface = 'paste' | 'srt-upload' | 'extension-import' | 'telegram' | 'lesson-import'
+export type IngestModerationSurface =
+  | 'paste'
+  | 'srt-upload'
+  | 'extension-import'
+  | 'telegram'
+  | 'lesson-import'
+  // Share-time checks for the Explore catalog: YouTube ingest is not gated, so
+  // its tracks are moderated when (and only when) they are about to publish.
+  | 'share-youtube'
+  | 'share-title'
 
 export type IngestModerationOutcome =
   // status null = incomplete coverage (a chunk failed or was unparseable):

@@ -1133,6 +1133,56 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_content_entries: {
+        Row: {
+          canonical_key: string
+          content_source_id: string
+          created_at: string
+          featured: boolean
+          id: string
+          language: string
+          removed_at: string | null
+          removed_reason: string | null
+          shared_by_user_id: string | null
+          text_track_id: string
+          unshared_at: string | null
+        }
+        Insert: {
+          canonical_key: string
+          content_source_id: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          language: string
+          removed_at?: string | null
+          removed_reason?: string | null
+          shared_by_user_id?: string | null
+          text_track_id: string
+          unshared_at?: string | null
+        }
+        Update: {
+          canonical_key?: string
+          content_source_id?: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          language?: string
+          removed_at?: string | null
+          removed_reason?: string | null
+          shared_by_user_id?: string | null
+          text_track_id?: string
+          unshared_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shared_content_entries_content_source_text_track_fkey'
+            columns: ['content_source_id', 'text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
+            referencedColumns: ['content_source_id', 'id']
+          },
+        ]
+      }
       stripe_subscriptions: {
         Row: {
           amount: number | null

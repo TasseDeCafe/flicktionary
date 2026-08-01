@@ -23,49 +23,55 @@ export type DbStudySessionWithSource = DbStudySession & {
 // the same identity model as the extension ingest flows. Re-adding the same
 // content with byte-identical subtitles resolves to the same track, so the
 // wizard lands the user back in their existing session instead of erroring.
-const insertStudySession = async (params: {
+type InsertStudySessionParams = {
   userId: string
   contentSourceId: string
   textTrackId: string
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
-}): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
-  const inserted = await beginTx(async (tx) => {
-    // A session is how a globally-deduped movie/TV source enters a guest's
-    // library — the quota is enforced here, atomically with the insert
-    // (already-attached sources re-resolve freely via the conflict clause).
-    await assertGuestSessionQuota(params.userId, params.contentSourceId, tx)
-    return (await tx`
-      INSERT INTO public.study_sessions (
-        user_id, content_source_id, text_track_id,
-        native_language, target_language, cefr_level
-      )
-      SELECT
-        ${params.userId},
-        ${params.contentSourceId},
-        ${params.textTrackId},
-        ${params.nativeLanguage},
-        ${params.targetLanguage},
-        ${params.cefrLevel}
-      WHERE EXISTS (
-        SELECT 1
-        FROM public.text_tracks
-        WHERE id = ${params.textTrackId}
-          AND content_source_id = ${params.contentSourceId}
-      )
-      ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
-        DO NOTHING
-      RETURNING *
-    `) as DbStudySession[]
-  })
+}
+
+// Runs on a caller-provided executor so callers that need extra checks in the
+// SAME transaction (the shared-content add flow locks its catalog entry first)
+// stay atomic with the quota check and the insert.
+const insertStudySessionOn = async (
+  db: postgres.Sql,
+  params: InsertStudySessionParams
+): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
+  // A session is how a globally-deduped movie/TV source enters a guest's
+  // library — the quota is enforced here, atomically with the insert
+  // (already-attached sources re-resolve freely via the conflict clause).
+  await assertGuestSessionQuota(params.userId, params.contentSourceId, db)
+  const inserted = (await db`
+    INSERT INTO public.study_sessions (
+      user_id, content_source_id, text_track_id,
+      native_language, target_language, cefr_level
+    )
+    SELECT
+      ${params.userId},
+      ${params.contentSourceId},
+      ${params.textTrackId},
+      ${params.nativeLanguage},
+      ${params.targetLanguage},
+      ${params.cefrLevel}
+    WHERE EXISTS (
+      SELECT 1
+      FROM public.text_tracks
+      WHERE id = ${params.textTrackId}
+        AND content_source_id = ${params.contentSourceId}
+    )
+    ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
+      DO NOTHING
+    RETURNING *
+  `) as DbStudySession[]
   const insertedSession = inserted[0]
   if (insertedSession) return { session: insertedSession, alreadyExisted: false }
 
   // No row back means either the unique index fired or the track doesn't
   // belong to the content source — the re-select disambiguates. The existing
   // session keeps its stored native language / CEFR level.
-  const existing = (await sql`
+  const existing = (await db`
     SELECT *
     FROM public.study_sessions
     WHERE user_id = ${params.userId}
@@ -75,6 +81,12 @@ const insertStudySession = async (params: {
   `) as DbStudySession[]
   const existingSession = existing[0]
   return existingSession ? { session: existingSession, alreadyExisted: true } : null
+}
+
+const insertStudySession = async (
+  params: InsertStudySessionParams
+): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
+  return await beginTx(async (tx) => insertStudySessionOn(tx, params))
 }
 
 const getOrCreateAdhocStudySession = async (params: {
@@ -814,14 +826,13 @@ const hasVisibleSession = async (userId: string): Promise<boolean> => {
 }
 
 export interface StudySessionsRepositoryInterface {
-  insertStudySession: (params: {
-    userId: string
-    contentSourceId: string
-    textTrackId: string
-    nativeLanguage: string
-    targetLanguage: string
-    cefrLevel: string
-  }) => Promise<{ session: DbStudySession; alreadyExisted: boolean } | null>
+  insertStudySession: (
+    params: InsertStudySessionParams
+  ) => Promise<{ session: DbStudySession; alreadyExisted: boolean } | null>
+  insertStudySessionOn: (
+    db: postgres.Sql,
+    params: InsertStudySessionParams
+  ) => Promise<{ session: DbStudySession; alreadyExisted: boolean } | null>
   getOrCreateAdhocStudySession: (params: {
     userId: string
     targetLanguage: string
@@ -929,6 +940,7 @@ export interface StudySessionsRepositoryInterface {
 export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
   return {
     insertStudySession,
+    insertStudySessionOn,
     getOrCreateAdhocStudySession,
     getOrCreateForYoutubeVideo,
     getOrCreateForStreamingVideo,

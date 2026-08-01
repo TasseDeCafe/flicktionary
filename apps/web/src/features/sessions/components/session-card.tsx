@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, FileText, GraduationCap, MonitorPlay, MoreVertical, Newspaper, Tv } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent } from '@flicktionary/ui/components/card'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { SessionDifficulty } from '../api/sessions-hooks'
+import { POSTER_PLACEHOLDERS } from './poster-placeholders'
 import { SessionActionsOverlay } from './session-actions-overlay'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 
@@ -27,6 +27,7 @@ export const SessionCardSkeleton = () => (
 
 type SessionRow = {
   id: string
+  textTrackId: string
   targetLanguage: string
   createdAt: string
   contentSourceTitle: string | null
@@ -40,24 +41,6 @@ type Props = {
   onRemove: (session: SessionRow) => void
   difficulty?: SessionDifficulty
   difficultyLoading?: boolean
-}
-
-// Poster fallback per source type: an icon on a hue that identifies the type
-// at a glance. Types without an entry (movie without a poster) fall back to a
-// plain muted box.
-const POSTER_PLACEHOLDERS: Partial<Record<ContentSourceType, { Icon: LucideIcon; className: string }>> = {
-  text: { Icon: FileText, className: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300' },
-  tv: { Icon: Tv, className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
-  article: { Icon: Newspaper, className: 'bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300' },
-  youtube: { Icon: MonitorPlay, className: 'bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300' },
-  streaming: {
-    Icon: Clapperboard,
-    className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300',
-  },
-  lesson: {
-    Icon: GraduationCap,
-    className: 'bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
-  },
 }
 
 export const SessionCard = ({ session, onRemove, difficulty, difficultyLoading }: Props) => {
@@ -137,6 +120,7 @@ export const SessionCard = ({ session, onRemove, difficulty, difficultyLoading }
         open={actionsOpen}
         onOpenChange={setActionsOpen}
         sessionTitle={title}
+        textTrackId={session.textTrackId}
         onRequestRemove={() => {
           setActionsOpen(false)
           onRemove(session)

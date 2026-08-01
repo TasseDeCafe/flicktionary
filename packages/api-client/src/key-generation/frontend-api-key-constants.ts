@@ -6,3 +6,6 @@ export const ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED = 'SUBSCRIPTION_REQUIRED'
 // An anonymous (guest) user hit the per-guest content-source cap — the web
 // app answers with the create-account (save-progress) prompt.
 export const ERROR_CODE_FOR_GUEST_SOURCE_LIMIT_REACHED = 'GUEST_SOURCE_LIMIT_REACHED'
+// Adding shared content in a language the user has no CEFR preference for —
+// the web app opens the CEFR dialog, saves the level, and retries.
+export const ERROR_CODE_FOR_CEFR_REQUIRED = 'CEFR_REQUIRED'

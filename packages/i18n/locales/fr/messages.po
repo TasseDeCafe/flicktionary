@@ -440,6 +440,10 @@ msgstr "Activité"
 msgid "Activity, streak, and coverage"
 msgstr "Activité, série et couverture"
 
+#: apps/web/src/features/explore/components/explore-card.tsx
+msgid "Add \"{entryTitle}\" to your library"
+msgstr "Ajouter « {entryTitle} » à votre bibliothèque"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
 msgstr "Ajouter {newCount} cartes"
@@ -573,6 +577,8 @@ msgid "AI-generated and not verified against a dictionary — double-check befor
 msgstr "Généré par IA et non vérifié dans un dictionnaire — à vérifier avant de le réviser."
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+#: apps/web/src/features/explore/components/explore-view.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 #: apps/web/src/features/stats/components/stats-view.tsx
@@ -930,7 +936,6 @@ msgstr "Par bande de fréquence"
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
@@ -1199,6 +1204,7 @@ msgstr "Contexte (facultatif)"
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -1236,6 +1242,10 @@ msgstr "Continuer avec Google"
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Correct!"
 msgstr "Correct !"
+
+#: apps/web/src/features/explore/api/explore-hooks.ts
+msgid "Could not add this content"
+msgstr "Impossible d'ajouter ce contenu"
 
 #: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Could not auto-load subtitles in your preferred language."
@@ -1313,6 +1323,10 @@ msgstr "Impossible de lire cette page."
 msgid "Could not remove the highlight."
 msgstr "Impossible de supprimer la surbrillance."
 
+#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+msgid "Could not remove this entry"
+msgstr "Impossible de supprimer cette entrée"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Could not rename — please try again."
 msgstr "Impossible de renommer — veuillez réessayer."
@@ -1336,6 +1350,14 @@ msgstr "Impossible d'envoyer l'e-mail de confirmation. Veuillez réessayer."
 #: apps/native/src/features/auth/components/user-setup-gate.tsx
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
+
+#: apps/web/src/features/explore/api/explore-hooks.ts
+msgid "Could not update sharing for this content"
+msgstr "Impossible de mettre à jour le partage de ce contenu"
+
+#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+msgid "Could not update the featured flag"
+msgstr "Impossible de mettre à jour l'indicateur de mise en avant"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't generate the form's data"
@@ -1867,6 +1889,15 @@ msgstr "Expliquer"
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Explain this term in more depth."
 msgstr "Expliquez ce terme plus en détail."
+
+#: apps/web/src/features/explore/components/explore-view.tsx
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx
+msgid "Explore"
+msgstr "Explorer"
+
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+msgid "Explore all"
+msgstr "Tout explorer"
 
 #: apps/extension/common/components/MiscSettingsTab.tsx
 msgid "Export Settings"
@@ -3429,6 +3460,10 @@ msgstr "Notes"
 msgid "Nothing new to learn right now."
 msgstr "Rien de nouveau à apprendre pour le moment."
 
+#: apps/web/src/features/explore/components/explore-view.tsx
+msgid "Nothing shared here yet — content you share from your own library shows up for everyone."
+msgstr "Rien n'a encore été partagé ici — le contenu que vous partagez depuis votre propre bibliothèque apparaît pour tout le monde."
+
 #: apps/extension/src/controllers/video-overlay-controller.ts
 msgid "Nothing to collect yet."
 msgstr "Rien à collecter pour l'instant."
@@ -3744,6 +3779,10 @@ msgstr "Choisissez la langue du film ou de la série que vous allez regarder. Le
 msgid "Pick what to create next."
 msgstr "Choisissez quoi créer ensuite."
 
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
+msgid "Pick your level so content and explanations match it."
+msgstr "Choisissez votre niveau pour que le contenu et les explications correspondent."
+
 #: apps/web/src/features/settings/components/native-language-selector.tsx
 msgid "Pick your native language"
 msgstr "Choisissez votre langue maternelle"
@@ -3981,6 +4020,14 @@ msgstr "Prononciation"
 msgid "Pronunciation/form cards are flashcards — enable a card item type to include them."
 msgstr "Les cartes de prononciation/forme sont des cartes mémoire — activez un type de carte pour les inclure."
 
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+msgid "Publish this text to the public catalog so others can study it — don't share private or copyrighted content."
+msgstr "Publiez ce texte dans le catalogue public pour que d'autres puissent l'étudier — ne partagez pas de contenu privé ou protégé par des droits d'auteur."
+
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Publish to the public catalog — don't share private or copyrighted content"
+msgstr "Publier dans le catalogue public — ne partagez pas de contenu privé ou protégé par des droits d'auteur"
+
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Quick gloss"
 msgstr "Glose rapide"
@@ -4167,6 +4214,10 @@ msgid "Remove from session"
 msgstr "Retirer de la session"
 
 #: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Remove it from the public catalog — copies others already added stay with them"
+msgstr "Retirer du catalogue public — les copies déjà ajoutées par d'autres restent chez eux"
+
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "Remove session"
 msgstr "Supprimer la session"
@@ -4308,7 +4359,6 @@ msgid "Russian"
 msgstr "Russe"
 
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Save"
 msgstr "Enregistrer"
@@ -4398,6 +4448,7 @@ msgstr "Enregistrement de vos évaluations…"
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
@@ -4627,10 +4678,19 @@ msgstr "Paramètres"
 msgid "Settings and keyboard shortcuts"
 msgstr "Paramètres et raccourcis clavier"
 
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Share to Explore"
+msgstr "Partager pour explorer"
+
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
 msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
+
+#: apps/web/src/features/explore/components/explore-view.tsx
+msgid "Shared content from the community"
+msgstr "Contenu partagé par la communauté"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Short paraphrase in the target language."
@@ -4830,6 +4890,10 @@ msgstr "Démarrer la session"
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Start something new"
 msgstr "Commencer quelque chose de nouveau"
+
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+msgid "Start with shared content"
+msgstr "Commencer avec du contenu partagé"
 
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start your first session"
@@ -5262,7 +5326,6 @@ msgstr "Réflexion en cours…"
 msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
 msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
 
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "Cela calibre le passage des mots difficiles et la profondeur des explications."
@@ -5604,6 +5667,10 @@ msgstr "Débloquer Premium"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Unseen"
 msgstr "Non vus"
+
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Unshare from Explore"
+msgstr "Ne plus partager dans Explorer"
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
@@ -6018,6 +6085,7 @@ msgstr "Annuel"
 msgid "Yesterday"
 msgstr "Hier"
 
+#: apps/web/src/features/explore/components/use-add-shared-entry.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "You already had a session for this — picking up where you left off."

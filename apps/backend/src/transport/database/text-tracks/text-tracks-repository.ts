@@ -4,7 +4,11 @@ import { Tables, Database } from '../database.public.types'
 export type DbTextTrack = Tables<'text_tracks'>
 export type TextTrackSource = Database['public']['Enums']['text_track_source']
 
-export type TrackModeration = { status: 'clean' | 'flagged'; category: string | null }
+// 'blocked' exists for tracks moderated AFTER ingest (share-time YouTube
+// checks): the gated ingest surfaces reject hard-blocked content before any
+// row exists, but an already-ingested track needs the verdict stored so it is
+// never re-checked and never published. It does not affect private study.
+export type TrackModeration = { status: 'clean' | 'flagged' | 'blocked'; category: string | null }
 
 const insertTextTrack = async (params: {
   contentSourceId: string
@@ -32,13 +36,22 @@ const insertTextTrack = async (params: {
 
 // NULL-repair only: the first verdict wins, so a re-import can fill in a
 // verdict for a pre-feature or failed-open track but never overwrite one
-// (protects a 'flagged' from being downgraded by a later 'clean').
-const backfillModeration = async (trackId: string, moderation: TrackModeration): Promise<void> => {
-  await sql`
+// (protects a 'flagged' from being downgraded by a later 'clean'). Returns the
+// status persisted on the row after the attempt — when two concurrent checks
+// race, the loser gets the winner's verdict back, and callers gating on the
+// verdict must use this return value, not their own LLM outcome.
+const backfillModeration = async (trackId: string, moderation: TrackModeration): Promise<string | null> => {
+  const updated = (await sql`
     UPDATE public.text_tracks
     SET moderation_status = ${moderation.status}, moderation_category = ${moderation.category}
     WHERE id = ${trackId} AND moderation_status IS NULL
-  `
+    RETURNING moderation_status
+  `) as { moderation_status: string | null }[]
+  if (updated.length > 0) return updated[0]!.moderation_status
+  const existing = (await sql`
+    SELECT moderation_status FROM public.text_tracks WHERE id = ${trackId}
+  `) as { moderation_status: string | null }[]
+  return existing[0]?.moderation_status ?? null
 }
 
 const findByContentSourceLanguageAndHash = async (params: {
@@ -108,7 +121,7 @@ export interface TextTracksRepositoryInterface {
     hash: string
     moderation: TrackModeration | null
   }) => Promise<DbTextTrack>
-  backfillModeration: (trackId: string, moderation: TrackModeration) => Promise<void>
+  backfillModeration: (trackId: string, moderation: TrackModeration) => Promise<string | null>
   findByContentSourceLanguageAndHash: (params: {
     contentSourceId: string
     language: string

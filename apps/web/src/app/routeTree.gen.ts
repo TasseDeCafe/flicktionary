@@ -37,6 +37,7 @@ import { Route as AuthenticatedAppStatsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
 import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_authenticated/_app/practice/index'
 import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
+import { Route as AuthenticatedAppExploreIndexRouteImport } from './routes/_authenticated/_app/explore/index'
 import { Route as AuthenticatedAppDashboardIndexRouteImport } from './routes/_authenticated/_app/dashboard/index'
 import { Route as AuthenticatedAppVocabularyNewWordRouteImport } from './routes/_authenticated/_app/vocabulary/new-word'
 import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_authenticated/_app/sessions/new-text'
@@ -212,6 +213,12 @@ const AuthenticatedAppMoreIndexRoute =
     path: '/more/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppExploreIndexRoute =
+  AuthenticatedAppExploreIndexRouteImport.update({
+    id: '/explore/',
+    path: '/explore/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppDashboardIndexRoute =
   AuthenticatedAppDashboardIndexRouteImport.update({
     id: '/dashboard/',
@@ -368,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/dashboard/': typeof AuthenticatedAppDashboardIndexRoute
+  '/explore/': typeof AuthenticatedAppExploreIndexRoute
   '/more/': typeof AuthenticatedAppMoreIndexRoute
   '/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
@@ -417,6 +425,7 @@ export interface FileRoutesByTo {
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/dashboard': typeof AuthenticatedAppDashboardIndexRoute
+  '/explore': typeof AuthenticatedAppExploreIndexRoute
   '/more': typeof AuthenticatedAppMoreIndexRoute
   '/practice': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
@@ -469,6 +478,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/_authenticated/_app/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/_authenticated/_app/dashboard/': typeof AuthenticatedAppDashboardIndexRoute
+  '/_authenticated/_app/explore/': typeof AuthenticatedAppExploreIndexRoute
   '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
   '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/sessions/new-text'
     | '/vocabulary/new-word'
     | '/dashboard/'
+    | '/explore/'
     | '/more/'
     | '/practice/'
     | '/sessions/'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/sessions/new-text'
     | '/vocabulary/new-word'
     | '/dashboard'
+    | '/explore'
     | '/more'
     | '/practice'
     | '/sessions'
@@ -620,6 +632,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/sessions/new-text'
     | '/_authenticated/_app/vocabulary/new-word'
     | '/_authenticated/_app/dashboard/'
+    | '/_authenticated/_app/explore/'
     | '/_authenticated/_app/more/'
     | '/_authenticated/_app/practice/'
     | '/_authenticated/_app/sessions/'
@@ -854,6 +867,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMoreIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/explore/': {
+      id: '/_authenticated/_app/explore/'
+      path: '/explore'
+      fullPath: '/explore/'
+      preLoaderRoute: typeof AuthenticatedAppExploreIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/dashboard/': {
       id: '/_authenticated/_app/dashboard/'
       path: '/dashboard'
@@ -1014,6 +1034,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppSessionsNewTextRoute: typeof AuthenticatedAppSessionsNewTextRoute
   AuthenticatedAppVocabularyNewWordRoute: typeof AuthenticatedAppVocabularyNewWordRoute
   AuthenticatedAppDashboardIndexRoute: typeof AuthenticatedAppDashboardIndexRoute
+  AuthenticatedAppExploreIndexRoute: typeof AuthenticatedAppExploreIndexRoute
   AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
   AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
@@ -1046,6 +1067,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppVocabularyNewWordRoute:
     AuthenticatedAppVocabularyNewWordRoute,
   AuthenticatedAppDashboardIndexRoute: AuthenticatedAppDashboardIndexRoute,
+  AuthenticatedAppExploreIndexRoute: AuthenticatedAppExploreIndexRoute,
   AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
   AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,

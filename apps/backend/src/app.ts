@@ -52,6 +52,8 @@ import { CoverageRouter } from './router/coverage-router/coverage-router'
 import { CoverageSnapshotsRepository } from './transport/database/coverage-snapshots/coverage-snapshots-repository'
 import { StatsRouter } from './router/stats-router/stats-router'
 import { StatsRepository } from './transport/database/stats/stats-repository'
+import { SharedContentRouter } from './router/shared-content-router/shared-content-router'
+import { SharedContentEntriesRepository } from './transport/database/shared-content-entries/shared-content-entries-repository'
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
 import type { WithTransaction } from './service/highlights/create-note-only-highlight'
 import { GhostsRouter } from './router/ghosts-router/ghosts-router'
@@ -344,7 +346,17 @@ export const buildApp = ({
     )
   }
 
-  app.use(API_V1, removalsRouter(authUsersRepository, usersRepository, stripeApi, stripeSubscriptionsRepository))
+  const sharedContentEntriesRepository = SharedContentEntriesRepository()
+  app.use(
+    API_V1,
+    removalsRouter(
+      authUsersRepository,
+      usersRepository,
+      stripeApi,
+      stripeSubscriptionsRepository,
+      sharedContentEntriesRepository
+    )
+  )
   app.use(API_V1, UserRouter(usersRepository, posthogClient))
   app.use(API_V1, BillingRouter(billingService, usersWithFreeAccess))
   if (FEATURES.STRIPE) {
@@ -488,6 +500,26 @@ export const buildApp = ({
 
   app.use(API_V1, CoverageRouter(coverageDependencies))
   app.use(API_V1, StatsRouter({ statsRepository: StatsRepository(), authUsersRepository }))
+  const sharedContentPublishDeps = {
+    contentSourcesRepository,
+    textTracksRepository,
+    textSegmentsRepository,
+    sharedContentEntriesRepository,
+    authUsersRepository,
+    anthropicPasses,
+  }
+  app.use(
+    API_V1,
+    SharedContentRouter({
+      sharedContentEntriesRepository,
+      studySessionsRepository,
+      contentSourcesRepository,
+      textTracksRepository,
+      usersRepository,
+      targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
+      publishDeps: sharedContentPublishDeps,
+    })
+  )
   app.use(
     API_V1,
     StudySessionsRouter(
@@ -500,7 +532,12 @@ export const buildApp = ({
       anthropicPasses,
       checkpointDependencies,
       markKnownDependencies,
-      difficultyDependencies
+      difficultyDependencies,
+      {
+        sharedContentEntriesRepository,
+        contentSourcesRepository,
+        publishDeps: sharedContentPublishDeps,
+      }
     )
   )
   app.use(

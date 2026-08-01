@@ -59,13 +59,15 @@ describe('text-tracks-repository moderation integration tests', () => {
       moderation: null,
     })
 
-    await repository.backfillModeration(track.id, { status: 'flagged', category: 'hate' })
+    expect(await repository.backfillModeration(track.id, { status: 'flagged', category: 'hate' })).toBe('flagged')
     const afterRepair = await repository.findById(track.id)
     expect(afterRepair?.moderation_status).toBe('flagged')
     expect(afterRepair?.moderation_category).toBe('hate')
 
-    // A later 'clean' must not downgrade the flag — first verdict wins.
-    await repository.backfillModeration(track.id, { status: 'clean', category: null })
+    // A later 'clean' must not downgrade the flag — first verdict wins, and
+    // the loser gets the winning verdict back so callers gate on the row, not
+    // on their own LLM outcome.
+    expect(await repository.backfillModeration(track.id, { status: 'clean', category: null })).toBe('flagged')
     const afterSecond = await repository.findById(track.id)
     expect(afterSecond?.moderation_status).toBe('flagged')
     expect(afterSecond?.moderation_category).toBe('hate')

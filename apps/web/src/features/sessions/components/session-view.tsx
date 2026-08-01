@@ -1093,15 +1093,22 @@ export const SessionView = () => {
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
         {session.targetLanguage.toUpperCase()} · {session.cefrLevel}
-        {sessionDifficulty && sessionDifficulty.status !== 'unsupported' && sessionDifficulty.status !== 'failed' && (
-          <button
-            type='button'
-            className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
-            onClick={() => setDifficultyOpen(true)}
-          >
-            <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
-          </button>
-        )}
+        {/* Suppressed verdicts (too little tracked vocab → null percent/label
+            on an 'available' result) render nothing inside the stat, which
+            would leave an empty, keyboard-focusable button — skip the wrapper
+            too. Pending keeps its skeleton. */}
+        {sessionDifficulty &&
+          sessionDifficulty.status !== 'unsupported' &&
+          sessionDifficulty.status !== 'failed' &&
+          !(sessionDifficulty.status === 'available' && sessionDifficulty.label === null) && (
+            <button
+              type='button'
+              className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
+              onClick={() => setDifficultyOpen(true)}
+            >
+              <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
+            </button>
+          )}
         {/* The session's highlight count, tappable through to the vocabulary
             list — the header owns this stat (the footer stays action-only). */}
         <button
@@ -1341,6 +1348,7 @@ export const SessionView = () => {
         open={actionsOpen}
         onOpenChange={setActionsOpen}
         sessionTitle={sourceTitle}
+        textTrackId={session.textTrackId}
         onRequestRemove={() => {
           setActionsOpen(false)
           setRemoveOpen(true)
