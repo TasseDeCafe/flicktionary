@@ -7,7 +7,7 @@ import type {
   Message,
 } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { getFullAccountFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { resolveOrCreateFlicktionarySession } from '../../services/flicktionary/session-resolver'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
@@ -40,7 +40,7 @@ export default class CollectCheckpointHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        const auth = await getFlicktionaryAuth()
+        const auth = await getFullAccountFlicktionaryAuth()
         if (!auth) {
           sendResponse({ success: false, error: i18n._(msg`Sign in to Flicktionary to collect reviews.`) })
           return

@@ -2,7 +2,7 @@ import { msg } from '@lingui/core/macro'
 import { i18n } from '@/ui/lingui'
 import { activateBackgroundLocale } from '@/services/activate-background-locale'
 import { getFlicktionaryApiClient } from './flicktionary-api-client'
-import { getFlicktionaryAuth } from './auth-storage'
+import { getFullAccountFlicktionaryAuth } from './auth-storage'
 import { getFlicktionaryConfig } from './flicktionary-config'
 import { extractFlicktionaryApiError } from './api-error'
 
@@ -54,7 +54,7 @@ interface ImportTextInput {
 // the body, and creates the source + track + study session in one shot (same
 // server-side flow the video ingestion uses). Returns the session id to open.
 const importTextToFlicktionary = async (input: ImportTextInput): Promise<string> => {
-  const auth = await getFlicktionaryAuth()
+  const auth = await getFullAccountFlicktionaryAuth()
   if (!auth) {
     throw new Error(i18n._(msg`Sign in to Flicktionary to import text.`))
   }
@@ -89,7 +89,7 @@ const showToast = async (tabId: number, kind: 'success' | 'error', message: stri
 // prompt rather than an extraction-layer error (e.g. "reload the page" when
 // the content script isn't reachable).
 const requireSignIn = async (tabId: number): Promise<ImportOutcome | null> => {
-  if (await getFlicktionaryAuth()) {
+  if (await getFullAccountFlicktionaryAuth()) {
     return null
   }
   const error = i18n._(msg`Sign in to Flicktionary to import text.`)

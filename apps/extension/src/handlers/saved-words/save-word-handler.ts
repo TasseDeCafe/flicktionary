@@ -1,7 +1,7 @@
 import type { Browser } from 'wxt/browser'
 import type { Command, Message, SavedHighlightDto, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { getFullAccountFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { lookupFlicktionarySession, storeFlicktionarySession } from '../../services/flicktionary/youtube-session-cache'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
@@ -56,7 +56,7 @@ export default class SaveWordHandler {
   private async _saveToFlicktionary(
     message: SaveWordMessage
   ): Promise<{ highlight: SavedHighlightDto | undefined; sessionId: string; targetLanguage: string }> {
-    const auth = await getFlicktionaryAuth()
+    const auth = await getFullAccountFlicktionaryAuth()
     if (!auth) {
       throw new Error(i18n._(msg`Sign in to Flicktionary to save words.`))
     }

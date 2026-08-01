@@ -13,7 +13,10 @@ export interface FlicktionaryAuthState {
   /** Unix seconds at which `accessToken` expires (matches Supabase). */
   expiresAt: number
   userId: string
-  email: string
+  /** Null for anonymous guest sessions; always set for paired accounts. */
+  email: string | null
+  /** Anonymous guest session (gloss-only access, minted on first gloss). */
+  isGuest: boolean
 }
 
 const readRaw = async (): Promise<unknown> => {
@@ -21,21 +24,45 @@ const readRaw = async (): Promise<unknown> => {
   return (result as Record<string, unknown>)[STORAGE_KEY]
 }
 
-const isAuthState = (value: unknown): value is FlicktionaryAuthState => {
-  if (!value || typeof value !== 'object') return false
+// Stored records predating guest support have a string email and no `isGuest`
+// key — they MUST keep validating (rejecting them would silently sign every
+// paired user out on extension update), so `isGuest` is normalized rather than
+// required and `email` accepts null.
+const parseAuthState = (value: unknown): FlicktionaryAuthState | null => {
+  if (!value || typeof value !== 'object') return null
   const v = value as Record<string, unknown>
-  return (
+  const validShape =
     typeof v.accessToken === 'string' &&
     typeof v.refreshToken === 'string' &&
     typeof v.expiresAt === 'number' &&
     typeof v.userId === 'string' &&
-    typeof v.email === 'string'
-  )
+    (typeof v.email === 'string' || v.email === null)
+  if (!validShape) return null
+  return {
+    accessToken: v.accessToken as string,
+    refreshToken: v.refreshToken as string,
+    expiresAt: v.expiresAt as number,
+    userId: v.userId as string,
+    email: (v.email as string | null) ?? null,
+    isGuest: v.isGuest === true,
+  }
 }
 
+export const __parseAuthStateForTest = parseAuthState
+
 export const getFlicktionaryAuth = async (): Promise<FlicktionaryAuthState | null> => {
-  const value = await readRaw()
-  return isAuthState(value) ? value : null
+  return parseAuthState(await readRaw())
+}
+
+/**
+ * The stored auth only when it belongs to a full (paired) account — null for
+ * guests. Feature handlers that must treat guests as signed out (saving,
+ * checkpoints, CEFR, imports, prefs sync) gate on this instead of
+ * `getFlicktionaryAuth`.
+ */
+export const getFullAccountFlicktionaryAuth = async (): Promise<FlicktionaryAuthState | null> => {
+  const auth = await getFlicktionaryAuth()
+  return auth && !auth.isGuest ? auth : null
 }
 
 export const setFlicktionaryAuth = async (state: FlicktionaryAuthState): Promise<void> => {
@@ -50,8 +77,7 @@ export const onFlicktionaryAuthChange = (listener: (state: FlicktionaryAuthState
   const wrapped = (changes: { [key: string]: Browser.storage.StorageChange }, areaName: Browser.storage.AreaName) => {
     if (areaName !== 'local') return
     if (!(STORAGE_KEY in changes)) return
-    const newValue = changes[STORAGE_KEY]?.newValue
-    listener(isAuthState(newValue) ? newValue : null)
+    listener(parseAuthState(changes[STORAGE_KEY]?.newValue))
   }
 
   browser.storage.onChanged.addListener(wrapped)

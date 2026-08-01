@@ -7,7 +7,7 @@ import type {
   SavedHighlightDto,
 } from '@asbplayer-fork/common'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
-import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
+import { getFullAccountFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import {
   lookupFlicktionarySession,
   removeFlicktionarySession,
@@ -92,7 +92,7 @@ export default class LoadFlicktionarySavedHighlightsHandler {
 
     void (async () => {
       try {
-        const auth = await getFlicktionaryAuth()
+        const auth = await getFullAccountFlicktionaryAuth()
         if (!auth) {
           sendResponse({ success: true, signedIn: false })
           return

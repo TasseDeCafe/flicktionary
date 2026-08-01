@@ -27,16 +27,15 @@ export const persistSupabaseSession = async (params: {
   refresh_token: string
   expires_at?: number
   user: { id: string; email?: string | null }
+  isGuest: boolean
 }): Promise<FlicktionaryAuthState> => {
-  if (!params.user.email) {
-    throw new Error('Paired Supabase session is missing email')
-  }
   const state: FlicktionaryAuthState = {
     accessToken: params.access_token,
     refreshToken: params.refresh_token,
     expiresAt: params.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
     userId: params.user.id,
-    email: params.user.email,
+    email: params.user.email ?? null,
+    isGuest: params.isGuest,
   }
   await setFlicktionaryAuth(state)
   return state
@@ -65,6 +64,7 @@ export const refreshAccessTokenIfNeeded = async (): Promise<FlicktionaryAuthStat
     refresh_token: data.session.refresh_token,
     expires_at: data.session.expires_at ?? undefined,
     user: { id: data.user.id, email: data.user.email },
+    isGuest: data.user.is_anonymous ?? current.isGuest,
   })
 }
 

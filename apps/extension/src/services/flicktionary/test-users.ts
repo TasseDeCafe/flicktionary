@@ -1,4 +1,4 @@
-import { getFlicktionaryAuth } from './auth-storage'
+import { getFullAccountFlicktionaryAuth } from './auth-storage'
 import { getFlicktionaryConfig } from './flicktionary-config'
 
 // Mirrors the web app's checkIsTestUser (apps/web/src/utils/test-users-utils.ts):
@@ -28,8 +28,8 @@ export const checkIsTestUser = async (email: string): Promise<boolean> => {
   return hashedEmailsOfTestUsers.includes(await hashEmail(email))
 }
 
-/** Test-user check for the currently paired account; false while unpaired. */
+/** Test-user check for the currently paired account; false while unpaired or a guest. */
 export const checkCurrentUserIsTestUser = async (): Promise<boolean> => {
-  const auth = await getFlicktionaryAuth()
-  return auth === null ? false : checkIsTestUser(auth.email)
+  const auth = await getFullAccountFlicktionaryAuth()
+  return auth?.email ? checkIsTestUser(auth.email) : false
 }
