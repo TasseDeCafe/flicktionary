@@ -7,6 +7,7 @@ import { KnownLemmasRepository } from '../../transport/database/known-lemmas/kno
 import { TextTrackLemmaProfilesRepository } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { sql } from '../../transport/database/postgres-client'
+import { MIN_TRACKED_LEMMAS_FOR_VERDICT } from '../../service/difficulty/session-difficulties'
 import {
   createReadingSession,
   ensureRuLemmaRankManifest,
@@ -96,6 +97,27 @@ describe('study-sessions difficulties', () => {
       maxSegmentIndex: null,
       wordTokenCount: 10,
       matchedTokenCount: 10,
+    })
+
+    // Below the tracked-vocab floor (3 tracked lemmas) the headline verdict is
+    // suppressed — the counts still flow for the breakdown sheet.
+    const suppressed = await getDifficulties(token, [session.id])
+    expect(suppressed.status).toBe(200)
+    const suppressedDto = suppressed.body.data.difficulties[session.id]
+    expect(suppressedDto.status).toBe('available')
+    expect(suppressedDto.expectedCoveragePercent).toBeNull()
+    expect(suppressedDto.label).toBeNull()
+    expect(suppressedDto.unknownLemmaCount).toBe(2)
+
+    // Filler known marks cross the floor without touching the track profile,
+    // so the coverage math below is unchanged.
+    await knownLemmasRepository.bulkMarkKnown({
+      userId,
+      targetLanguage: 'ru',
+      lemmas: Array.from({ length: MIN_TRACKED_LEMMAS_FOR_VERDICT }, (_, i) => `флр${s}${i}`),
+      source: 'bulk_text',
+      sourceId: null,
+      sweepBatchId: null,
     })
 
     const response = await getDifficulties(token, [session.id])
