@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { Card, CardContent } from '@flicktionary/ui/components/card'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
 import { POSTER_PLACEHOLDERS } from '@/features/sessions/components/poster-placeholders'
 
 export type ExploreEntry = {
@@ -40,10 +40,12 @@ type Props = {
 // meta) with one action — add it to the library. The whole card is the tap
 // target; the trailing plus is the affordance, not a separate control.
 export const ExploreCard = ({ entry, onAdd, isAdding }: Props) => {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const entryTitle = entry.title
   const placeholder = POSTER_PLACEHOLDERS[entry.type as ContentSourceType]
-  const metaParts = [getLanguageName(entry.language), entry.sourceDomain].filter(
+  // Localized like the filter chips above the grid — the English fallback
+  // names would clash with them in every non-English UI locale.
+  const metaParts = [getLocalizedCoverageLanguageName(i18n, entry.language), entry.sourceDomain].filter(
     (part): part is string => part !== null && part !== ''
   )
 

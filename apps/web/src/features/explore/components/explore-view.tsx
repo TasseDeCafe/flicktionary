@@ -26,8 +26,11 @@ export const ExploreView = () => {
   const languages = useMemo(() => [...new Set((entries ?? []).map((entry) => entry.language))].sort(), [entries])
 
   // URL param wins; otherwise preselect the user's last target language when
-  // the feed actually has it. `null` = All.
-  const active = lang && languages.includes(lang) ? lang : null
+  // the feed actually has it. An explicit All click writes the 'all' sentinel
+  // to the URL — a bare missing param means "no choice made yet", and only
+  // that state gets the preference default (otherwise All could never stick
+  // for users with a saved language).
+  const active = lang && lang !== 'all' && languages.includes(lang) ? lang : null
   const defaulted =
     active === null && !lang && prefs?.lastTargetLanguage && languages.includes(prefs.lastTargetLanguage)
       ? prefs.lastTargetLanguage
@@ -38,7 +41,7 @@ export const ExploreView = () => {
   const setLanguage = (code: string | null) => {
     void navigate({
       to: '/explore',
-      search: code ? { lang: code } : {},
+      search: { lang: code ?? 'all' },
       replace: true,
     })
   }

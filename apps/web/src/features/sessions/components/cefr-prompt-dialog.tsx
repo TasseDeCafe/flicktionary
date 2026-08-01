@@ -27,6 +27,14 @@ type Props = {
 export const CefrPromptDialog = ({ open, targetLanguage, isSubmitting, onSubmit, onCancel }: Props) => {
   const { t } = useLingui()
   const [level, setLevel] = useState<CefrLevel | null>(null)
+  // The component stays mounted between opens (the caller toggles `open` and
+  // swaps `targetLanguage`), so a level picked before a cancel would leak
+  // into the next ask. Adjust-during-render reset: every open starts blank.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (prevOpen !== open) {
+    setPrevOpen(open)
+    if (open) setLevel(null)
+  }
   const languageName = getLanguageName(targetLanguage)
 
   return (
