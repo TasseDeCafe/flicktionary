@@ -417,6 +417,12 @@ stat is always a live query — never pre-aggregated or snapshotted.
   frustrating — while the displayed percent is **floored**, so a shown "98%"
   never carries a sub-0.98 label. Copy scopes honestly to *vocabulary*
   coverage (syntax, speech rate, abstractness are excluded).
+- **Tracked-vocab floor**: with fewer than 20 tracked entries (saved lookups +
+  known marks) in the language, the headline verdict is suppressed — the
+  result stays `available` but percent/label are null (a brand-new user would
+  otherwise see ~0% "frustrating" on every card). The breakdown counts still
+  flow, so the detail sheet stays honest. UI-side, the null shape renders
+  nothing and the session header skips the (otherwise empty) tappable wrapper.
 - **Statuses**: `unsupported` (ad-hoc/lesson sessions — synthetic,
   non-narrative content — and languages without both kaikki data and a
   `lemma_rank_builds` manifest row), `pending` (profile build enqueued /
