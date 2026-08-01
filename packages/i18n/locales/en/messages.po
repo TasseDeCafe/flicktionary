@@ -1323,6 +1323,10 @@ msgstr "Could not read this page."
 msgid "Could not remove the highlight."
 msgstr "Could not remove the highlight."
 
+#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+msgid "Could not remove this entry"
+msgstr "Could not remove this entry"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Could not rename — please try again."
 msgstr "Could not rename — please try again."
@@ -1350,6 +1354,10 @@ msgstr "Could not set up your account. Please try restarting the app."
 #: apps/web/src/features/explore/api/explore-hooks.ts
 msgid "Could not update sharing for this content"
 msgstr "Could not update sharing for this content"
+
+#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+msgid "Could not update the featured flag"
+msgstr "Could not update the featured flag"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't generate the form's data"
