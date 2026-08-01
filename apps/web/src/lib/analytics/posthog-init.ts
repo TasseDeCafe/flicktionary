@@ -72,7 +72,13 @@ export const initPostHog = (): void => {
   }
 
   posthog.init(posthogProjectToken, {
-    api_host: 'https://eu.i.posthog.com',
+    // Managed reverse proxy so ad-blockers don't drop events. The proxy routes
+    // by project token, so every environment (prod and dev projects alike)
+    // shares it: https://github.com/TasseDeCafe/flicktionary/issues/421
+    api_host: 'https://e.flicktionary.app',
+    // With api_host on a custom domain, the toolbar and links back to the
+    // PostHog UI need the real host spelled out.
+    ui_host: 'https://eu.posthog.com',
     defaults: '2026-06-25',
     persistence: 'localStorage+cookie',
     capture_exceptions: true,
