@@ -899,18 +899,36 @@ Everything above this divider is vendored **verbatim** from
 (v0.0.9). To update it, re-download from upstream and re-append this section —
 never hand-edit the vendored part. This section is repo-local guidance.
 
-### You don't need the extension for small stacks
+### Two kinds of stacked PRs now exist — know which one you have
 
-GitHub auto-groups PRs into a native stack when a PR's base is another PR's
-branch — `gh pr create --base <other-pr-branch>` is enough (that's how
-PRs #418/#419 became a stack, with no extension installed). Reach for the
-`gh stack` extension when *creating and managing* stacks of 3+ layers
-(rebasing, mid-stack edits, navigation); check `gh stack --help` and
+`gh pr create --base <other-pr-branch>` creates an **old-style** chain: just
+PRs whose bases point at each other. GitHub does NOT auto-convert these — but
+it offers the PR author a **"convert to stack"** prompt in the web UI, and the
+repo owner uses it (that's how #418/#419 became a native stack after being
+created the old way). So a chain you created may silently become native
+between creation and merge. The two behave differently:
+
+- **Old-style chain** (not converted): `gh pr merge` works per-PR; you must
+  merge bottom-first and **retarget the child to main before merging+deleting
+  the base branch** (the pre-2026 ritual — #222 was stranded by skipping it).
+- **Native stack** (converted in the UI, or created via `gh stack submit` /
+  `gh stack link`): `gh pr merge` and `gh pr edit --base` are both refused;
+  merge via the async API below, which handles the whole chain — no manual
+  retargeting.
+
+You can't assume which one you have from how the PRs were created. Cheapest
+detection: just attempt the intended operation — the native-stack refusals are
+loud and name the fix ("must be merged using the asynchronous merge REST
+API"). Prefer creating stacks natively (`gh stack` extension, or converting in
+the UI) so the merge story is the API one.
+
+Reach for the `gh stack` extension when *creating and managing* stacks of 3+
+layers (rebasing, mid-stack edits, navigation); check `gh stack --help` and
 `gh extension install github/gh-stack` if missing.
 
-### Merging a stack WITHOUT the extension
+### Merging a NATIVE stack without the extension
 
-Once PRs form a native stack, two old habits **stop working**:
+On a native stack, two old habits **stop working**:
 
 - `gh pr merge` fails: *"part of a stack and must be merged using the
   asynchronous merge REST API"*.
