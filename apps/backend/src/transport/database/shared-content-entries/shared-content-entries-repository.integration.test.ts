@@ -14,11 +14,12 @@ const insertSourceWithTrack = async (params: {
   title?: string
 }) => {
   const language = params.language ?? 'de'
+  const title = params.title ?? __generateUniqueId('shared-repo-title')
   const sourceRows = (await sql`
     INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
     VALUES (
       ${params.type ?? 'text'},
-      ${params.title ?? __generateUniqueId('shared-repo-title')},
+      ${title},
       ${language},
       '{}'::jsonb,
       ${params.userId}
@@ -31,19 +32,25 @@ const insertSourceWithTrack = async (params: {
     VALUES (${sourceId}, 'paste', ${language}, NULL, ${__generateUniqueId('shared-repo-hash')})
     RETURNING id
   `) as { id: string }[]
-  return { sourceId, trackId: trackRows[0]!.id, language }
+  return { sourceId, trackId: trackRows[0]!.id, language, title }
 }
 
-const publishParams = (
-  fixture: { sourceId: string; trackId: string; language: string },
-  userId: string,
-  canonicalKey: string
-) => ({
+type Fixture = Awaited<ReturnType<typeof insertSourceWithTrack>>
+
+const publishParams = (fixture: Fixture, userId: string, canonicalKey: string) => ({
   contentSourceId: fixture.sourceId,
   textTrackId: fixture.trackId,
   canonicalKey,
   language: fixture.language,
   sharedByUserId: userId,
+  moderatedTitle: fixture.title,
+})
+
+const reshareParams = (fixture: Fixture, canonicalKey: string) => ({
+  textTrackId: fixture.trackId,
+  contentSourceId: fixture.sourceId,
+  canonicalKey,
+  moderatedTitle: fixture.title,
 })
 
 describe('shared-content-entries-repository', () => {
@@ -98,15 +105,15 @@ describe('shared-content-entries-repository', () => {
     const fixture = await insertSourceWithTrack({ userId })
     const key = __generateUniqueId('key')
 
-    expect(await repository.reshare(fixture.trackId)).toBe('no-entry')
+    expect(await repository.reshare(reshareParams(fixture, key))).toBe('no-entry')
 
     const entry = await repository.insertIfPublishable(publishParams(fixture, userId, key))
     await repository.upsertUnshared(publishParams(fixture, userId, key))
-    expect(await repository.reshare(fixture.trackId)).toBe('reshared')
+    expect(await repository.reshare(reshareParams(fixture, key))).toBe('reshared')
     expect((await repository.findByTextTrackId(fixture.trackId))?.unshared_at).toBeNull()
 
     await repository.removeAsAdmin(entry!.id, 'spam')
-    expect(await repository.reshare(fixture.trackId)).toBe('tombstoned')
+    expect(await repository.reshare(reshareParams(fixture, key))).toBe('tombstoned')
   })
 
   test('reshare reports a canonical conflict when someone else went live in the meantime', async () => {
@@ -121,7 +128,45 @@ describe('shared-content-entries-repository', () => {
     const fixtureB = await insertSourceWithTrack({ userId: userB })
     await repository.insertIfPublishable(publishParams(fixtureB, userB, key))
 
-    expect(await repository.reshare(fixtureA.trackId)).toBe('canonical-conflict')
+    expect(await repository.reshare(reshareParams(fixtureA, key))).toBe('canonical-conflict')
+  })
+
+  test('an admin tombstone on another copy of the same canonical content blocks resharing', async () => {
+    const { id: userA } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const { id: userB } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const key = __generateUniqueId('key')
+
+    // A shares, then unshares — their row survives with the canonical key.
+    const fixtureA = await insertSourceWithTrack({ userId: userA })
+    await repository.insertIfPublishable(publishParams(fixtureA, userA, key))
+    await repository.upsertUnshared(publishParams(fixtureA, userA, key))
+
+    // B shares the same content; an admin tombstones B's copy.
+    const fixtureB = await insertSourceWithTrack({ userId: userB })
+    const entryB = await repository.insertIfPublishable(publishParams(fixtureB, userB, key))
+    await repository.removeAsAdmin(entryB!.id, 'copyright')
+
+    // Removed rows are outside the partial unique index, so only the explicit
+    // guard keeps A from resurrecting admin-removed content.
+    expect(await repository.reshare(reshareParams(fixtureA, key))).toBe('canonical-conflict')
+  })
+
+  test('a title that changed since moderation aborts publish and reshare', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const fixture = await insertSourceWithTrack({ userId })
+    const key = __generateUniqueId('key')
+
+    const stalePublish = await repository.insertIfPublishable({
+      ...publishParams(fixture, userId, key),
+      moderatedTitle: 'a title the moderation pass never saw',
+    })
+    expect(stalePublish).toBeNull()
+
+    await repository.insertIfPublishable(publishParams(fixture, userId, key))
+    await repository.upsertUnshared(publishParams(fixture, userId, key))
+    expect(await repository.reshare({ ...reshareParams(fixture, key), moderatedTitle: 'another unseen title' })).toBe(
+      'stale-title'
+    )
   })
 
   test('listLive filters by language and featured, orders featured first, and hides dead entries', async () => {

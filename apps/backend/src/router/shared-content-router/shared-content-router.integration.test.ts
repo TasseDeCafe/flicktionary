@@ -325,6 +325,21 @@ describe('shared-content-router', () => {
     expect(toggleOn.status).toBe(409)
     // …and nothing ever reached the feed.
     expect(await listEntries(owner.token, language)).toEqual([])
+
+    // Toggling off first creates an opt-out ROW for the flagged track; the
+    // reshare path must re-run the eligibility gate rather than blindly flip
+    // the existing row live.
+    const toggleOff = await request(testApp)
+      .put('/api/v1/shared-content/share-state')
+      .set(buildAuthorizationHeaders(owner.token))
+      .send({ textTrackId, shared: false })
+    expect(toggleOff.status).toBe(200)
+    const reshareAttempt = await request(testApp)
+      .put('/api/v1/shared-content/share-state')
+      .set(buildAuthorizationHeaders(owner.token))
+      .send({ textTrackId, shared: true })
+    expect(reshareAttempt.status).toBe(409)
+    expect(await listEntries(owner.token, language)).toEqual([])
   })
 
   test('guests cannot share their own content', async () => {
@@ -366,5 +381,16 @@ describe('shared-content-router', () => {
       .set(buildAuthorizationHeaders(intruder.token))
       .send({ contentSourceId, language, text: `${uniquePasteText()} intruder edition with extra characters` })
     expect(importAttempt.status).toBe(400)
+
+    // The same guard covers every track importer, not just paste.
+    const srtAttempt = await request(testApp)
+      .post('/api/v1/text-tracks/upload')
+      .set(buildAuthorizationHeaders(intruder.token))
+      .send({
+        contentSourceId,
+        language,
+        srtContent: '1\n00:00:01,000 --> 00:00:02,000\nEindringling\n',
+      })
+    expect(srtAttempt.status).toBe(400)
   })
 })

@@ -18,7 +18,11 @@ import type { UsersRepositoryInterface } from '../../transport/database/users/us
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { addSharedEntryToLibrary } from '../../service/shared-content/add-to-library'
-import { publishIfEligible, type PublishSharedContentDeps } from '../../service/shared-content/publish-shared-content'
+import {
+  publishIfEligible,
+  reshareIfEligible,
+  type PublishSharedContentDeps,
+} from '../../service/shared-content/publish-shared-content'
 import { canonicalKeyForShare, SHARE_MODE_BY_SOURCE_TYPE } from '../../service/shared-content/shareability'
 import { toStudySessionDto } from '../study-sessions-router/study-sessions-router'
 
@@ -180,8 +184,16 @@ export const SharedContentRouter = (deps: SharedContentRouterDeps): Router => {
       }
 
       if (owned.entry) {
-        const reshared = await deps.sharedContentEntriesRepository.reshare(owned.track.id)
+        // The existing row may be a pre-publish opt-out (track never
+        // moderated) or predate a title change / cross-copy tombstone —
+        // resharing re-runs the full eligibility gate, not just the flip.
+        const reshared = await reshareIfEligible({ source: owned.source, track: owned.track }, deps.publishDeps)
         if (reshared === 'reshared') return { data: { state: 'shared' as const } }
+        if (reshared === 'moderation-not-clean' || reshared === 'title-not-clean') {
+          throw errors.CONFLICT({
+            data: { errors: [{ message: "This content didn't pass the sharing moderation check" }] },
+          })
+        }
         throw errors.CONFLICT({
           data: { errors: [{ message: 'This content is already shared by someone else or was removed' }] },
         })

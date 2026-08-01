@@ -28,9 +28,18 @@ const insertIfPublishable = async (params: {
   canonicalKey: string
   language: string
   sharedByUserId: string
+  moderatedTitle: string
 }): Promise<DbSharedContentEntry | null> => {
   try {
     return await beginTx(async (tx) => {
+      // FOR SHARE blocks a concurrent re-ingest's title UPDATE until this tx
+      // commits, so the title-change fence always runs with the entry already
+      // visible; a title that changed since it was moderated aborts the
+      // publish instead of going live unchecked.
+      const sourceRows = (await tx`
+        SELECT title FROM public.content_sources WHERE id = ${params.contentSourceId} FOR SHARE
+      `) as { title: string }[]
+      if (sourceRows[0]?.title !== params.moderatedTitle) return null
       const blocked = await tx`
         SELECT 1 FROM public.shared_content_entries
         WHERE text_track_id = ${params.textTrackId}
@@ -161,23 +170,49 @@ const upsertUnshared = async (params: {
   `
 }
 
-export type ReshareResult = 'reshared' | 'tombstoned' | 'no-entry' | 'canonical-conflict'
+export type ReshareResult = 'reshared' | 'tombstoned' | 'no-entry' | 'canonical-conflict' | 'stale-title'
 
-// Owner opt-in on a previously unshared entry. Tombstoned entries never come
-// back; a live entry for the same canonical content owned by someone else
-// trips the partial unique index and reports as a conflict.
-const reshare = async (textTrackId: string): Promise<ReshareResult> => {
+// Owner opt-in on a previously unshared entry, under the same identity rules
+// as a fresh publish: an admin tombstone on ANY copy of this canonical
+// content sticks (removed rows are outside the partial unique index, so only
+// this explicit check enforces it), a live copy elsewhere conflicts, and a
+// title mutated since the caller moderated it aborts (same FOR SHARE fence as
+// insertIfPublishable). Tombstoned own entries never come back.
+const reshare = async (params: {
+  textTrackId: string
+  contentSourceId: string
+  canonicalKey: string
+  moderatedTitle: string
+}): Promise<ReshareResult> => {
   try {
-    const result = (await sql`
-      UPDATE public.shared_content_entries
-      SET unshared_at = NULL
-      WHERE text_track_id = ${textTrackId} AND removed_at IS NULL
-      RETURNING id
-    `) as { id: string }[]
-    if (result.length > 0) return 'reshared'
-    const existing = await findByTextTrackId(textTrackId)
-    return existing ? 'tombstoned' : 'no-entry'
+    return await beginTx(async (tx) => {
+      const sourceRows = (await tx`
+        SELECT title FROM public.content_sources WHERE id = ${params.contentSourceId} FOR SHARE
+      `) as { title: string }[]
+      if (sourceRows[0]?.title !== params.moderatedTitle) return 'stale-title'
+      const blocked = await tx`
+        SELECT 1 FROM public.shared_content_entries
+        WHERE canonical_key = ${params.canonicalKey}
+          AND text_track_id <> ${params.textTrackId}
+          AND (removed_at IS NOT NULL OR unshared_at IS NULL)
+        LIMIT 1
+      `
+      if (blocked.length > 0) return 'canonical-conflict'
+      const result = (await tx`
+        UPDATE public.shared_content_entries
+        SET unshared_at = NULL
+        WHERE text_track_id = ${params.textTrackId} AND removed_at IS NULL
+        RETURNING id
+      `) as { id: string }[]
+      if (result.length > 0) return 'reshared'
+      const existing = await tx`
+        SELECT 1 FROM public.shared_content_entries WHERE text_track_id = ${params.textTrackId}
+      `
+      return existing.length > 0 ? ('tombstoned' as const) : ('no-entry' as const)
+    })
   } catch (error) {
+    // A same-key copy going live between the probe and the UPDATE still trips
+    // the partial unique index — same outcome as the probe hitting.
     if (isPostgresUniqueViolation(error)) return 'canonical-conflict'
     throw error
   }
@@ -242,6 +277,7 @@ export interface SharedContentEntriesRepositoryInterface {
     canonicalKey: string
     language: string
     sharedByUserId: string
+    moderatedTitle: string
   }) => Promise<DbSharedContentEntry | null>
   hasLiveEntriesForSource: (contentSourceId: string) => Promise<boolean>
   findByTextTrackId: (textTrackId: string) => Promise<DbSharedContentEntry | null>
@@ -261,7 +297,12 @@ export interface SharedContentEntriesRepositoryInterface {
     language: string
     sharedByUserId: string
   }) => Promise<void>
-  reshare: (textTrackId: string) => Promise<ReshareResult>
+  reshare: (params: {
+    textTrackId: string
+    contentSourceId: string
+    canonicalKey: string
+    moderatedTitle: string
+  }) => Promise<ReshareResult>
   unshareAllLiveForSource: (contentSourceId: string) => Promise<void>
   unshareAllLiveForUser: (userId: string) => Promise<void>
   unshareLiveForUserAndTrack: (userId: string, textTrackId: string) => Promise<void>

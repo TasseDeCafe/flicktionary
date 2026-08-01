@@ -1,4 +1,7 @@
-import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
+import type {
+  ContentSourcesRepositoryInterface,
+  DbContentSource,
+} from '../../transport/database/content-sources/content-sources-repository'
 import type {
   TextTracksRepositoryInterface,
   DbTextTrack,
@@ -42,16 +45,20 @@ const resolveTrackModerationStatus = async (
   const segments = await deps.textSegmentsRepository.listByTrackId(track.id)
   const text = segments.map((s) => s.text).join('\n')
   const outcome = await moderateIngestText(text, deps.anthropicPasses, { surface: 'share-youtube' })
+  // The backfill is first-verdict-wins, so gate on what it returns (the
+  // persisted status), never on this call's own outcome: a concurrent check
+  // may have stored 'flagged' while this one came back 'clean'.
   if (!outcome.allowed) {
-    await deps.textTracksRepository.backfillModeration(track.id, { status: 'blocked', category: outcome.category })
-    return 'blocked'
+    return await deps.textTracksRepository.backfillModeration(track.id, {
+      status: 'blocked',
+      category: outcome.category,
+    })
   }
   if (outcome.status === null) return null
-  await deps.textTracksRepository.backfillModeration(track.id, {
+  return await deps.textTracksRepository.backfillModeration(track.id, {
     status: outcome.status,
     category: outcome.category,
   })
-  return outcome.status
 }
 
 // The title is the public payload of a catalog entry, and no ingest path
@@ -92,8 +99,38 @@ export const publishIfEligible = async (
     canonicalKey: canonicalKeyForShare(source, track),
     language: track.language,
     sharedByUserId: params.userId,
+    // The insert aborts if the source title changed since the check above —
+    // otherwise a concurrent re-ingest could swap in an unmoderated title
+    // right before the entry goes live, too early for the title fence to see
+    // a live entry.
+    moderatedTitle: source.title,
   })
   return entry ? 'published' : 'already-exists-or-conflict'
+}
+
+export type ReshareOutcome = 'reshared' | 'moderation-not-clean' | 'title-not-clean' | 'conflict'
+
+// Owner opt-in on an EXISTING (unshared) entry. The row's existence proves
+// nothing about eligibility: an opt-out row can predate any publish (so the
+// track may never have been moderated at all), the title may have mutated
+// since the entry last went live, and an admin may have tombstoned another
+// copy of the same canonical content. Re-run the full gate before flipping
+// the row back to live. The caller owns authorization (owner, non-anonymous,
+// shareable type) — this covers content eligibility only.
+export const reshareIfEligible = async (
+  params: { source: DbContentSource; track: DbTextTrack },
+  deps: PublishSharedContentDeps
+): Promise<ReshareOutcome> => {
+  const moderationStatus = await resolveTrackModerationStatus(params.track, deps)
+  if (moderationStatus !== 'clean') return 'moderation-not-clean'
+  if (!(await isTitleClean(params.source.title, deps))) return 'title-not-clean'
+  const outcome = await deps.sharedContentEntriesRepository.reshare({
+    textTrackId: params.track.id,
+    contentSourceId: params.source.id,
+    canonicalKey: canonicalKeyForShare(params.source, params.track),
+    moderatedTitle: params.source.title,
+  })
+  return outcome === 'reshared' ? 'reshared' : 'conflict'
 }
 
 // Fire-and-forget wrapper for the ingest paths: never throws, never blocks.

@@ -808,23 +808,18 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
+      // The session is the owner's only surface for the Explore share toggle,
+      // so its content must never stay public without it. Unshare first and
+      // awaited: whichever step fails, the surviving state is safe (an
+      // unshared entry with the session still alive keeps the toggle; the
+      // reverse — deleted session, live entry — can never happen).
+      await sharedContentDeps.sharedContentEntriesRepository.unshareLiveForUserAndTrack(userId, session.text_track_id)
       const ok = await studySessionsRepository.softDelete(input.sessionId, userId)
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to remove session' }] },
         })
       }
-      // The session was the owner's only surface for the Explore share toggle —
-      // content must not stay public with no way to manage it.
-      void sharedContentDeps.sharedContentEntriesRepository
-        .unshareLiveForUserAndTrack(userId, session.text_track_id)
-        .catch((error) => {
-          logError({
-            message: 'unshare on session removal failed',
-            params: { userId, sessionId: input.sessionId },
-            error,
-          })
-        })
       return { data: { ok: true as const } }
     }),
   })

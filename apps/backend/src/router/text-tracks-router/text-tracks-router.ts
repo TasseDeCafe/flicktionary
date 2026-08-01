@@ -5,7 +5,10 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { textTracksContract } from '@flicktionary/api-client/orpc-contracts/text-tracks-contract'
 import { searchByTmdbId, searchEpisodeSubtitles } from '../../transport/third-party/opensubtitles/opensubtitles-client'
-import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
+import {
+  ContentSourcesRepositoryInterface,
+  DbContentSource,
+} from '../../transport/database/content-sources/content-sources-repository'
 import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
@@ -15,6 +18,17 @@ import { importPastedText } from '../../service/text-tracks/import-pasted-text'
 import { ensureTrackLemmaProfileJob } from '../../service/lemma-profiles/ensure-profile-job'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+
+// Personal sources accept tracks only from their owner: the Explore catalog
+// hands other users a session on the source (which exposes its id), and that
+// must never grant write access to it. Movie/TV sources stay open — they are
+// global by design (community SRT uploads). Applies to EVERY track-creating
+// handler, not just paste.
+const canWriteTracksToSource = (source: DbContentSource | null, userId: string): source is DbContentSource => {
+  if (!source) return false
+  const isGlobalType = source.type === 'movie' || source.type === 'tv'
+  return isGlobalType || source.created_by_user_id === userId
+}
 
 const toTextTrackDto = (row: DbTextTrack) => ({
   id: row.id,
@@ -59,8 +73,8 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
 
     importFromOpenSubtitles: implementer.importFromOpenSubtitles.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
-      if (!contentSource) {
-        throw errors.INTERNAL_SERVER_ERROR({
+      if (!canWriteTracksToSource(contentSource, context.res.locals.userId)) {
+        throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Content source not found' }] },
         })
       }
@@ -79,7 +93,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
 
     uploadSrt: implementer.uploadSrt.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
-      if (!contentSource) {
+      if (!canWriteTracksToSource(contentSource, context.res.locals.userId)) {
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Content source not found' }] },
         })
@@ -115,13 +129,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
 
     importFromPaste: implementer.importFromPaste.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
-      // Personal sources accept tracks only from their owner: the Explore
-      // catalog hands other users a session on the source (which exposes its
-      // id), and that must never grant write access to it. Movie/TV sources
-      // stay open — they are global by design (community SRT uploads).
-      const isGlobalType = contentSource?.type === 'movie' || contentSource?.type === 'tv'
-      const isOwned = contentSource?.created_by_user_id === context.res.locals.userId
-      if (!contentSource || (!isGlobalType && !isOwned)) {
+      if (!canWriteTracksToSource(contentSource, context.res.locals.userId)) {
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Content source not found' }] },
         })
