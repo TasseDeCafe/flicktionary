@@ -20,6 +20,7 @@ import {
   computeDifficulty,
   flooredCoveragePercent,
   labelForCoverage,
+  type DifficultyComputation,
   type DifficultyLabel,
   type LemmaKnowledge,
 } from './compute-difficulty'
@@ -52,6 +53,34 @@ export type SessionDifficultiesDependencies = {
   knownLemmasRepository: KnownLemmasRepositoryInterface
   lemmaRanksRepository: LemmaRanksRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
+}
+
+// Minimum tracked vocabulary entries (saved lookups + known marks) in a
+// language before the headline verdict (percent + label) means anything.
+export const MIN_TRACKED_LEMMAS_FOR_VERDICT = 20
+
+// A verdict computed from (almost) no tracked vocabulary is noise, not signal
+// — a brand-new user would see ~0% coverage and "frustrating" on every card.
+// Below the floor the counts still flow (the breakdown sheet stays honest) but
+// the headline verdict is suppressed; the UI hides the chip on the null shape.
+export const buildAvailableDifficultyDto = (
+  computation: Pick<
+    DifficultyComputation,
+    'expectedCoverage' | 'unknownLemmas' | 'frequentUnknownLemmas' | 'savedNotStartedLemmas' | 'knownLemmas'
+  >,
+  trackedLemmaCount: number
+): SessionDifficultyDto => {
+  const coverage = computation.expectedCoverage
+  const suppressVerdict = coverage === null || trackedLemmaCount < MIN_TRACKED_LEMMAS_FOR_VERDICT
+  return {
+    status: 'available',
+    expectedCoveragePercent: suppressVerdict ? null : flooredCoveragePercent(coverage),
+    label: suppressVerdict ? null : labelForCoverage(coverage),
+    unknownLemmaCount: computation.unknownLemmas.length,
+    frequentUnknownCount: computation.frequentUnknownLemmas.length,
+    savedNotStartedCount: computation.savedNotStartedLemmas.length,
+    knownLemmaCount: computation.knownLemmas.length,
+  }
 }
 
 const EMPTY_OF = (status: SessionDifficultyStatus): SessionDifficultyDto => ({
@@ -195,21 +224,13 @@ export const getSessionDifficulties = async (
           targetLanguage: group.targetLanguage,
           lemmas: [...candidateLemmas],
         })
+        const knowledgeByLemma = knowledgeByLanguage.get(group.targetLanguage) ?? new Map<string, LemmaKnowledge>()
         const computation = computeDifficulty({
           groups: profileRows.map((row) => ({ tokenCount: row.token_count, candidateLemmas: row.candidate_lemmas })),
-          knowledgeByLemma: knowledgeByLanguage.get(group.targetLanguage) ?? new Map(),
+          knowledgeByLemma,
           ranksByLemma,
         })
-        dto = {
-          status: 'available',
-          expectedCoveragePercent:
-            computation.expectedCoverage === null ? null : flooredCoveragePercent(computation.expectedCoverage),
-          label: computation.expectedCoverage === null ? null : labelForCoverage(computation.expectedCoverage),
-          unknownLemmaCount: computation.unknownLemmas.length,
-          frequentUnknownCount: computation.frequentUnknownLemmas.length,
-          savedNotStartedCount: computation.savedNotStartedLemmas.length,
-          knownLemmaCount: computation.knownLemmas.length,
-        }
+        dto = buildAvailableDifficultyDto(computation, knowledgeByLemma.size)
       }
       for (const sessionId of group.sessionIds) result[sessionId] = dto
     })
