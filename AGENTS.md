@@ -40,6 +40,7 @@ Tasks, bugs, and ideas live in **GitHub Issues** on this repo (browse/edit with 
 
 - **Milestones are epics/phases** (e.g. `Anonymous signup`, `Prelaunch`). Labels beyond the GitHub defaults: `idea`, `ux`, `dx`, `infra`, `extension`, `practice`, `marketing`, `feedback`, `blocked`.
 - **PRs close issues**: when a PR resolves a filed issue, put `Fixes #N` in the PR body (the `create-pr` skill covers this). The board maintains itself via project workflows — new issues auto-add to Backlog, closed issues move to Done — so work at the **issue** level; don't script the project API except to set Status/Priority deliberately.
+- **Stacked PRs**: load the **`gh-stack` skill** before creating or merging dependent PRs (a PR based on another PR's branch). Old-style base-chained PRs and GitHub-native stacks behave differently — native stacks refuse `gh pr merge` and `--base` edits and merge the whole chain via the async merge API — and an old-style chain can be converted to native in the web UI after creation, so never assume which you have; the skill covers detection and both merge paths.
 - **Side quests found mid-session**: offer to file a labeled issue (`gh issue create`) instead of leaving the idea in conversation. `docs/proposals/` stays reserved for actual design documents; an issue can link to one.
 - Editing the board itself (fields, columns) needs the classic gh OAuth token with the `project` scope — fine-grained PATs can't manage user-owned Projects v2.
 
