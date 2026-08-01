@@ -1331,7 +1331,7 @@ msgstr "Could not read this page."
 msgid "Could not remove the highlight."
 msgstr "Could not remove the highlight."
 
-#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+#: apps/web/src/features/explore/api/explore-admin-hooks.ts
 msgid "Could not remove this entry"
 msgstr "Could not remove this entry"
 
@@ -1363,7 +1363,7 @@ msgstr "Could not set up your account. Please try restarting the app."
 msgid "Could not update sharing for this content"
 msgstr "Could not update sharing for this content"
 
-#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+#: apps/web/src/features/explore/api/explore-admin-hooks.ts
 msgid "Could not update the featured flag"
 msgstr "Could not update the featured flag"
 

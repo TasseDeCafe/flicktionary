@@ -1331,7 +1331,7 @@ msgstr "Impossible de lire cette page."
 msgid "Could not remove the highlight."
 msgstr "Impossible de supprimer la surbrillance."
 
-#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+#: apps/web/src/features/explore/api/explore-admin-hooks.ts
 msgid "Could not remove this entry"
 msgstr "Impossible de supprimer cette entrée"
 
@@ -1363,7 +1363,7 @@ msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'applicatio
 msgid "Could not update sharing for this content"
 msgstr "Impossible de mettre à jour le partage de ce contenu"
 
-#: apps/web/src/features/admin/api/shared-content-admin-hooks.ts
+#: apps/web/src/features/explore/api/explore-admin-hooks.ts
 msgid "Could not update the featured flag"
 msgstr "Impossible de mettre à jour l'indicateur de mise en avant"
 

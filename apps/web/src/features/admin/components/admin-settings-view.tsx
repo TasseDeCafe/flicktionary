@@ -6,7 +6,6 @@ import { logError } from '@/lib/analytics/log-error.ts'
 import { useTriggerErrorMessageMutation } from '@/features/admin/api/error-debug-hooks.ts'
 import { useAdvancePracticeClockMutation } from '@/features/admin/api/dev-tools-hooks.ts'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { SharedContentAdminCard } from '@/features/admin/components/shared-content-admin-card'
 
 export const AdminSettingsView = () => {
   const { t } = useLingui()
@@ -58,8 +57,6 @@ export const AdminSettingsView = () => {
     <ModalScreen onClose={() => navigate({ to: '/more' })} closeIcon='chevron' title={t`Admin settings`}>
       <main className='flex flex-1 justify-center overflow-y-auto p-4'>
         <div className='w-full max-w-3xl space-y-4'>
-          <SharedContentAdminCard />
-
           {/* Practice time travel: shifts this account's practice timestamps
               backward, which is equivalent to the server clock advancing —
               multi-day flows (warm-up/rehab graduation, daily-new cap resets)

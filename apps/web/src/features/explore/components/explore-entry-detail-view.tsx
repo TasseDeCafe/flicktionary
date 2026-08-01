@@ -7,8 +7,11 @@ import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
+import { checkIsTestUser } from '@/utils/test-users-utils'
+import { getUserEmail, useAuthStore } from '@/stores/auth-store'
 import { useSharedContentEntryDetail } from '../api/explore-hooks'
 import { countWords } from '../utils/count-words'
+import { ExploreAdminPanel } from './explore-admin-panel'
 import { ExploreThumb } from './explore-card'
 import { useAddSharedEntry } from './use-add-shared-entry'
 
@@ -42,6 +45,7 @@ export const ExploreEntryDetailView = () => {
   const { t, i18n } = useLingui()
   const { entryId } = routeApi.useParams()
   const close = useModalScreenClose({ to: '/explore' })
+  const isAdmin = checkIsTestUser(useAuthStore(getUserEmail))
   const { data: entry, isLoading, isError, error, isFetching, refetch } = useSharedContentEntryDetail(entryId)
   const { addEntry, isAdding, cefrDialog } = useAddSharedEntry()
 
@@ -91,6 +95,7 @@ export const ExploreEntryDetailView = () => {
                   <div className='text-muted-foreground mt-1 text-xs'>{t`~${wordCount} words · ${lineCount} lines`}</div>
                 </div>
               </div>
+              {isAdmin && <ExploreAdminPanel entry={entry} />}
               {/* Read-only preview: no glossing, no selection commit — the
                   reader (and everything interactive) starts after the CTA. */}
               <div className='mt-6 flex flex-col gap-3 text-base leading-relaxed whitespace-pre-wrap'>
@@ -99,13 +104,17 @@ export const ExploreEntryDetailView = () => {
                 ))}
               </div>
             </div>
-            <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
-              <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
-                <Button size='xl' className='w-full' disabled={isAdding} onClick={() => addEntry(entry)}>
-                  {isAdding ? t`Adding...` : t`Start reading`}
-                </Button>
+            {/* Non-live entries are admin-only views of dead content — adding
+                would 404, so there is nothing to CTA. */}
+            {entry.status === 'live' && (
+              <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+                <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+                  <Button size='xl' className='w-full' disabled={isAdding} onClick={() => addEntry(entry)}>
+                    {isAdding ? t`Adding...` : t`Start reading`}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
