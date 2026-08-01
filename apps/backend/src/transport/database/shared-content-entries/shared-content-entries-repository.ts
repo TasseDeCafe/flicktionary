@@ -134,11 +134,27 @@ const findByIdWithSource = async (id: string): Promise<DbSharedContentEntryWithS
   return result[0] ?? null
 }
 
-const listForAdmin = async (limit: number): Promise<DbSharedContentEntryWithSource[]> => {
+// The status filter runs in SQL (WHERE before LIMIT): filtering the flat
+// latest-N client-side would silently lose older unshared/removed entries
+// once the catalog outgrows the cap.
+const listForAdmin = async (
+  limit: number,
+  status: 'live' | 'unshared' | 'removed' | null
+): Promise<DbSharedContentEntryWithSource[]> => {
+  const statusClause =
+    status === 'removed'
+      ? sql`AND e.removed_at IS NOT NULL`
+      : status === 'unshared'
+        ? sql`AND e.unshared_at IS NOT NULL AND e.removed_at IS NULL`
+        : status === 'live'
+          ? sql`AND e.unshared_at IS NULL AND e.removed_at IS NULL`
+          : sql``
   return (await sql`
     SELECT e.*, cs.title, cs.type, cs.metadata
     FROM public.shared_content_entries e
     JOIN public.content_sources cs ON cs.id = e.content_source_id
+    WHERE TRUE
+      ${statusClause}
     ORDER BY e.created_at DESC
     LIMIT ${limit}
   `) as DbSharedContentEntryWithSource[]
@@ -289,7 +305,10 @@ export interface SharedContentEntriesRepositoryInterface {
     featuredOnly: boolean
     limit: number
   }) => Promise<DbSharedContentEntryWithSource[]>
-  listForAdmin: (limit: number) => Promise<DbSharedContentEntryWithSource[]>
+  listForAdmin: (
+    limit: number,
+    status: 'live' | 'unshared' | 'removed' | null
+  ) => Promise<DbSharedContentEntryWithSource[]>
   upsertUnshared: (params: {
     contentSourceId: string
     textTrackId: string

@@ -18,19 +18,25 @@ export const SharedContentEntrySchema = z.object({
   createdAt: z.string(),
 })
 
+export const SharedContentEntryStatusSchema = z.enum(['live', 'unshared', 'removed'])
+
 // The full-text preview behind a catalog card: same public posture as the
 // list entry (no source/track UUIDs), plus the track's complete text so users
 // can read what something is before adding it. Word count / reading time are
 // derived client-side (language-aware segmentation lives there already).
+// Non-admins only ever receive live entries (status 'live', removedReason
+// null); admins get non-live entries too so moderation isn't blind.
 export const SharedContentEntryDetailSchema = SharedContentEntrySchema.extend({
   text: z.string(),
   segmentCount: z.number().int(),
+  status: SharedContentEntryStatusSchema,
+  removedReason: z.string().nullable(),
 })
 
 export const SharedContentShareStateSchema = z.enum(['shared', 'not-shared', 'not-shareable'])
 
 export const AdminSharedContentEntrySchema = SharedContentEntrySchema.extend({
-  status: z.enum(['live', 'unshared', 'removed']),
+  status: SharedContentEntryStatusSchema,
   contentSourceId: z.string().uuid(),
   textTrackId: z.string().uuid(),
   canonicalKey: z.string(),
@@ -115,7 +121,10 @@ export const sharedContentContract = {
       FORBIDDEN: { status: 403, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({}))
+    // The filter is server-side (WHERE before LIMIT): client-side filtering
+    // over the flat latest-N would silently lose older unshared/removed
+    // entries once the catalog outgrows the cap.
+    .input(z.object({ status: SharedContentEntryStatusSchema.optional() }))
     .output(z.object({ data: z.array(AdminSharedContentEntrySchema) })),
 
   adminRemove: oc

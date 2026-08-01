@@ -317,12 +317,64 @@ describe('shared-content-router', () => {
       'removed'
     )
 
+    // Moderation isn't blind: the admin still opens the tombstoned entry's
+    // detail — full text, status, and the removal reason — while a normal
+    // user 404s on the same id.
+    const removedDetail = await request(testApp)
+      .get(`/api/v1/shared-content/${entry!.id}/detail`)
+      .set(buildAuthorizationHeaders(admin.token))
+    expect(removedDetail.status).toBe(200)
+    expect(removedDetail.body.data.status).toBe('removed')
+    expect(removedDetail.body.data.removedReason).toBe('copyright takedown')
+    expect(removedDetail.body.data.segmentCount).toBeGreaterThanOrEqual(1)
+    const outsiderDetail = await request(testApp)
+      .get(`/api/v1/shared-content/${entry!.id}/detail`)
+      .set(buildAuthorizationHeaders(outsider.token))
+    expect(outsiderDetail.status).toBe(404)
+
     // Tombstone: the owner cannot re-share, and the toggle reads unmanageable.
     const reshare = await request(testApp)
       .put('/api/v1/shared-content/share-state')
       .set(buildAuthorizationHeaders(owner.token))
       .send({ textTrackId, shared: true })
     expect(reshare.status).toBe(403)
+
+    // A second entry, unshared by its owner: the admin detail shows the
+    // status (no removal reason to show), the normal user still 404s.
+    const otherLanguage = uniqueLanguage()
+    const second = await createSharedPasteSession(owner.token, otherLanguage, true)
+    await expect.poll(async () => (await listEntries(owner.token, otherLanguage)).length, { timeout: 5000 }).toBe(1)
+    const [secondEntry] = await listEntries(owner.token, otherLanguage)
+    await request(testApp)
+      .put('/api/v1/shared-content/share-state')
+      .set(buildAuthorizationHeaders(owner.token))
+      .send({ textTrackId: second.textTrackId, shared: false })
+    const unsharedDetail = await request(testApp)
+      .get(`/api/v1/shared-content/${secondEntry!.id}/detail`)
+      .set(buildAuthorizationHeaders(admin.token))
+    expect(unsharedDetail.status).toBe(200)
+    expect(unsharedDetail.body.data.status).toBe('unshared')
+    expect(unsharedDetail.body.data.text).toContain(second.pasteText)
+    const outsiderUnshared = await request(testApp)
+      .get(`/api/v1/shared-content/${secondEntry!.id}/detail`)
+      .set(buildAuthorizationHeaders(outsider.token))
+    expect(outsiderUnshared.status).toBe(404)
+
+    // The adminList status filter runs server-side; assertions are keyed to
+    // this test's entries (the shared DB holds other tests' rows too).
+    const filtered = async (status: string) => {
+      const response = await request(testApp)
+        .get(`/api/v1/shared-content/admin/entries?status=${status}`)
+        .set(buildAuthorizationHeaders(admin.token))
+      expect(response.status).toBe(200)
+      return (response.body.data as { id: string }[]).map((row) => row.id)
+    }
+    expect(await filtered('removed')).toContain(entry!.id)
+    expect(await filtered('removed')).not.toContain(secondEntry!.id)
+    expect(await filtered('unshared')).toContain(secondEntry!.id)
+    expect(await filtered('unshared')).not.toContain(entry!.id)
+    expect(await filtered('live')).not.toContain(entry!.id)
+    expect(await filtered('live')).not.toContain(secondEntry!.id)
   })
 
   test('a flagged paste never publishes even when the owner opted in', async () => {

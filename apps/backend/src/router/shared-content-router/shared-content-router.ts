@@ -5,7 +5,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { sharedContentContract } from '@flicktionary/api-client/orpc-contracts/shared-content-contract'
 import { ERROR_CODE_FOR_CEFR_REQUIRED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
-import { assertTestUser } from '../orpc/helpers/assert-test-user'
+import { assertTestUser, isTestUserEmail } from '../orpc/helpers/assert-test-user'
 import type {
   SharedContentEntriesRepositoryInterface,
   DbSharedContentEntry,
@@ -64,10 +64,13 @@ const toEntryDto = (row: DbSharedContentEntryWithSource) => ({
 const entryStatus = (row: DbSharedContentEntry): 'live' | 'unshared' | 'removed' =>
   row.removed_at !== null ? 'removed' : row.unshared_at !== null ? 'unshared' : 'live'
 
-const toEntryDetailDto = (row: DbSharedContentEntryWithSource, segments: DbTextSegment[]) => ({
+const toEntryDetailDto = (row: DbSharedContentEntryWithSource, segments: DbTextSegment[], isAdmin: boolean) => ({
   ...toEntryDto(row),
   text: segments.map((segment) => segment.text).join('\n'),
   segmentCount: segments.length,
+  status: entryStatus(row),
+  // The removal reason is moderation bookkeeping, not public copy.
+  removedReason: isAdmin ? row.removed_reason : null,
 })
 
 const toAdminEntryDto = (row: DbSharedContentEntryWithSource) => ({
@@ -120,15 +123,19 @@ export const SharedContentRouter = (deps: SharedContentRouterDeps): Router => {
       return { data: entries.map(toEntryDto) }
     }),
 
-    get: implementer.get.handler(async ({ input, errors }) => {
+    get: implementer.get.handler(async ({ input, context, errors }) => {
+      // Admins can open non-live entries — moderating a tombstone (or judging
+      // an unshare) requires seeing the content. The public path stays
+      // live-only.
+      const isAdmin = isTestUserEmail(context.res.locals.email)
       const row = await deps.sharedContentEntriesRepository.findByIdWithSource(input.entryId)
-      if (!row || entryStatus(row) !== 'live') {
+      if (!row || (!isAdmin && entryStatus(row) !== 'live')) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'This content is no longer shared' }] },
         })
       }
       const segments = await deps.textSegmentsRepository.listByTrackId(row.text_track_id)
-      return { data: toEntryDetailDto(row, segments) }
+      return { data: toEntryDetailDto(row, segments, isAdmin) }
     }),
 
     addToLibrary: implementer.addToLibrary.handler(async ({ input, context, errors }) => {
@@ -241,9 +248,9 @@ export const SharedContentRouter = (deps: SharedContentRouterDeps): Router => {
       })
     }),
 
-    adminList: implementer.adminList.handler(async ({ context }) => {
+    adminList: implementer.adminList.handler(async ({ input, context }) => {
       assertTestUser(context.res.locals.email)
-      const entries = await deps.sharedContentEntriesRepository.listForAdmin(ADMIN_LIST_LIMIT)
+      const entries = await deps.sharedContentEntriesRepository.listForAdmin(ADMIN_LIST_LIMIT, input.status ?? null)
       return { data: entries.map(toAdminEntryDto) }
     }),
 
