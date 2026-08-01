@@ -19,12 +19,17 @@ import {
   setCefr,
   startFlicktionaryPairing,
 } from '../../services/flicktionary/flicktionary-client'
-import { getFlicktionaryAuth, onFlicktionaryAuthChange } from '../../services/flicktionary/auth-storage'
+import {
+  FlicktionaryAuthState,
+  getFlicktionaryAuth,
+  onFlicktionaryAuthChange,
+} from '../../services/flicktionary/auth-storage'
 import { describeLanguageCode } from '../../services/flicktionary/youtube-context'
 import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
 import { SAVED_SPAN_CLASS, SELECTION_SPAN_CLASS, Word } from './word'
 import { GlossContent, GlossSaveOptions, GlossTooltip, SavedGlossTooltip } from './gloss-tooltip'
 import { CefrPicker } from './cefr-picker'
+import { GuestSignupDialog } from './guest-signup-dialog'
 import { toast } from 'sonner'
 import { dispatchToast } from './toaster-host'
 import { glossQueryClient } from './gloss-query-client'
@@ -206,14 +211,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot)
 
   // Pointer-interaction state, one store per overlay mount. Rendering
-  // subscribes to `selection`/`signedIn` only; the imperative handlers read
+  // subscribes to `selection`/`authTier` only; the imperative handlers read
   // getState() (always live), and `hovered`/`selecting` never cause renders.
   const [interaction] = useState(() => createOverlayInteractionStore<HoveredWord>())
   const selection = useStore(interaction, (s) => s.selection)
-  // Flicktionary pairing ("sign in") state. Tracked from chrome.storage so the
-  // gloss popover / toasts can offer a Sign in button when saving & glossing
-  // are gated, and so they update live once pairing completes in the opened tab.
-  const signedIn = useStore(interaction, (s) => s.signedIn)
+  // Flicktionary auth tier. Tracked from chrome.storage so the gloss popover /
+  // toasts can gate saving (guests get gloss only; signed-out gets nothing) and
+  // update live once pairing completes in the opened tab.
+  const authTier = useStore(interaction, (s) => s.authTier)
+  const fullAccount = authTier === 'full'
 
   const [gloss, setGloss] = useState<GlossState | null>(null)
   // Ref twin so the async save outcome can check whether the open gloss is
@@ -224,6 +230,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // "Saving…" until the outcome swaps the preview into the saved-mode popover.
   const [glossSaving, setGlossSaving] = useState(false)
   const [cefr, setCefrState] = useState<CefrState | null>(null)
+  // "Create a free account to save" dialog, shown when a guest tries to save.
+  const [guestSignupOpen, setGuestSignupOpen] = useState(false)
 
   // Persistent saved-highlight spans, one store per overlay mount. Rendering
   // subscribes to `highlights`/`sessionId`; the imperative handlers read
@@ -337,7 +345,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // the change listener both hit chrome.storage.local (available in the content
   // script), so pairing done in the opened tab flips this live.
   useEffect(() => {
-    const apply = (auth: unknown) => interaction.getState().setSignedIn(auth !== null)
+    const apply = (auth: FlicktionaryAuthState | null) =>
+      interaction.getState().setAuthTier(auth === null ? 'signed-out' : auth.isGuest ? 'guest' : 'full')
     void getFlicktionaryAuth().then(apply)
     return onFlicktionaryAuthChange(apply)
   }, [interaction])
@@ -382,9 +391,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   // Mount + sign-in trigger, with a short retry while the binding's video
   // context is still being set (it lands asynchronously after subtitles load).
-  // Signing out clears the spans immediately.
+  // Signing out clears the spans immediately. Guests never have saved
+  // highlights, so only a full account loads (or keeps) them.
   useEffect(() => {
-    if (!signedIn) {
+    if (!fullAccount) {
       savedStore.getState().reset()
       savedLoadedHashRef.current = null
       return
@@ -404,14 +414,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [signedIn, closures, savedStore, loadSaved])
+  }, [fullAccount, closures, savedStore, loadSaved])
 
   // contentHash-change trigger: the subtitle track can be swapped mid-video
   // (new hash, new session). Cue changes re-run this; the hash compare inside
   // loadSaved makes it a no-op until the track actually changes.
   useEffect(() => {
-    if (signedIn && snapshot.lines.length > 0) loadSaved()
-  }, [signedIn, snapshot.lines, loadSaved])
+    if (fullAccount && snapshot.lines.length > 0) loadSaved()
+  }, [fullAccount, snapshot.lines, loadSaved])
 
   // Route through the page-global sonner toaster (viewport bottom-right);
   // dispatchToast stands the singleton host up lazily and queues the call until
@@ -546,7 +556,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           showToast(
             outcome.message,
             true,
-            interaction.getState().signedIn ? undefined : { label: i18n._(msg`Sign in`), onClick: onSignIn }
+            interaction.getState().authTier === 'full' ? undefined : { label: i18n._(msg`Sign in`), onClick: onSignIn }
           )
           clearSelection()
           break
@@ -882,6 +892,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // debounce is cleared so it can't pop a stale preview over the result.
   const onWordContextMenu = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
+      // Guests can't save (and have no saved spans to remove) — the quick-save
+      // gesture funnels into the signup dialog instead.
+      if (interaction.getState().authTier === 'guest') {
+        clearHoverTimer()
+        setGuestSignupOpen(true)
+        return
+      }
       const g = glossRef.current
       const initialGloss = g
         ? queryClient.getQueryData<GlossData>(glossQueryKey(g.word, g.sentence, savedTargetLanguage ?? ''))
@@ -1100,8 +1117,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       clearSelection()
       setCefrState(null)
       setSavedPopover(null)
+      setGuestSignupOpen(false)
     }
   }, [snapshot.visible, hideGloss, clearSelection])
+
+  // A successful pairing auto-returns the user to this tab — a signup dialog
+  // left open would greet a user who no longer needs it.
+  useEffect(() => {
+    if (fullAccount) setGuestSignupOpen(false)
+  }, [fullAccount])
 
   // ---- render ----------------------------------------------------------------
 
@@ -1267,10 +1291,17 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               word={gloss.word}
               content={glossContent}
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
-              signedIn={signedIn}
+              signedIn={authTier !== 'signed-out'}
               onSignIn={onSignIn}
               saving={glossSaving}
               onSave={(save) => {
+                // Guests see the normal Save affordance, but committing takes a
+                // full account — swap the popover for the signup dialog.
+                if (authTier === 'guest') {
+                  hideGloss()
+                  setGuestSignupOpen(true)
+                  return
+                }
                 // Keep the popover open ("Saving…") — the saved outcome swaps
                 // it into the saved-mode popover in place (or toasts on the
                 // fallback paths).
@@ -1290,6 +1321,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           )}
           {cefr && (
             <CefrPicker languageCode={cefr.targetLanguage} video={video} onPick={onCefrPick} onCancel={onCefrCancel} />
+          )}
+          {guestSignupOpen && (
+            <GuestSignupDialog
+              video={video}
+              onSignUp={() => {
+                setGuestSignupOpen(false)
+                onSignIn()
+              }}
+              onDismiss={() => setGuestSignupOpen(false)}
+            />
           )}
         </>,
         popoverContainer

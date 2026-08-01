@@ -10,6 +10,7 @@ import {
   onFlicktionaryAuthChange,
 } from '@/services/flicktionary/auth-storage'
 import { openFlicktionaryPairingTab } from '@/services/flicktionary/start-pairing'
+import { clearFlicktionarySessionCache } from '@/services/flicktionary/youtube-session-cache'
 
 export const FlicktionaryPairSection = () => {
   const [auth, setAuth] = useState<FlicktionaryAuthState | null>(null)
@@ -47,7 +48,9 @@ export const FlicktionaryPairSection = () => {
     // cleared regardless (same semantics as the old try/catch).
     meta: { showErrorToast: false },
     onError: (error) => console.warn('Failed to revoke Flicktionary session before unpairing', error),
-    onSettled: () => clearFlicktionaryAuth(),
+    // The session cache is account-scoped in effect (session/segment ids), so
+    // it goes with the identity — a later sign-in must not inherit it.
+    onSettled: () => Promise.all([clearFlicktionaryAuth(), clearFlicktionarySessionCache()]),
   })
 
   const handleUnpair = () => unpairMutation.mutate()
@@ -57,13 +60,25 @@ export const FlicktionaryPairSection = () => {
       <p className='mb-2 text-sm'>
         <Trans>Flicktionary</Trans>
       </p>
-      {auth ? (
+      {auth && !auth.isGuest ? (
         <>
           <p className='text-muted-foreground mb-2 text-xs'>
             <Trans>Signed in as {auth.email}</Trans>
           </p>
           <Button type='button' variant='outline' size='sm' className='text-destructive w-full' onClick={handleUnpair}>
             <Trans>Sign out</Trans>
+          </Button>
+        </>
+      ) : auth?.isGuest ? (
+        // A guest session is gloss-only and holds nothing worth revoking, so
+        // there's no sign-out here — only the upgrade path (the normal pairing
+        // flow, which replaces the guest session with the account's).
+        <>
+          <p className='text-muted-foreground mb-2 text-xs'>
+            <Trans>Using Flicktionary as a guest — translations only.</Trans>
+          </p>
+          <Button type='button' variant='outline' size='sm' className='w-full' onClick={handlePair} disabled={pairing}>
+            {pairing ? <Trans>Signing in…</Trans> : <Trans>Create free account</Trans>}
           </Button>
         </>
       ) : (
