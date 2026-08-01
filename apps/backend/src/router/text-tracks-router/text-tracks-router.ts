@@ -115,7 +115,13 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
 
     importFromPaste: implementer.importFromPaste.handler(async ({ input, context, errors }) => {
       const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
-      if (!contentSource) {
+      // Personal sources accept tracks only from their owner: the Explore
+      // catalog hands other users a session on the source (which exposes its
+      // id), and that must never grant write access to it. Movie/TV sources
+      // stay open — they are global by design (community SRT uploads).
+      const isGlobalType = contentSource?.type === 'movie' || contentSource?.type === 'tv'
+      const isOwned = contentSource?.created_by_user_id === context.res.locals.userId
+      if (!contentSource || (!isGlobalType && !isOwned)) {
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Content source not found' }] },
         })

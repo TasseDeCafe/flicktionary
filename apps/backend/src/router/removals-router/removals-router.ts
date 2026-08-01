@@ -8,6 +8,7 @@ import type { AuthUsersRepository } from '../../transport/database/auth-users/au
 import { StripeApi } from '../../transport/third-party/stripe/stripe-api'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { StripeSubscriptionsRepositoryInterface } from '../../transport/database/stripe-subscriptions/stripe-subscriptions-repository'
+import type { SharedContentEntriesRepositoryInterface } from '../../transport/database/shared-content-entries/shared-content-entries-repository'
 import { removalsContract } from '@flicktionary/api-client/orpc-contracts/removals-contract'
 import { CrypticCodeConstants } from '../../constants/cryptic-code-constants'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
@@ -18,7 +19,8 @@ export const removalsRouter = (
   authUsersRepository: AuthUsersRepository,
   usersRepository: UsersRepositoryInterface,
   stripeApi: StripeApi,
-  stripeSubscriptionsRepository: StripeSubscriptionsRepositoryInterface
+  stripeSubscriptionsRepository: StripeSubscriptionsRepositoryInterface,
+  sharedContentEntriesRepository: SharedContentEntriesRepositoryInterface
 ) => {
   const expressRouter: Router = Router()
 
@@ -86,6 +88,30 @@ export const removalsRouter = (
             },
           })
         }
+      }
+
+      // Unpublish the user's Explore entries BEFORE the auth row goes away —
+      // afterwards shared_by_user_id is NULL and the rows are unreachable by
+      // owner. Copies other users already added stay in their libraries by
+      // design; only the public listing comes down.
+      try {
+        await sharedContentEntriesRepository.unshareAllLiveForUser(userId)
+      } catch (error) {
+        logError({
+          message: 'account removal: failed to unshare shared content',
+          params: { userId },
+          error,
+        })
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: {
+            errors: [
+              {
+                message: 'account removal did not fully succeed',
+                code: CrypticCodeConstants.REMOVAL_ACCOUNT_UNSHARE_FAILED,
+              },
+            ],
+          },
+        })
       }
 
       const isSuccessfullyRemovedFromAuthUsers = await authUsersRepository.removeUserFromAuthUsers(userId)

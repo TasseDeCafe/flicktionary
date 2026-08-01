@@ -4,7 +4,11 @@ import { Tables, Database } from '../database.public.types'
 export type DbTextTrack = Tables<'text_tracks'>
 export type TextTrackSource = Database['public']['Enums']['text_track_source']
 
-export type TrackModeration = { status: 'clean' | 'flagged'; category: string | null }
+// 'blocked' exists for tracks moderated AFTER ingest (share-time YouTube
+// checks): the gated ingest surfaces reject hard-blocked content before any
+// row exists, but an already-ingested track needs the verdict stored so it is
+// never re-checked and never published. It does not affect private study.
+export type TrackModeration = { status: 'clean' | 'flagged' | 'blocked'; category: string | null }
 
 const insertTextTrack = async (params: {
   contentSourceId: string
