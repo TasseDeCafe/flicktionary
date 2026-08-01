@@ -269,8 +269,49 @@ stall, so the page also exposes a manual **"Return to the extension"** fallback
 onboarded-but-not-yet-closed and prefs-error/retry states.
 
 The popup shows the paired email + sign-out
-(revokes the session server-side via `extensionAuth.revokeSession`). Auth state
-changes propagate live to open overlays via a storage subscription.
+(revokes the session server-side via `extensionAuth.revokeSession` and clears
+the video-session cache — its session/segment ids belong to the identity that
+populated it). Auth state changes propagate live to open overlays via a storage
+subscription.
+
+**Guest sessions (gloss without signup).** With no stored auth, the first
+hover-gloss lazily mints an anonymous Supabase session in the background
+(`guest-session.ts`): a single-flight `signInAnonymously()` gated on the
+pre-auth `config.getConfig()` (`isGuestModeEnabled`, and `captchaSiteKey` must
+be null — except the Cloudflare test-sitekey family `1x0000…`, where a dummy
+token is sent, since dev backends always arm the test key). The fresh guest is
+provisioned via `user.putUser` with a browser-locale-derived native language
+(server seeds `is_onboarded = true`, so the needs-onboarding gate never traps a
+guest); provisioning failure rolls the mint back (best-effort server sign-out,
+local auth always cleared). Any failure degrades to the signed-out behavior —
+notably, **armed captcha with a real sitekey disables guest minting entirely**
+(Turnstile cannot render in a service worker), which is the accepted trade-off
+for keeping the endpoint authenticated.
+
+Guests are **gloss-only**: every other backend-backed feature (saving, saved
+highlights, checkpoints/declarations, CEFR, article/text import, UI-prefs sync,
+test-user gating) treats a guest as signed out via
+`getFullAccountFlicktionaryAuth()`. The overlay tracks a tri-state `authTier`
+(`signed-out | guest | full`); a guest sees the normal Save affordance, but
+Save / Save-note / right-click quick-save all open a centered "create a free
+account" dialog instead (CEFR-picker presentation), whose CTA is the normal
+pairing flow — pairing overwrites the guest session with the account's session,
+so conversion needs no extra machinery (guest-saved data cannot exist, so
+nothing is orphaned). The popup shows a "Using Flicktionary as a guest" card
+with the same CTA and no sign-out. Stored auth records
+(`flicktionary.auth.v1`) carry `email: string | null` + `isGuest`; legacy
+records (paired before guest support) parse as full accounts. A dead guest
+session (kill switch `GUEST_MODE_ENABLED=false` answering
+`GUEST_ACCESS_DISABLED`, or the ~30-day anonymous cleanup deleting the account)
+is cleared on the next gloss and the extension falls back to signed-out; the
+config gate prevents a re-mint loop, and a later gloss simply mints a fresh
+guest once guest mode allows it. The gloss query cache clears only on an
+identity *change* (sign-out, re-pair, guest→full) — not on token refreshes or
+the mint itself, which lands mid-first-gloss.
+
+One conversion nuance: the pairing nonce TTL is 120 s, so a guest who signs
+*up* during pairing outlives the nonce and must restart pairing from the popup
+— the web page's "create a free account" card says exactly that.
 
 Right after the session persists, the background handler reconciles the
 server-synced UI prefs (`ui-prefs-sync.ts`): for each of theme/interface
@@ -1258,7 +1299,9 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 
 | Procedure | Used for |
 |---|---|
-| `extensionAuth.bootstrapPrefs` | primary target language after pairing |
+| `config.getConfig` | pre-auth guest-mode gate (`isGuestModeEnabled` + `captchaSiteKey`) before minting a guest session |
+| `user.putUser` | provisioning a freshly minted guest (native language + onboarded seed) |
+| `extensionAuth.bootstrapPrefs` | primary target language after pairing (`email` is null for guest sessions) |
 | `extensionAuth.revokeSession` | sign-out |
 | `extensionAuth.setCefrLevel` | CEFR picker |
 | `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
@@ -1281,18 +1324,18 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `userPrefs.setUiTheme` / `userPrefs.setUiLanguage` | write-through + pairing reconcile of theme/interface language (NULL round-trip supported) |
 | `userPrefs.setNativeLanguage` | JIT native-language picker |
 
-Plus Supabase auth (`verifyOtp`, publishable key in `flicktionary-config.ts`),
-the web app's `/extension-pair` route, and the external Whisper transcript
-server. Contract edits require rebuilding `@flicktionary/api-client` before the
+Plus Supabase auth (`verifyOtp` for pairing, `signInAnonymously` for guest
+minting; publishable key in `flicktionary-config.ts`), the web app's
+`/extension-pair` route, and the external Whisper transcript server. Contract edits require rebuilding `@flicktionary/api-client` before the
 extension typecheck sees them.
 
 ## Persistence summary
 
 | Store | Contents |
 |---|---|
-| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, `flicktionary.extensionEnabled.v1` global on/off switch, cached target language, pairing nonces |
+| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session (paired account or anonymous guest — `isGuest` flag, null email), `flicktionary.devTools.v1` admin debug toggles, `flicktionary.extensionEnabled.v1` global on/off switch, cached target language, pairing nonces |
 | IndexedDB `asbplayer-transcript-cache` | generated Whisper SRTs per video id |
-| In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache, saved-highlights store (per overlay mount) |
+| In-memory only | gloss query cache (`glossQueryClient`, cleared when the authenticated identity changes — not on token refreshes or the guest mint), session/segment-id cache, saved-highlights store (per overlay mount) |
 
 No learning data is stored locally; highlights live in the backend. The
 session/segment-id cache (`flicktionary.session-cache.v3` in
