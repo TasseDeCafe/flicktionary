@@ -294,8 +294,10 @@ test-user gating) treats a guest as signed out via
 `getFullAccountFlicktionaryAuth()`. The overlay tracks a tri-state `authTier`
 (`signed-out | guest | full`); a guest sees the normal Save affordance, but
 Save / Save-note / right-click quick-save all open a centered "create a free
-account" dialog instead (CEFR-picker presentation), whose CTA is the normal
-pairing flow — pairing overwrites the guest session with the account's session,
+account" dialog instead (CEFR-picker presentation), whose CTA — and an
+"already have an account? sign in" link, same handler, labeled for users who
+would find "create" misleading — is the normal pairing flow. Pairing
+overwrites the guest session with the account's session,
 so conversion needs no extra machinery (guest-saved data cannot exist, so
 nothing is orphaned). The popup shows a "Using Flicktionary as a guest" card
 with the same CTA and no sign-out. Stored auth records

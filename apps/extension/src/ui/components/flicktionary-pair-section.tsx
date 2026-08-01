@@ -80,6 +80,21 @@ export const FlicktionaryPairSection = () => {
           <Button type='button' variant='outline' size='sm' className='w-full' onClick={handlePair} disabled={pairing}>
             {pairing ? <Trans>Signing in…</Trans> : <Trans>Create free account</Trans>}
           </Button>
+          {/* Same pairing flow as the button — pairing signs an existing
+              account straight in, the label just matches that intent. */}
+          <p className='text-muted-foreground mt-2 text-center text-xs'>
+            <Trans>
+              Already have an account?{' '}
+              <button
+                type='button'
+                className='cursor-pointer border-none bg-transparent p-0 text-xs underline underline-offset-2'
+                onClick={handlePair}
+                disabled={pairing}
+              >
+                Sign in
+              </button>
+            </Trans>
+          </p>
         </>
       ) : (
         <Button type='button' variant='outline' size='sm' className='w-full' onClick={handlePair} disabled={pairing}>

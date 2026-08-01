@@ -51,6 +51,20 @@ export const GuestSignupDialog = ({ video, onSignUp, onDismiss }: GuestSignupDia
       >
         <Trans>Create free account</Trans>
       </button>
+      {/* Same pairing flow as the CTA — the label just matches the intent of a
+          user who already has an account (pairing signs them straight in). */}
+      <p className='m-0 text-center text-xs text-white/65'>
+        <Trans>
+          Already have an account?{' '}
+          <button
+            type='button'
+            className='cursor-pointer border-none bg-transparent p-0 text-xs text-white underline underline-offset-2 hover:text-white/80'
+            onClick={onSignUp}
+          >
+            Sign in
+          </button>
+        </Trans>
+      </p>
       <div className='flex justify-end'>
         <button
           type='button'

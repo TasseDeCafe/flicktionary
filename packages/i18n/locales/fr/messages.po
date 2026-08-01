@@ -622,6 +622,11 @@ msgstr "Autoriser le glisser-déposer de fichiers de sous-titres"
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
+#: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
+msgid "Already have an account? <0>Sign in</0>"
+msgstr "Vous avez déjà un compte ? <0>Se connecter</0>"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Already in your vocabulary"
 msgstr "Déjà dans votre vocabulaire"
