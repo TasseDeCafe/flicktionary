@@ -1,2 +1,0 @@
-Scratch file for the stacked-PR merge test under the protect-main ruleset.
-Layer B of the same stack deletes this file, so a full stack merge leaves main net-clean.
