@@ -114,6 +114,7 @@ The web app follows opinionated UI idioms (hover/press states, `WizardShell`, st
 
 # Useful commands:
 
+- Full pre-push battery: `pnpm verify` (from the root) — runs everything the pre-push hook gates on (Lingui catalog guard, email templates, lint, types, all tests, build) and on success stamps the verified content, so the following `git push` skips re-running it all. While iterating, keep using targeted commands (a single test file, one package's typecheck) — the battery is not a per-change requirement. But when you decide to do a **final full validation**, do it via `pnpm verify` instead of running the global lint/types/tests/build commands individually: same work either way, and only `pnpm verify` makes the push cheap.
 - Check typing with TS: pnpm check:types (executed from the root directory)
 - Check linting with ESLint: pnpm lint (executed from the root directory)
 - Find dead code (unused files / exports / dependencies): `pnpm knip` — treat its output as candidates, not facts. Follow the **`remove-dead-code` skill** (known false positives, the bundled-dependency trap), and never delete anything it flags without asking the user.
