@@ -9,10 +9,12 @@ import { getSupabase } from '../../transport/database/supabase'
 import { getConfig } from '../../config/environment-config'
 import { TelegramAuthNoncesRepositoryInterface } from '../../transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { AuthUsersRepository } from '../../transport/database/auth-users/auth-users-repository'
+import { incrementFixedWindowCount } from '../fixed-window-counter'
 
 // The endpoint is unauthenticated (the nonce is the credential), so throttle
 // exchange attempts per IP. Nonces are UUIDs — unguessable — but this keeps a
-// misbehaving client from hammering the Supabase admin API.
+// misbehaving client from hammering the Supabase admin API. The window is
+// fixed, counted from the IP's first attempt (see incrementFixedWindowCount).
 const exchangeAttemptsByIp = new NodeCache({ stdTTL: 10 * 60 })
 const MAX_ATTEMPTS_PER_WINDOW = 20
 
@@ -32,7 +34,7 @@ export const TelegramAuthRouter = (
             data: { errors: [{ message: 'Too many sign-in attempts — try again later' }] },
           })
         }
-        exchangeAttemptsByIp.set(ip, attempts + 1)
+        incrementFixedWindowCount(exchangeAttemptsByIp, ip)
       }
 
       const consumed = await noncesRepository.consume(input.nonce)
