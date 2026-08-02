@@ -1,0 +1,41 @@
+# Pre-merge gate, the cheap complement to backend-ci's post-merge tripwire.
+# It exists for two reasons: (1) nothing else runs any check before a PR
+# merges — the pre-push hook covers typecheck/lint/tests/build locally but is
+# skippable (--no-verify) and can't re-run when main moves after the last
+# push; (2) the main ruleset's "require branches to be up to date before
+# merging" flag needs a required status check to attach to — that flag is
+# what enforces rebase-before-merge server-side. Tests and builds stay
+# post-merge in backend-ci on purpose; keep this job fast.
+#
+# No branch filter: stacked-PR children target their parent branch, not main,
+# and should get the same gate.
+name: pr-gate
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm check:types
+
+      - name: Lint
+        run: pnpm lint:check
