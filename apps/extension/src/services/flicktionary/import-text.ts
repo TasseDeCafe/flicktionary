@@ -1,4 +1,8 @@
 import { msg } from '@lingui/core/macro'
+import {
+  IMPORT_TEXT_MAX_LENGTH,
+  IMPORT_TEXT_TITLE_MAX_LENGTH,
+} from '@flicktionary/api-client/orpc-contracts/study-sessions-contract'
 import { i18n } from '@/ui/lingui'
 import { activateBackgroundLocale } from '@/services/activate-background-locale'
 import { getFlicktionaryApiClient } from './flicktionary-api-client'
@@ -59,7 +63,9 @@ const importTextToFlicktionary = async (input: ImportTextInput): Promise<string>
     throw new Error(i18n._(msg`Sign in to Flicktionary to import text.`))
   }
   const { data } = await getFlicktionaryApiClient().studySessions.importText({
-    title: input.title,
+    // Readability page titles can exceed the contract cap; clamp rather than
+    // fail validation over a title.
+    title: input.title.slice(0, IMPORT_TEXT_TITLE_MAX_LENGTH),
     text: input.text,
     ...(input.sourceUrl ? { sourceUrl: input.sourceUrl } : {}),
   })
@@ -104,7 +110,7 @@ const deriveTitle = (raw: string, fallback: string): string => {
       .split('\n')
       .map((line) => line.trim())
       .find((line) => line.length > 0) ?? ''
-  return (firstLine || fallback || i18n._(msg`Imported text`)).slice(0, 200)
+  return (firstLine || fallback || i18n._(msg`Imported text`)).slice(0, IMPORT_TEXT_TITLE_MAX_LENGTH)
 }
 
 const finishImport = async (
@@ -113,6 +119,20 @@ const finishImport = async (
   presentation: ImportPresentation,
   isCefrRetry: boolean
 ): Promise<ImportOutcome> => {
+  // Pre-check the contract's text cap so an oversized body gets a message that
+  // names the problem and the limit, instead of bouncing off backend input
+  // validation as a bare "Input validation failed".
+  if (input.text.length > IMPORT_TEXT_MAX_LENGTH) {
+    const textLength = i18n.number(input.text.length)
+    const maxLength = i18n.number(IMPORT_TEXT_MAX_LENGTH)
+    // sourceUrl marks the Readability-article path; without it the text came
+    // from a selection.
+    const error = input.sourceUrl
+      ? i18n._(msg`This article is too long to import (${textLength} characters — the limit is ${maxLength}).`)
+      : i18n._(msg`This selection is too long to import (${textLength} characters — the limit is ${maxLength}).`)
+    await showToast(tabId, 'error', error)
+    return { ok: false, error }
+  }
   try {
     const sessionId = await importTextToFlicktionary(input)
     await openFlicktionarySession(sessionId)
