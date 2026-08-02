@@ -9,6 +9,12 @@ import { StudySessionSchema, TextSegmentSchema } from './common/flicktionary-sch
 // upload pipeline.
 const EXTENSION_MAX_SEGMENTS = 10000
 
+// Caps for the text-import endpoint. Exported so clients can pre-check the
+// extracted text and show a clear "too long" message instead of letting the
+// request bounce off input validation with a generic error.
+export const IMPORT_TEXT_MAX_LENGTH = 100_000
+export const IMPORT_TEXT_TITLE_MAX_LENGTH = 200
+
 const ExtensionSubtitleSegmentSchema = z.object({
   index: z.number().int().nonnegative(),
   text: z.string(),
@@ -659,8 +665,8 @@ export const studySessionsContract = {
     })
     .input(
       z.object({
-        title: z.string().trim().min(1).max(200),
-        text: z.string().min(1).max(100_000),
+        title: z.string().trim().min(1).max(IMPORT_TEXT_TITLE_MAX_LENGTH),
+        text: z.string().min(1).max(IMPORT_TEXT_MAX_LENGTH),
         // Present for Readability article extraction (back-link + 'article' type);
         // absent for a bare text selection (treated as a paste, type 'text').
         sourceUrl: z.string().url().optional(),

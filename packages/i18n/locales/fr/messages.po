@@ -5350,6 +5350,10 @@ msgstr "Réflexion en cours…"
 msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
 msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
 
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "This article is too long to import ({textLength} characters — the limit is {maxLength})."
+msgstr "Cet article est trop long pour être importé ({textLength} caractères — la limite est de {maxLength})."
+
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "Cela calibre le passage des mots difficiles et la profondeur des explications."
@@ -5390,6 +5394,10 @@ msgstr "Ce produit utilise l'API <0>TMDB</0> mais n'est ni approuvé ni certifi�
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous pouvez présenter les fonctionnalités premium ici."
+
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "This selection is too long to import ({textLength} characters — the limit is {maxLength})."
+msgstr "Cette sélection est trop longue pour être importée ({textLength} caractères — la limite est de {maxLength})."
 
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "This show has no episodes."

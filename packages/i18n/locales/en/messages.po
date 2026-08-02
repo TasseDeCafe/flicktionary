@@ -5351,6 +5351,10 @@ msgstr "Thinking…"
 msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
 msgstr "This action cannot be undone. This will permanently delete your account and related data from our servers."
 
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "This article is too long to import ({textLength} characters — the limit is {maxLength})."
+msgstr "This article is too long to import ({textLength} characters — the limit is {maxLength})."
+
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
@@ -5391,6 +5395,10 @@ msgstr "This product uses the <0>TMDB</0> API but is not endorsed or certified b
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
+
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "This selection is too long to import ({textLength} characters — the limit is {maxLength})."
+msgstr "This selection is too long to import ({textLength} characters — the limit is {maxLength})."
 
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "This show has no episodes."
