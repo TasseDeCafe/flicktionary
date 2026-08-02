@@ -114,13 +114,14 @@ export const SharedContentRouter = (deps: SharedContentRouterDeps): Router => {
   }
 
   const router = implementer.router({
-    list: implementer.list.handler(async ({ input }) => {
+    list: implementer.list.handler(async ({ input, context }) => {
       const entries = await deps.sharedContentEntriesRepository.listLive({
+        viewerUserId: context.res.locals.userId,
         language: input.language ?? null,
         featuredOnly: input.featuredOnly ?? false,
         limit: FEED_LIMIT,
       })
-      return { data: entries.map(toEntryDto) }
+      return { data: entries.map((row) => ({ ...toEntryDto(row), inLibrary: row.in_library })) }
     }),
 
     get: implementer.get.handler(async ({ input, context, errors }) => {

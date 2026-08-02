@@ -18,6 +18,14 @@ export const SharedContentEntrySchema = z.object({
   createdAt: z.string(),
 })
 
+// Feed rows add the one viewer-specific field: whether the entry already has
+// a live session in the caller's library (the same (user, track, language)
+// key addToLibrary's find-or-create uses). Only the list carries it — the
+// detail/admin DTOs stay viewer-independent.
+export const SharedContentListEntrySchema = SharedContentEntrySchema.extend({
+  inLibrary: z.boolean(),
+})
+
 export const SharedContentEntryStatusSchema = z.enum(['live', 'unshared', 'removed'])
 
 // The full-text preview behind a catalog card: same public posture as the
@@ -56,7 +64,7 @@ export const sharedContentContract = {
         featuredOnly: z.coerce.boolean().optional(),
       })
     )
-    .output(z.object({ data: z.array(SharedContentEntrySchema) })),
+    .output(z.object({ data: z.array(SharedContentListEntrySchema) })),
 
   // The '/detail' suffix (rather than a bare GET /shared-content/{entryId})
   // keeps the param path from competing with the static GET

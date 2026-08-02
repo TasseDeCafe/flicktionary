@@ -187,12 +187,46 @@ describe('shared-content-entries-repository', () => {
     await repository.upsertUnshared(publishParams(dead, userId, deadKey))
     await repository.setFeatured(featuredEntry!.id, true)
 
-    const all = await repository.listLive({ language, featuredOnly: false, limit: 100 })
+    const all = await repository.listLive({ viewerUserId: userId, language, featuredOnly: false, limit: 100 })
     expect(all.map((row) => row.id)).toEqual([featuredEntry!.id, plainEntry!.id])
     expect(all[0]!.title).toBeTruthy()
 
-    const featuredOnly = await repository.listLive({ language, featuredOnly: true, limit: 100 })
+    const featuredOnly = await repository.listLive({ viewerUserId: userId, language, featuredOnly: true, limit: 100 })
     expect(featuredOnly.map((row) => row.id)).toEqual([featuredEntry!.id])
+  })
+
+  test('listLive marks entries whose track has a live session for the viewer', async () => {
+    const { id: sharerId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const { id: viewerId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const language = __generateUniqueId('lang')
+
+    const inLibrary = await insertSourceWithTrack({ userId: sharerId, language })
+    const notInLibrary = await insertSourceWithTrack({ userId: sharerId, language })
+    await repository.insertIfPublishable(publishParams(inLibrary, sharerId, __generateUniqueId('key')))
+    await repository.insertIfPublishable(publishParams(notInLibrary, sharerId, __generateUniqueId('key')))
+
+    const sessionRows = (await sql`
+      INSERT INTO public.study_sessions
+        (user_id, content_source_id, text_track_id, native_language, target_language, cefr_level)
+      VALUES (${viewerId}, ${inLibrary.sourceId}, ${inLibrary.trackId}, 'en', ${language}, 'B1')
+      RETURNING id
+    `) as { id: string }[]
+
+    const flagsByTrack = (rows: { text_track_id: string; in_library: boolean }[]) =>
+      new Map(rows.map((row) => [row.text_track_id, row.in_library]))
+
+    const withSession = flagsByTrack(
+      await repository.listLive({ viewerUserId: viewerId, language, featuredOnly: false, limit: 100 })
+    )
+    expect(withSession.get(inLibrary.trackId)).toBe(true)
+    expect(withSession.get(notInLibrary.trackId)).toBe(false)
+
+    // A soft-deleted session no longer counts — the entry becomes addable again.
+    await sql`UPDATE public.study_sessions SET deleted_at = NOW() WHERE id = ${sessionRows[0]!.id}`
+    const afterDelete = flagsByTrack(
+      await repository.listLive({ viewerUserId: viewerId, language, featuredOnly: false, limit: 100 })
+    )
+    expect(afterDelete.get(inLibrary.trackId)).toBe(false)
   })
 
   test('bulk unshares: per source, per user, and per user+track', async () => {
@@ -205,16 +239,18 @@ describe('shared-content-entries-repository', () => {
     await repository.insertIfPublishable(publishParams(two, userId, __generateUniqueId('key')))
 
     await repository.unshareLiveForUserAndTrack(userId, one.trackId)
-    expect((await repository.listLive({ language, featuredOnly: false, limit: 100 })).map((row) => row.id)).toEqual([
-      (await repository.findByTextTrackId(two.trackId))!.id,
-    ])
+    expect(
+      (await repository.listLive({ viewerUserId: userId, language, featuredOnly: false, limit: 100 })).map(
+        (row) => row.id
+      )
+    ).toEqual([(await repository.findByTextTrackId(two.trackId))!.id])
 
     await repository.unshareAllLiveForSource(two.sourceId)
-    expect(await repository.listLive({ language, featuredOnly: false, limit: 100 })).toEqual([])
+    expect(await repository.listLive({ viewerUserId: userId, language, featuredOnly: false, limit: 100 })).toEqual([])
 
     const three = await insertSourceWithTrack({ userId, language })
     await repository.insertIfPublishable(publishParams(three, userId, __generateUniqueId('key')))
     await repository.unshareAllLiveForUser(userId)
-    expect(await repository.listLive({ language, featuredOnly: false, limit: 100 })).toEqual([])
+    expect(await repository.listLive({ viewerUserId: userId, language, featuredOnly: false, limit: 100 })).toEqual([])
   })
 })

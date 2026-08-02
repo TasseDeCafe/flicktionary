@@ -79,7 +79,7 @@ describe('shared-content-router', () => {
       .get(`/api/v1/shared-content?language=${language}`)
       .set(buildAuthorizationHeaders(token))
     expect(response.status).toBe(200)
-    return response.body.data as { id: string; title: string; language: string }[]
+    return response.body.data as { id: string; title: string; language: string; inLibrary: boolean }[]
   }
 
   test('returns 401 when unauthenticated', async () => {
@@ -96,6 +96,10 @@ describe('shared-content-router', () => {
 
     // The opt-in publish is fire-and-forget behind session creation.
     await expect.poll(async () => (await listEntries(owner.token, language)).length, { timeout: 5000 }).toBe(1)
+
+    // The sharer has a session on the track, so their own entry reads as
+    // already-in-library.
+    expect((await listEntries(owner.token, language))[0]!.inLibrary).toBe(true)
 
     const state = await request(testApp)
       .get(`/api/v1/shared-content/share-state?textTrackId=${textTrackId}`)
@@ -174,6 +178,9 @@ describe('shared-content-router', () => {
     const reader = await __createUserInSupabaseAndGetHisIdAndToken()
     await __createOrGetUserWithOurApi({ testApp, token: reader.token, referral: null })
 
+    // The viewer-specific feed flag: not in the reader's library yet.
+    expect((await listEntries(reader.token, language))[0]!.inLibrary).toBe(false)
+
     // No CEFR pref for the entry's language yet → typed 422.
     const withoutCefr = await request(testApp)
       .post(`/api/v1/shared-content/${entry!.id}/add`)
@@ -195,6 +202,8 @@ describe('shared-content-router', () => {
     expect(added.status).toBe(201)
     expect(added.body.alreadyExisted).toBe(false)
     expect(added.body.data.targetLanguage).toBe(language)
+
+    expect((await listEntries(reader.token, language))[0]!.inLibrary).toBe(true)
 
     const again = await request(testApp)
       .post(`/api/v1/shared-content/${entry!.id}/add`)

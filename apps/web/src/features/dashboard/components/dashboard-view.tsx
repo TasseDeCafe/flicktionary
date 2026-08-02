@@ -58,8 +58,6 @@ export const DashboardView = () => {
 
       <GettingStartedChecklist hasSessionsInList={(data?.length ?? 0) > 0} />
 
-      <ExploreFeaturedSection sessionCount={data?.length ?? 0} sessionsLoaded={!isLoading} />
-
       <DailyMixBanner />
 
       {/* Each slide exists only while its data might qualify — during load the
@@ -85,6 +83,8 @@ export const DashboardView = () => {
           />
         </>
       )}
+
+      <ExploreFeaturedSection />
 
       <div className='mt-6 flex items-baseline justify-between'>
         <h2 className='text-base font-semibold'>{t`Recent`}</h2>
