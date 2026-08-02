@@ -581,7 +581,6 @@ msgid "AI-generated and not verified against a dictionary — double-check befor
 msgstr "AI-generated and not verified against a dictionary — double-check before drilling it."
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
-#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
 #: apps/web/src/features/explore/components/explore-view.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
@@ -2328,6 +2327,10 @@ msgstr "Fast-forward"
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Fast-forward mode playback rate"
 msgstr "Fast-forward mode playback rate"
+
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+msgid "Featured content"
+msgstr "Featured content"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Feminine"
@@ -4481,6 +4484,14 @@ msgstr "Say it out loud"
 msgid "Scope"
 msgstr "Scope"
 
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+msgid "Scroll back"
+msgstr "Scroll back"
+
+#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+msgid "Scroll forward"
+msgstr "Scroll forward"
+
 #: apps/web/src/components/language-option-list.tsx
 msgid "Search languages…"
 msgstr "Search languages…"
@@ -4915,10 +4926,6 @@ msgstr "Start session"
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Start something new"
 msgstr "Start something new"
-
-#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
-msgid "Start with shared content"
-msgstr "Start with shared content"
 
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start your first session"

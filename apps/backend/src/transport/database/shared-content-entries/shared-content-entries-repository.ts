@@ -107,21 +107,35 @@ const lockLiveById = async (id: string, db: postgres.Sql): Promise<DbSharedConte
   return result[0] ?? null
 }
 
+// Feed rows carry `in_library`: whether the viewer already has a live session
+// on this entry's content. The join key is exactly addToLibrary's
+// find-or-create identity — the partial unique index on
+// (user_id, text_track_id, target_language) WHERE deleted_at IS NULL — so the
+// LEFT JOIN is index-backed and matches at most one row. The sharer's own
+// entry counts as in-library too (they have a session on the track).
+export type DbSharedContentFeedEntry = DbSharedContentEntryWithSource & { in_library: boolean }
+
 const listLive = async (params: {
+  viewerUserId: string
   language: string | null
   featuredOnly: boolean
   limit: number
-}): Promise<DbSharedContentEntryWithSource[]> => {
+}): Promise<DbSharedContentFeedEntry[]> => {
   return (await sql`
-    SELECT e.*, cs.title, cs.type, cs.metadata
+    SELECT e.*, cs.title, cs.type, cs.metadata, (ss.id IS NOT NULL) AS in_library
     FROM public.shared_content_entries e
     JOIN public.content_sources cs ON cs.id = e.content_source_id
+    LEFT JOIN public.study_sessions ss
+      ON ss.user_id = ${params.viewerUserId}
+      AND ss.text_track_id = e.text_track_id
+      AND ss.target_language = e.language
+      AND ss.deleted_at IS NULL
     WHERE e.unshared_at IS NULL AND e.removed_at IS NULL
       ${params.language ? sql`AND e.language = ${params.language}` : sql``}
       ${params.featuredOnly ? sql`AND e.featured = TRUE` : sql``}
     ORDER BY e.featured DESC, e.created_at DESC
     LIMIT ${params.limit}
-  `) as DbSharedContentEntryWithSource[]
+  `) as DbSharedContentFeedEntry[]
 }
 
 const findByIdWithSource = async (id: string): Promise<DbSharedContentEntryWithSource | null> => {
@@ -301,10 +315,11 @@ export interface SharedContentEntriesRepositoryInterface {
   lockLiveById: (id: string, db: postgres.Sql) => Promise<DbSharedContentEntry | null>
   findByIdWithSource: (id: string) => Promise<DbSharedContentEntryWithSource | null>
   listLive: (params: {
+    viewerUserId: string
     language: string | null
     featuredOnly: boolean
     limit: number
-  }) => Promise<DbSharedContentEntryWithSource[]>
+  }) => Promise<DbSharedContentFeedEntry[]>
   listForAdmin: (
     limit: number,
     status: 'live' | 'unshared' | 'removed' | null
