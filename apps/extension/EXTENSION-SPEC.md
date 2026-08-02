@@ -1210,7 +1210,12 @@ backend detects language, segments, and creates a session; success opens it in
 a new tab. A selection-based path imports highlighted text as a paste (no
 sourceUrl). Errors show inline in the popup with retry, plus an on-page toast.
 Both paths check pairing up front — a signed-out user gets a sign-in prompt
-before any extraction is attempted.
+before any extraction is attempted. Both paths also pre-check the contract's
+text cap (`IMPORT_TEXT_MAX_LENGTH`, shared from the api-client contract) before
+calling the backend, so an oversized article/selection surfaces a localized
+"too long" message with the actual and maximum character counts instead of a
+raw input-validation error; titles are clamped to the contract cap rather than
+failing validation.
 
 A `MISSING_CEFR` failure (the detected language has no CEFR level yet) is
 handled in-context, not dead-ended: the **popup** import surfaces an inline
