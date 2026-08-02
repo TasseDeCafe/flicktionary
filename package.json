@@ -22,6 +22,7 @@
     "check:types": "turbo run check:types",
     "test": "turbo run test",
     "test:run": "turbo run test:run",
+    "verify": "scripts/verify.sh",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "translate": "pnpm --filter @flicktionary/i18n translate",

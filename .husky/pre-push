@@ -103,32 +103,6 @@ else
   echo "✅ Branch is up-to-date with main"
 fi
 
-# Guard the Lingui catalogs. We do NOT translate here: the AI call is slow and
-# its auto-commit can't join an in-flight push (forcing a "push again" dance),
-# and the gettext re-serialization used to ping-pong the catalog format. Instead
-# translation happens at PR time (`pnpm translate:sync`, run by the create-pr
-# flow), and this stays a fast, deterministic gate that fails if the catalogs
-# are stale or any string is untranslated.
-echo "🧹 Checking Lingui catalogs..."
-if ! pnpm lingui extract --clean; then
-  echo "❌ Lingui extract failed"
-  exit 1
-fi
-
-if ! git diff --quiet -- packages/i18n/locales; then
-  echo "❌ Lingui catalogs are out of date (extract changed them)."
-  echo "   Run 'pnpm translate:sync' and commit packages/i18n/locales before pushing."
-  git --no-pager diff --stat -- packages/i18n/locales
-  exit 1
-fi
-
-if ! pnpm --filter @flicktionary/i18n translate:check; then
-  echo "❌ Some strings are untranslated."
-  echo "   Run 'pnpm translate:sync' and commit packages/i18n/locales before pushing."
-  exit 1
-fi
-echo "✅ Lingui catalogs are up to date and fully translated"
-
 # Check if native app requires a new build using expo fingerprint
 echo "📱 Checking native app fingerprint..."
 fingerprint_result=0
@@ -226,9 +200,6 @@ else
   exit 1
 fi
 
-# Run all checks through turborepo
-echo "🏃 Running all checks..."
-
 # Check if native app (apps/native) needs environment sync
 echo "⚙️ Checking for native app changes to determine if EAS sync is needed..."
 # We use 'turbo ls --affected --output=json' and jq to check if 'native' package is in the list of affected packages.
@@ -245,45 +216,20 @@ else
   echo "Skipping EAS environment sync as native app is not affected by these changes."
 fi
 
-cd apps/backend
-pnpm check-templates
-cd ../..
-
-# Read-only lint gate. eslint auto-fixes are applied by the pre-commit hook
-# (lint-staged) at commit time, so they ride along in the same push — there is
-# no in-hook --fix here, nothing to auto-commit, and no "push again" dance. This
-# only fails on genuine lint errors (including a fixable issue committed with
-# --no-verify, which the pre-commit hook would otherwise have fixed).
-echo "Running lint..."
-if pnpm lint:check; then
-    echo "✅ Lint passed"
+# The expensive battery (Lingui catalog guard, email templates, lint, types,
+# tests, build) lives in scripts/verify.sh (`pnpm verify`). On success it
+# stamps the repo's content hash; when the tree being pushed is exactly a
+# stamped one — a `pnpm verify` run moments ago, or the previous push of the
+# auto-commit "push again" dance — re-proving it here is pure waste, so skip.
+stamp_file="$(git rev-parse --git-dir)/flicktionary-verify-stamp"
+current_tree=$(scripts/tree-hash.sh)
+if [ -f "$stamp_file" ] && [ "$(cat "$stamp_file")" = "$current_tree" ]; then
+  echo "✅ Tree ${current_tree:0:12} already passed 'pnpm verify' — skipping checks."
 else
-    echo "❌ Lint failed (run 'pnpm lint' to auto-fix, then commit)"
+  echo "🏃 Running all checks (pnpm verify)..."
+  if ! pnpm verify; then
     exit 1
-fi
-
-echo "Checking types..."
-if pnpm check:types; then
-    echo "✅ Types check passed"
-else
-    echo "❌ Types check failed"
-    exit 1
-fi
-
-echo "Running tests..."
-if pnpm test:run; then
-    echo "✅ Tests passed"
-else
-    echo "❌ Tests failed"
-    exit 1
-fi
-
-echo "Building..."
-if pnpm build; then
-    echo "✅ Build passed"
-else
-    echo "❌ Build failed"
-    exit 1
+  fi
 fi
 
 echo "✅ Pre-push script executed successfully."
