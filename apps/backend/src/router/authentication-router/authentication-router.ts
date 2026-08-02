@@ -9,10 +9,13 @@ import { getConfig } from '../../config/environment-config'
 import { authenticationContract } from '@flicktionary/api-client/orpc-contracts/authentication-contract'
 import { buildMagicLinkRedirectUrl } from './magic-link-redirect'
 import NodeCache from 'node-cache'
+import { incrementFixedWindowCount } from '../fixed-window-counter'
 
-// Create rate limit caches outside the function so they persist across requests
-const emailRateLimitCache10Min = new NodeCache({ stdTTL: 10 * 60 }) // 10 minutes TTL
-const emailRateLimitCacheDaily = new NodeCache({ stdTTL: 60 * 60 }) // 1 hour TTL
+// Rate limit caches live outside the function so they persist across requests.
+// Both are fixed windows counted from the first attempt for an email (see
+// incrementFixedWindowCount), matching the "try again later / tomorrow" copy.
+const emailRateLimitCache10Min = new NodeCache({ stdTTL: 10 * 60 })
+const emailRateLimitCacheDaily = new NodeCache({ stdTTL: 24 * 60 * 60 })
 
 export const authenticationRouter = (): Router => {
   const implementer = implement(authenticationContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -23,7 +26,7 @@ export const authenticationRouter = (): Router => {
       if (getConfig().shouldRateLimit) {
         const email = input.email
 
-        let count10Min = emailRateLimitCache10Min.get<number>(email) || 0
+        const count10Min = emailRateLimitCache10Min.get<number>(email) ?? 0
         if (count10Min >= 10) {
           throw errors.INTERNAL_SERVER_ERROR({
             data: {
@@ -33,9 +36,9 @@ export const authenticationRouter = (): Router => {
             },
           })
         }
-        emailRateLimitCache10Min.set(email, count10Min + 1)
+        incrementFixedWindowCount(emailRateLimitCache10Min, email)
 
-        let countDaily = emailRateLimitCacheDaily.get<number>(email) || 0
+        const countDaily = emailRateLimitCacheDaily.get<number>(email) ?? 0
         if (countDaily >= 20) {
           throw errors.INTERNAL_SERVER_ERROR({
             data: {
@@ -45,7 +48,7 @@ export const authenticationRouter = (): Router => {
             },
           })
         }
-        emailRateLimitCacheDaily.set(email, countDaily + 1)
+        incrementFixedWindowCount(emailRateLimitCacheDaily, email)
       }
 
       try {
