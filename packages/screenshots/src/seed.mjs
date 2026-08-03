@@ -17,7 +17,7 @@
 // Prereq: dev tunnel running (web + backend + dev-tunnel Supabase).
 // Run: pnpm --filter @flicktionary/screenshots seed
 
-import { adminClient, ensureUser, ensureUserMetadataEmail, mintAccessToken } from './lib/supabase.mjs'
+import { adminClient, ensureUser, mintAccessToken } from './lib/supabase.mjs'
 import { apiClient } from './lib/api.mjs'
 import { connectDb } from './lib/db.mjs'
 import { log, sleep } from './lib/env.mjs'
@@ -186,7 +186,6 @@ const run = async () => {
   await ensureUser(admin, DEMO.email)
   const userId = await findUserId(DEMO.email)
   if (!userId) throw new Error(`user not found after creation: ${DEMO.email}`)
-  await ensureUserMetadataEmail(admin, userId, DEMO.email)
   // The app row normally created by the web signup flow; admin-created auth
   // users skip it, so mirror users-repository.insertUser here.
   await sql`INSERT INTO public.users (id) VALUES (${userId}) ON CONFLICT (id) DO NOTHING`
