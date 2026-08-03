@@ -13,6 +13,9 @@ export const classifyTmdbFailure = (label: string, response: { status: number; s
   return new Error(`TMDB ${label} failed: ${response.status} ${response.statusText}`)
 }
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w342'
+// Backdrops are landscape hero images for the 16:9 card media — they need a
+// wider size than the portrait posters.
+const TMDB_BACKDROP_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w780'
 
 export type TmdbMovie = {
   tmdbId: number
@@ -20,6 +23,7 @@ export type TmdbMovie = {
   originalTitle: string
   year: number | null
   posterUrl: string | null
+  backdropUrl: string | null
   overview: string
 }
 
@@ -30,6 +34,7 @@ type TmdbSearchResponse = {
     original_title: string
     release_date: string | null
     poster_path: string | null
+    backdrop_path: string | null
     overview: string
   }>
 }
@@ -40,6 +45,9 @@ const headers = (): Record<string, string> => ({
 })
 
 const imageUrl = (path: string | null): string | null => (path ? `${TMDB_IMAGE_BASE_URL}${path}` : null)
+
+export const backdropImageUrl = (path: string | null): string | null =>
+  path ? `${TMDB_BACKDROP_IMAGE_BASE_URL}${path}` : null
 
 export const searchMovies = async (query: string, year?: number): Promise<TmdbMovie[]> => {
   const params = new URLSearchParams({ query, include_adult: 'false', language: 'en-US' })
@@ -57,6 +65,7 @@ export const searchMovies = async (query: string, year?: number): Promise<TmdbMo
     originalTitle: r.original_title,
     year: r.release_date ? Number(r.release_date.slice(0, 4)) : null,
     posterUrl: imageUrl(r.poster_path),
+    backdropUrl: backdropImageUrl(r.backdrop_path),
     overview: r.overview,
   }))
 }
@@ -67,6 +76,7 @@ export type TmdbTvShow = {
   originalTitle: string
   year: number | null
   posterUrl: string | null
+  backdropUrl: string | null
   overview: string
 }
 
@@ -77,6 +87,7 @@ type TmdbTvSearchResponse = {
     original_name: string
     first_air_date: string | null
     poster_path: string | null
+    backdrop_path: string | null
     overview: string
   }>
 }
@@ -96,6 +107,7 @@ export const searchTvShows = async (query: string): Promise<TmdbTvShow[]> => {
     originalTitle: r.original_name,
     year: r.first_air_date ? Number(r.first_air_date.slice(0, 4)) : null,
     posterUrl: imageUrl(r.poster_path),
+    backdropUrl: backdropImageUrl(r.backdrop_path),
     overview: r.overview,
   }))
 }

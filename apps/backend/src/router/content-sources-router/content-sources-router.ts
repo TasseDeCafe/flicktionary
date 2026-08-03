@@ -56,6 +56,7 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
           originalTitle: input.originalTitle,
           year: input.year,
           posterUrl: input.posterUrl,
+          backdropUrl: input.backdropUrl,
         },
         createdByUserId: userId,
       })
@@ -91,6 +92,8 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
           episodeTitle: input.episodeTitle,
           year: input.year,
           posterUrl: input.posterUrl,
+          backdropUrl: input.backdropUrl,
+          stillUrl: input.stillUrl,
         },
         createdByUserId: userId,
       })

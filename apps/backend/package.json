@@ -20,6 +20,7 @@
     "build:lemma-ranks": "npx tsx scripts/build-lemma-ranks.ts",
     "load:reference-data": "pnpm run export:wordfreq && pnpm run load:kaikki && pnpm run build:lemma-ranks",
     "db:advance-day": "npx tsx scripts/advance-practice-day.ts",
+    "db:backfill-backdrops": "npx tsx scripts/backfill-tmdb-backdrops.ts",
     "db:dev:tunnel:reset": "./scripts/db--dev-tunnel--reset.sh",
     "db:dev:tunnel:wipe": "./scripts/db--dev-tunnel--wipe.sh",
     "db:dev:tunnel:migrate": "./scripts/db--dev-tunnel--migrate.sh",
