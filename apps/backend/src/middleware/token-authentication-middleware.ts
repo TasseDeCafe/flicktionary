@@ -19,6 +19,8 @@ export interface SupabaseClaims {
   user_metadata?: {
     name?: string
     full_name?: string
+    // User-writable (any client can call updateUser({ data })) — never read
+    // as identity. Declared only so tests can mint spoofed tokens against it.
     email?: string
     avatar_url?: string
   }
@@ -49,12 +51,13 @@ export const tokenAuthenticationMiddleware =
       try {
         const decoded = await verifySupabaseToken(token)
         const { sub, is_anonymous: isAnonymous = false, email: verifiedEmail, user_metadata = {} } = decoded
-        const { name, full_name, email: metadataEmail, avatar_url } = user_metadata
-        // Prefer the verified top-level claim: user_metadata is user-writable
-        // (any client can call updateUser({ data })), and a guest converted to
-        // a permanent account has an email only in the top-level claim. The
-        // metadata fallback covers tokens that omit the claim.
-        const email = verifiedEmail || metadataEmail
+        const { name, full_name, avatar_url } = user_metadata
+        // Only the verified top-level claim counts as identity: user_metadata
+        // is user-writable (any client can call updateUser({ data })), so a
+        // guest could spoof any address there and unlock email-gated surfaces
+        // (test-user checks, pairing, billing). GoTrue stamps "" on anonymous
+        // tokens — normalized to undefined, matching "guests have no email".
+        const email = verifiedEmail || undefined
 
         // The kill switch locks out existing guest sessions too: the token is
         // cryptographically valid, but anonymous access is administratively off.
