@@ -3,10 +3,7 @@ import { Link, type LinkProps } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { Card } from '@flicktionary/ui/components/card'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
-import type {
-  ContentSourceType,
-  StudySession,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { LetterformTile } from './letterform-tile'
 
@@ -16,18 +13,6 @@ import { LetterformTile } from './letterform-tile'
 // MediaCard is the vertical card for grids and rails; MediaListItem is the
 // list shape — a stacked media card on mobile, a YouTube-search-style
 // thumb-left row on desktop.
-
-export const youtubeThumbnailUrl = (videoId: string): string => `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
-
-// The landscape image for a session, in specificity order: the TV episode's
-// own still, the movie/show backdrop, the YouTube thumbnail. Sessions with
-// none (texts, articles, lessons, pre-backdrop TMDB rows) get the letterform.
-export const sessionMediaImageUrl = (
-  session: Pick<StudySession, 'contentSourceStillUrl' | 'contentSourceBackdropUrl' | 'youtubeVideoId'>
-): string | null =>
-  session.contentSourceStillUrl ??
-  session.contentSourceBackdropUrl ??
-  (session.youtubeVideoId ? youtubeThumbnailUrl(session.youtubeVideoId) : null)
 
 type MediaThumbProps = {
   imageUrl: string | null

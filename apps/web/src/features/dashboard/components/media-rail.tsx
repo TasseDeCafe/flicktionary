@@ -35,16 +35,18 @@ export const MediaRail = ({ itemCount, scrollerClassName, children }: Props) => 
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
   }, [])
 
+  // Re-measured whenever the rendered count changes — items landing after the
+  // skeleton pass (or a viewport resize) can toggle overflow without any
+  // scroll event. An emptied rail keeps its stale measurement; the render
+  // gates below hide the affordances instead of an effect resetting state.
   useEffect(() => {
-    if (itemCount === 0) {
-      setCanScrollLeft(false)
-      setCanScrollRight(false)
-      return
-    }
     updateChevrons()
     window.addEventListener('resize', updateChevrons)
     return () => window.removeEventListener('resize', updateChevrons)
   }, [updateChevrons, itemCount])
+
+  const showLeft = itemCount > 0 && canScrollLeft
+  const showRight = itemCount > 0 && canScrollRight
 
   const scrollByPage = (direction: -1 | 1) => {
     const el = scrollerRef.current
@@ -61,13 +63,13 @@ export const MediaRail = ({ itemCount, scrollerClassName, children }: Props) => 
           the rail is hovered (or a chevron is keyboard-focused) — the edge
           fades alone carry the "more content this way" hint on an idle
           dashboard. */}
-      {canScrollLeft && (
+      {showLeft && (
         <div className='from-background pointer-events-none absolute inset-y-0 -left-4 z-10 w-10 bg-linear-to-r to-transparent md:left-0' />
       )}
-      {canScrollRight && (
+      {showRight && (
         <div className='from-background pointer-events-none absolute inset-y-0 -right-4 z-10 w-10 bg-linear-to-l to-transparent md:right-0' />
       )}
-      {canScrollLeft && (
+      {showLeft && (
         <button
           type='button'
           onClick={() => scrollByPage(-1)}
@@ -77,7 +79,7 @@ export const MediaRail = ({ itemCount, scrollerClassName, children }: Props) => 
           <ChevronLeft className='h-4 w-4' />
         </button>
       )}
-      {canScrollRight && (
+      {showRight && (
         <button
           type='button'
           onClick={() => scrollByPage(1)}

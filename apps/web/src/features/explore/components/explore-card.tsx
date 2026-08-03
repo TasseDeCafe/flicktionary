@@ -2,7 +2,8 @@ import type { I18n } from '@lingui/core'
 import { useLingui } from '@lingui/react/macro'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
-import { MediaCard, MediaListItem, MediaThumb, youtubeThumbnailUrl } from '@/features/sessions/components/media-card'
+import { MediaCard, MediaListItem, MediaThumb } from '@/features/sessions/components/media-card'
+import { youtubeThumbnailUrl } from '@/features/sessions/utils/session-media'
 
 export type ExploreEntry = {
   id: string
