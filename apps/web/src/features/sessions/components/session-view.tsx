@@ -59,6 +59,7 @@ import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkp
 import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
 import { SessionActionsOverlay } from './session-actions-overlay'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
+import { hasDifficultyStatContent } from './difficulty-stat-content'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
@@ -1093,22 +1094,20 @@ export const SessionView = () => {
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
         {session.targetLanguage.toUpperCase()} · {session.cefrLevel}
-        {/* Suppressed verdicts (too little tracked vocab → null percent/label
-            on an 'available' result) render nothing inside the stat, which
-            would leave an empty, keyboard-focusable button — skip the wrapper
-            too. Pending keeps its skeleton. */}
-        {sessionDifficulty &&
-          sessionDifficulty.status !== 'unsupported' &&
-          sessionDifficulty.status !== 'failed' &&
-          !(sessionDifficulty.status === 'available' && sessionDifficulty.label === null) && (
-            <button
-              type='button'
-              className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
-              onClick={() => setDifficultyOpen(true)}
-            >
-              <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
-            </button>
-          )}
+        {/* The chip is the header's entry to the coverage sheet (breakdown +
+            mark-known CTAs), so it stays visible even when the verdict is
+            suppressed below the tracked-vocab floor — the stat falls back to
+            the unknown-word count. Only a stat that renders nothing skips the
+            wrapper (an empty, keyboard-focusable button otherwise). */}
+        {hasDifficultyStatContent(sessionDifficulty) && (
+          <button
+            type='button'
+            className='hover:text-foreground cursor-pointer underline-offset-2 hover:underline'
+            onClick={() => setDifficultyOpen(true)}
+          >
+            <SessionDifficultyStat difficulty={sessionDifficulty} prefix=' · ' />
+          </button>
+        )}
         {/* The session's highlight count, tappable through to the vocabulary
             list — the header owns this stat (the footer stays action-only). */}
         <button

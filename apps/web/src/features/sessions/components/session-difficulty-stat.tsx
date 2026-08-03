@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { SessionDifficulty } from '../api/sessions-hooks'
 import { useDifficultyLabelText } from '../hooks/use-difficulty-label-text'
@@ -21,7 +22,10 @@ type Props = {
 // The compact per-session difficulty stat ("~93% comfortable") for card meta
 // lines and the session header. Skeleton while the profile builds (pending) or
 // the batch query first loads; absent for unsupported/failed sessions and
-// empty profiles.
+// empty profiles. Below the tracked-vocab floor the verdict is suppressed
+// (null percent/label on an 'available' result) but the entry point must
+// survive — sweeping words as known is exactly how a new user crosses the
+// floor — so the stat falls back to the neutral unknown-word count.
 export const SessionDifficultyStat = ({ difficulty, isLoading = false, prefix }: Props) => {
   const labelText = useDifficultyLabelText()
   if (difficulty?.status === 'pending' || (isLoading && !difficulty)) {
@@ -32,8 +36,18 @@ export const SessionDifficultyStat = ({ difficulty, isLoading = false, prefix }:
       </>
     )
   }
-  if (difficulty?.status !== 'available' || difficulty.expectedCoveragePercent === null || difficulty.label === null) {
-    return null
+  if (difficulty?.status !== 'available') return null
+  if (difficulty.expectedCoveragePercent === null || difficulty.label === null) {
+    const unknownCount = difficulty.unknownLemmaCount ?? 0
+    if (unknownCount === 0) return null
+    return (
+      <>
+        {prefix}
+        <span className='whitespace-nowrap'>
+          {plural(unknownCount, { one: '# unknown word', other: '# unknown words' })}
+        </span>
+      </>
+    )
   }
   return (
     <>
