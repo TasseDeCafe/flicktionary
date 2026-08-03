@@ -143,8 +143,18 @@ const getTopLemmasBuild = async (params: { targetLanguage: string; limit: number
   return row ? { version: row.version, lemmas: row.lemmas } : null
 }
 
+// When the language's ranks were last (re)built — the freshness anchor for
+// detecting track profiles computed against older reference data.
+const getRankBuildTime = async (targetLanguage: string): Promise<Date | null> => {
+  const rows = (await sql`
+    SELECT built_at FROM public.lemma_rank_builds WHERE target_language = ${targetLanguage}
+  `) as Array<{ built_at: Date }>
+  return rows[0]?.built_at ?? null
+}
+
 export interface LemmaRanksRepositoryInterface {
   listBuiltLanguages: () => Promise<Set<string>>
+  getRankBuildTime: (targetLanguage: string) => Promise<Date | null>
   listRanksForLemmas: (params: {
     targetLanguage: string
     lemmas: readonly string[]
@@ -160,6 +170,7 @@ export interface LemmaRanksRepositoryInterface {
 export const LemmaRanksRepository = (): LemmaRanksRepositoryInterface => {
   return {
     listBuiltLanguages,
+    getRankBuildTime,
     listRanksForLemmas,
     getCoverageData,
     getTopLemmasBuild,
