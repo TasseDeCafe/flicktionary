@@ -7,6 +7,7 @@
 import { extractDisplayForm, type GrammarPatch, type KaikkiEntry } from './extract/shared'
 import { extractRussianNoun, extractRussianVerb } from './extract/ru'
 import { extractGermanNoun, extractGermanVerb } from './extract/de'
+import { extractFrenchNoun } from './extract/fr'
 import { extractIpaBag } from './extract/ipa'
 
 // Re-exported so existing importers keep using the stable `./extract` path.
@@ -51,6 +52,8 @@ const LANGUAGE_EXTRACTORS: Record<string, LanguageExtractor> = {
   // display form. Same noise class as the German/English skip.
   es: { skipDisplayForm: true },
   pt: { skipDisplayForm: true },
+  // French head lines are the same noise class ("maison f (plural maisons)").
+  fr: { byPos: { noun: extractFrenchNoun }, skipDisplayForm: true },
 }
 
 // Public: extract the structured-grammar patch we want to merge into the

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { DE_CASE_TWIN_DISCOUNT, checkAcceptance, isRealWordToken, rankLemmas, splitFormMass } from './build-ranking'
+import {
+  DE_CASE_TWIN_DISCOUNT,
+  checkAcceptance,
+  isRealWordToken,
+  rankLemmas,
+  remapTokenizerClitics,
+  splitFormMass,
+} from './build-ranking'
 
 describe('isRealWordToken', () => {
   it('accepts plain and hyphenated words of the language script', () => {
@@ -15,6 +22,12 @@ describe('isRealWordToken', () => {
     expect(isRealWordToken('coração', 'pt')).toBe(true)
     expect(isRealWordToken('queixar-se', 'pt')).toBe(true)
     expect(isRealWordToken('você', 'pt')).toBe(true)
+    // fr sees checkpoint_fold output: elision clitics already stripped, but
+    // interior apostrophes and hyphens survive.
+    expect(isRealWordToken('été', 'fr')).toBe(true)
+    expect(isRealWordToken("aujourd'hui", 'fr')).toBe(true)
+    expect(isRealWordToken('peut-être', 'fr')).toBe(true)
+    expect(isRealWordToken('garçon', 'fr')).toBe(true)
   })
 
   it('keeps single-letter words (one-letter function words are real)', () => {
@@ -32,10 +45,36 @@ describe('isRealWordToken', () => {
     expect(isRealWordToken('año2', 'es')).toBe(false)
     expect(isRealWordToken('стол', 'es')).toBe(false)
     expect(isRealWordToken('são-', 'pt')).toBe(false)
+    expect(isRealWordToken("l'", 'fr')).toBe(false)
   })
 
   it('throws on a language without a pattern', () => {
-    expect(() => isRealWordToken('mot', 'fr')).toThrow(/no real-word-token pattern/i)
+    expect(() => isRealWordToken('犬', 'ja')).toThrow(/no real-word-token pattern/i)
+  })
+})
+
+describe('remapTokenizerClitics', () => {
+  it('merges detached French clitic mass into the elided function word', () => {
+    const tokens = new Map([
+      ['l', 0.018],
+      ['le', 0.022],
+      ['d', 0.014],
+      ['homme', 0.001],
+    ])
+    const remapped = remapTokenizerClitics(tokens, 'fr')
+    expect(remapped.get('le')).toBeCloseTo(0.04)
+    expect(remapped.get('de')).toBeCloseTo(0.014)
+    expect(remapped.get('homme')).toBeCloseTo(0.001)
+    expect(remapped.has('l')).toBe(false)
+    expect(remapped.has('d')).toBe(false)
+  })
+
+  it('is a no-op for languages without a remap', () => {
+    const tokens = new Map([
+      ['l', 0.01],
+      ['de', 0.02],
+    ])
+    expect(remapTokenizerClitics(tokens, 'es')).toEqual(tokens)
   })
 })
 

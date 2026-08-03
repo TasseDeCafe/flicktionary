@@ -37,9 +37,35 @@ describe('foldCheckpointToken', () => {
     expect(foldCheckpointToken('стола\u0301', 'ru')).toBe('стола')
   })
 
-  test('trims whitespace and applies no per-language fold outside ru/de', () => {
+  test('trims whitespace and applies no per-language fold outside ru/de/fr', () => {
     expect(foldCheckpointToken('  Straße  ', 'en')).toBe('straße')
     expect(foldCheckpointToken(' Running ', 'en')).toBe('running')
+  })
+
+  test('strips one leading French elision clitic (both apostrophe shapes)', () => {
+    expect(foldCheckpointToken("l'homme", 'fr')).toBe('homme')
+    expect(foldCheckpointToken('L’Homme', 'fr')).toBe('homme')
+    expect(foldCheckpointToken("j'arrive", 'fr')).toBe('arrive')
+    expect(foldCheckpointToken('c’est', 'fr')).toBe('est')
+    expect(foldCheckpointToken("qu'il", 'fr')).toBe('il')
+    expect(foldCheckpointToken("jusqu'à", 'fr')).toBe('à')
+    expect(foldCheckpointToken("s'appeler", 'fr')).toBe('appeler')
+  })
+
+  test('keeps interior French apostrophes and strips at most one clitic', () => {
+    expect(foldCheckpointToken("aujourd'hui", 'fr')).toBe("aujourd'hui")
+    expect(foldCheckpointToken('aujourd’hui', 'fr')).toBe("aujourd'hui")
+    expect(foldCheckpointToken("quelqu'un", 'fr')).toBe("quelqu'un")
+    // quoiqu' is a clitic; the bare qu alternative must not fire mid-word.
+    expect(foldCheckpointToken("quoiqu'il", 'fr')).toBe('il')
+  })
+
+  test('folds French ligatures to their digraph spellings', () => {
+    expect(foldCheckpointToken('cœur', 'fr')).toBe('coeur')
+    expect(foldCheckpointToken('ŒUVRE', 'fr')).toBe('oeuvre')
+    expect(foldCheckpointToken('ex æquo', 'fr')).toBe('ex aequo')
+    // No French fold outside fr — the same word keeps its ligature in en.
+    expect(foldCheckpointToken('cœur', 'en')).toBe('cœur')
   })
 })
 
@@ -54,6 +80,12 @@ describe('foldUserHeadwordCandidates', () => {
 
   test('returns only the folded headword for Russian', () => {
     expect(foldUserHeadwordCandidates('Обнару́жить', 'ru')).toEqual(['обнаружить'])
+  })
+
+  test('strips the French pronominal particle as an extra candidate (elided via the fold)', () => {
+    expect(foldUserHeadwordCandidates('se laver', 'fr')).toEqual(['se laver', 'laver'])
+    // s'appeler needs no headword rule — the fold's clitic strip reduces it.
+    expect(foldUserHeadwordCandidates("s'appeler", 'fr')).toEqual(['appeler'])
   })
 
   test('adds the de-reflexivized base for Spanish fused and Portuguese hyphenated citations', () => {

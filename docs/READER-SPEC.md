@@ -301,8 +301,8 @@ The enrichment path uses these shared steps:
      `ran out of milk` → `headword = "run out of"`.
 3. **Wiktionary grounding (post-basic-data, per-language).** For target
    languages loaded from the raw Kaikki/Wiktextract dump into our
-   `wiktionary_entries` / `wiktionary_forms` tables (currently `ru`,
-   `en`, and `de` — gated by `KAIKKI_LANGUAGES`), each newly-touched
+   `wiktionary_entries` / `wiktionary_forms` tables (currently `ru`, `en`,
+   `de`, `es`, `pt`, and `fr` — gated by `KAIKKI_LANGUAGES`), each newly-touched
    `user_lookups` row is looked up via a four-path chain: real-lemma direct
    hit → real-lemma POS-agnostic → form-of pseudo-entry resolved to its
    underlying lemma → `wiktionary_forms` paradigm-cell match. For English
@@ -311,15 +311,16 @@ The enrichment path uses these shared steps:
    broader paths. When something matches, the structured grammar fields the
    extractor knows about (e.g. POS, Russian gender/animacy/aspect fields,
    German gender/plural/genitive/weak-noun + separable/auxiliary fields,
+   French gender + pluralia tantum from the `fr-noun` head template,
    display_form where appropriate, and Wiktionary IPA) are shallow-merged
    into the row's `grammar` JSONB with **kaikki winning where both sides
    have a value**; LLM-only keys (e.g. `government`, `notes`,
    `notable_forms` — German keeps principal parts LLM-owned) are preserved
-   untouched. English, German, Spanish **and Portuguese** skip Wiktionary
-   `display_form` because head-template expansions are noisy whole head lines
-   (`dictionary (plural dictionaries)`; German `Haus n (strong, genitive
-   Hauses, …)`; es/pt have no ` • ` separator so the entire expansion would
-   leak). IPA is bucketed per dialect-split language: English into GA/RP when
+   untouched. English, German, Spanish, Portuguese **and French** skip
+   Wiktionary `display_form` because head-template expansions are noisy whole
+   head lines (`dictionary (plural dictionaries)`; German `Haus n (strong,
+   genitive Hauses, …)`; es/pt/fr have no ` • ` separator so the entire
+   expansion would leak). IPA is bucketed per dialect-split language: English into GA/RP when
    tags allow it, Portuguese into BR/EU from bare `Brazil`/`Portugal` tags
    (narrower regions like Rio-de-Janeiro dropped), Spanish into
    Castilian/LatAm via the θ-twin rule over untagged variants (a θ-variant
@@ -329,7 +330,11 @@ The enrichment path uses these shared steps:
    bucket — for German, sounds tagged only `standard` / `Germany` count as
    untagged too, and any regional tag (Austria / Switzerland /
    Southern-Germany) is dropped so a learner never gets a regional
-   pronunciation. `grounded_at` is stamped on success, and the exact merged patch is
+   pronunciation. French likewise accepts sounds tagged only France /
+   Belgium / Switzerland / Paris / Europe as untagged (a handful of common
+   words like `chien` have no untagged row at all) while overseas variants
+   (Quebec / Canada / Louisiana / Newfoundland) are dropped — no dialect
+   split. `grounded_at` is stamped on success, and the exact merged patch is
    snapshotted into `grounding_patch` — the focus view's per-field provenance
    indicators compare live grammar values against it. Idempotent across
    re-process: rows already grounded short-circuit, EXCEPT rows grounded

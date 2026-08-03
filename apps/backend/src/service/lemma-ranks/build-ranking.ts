@@ -21,12 +21,39 @@ const REAL_WORD_TOKEN_PATTERNS: Record<string, RegExp> = {
   es: /^[a-záéíóúüñ]+(?:-[a-záéíóúüñ]+)*$/,
   // Hyphen groups cover enclitic spellings (queixar-se, dá-lo).
   pt: /^[a-záàâãéêíóôõúüç]+(?:-[a-záàâãéêíóôõúüç]+)*$/,
+  // Apostrophe groups cover surviving interior elisions (aujourd'hui,
+  // quelqu'un — leading clitics and ligatures are already folded away);
+  // hyphen groups cover compounds (peut-être) and inversion clitics.
+  fr: /^[a-zàâäéèêëîïôöùûüÿç]+(?:['-][a-zàâäéèêëîïôöùûüÿç]+)*$/,
 }
 
 export const isRealWordToken = (foldedForm: string, targetLanguage: string): boolean => {
   const pattern = REAL_WORD_TOKEN_PATTERNS[targetLanguage]
   if (!pattern) throw new Error(`No real-word-token pattern for language ${targetLanguage}`)
   return pattern.test(foldedForm)
+}
+
+// wordfreq's tokenizer detaches French elision clitics as bare letters
+// ("l'homme" → "l" + "homme") — ~6% of French token mass. Left alone those
+// artifacts resolve to absurd single-letter abbreviation redirects (d→dame,
+// n→nord, m→merde) or to nothing at all (l, j — the acceptance failure).
+// Fold their mass into the function word each clitic elides. `l`→`le` and
+// `s`→`se` pick the dominant expansion (over la / si).
+const TOKENIZER_CLITIC_REMAP: Record<string, Record<string, string>> = {
+  fr: { l: 'le', d: 'de', c: 'ce', qu: 'que', j: 'je', n: 'ne', s: 'se', m: 'me', t: 'te' },
+}
+
+export const remapTokenizerClitics = (
+  wordTokens: ReadonlyMap<string, number>,
+  targetLanguage: string
+): Map<string, number> => {
+  const remap = TOKENIZER_CLITIC_REMAP[targetLanguage]
+  const out = new Map<string, number>()
+  for (const [token, frequency] of wordTokens) {
+    const target = remap?.[token] ?? token
+    out.set(target, (out.get(target) ?? 0) + frequency)
+  }
+  return out
 }
 
 // wordfreq is caseless, so a capitalized German lemma (Auch, the town) and
