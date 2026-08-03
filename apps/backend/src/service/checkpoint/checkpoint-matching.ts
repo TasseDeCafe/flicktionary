@@ -112,12 +112,25 @@ const MWE_PARTICLES: Record<string, ReadonlySet<string>> = {
   de: new Set(['sich']),
   es: new Set(['de', 'a', 'en', 'con', 'la', 'el', 'los', 'las', 'se', 'que']),
   pt: new Set(['de', 'a', 'o', 'os', 'as', 'em', 'com', 'se', 'que']),
+  fr: new Set(['de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'à', 'au', 'aux', 'en', 'se', 'que', 'ne']),
+}
+
+// French hyphenated compounds (peut-être, grand-mère) are MWEs too: the
+// segmenter splits them into separate word tokens at the hyphen, so they can
+// only ever match through the content-lemma path.
+export const isMweHeadword = (headword: string, targetLanguage: string): boolean => {
+  const trimmed = headword.trim()
+  return trimmed.includes(' ') || (targetLanguage === 'fr' && trimmed.includes('-'))
 }
 
 export const splitMweContentLemmas = (headword: string, targetLanguage: string): string[] => {
   const particles = MWE_PARTICLES[targetLanguage]
   const parts = foldCheckpointToken(headword, targetLanguage)
-    .split(/\s+/)
+    .split(targetLanguage === 'fr' ? /[\s-]+/ : /\s+/)
+    // The fold strips elided clitics only at the string head, so interior
+    // parts re-fold: `coup d'état` yields `état` — the same value the
+    // segmenter's `d'état` token folds to.
+    .map((p) => foldCheckpointToken(p, targetLanguage))
     .filter((p) => p.length > 0 && !particles?.has(p))
     // Pronominal parts inside an MWE (`darse cuenta de` → `darse`) reduce to
     // their base verb — text tokens resolve to `dar`, never `darse`, so the
@@ -140,7 +153,7 @@ export const findMweCandidates = (params: {
   lemmasByToken: ReadonlyMap<string, Set<string>>
   targetLanguage: string
 }): MatchedVocabRow[] => {
-  const mweRows = params.vocab.filter((row) => row.lookup.headword.trim().includes(' '))
+  const mweRows = params.vocab.filter((row) => isMweHeadword(row.lookup.headword, params.targetLanguage))
   if (mweRows.length === 0) return []
 
   // Lemma view of each segment: the segment's own folded tokens plus every

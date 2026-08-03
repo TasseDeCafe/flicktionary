@@ -13,8 +13,8 @@ describe('checkpoint_fold SQL-vs-TS parity', () => {
   // Inputs cover: stress marks, case, ё both cases, ß/ẞ, decomposed combining
   // marks (U+0308 and orthographic acutes that must survive via NFC-first),
   // surrounding whitespace, multi-word strings, hyphens, apostrophes, digits,
-  // and the empty string — across ru/de/en plus unconfigured languages (base
-  // fold only).
+  // French elision clitics / ligatures, and the empty string — across
+  // ru/de/en/fr plus unconfigured languages (base fold only).
   const vectors: Array<{ input: string; lang: string }> = [
     { input: 'Стола́', lang: 'ru' },
     { input: 'ЁЖ', lang: 'ru' },
@@ -44,6 +44,28 @@ describe('checkpoint_fold SQL-vs-TS parity', () => {
     { input: 'e\u0302\u0301', lang: 'vi' },
     // Decomposed Russian stress mark — still stripped (never composes).
     { input: 'стола\u0301', lang: 'ru' },
+    // French elision clitics (both apostrophe shapes), interior apostrophes,
+    // the qu-compounds vs bare qu, and the œ/æ ligature folds. The JS regex
+    // uses first-match alternation and Postgres uses POSIX longest-match —
+    // these vectors pin that both pick the same clitic.
+    { input: "l'homme", lang: 'fr' },
+    { input: 'L’Homme', lang: 'fr' },
+    { input: "j'arrive", lang: 'fr' },
+    { input: 'c’est', lang: 'fr' },
+    { input: "qu'il", lang: 'fr' },
+    { input: "jusqu'à", lang: 'fr' },
+    { input: "quoiqu'il", lang: 'fr' },
+    { input: "presqu'île", lang: 'fr' },
+    { input: "s'appeler", lang: 'fr' },
+    { input: "aujourd'hui", lang: 'fr' },
+    { input: 'aujourd’hui', lang: 'fr' },
+    { input: "quelqu'un", lang: 'fr' },
+    { input: 'cœur', lang: 'fr' },
+    { input: 'ŒUVRE', lang: 'fr' },
+    { input: 'ex æquo', lang: 'fr' },
+    { input: 'peut-être', lang: 'fr' },
+    { input: "d'", lang: 'fr' },
+    { input: "'", lang: 'fr' },
     { input: '', lang: 'ru' },
   ]
 
