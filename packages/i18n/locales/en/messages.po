@@ -280,6 +280,10 @@ msgstr "{total} cards across {languageCount} languages"
 msgid "{total} cards in {firstLanguageName}"
 msgstr "{total} cards in {firstLanguageName}"
 
+#: apps/web/src/features/sessions/components/session-difficulty-stat.tsx
+msgid "{unknownCount, plural, one {# unknown word} other {# unknown words}}"
+msgstr "{unknownCount, plural, one {# unknown word} other {# unknown words}}"
+
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{verifiedPct}% verified · rest claimed"
 msgstr "{verifiedPct}% verified · rest claimed"
