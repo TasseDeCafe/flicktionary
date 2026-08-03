@@ -110,6 +110,15 @@ const UNRELATED_REGIONAL_TAGS = new Set([
 // occasionally `Germany`); everything else regional is dropped.
 const NON_ENGLISH_ACCEPTED_TAGS = new Set(['standard', 'Germany'])
 
+// French kaikki IPA is 99.8% untagged, but a handful of common words carry
+// only region-tagged sounds (`chien` has just [Belgium, France] + [Quebec]).
+// Metropolitan/European tags are the standard reference pronunciation and are
+// accepted; Quebec / Canada / Louisiana / Newfoundland variants are dropped —
+// no dialect split for French, same untagged-bucket policy as German.
+// Full-dump validation (2026-08 dump): of 278 tagged-only entries this set
+// rescues 134; the rest are overseas-dialect-only or letter-name noise.
+const FRENCH_ACCEPTED_TAGS = new Set(['France', 'Belgium', 'Switzerland', 'Paris', 'Europe'])
+
 type SoundEntry = {
   ipa?: unknown
   tags?: unknown
@@ -277,10 +286,12 @@ export const extractIpaBag = (entry: KaikkiEntry, langCode: string): IpaBag => {
 
     // Other non-English: keep untagged sounds, plus those marked only as the
     // language's standard reference pronunciation (German tags its reference
-    // form `standard` / `Germany`). Any regional tag — Austria, Switzerland,
-    // Southern-Germany, etc. — fails the `every` check and is dropped, so a
-    // German learner is never served an Austrian pronunciation.
-    if (tags.length === 0 || tags.every((tag) => NON_ENGLISH_ACCEPTED_TAGS.has(tag))) {
+    // form `standard` / `Germany`; French tags it France / Belgium / …). Any
+    // other regional tag — Austria, Quebec, Southern-Germany, etc. — fails the
+    // `every` check and is dropped, so a German learner is never served an
+    // Austrian pronunciation nor a French learner a Louisiana one.
+    const acceptedTags = langCode === 'fr' ? FRENCH_ACCEPTED_TAGS : NON_ENGLISH_ACCEPTED_TAGS
+    if (tags.length === 0 || tags.every((tag) => acceptedTags.has(tag))) {
       pushUnique(untagged, ipa)
     }
   }

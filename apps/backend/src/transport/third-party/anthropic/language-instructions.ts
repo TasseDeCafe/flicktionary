@@ -193,6 +193,58 @@ Do not duplicate information across grammar and exploration_extras: register
 goes only in extras; case government goes only in grammar.government;
 etymology only in extras.etymology.`
 
+const FRENCH_INSTRUCTIONS = `French-specific guidance:
+
+- Default register: standard metropolitan (European) French, unless the
+  source's regional signals say otherwise. When a word or usage is chiefly
+  Québécois / Belgian / Swiss (septante, char, blonde, dépanneur), flag it
+  and give the metropolitan equivalent.
+- Headword form is ALWAYS clean: no article, no annotations. Nouns cite the
+  bare singular (\`maison\`, not \`la maison\` — the article is derived from
+  grammar.gender at render time). Verbs cite the infinitive; pronominal verbs
+  include the clitic in its citation shape (\`se laver\`, \`s'appeler\`,
+  \`s'en aller\`). Prepositional collocations include the canonical
+  preposition (\`avoir besoin de\`).
+
+Grammar field usage — populate per chunk:
+
+- grammar.pos — REQUIRED for every chunk.
+
+For nouns:
+- grammar.gender — REQUIRED: 'm' | 'f'. This drives the displayed article
+  (le/la), and French gender is a core learning target — never omit it. For
+  dual-gender nouns whose gender tracks the referent (\`élève\`, \`artiste\`)
+  or differs by sense (\`un livre\` / \`une livre\`), pick the gender of the
+  sense in the source and explain the split in the exploration notes.
+- grammar.number_only — 'plurale_tantum' for \`ciseaux\` / \`fiançailles\` /
+  \`mœurs\`; 'singulare_tantum' for mass nouns when relevant.
+
+For verbs:
+- grammar.is_reflexive — true for pronominal verbs in the relevant sense
+  (\`se souvenir\`, \`s'évanouir\`). For optionally-pronominal verbs, the
+  headword reflects the sense in the source.
+- grammar.government — the fixed preposition a learner would otherwise miss.
+  Format: "+ à", "+ de", "à + inf", "de + inf" (\`penser à\`, \`dépendre de\`,
+  \`réussir à + inf\`, \`décider de + inf\`). Omit for bare transitives.
+
+For all chunks:
+- grammar.notable_forms — irregular / surprising paradigm cells only, kept
+  tight (1–3 entries). Irregular plurals (\`œil\` →
+  [{label:'plural',form:'yeux'}], \`-al\` → \`-aux\`), irregular feminines
+  (\`vieux\` → [{label:'feminine',form:'vieille'}]), and for irregular verbs
+  the cells that surprise (\`aller\`: [{label:'1sg.pres',form:'vais'},
+  {label:'future',form:'irai'}]). Skip entirely for regular paradigms.
+- grammar.ipa — fill the \`untagged\` bucket with standard metropolitan
+  pronunciation.
+- When an h-initial word is h aspiré (no elision/liaison: \`le haricot\`,
+  \`la honte\`), say so in the exploration notes — the headword and grammar
+  fields don't encode it.
+- grammar.display_form — leave unset; French doesn't use it.
+
+Do not duplicate information across grammar and exploration_extras: register
+goes only in extras; preposition government goes only in grammar.government;
+etymology only in extras.etymology.`
+
 export type EnglishIpaDialect = 'ga' | 'rp'
 
 // The dialect block mirrors the user's English IPA dialect preference
@@ -260,6 +312,9 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   de: GERMAN_INSTRUCTIONS,
   deu: GERMAN_INSTRUCTIONS,
   german: GERMAN_INSTRUCTIONS,
+  fr: FRENCH_INSTRUCTIONS,
+  fra: FRENCH_INSTRUCTIONS,
+  french: FRENCH_INSTRUCTIONS,
 }
 
 // The dialect pick for whichever dialect-split language the session targets —

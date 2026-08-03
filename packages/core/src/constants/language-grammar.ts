@@ -70,10 +70,10 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     },
   },
   fr: {
-    fields: ['pos', 'display_form', 'gender', 'is_reflexive', 'government', 'number_only', 'notable_forms', 'notes'],
+    fields: ['pos', 'ipa', 'gender', 'is_reflexive', 'government', 'number_only', 'notable_forms', 'notes'],
     hints: {
-      display_form: { label: 'Pronunciation hint (IPA)', placeholder: 'e.g. /paʁ.le/' },
       government: { placeholder: 'e.g. + à, + de' },
+      ipa: { label: 'IPA' },
     },
   },
   pt: {
@@ -116,7 +116,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
 // gloss/lookup sheets). Add languages here only after running
 // `pnpm load:kaikki` for them and validating the extraction shape
 // (head_templates structure varies by language).
-export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en', 'de', 'es', 'pt'])
+export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en', 'de', 'es', 'pt', 'fr'])
 
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG
