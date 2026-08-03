@@ -7,6 +7,7 @@ import { useTmdbTvEpisodes } from '../api/sessions-hooks'
 export type TvEpisodePick = {
   episodeNumber: number
   name: string
+  stillUrl: string | null
 }
 
 type Props = {
@@ -49,7 +50,9 @@ export const TvEpisodePicker = ({ tmdbShowId, seasonNumber, onPick, disabled, ad
             }
             title={`${code} · ${episode.name}`}
             disabled={disabled}
-            onSelect={() => onPick({ episodeNumber: episode.episodeNumber, name: episode.name })}
+            onSelect={() =>
+              onPick({ episodeNumber: episode.episodeNumber, name: episode.name, stillUrl: episode.stillUrl })
+            }
           />
         )
       })}

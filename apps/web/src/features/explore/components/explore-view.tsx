@@ -11,7 +11,8 @@ import { checkIsTestUser } from '@/utils/test-users-utils'
 import { getUserEmail, useAuthStore } from '@/stores/auth-store'
 import { useSharedContentList } from '../api/explore-hooks'
 import { useAdminSharedContentList, type SharedContentEntryStatus } from '../api/explore-admin-hooks'
-import { ExploreCard, ExploreCardSkeleton } from './explore-card'
+import { MediaListItemSkeleton } from '@/features/sessions/components/media-card'
+import { ExploreListItem } from './explore-card'
 
 const ADMIN_STATUSES: SharedContentEntryStatus[] = ['live', 'unshared', 'removed']
 
@@ -98,17 +99,17 @@ export const ExploreView = () => {
           </div>
         )}
 
-        <div className='mt-4 grid grid-cols-1 gap-3 md:grid-cols-2'>
-          {isLoading && <SkeletonList count={6} renderItem={() => <ExploreCardSkeleton />} />}
+        <div className='mt-4 flex flex-col gap-3'>
+          {isLoading && <SkeletonList count={4} renderItem={() => <MediaListItemSkeleton />} />}
           {!isLoading && visible.length === 0 && (
-            <p className='text-muted-foreground text-sm md:col-span-2'>
+            <p className='text-muted-foreground text-sm'>
               {adminStatus !== null
                 ? `No ${adminStatus} entries.`
                 : t`Nothing shared here yet — content you share from your own library shows up for everyone.`}
             </p>
           )}
           {visible.map((entry) => (
-            <ExploreCard key={entry.id} entry={entry} />
+            <ExploreListItem key={entry.id} entry={entry} />
           ))}
         </div>
       </PageContainer>

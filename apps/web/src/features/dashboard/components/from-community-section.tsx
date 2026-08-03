@@ -6,27 +6,24 @@ import { MediaCardSkeleton } from '@/features/sessions/components/media-card'
 import { MediaRail, RAIL_CARD_CLASS } from './media-rail'
 import { useDashboardExploreEntries } from './use-dashboard-explore-entries'
 
-// Featured shared content for everyone, not just new users: a single-row rail
-// so it stays discoverable without competing with the session grid for
-// vertical space.
-export const ExploreFeaturedSection = () => {
+// The latest shared content that isn't already surfaced by the Featured rail.
+// On mobile this section's "Explore all" is the only way into /explore (no
+// bottom-nav tab — deliberate), so it sits on both breakpoints.
+export const FromCommunitySection = () => {
   const { t } = useLingui()
-  const { featured, isLoading } = useDashboardExploreEntries()
+  const { community, isLoading } = useDashboardExploreEntries()
 
-  // Render nothing once the queries prove the rail is empty (no featured
-  // entries in the user's languages, or everything already added) — a
-  // flash-in/flash-out section is worse than a late one.
-  if (!isLoading && featured.length === 0) return null
+  if (!isLoading && community.length === 0) return null
 
   return (
     <div className='mt-6'>
       <div className='flex items-baseline justify-between'>
-        <h2 className='text-base font-semibold'>{t`Featured content`}</h2>
+        <h2 className='text-base font-semibold'>{t`From the community`}</h2>
         <SeeMoreLink to='/explore'>{t`Explore all`}</SeeMoreLink>
       </div>
-      <MediaRail itemCount={featured.length}>
+      <MediaRail itemCount={community.length}>
         {isLoading && <SkeletonList count={4} renderItem={() => <MediaCardSkeleton className={RAIL_CARD_CLASS} />} />}
-        {featured.map((entry) => (
+        {community.map((entry) => (
           <ExploreMediaCard key={entry.id} entry={entry} className={RAIL_CARD_CLASS} />
         ))}
       </MediaRail>

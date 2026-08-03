@@ -14,6 +14,7 @@ export type TmdbTvShowPick = {
   originalTitle: string
   year: number | null
   posterUrl: string | null
+  backdropUrl: string | null
 }
 
 type Props = {
@@ -64,6 +65,7 @@ export const TmdbTvSearch = ({ onPick, disabled }: Props) => {
                   originalTitle: show.originalTitle ?? show.showTitle,
                   year: show.year,
                   posterUrl: show.posterUrl,
+                  backdropUrl: show.backdropUrl,
                 })
               }
             />
@@ -100,6 +102,7 @@ export const TmdbTvSearch = ({ onPick, disabled }: Props) => {
                   originalTitle: show.originalTitle,
                   year: show.year,
                   posterUrl: show.posterUrl,
+                  backdropUrl: show.backdropUrl,
                 })
               }
             />

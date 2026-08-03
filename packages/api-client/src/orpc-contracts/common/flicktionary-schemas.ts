@@ -443,6 +443,12 @@ export const StudySessionSchema = z.object({
   contentSourceTitle: z.string().nullable(),
   contentSourceType: ContentSourceTypeSchema.nullable(),
   contentSourcePosterUrl: z.string().nullable(),
+  // Landscape media for the 16:9 cards: the TMDB show/movie backdrop, and the
+  // episode-specific still for TV sessions (falls back to the backdrop).
+  contentSourceBackdropUrl: z.string().nullable(),
+  contentSourceStillUrl: z.string().nullable(),
+  // YouTube-only: powers the i.ytimg.com thumbnail, mirroring the Explore feed.
+  youtubeVideoId: z.string().nullable(),
   contentSourceYear: z.number().int().nullable(),
   // TV-only show identity, read from content_source.metadata. Null for every
   // other source type. Powers grouping the Sessions list by show and the

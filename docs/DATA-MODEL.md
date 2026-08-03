@@ -17,7 +17,8 @@ content_source
                                    -- 'tv' rows are one content_source per
                                    -- episode (metadata: tmdbShowId, showTitle,
                                    -- seasonNumber, episodeNumber, episodeTitle,
-                                   -- year, posterUrl); deduped globally on
+                                   -- year, posterUrl, backdropUrl, stillUrl);
+                                   -- deduped globally on
                                    -- (tmdbShowId, seasonNumber, episodeNumber)
                                    -- via a partial unique index, like movies.
                                    -- 'youtube' rows are created by the browser
@@ -29,7 +30,12 @@ content_source
                                    -- NOT deduped per (user, language).
   title               text
   language            text
-  metadata            jsonb        -- tmdb_id, year, isbn, url, etc.
+  metadata            jsonb        -- tmdbId, year, isbn, url, etc. TMDB image
+                                   -- URLs are snapshotted here at creation:
+                                   -- posterUrl (w342), backdropUrl (w780, the
+                                   -- 16:9 card media), and per-episode
+                                   -- stillUrl (tv only). Pre-existing rows are
+                                   -- filled by scripts/backfill-tmdb-backdrops.ts.
   created_by_user_id  uuid?        -- null for shared/OS-sourced rows
   created_at          timestamptz
 

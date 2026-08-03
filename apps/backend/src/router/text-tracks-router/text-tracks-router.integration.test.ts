@@ -31,6 +31,7 @@ const createContentSource = async (testApp: ReturnType<typeof buildTestApp>, tok
       originalTitle: 'Test Movie',
       year: 2020,
       posterUrl: null,
+      backdropUrl: null,
       language: 'de',
     })
   expect(response.status).toBe(201)

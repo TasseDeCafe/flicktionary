@@ -91,6 +91,7 @@ export const NewSessionWizard = () => {
       originalTitle: seedGroup.originalTitle ?? seedGroup.showTitle,
       year: seedGroup.year,
       posterUrl: seedGroup.posterUrl,
+      backdropUrl: seedGroup.backdropUrl,
     })
     setSeason({ seasonNumber: seedSeason, name: '' })
     setEpisode(null)
@@ -277,6 +278,7 @@ export const NewSessionWizard = () => {
           originalTitle: picked.originalTitle,
           year: picked.year,
           posterUrl: picked.posterUrl,
+          backdropUrl: picked.backdropUrl,
           language: targetLanguage,
         },
         {
@@ -365,6 +367,8 @@ export const NewSessionWizard = () => {
           episodeTitle: picked.name,
           year: tvShow.year,
           posterUrl: tvShow.posterUrl,
+          backdropUrl: tvShow.backdropUrl,
+          stillUrl: picked.stillUrl,
           language: targetLanguage,
         },
         {

@@ -9,6 +9,7 @@ const TmdbMovieSchema = z.object({
   originalTitle: z.string(),
   year: z.number().int().nullable(),
   posterUrl: z.string().nullable(),
+  backdropUrl: z.string().nullable(),
   overview: z.string(),
 })
 
@@ -18,6 +19,7 @@ const TmdbTvShowSchema = z.object({
   originalTitle: z.string(),
   year: z.number().int().nullable(),
   posterUrl: z.string().nullable(),
+  backdropUrl: z.string().nullable(),
   overview: z.string(),
 })
 
@@ -66,6 +68,7 @@ export const contentSourcesContract = {
         originalTitle: z.string(),
         year: z.number().int().nullable(),
         posterUrl: z.string().nullable(),
+        backdropUrl: z.string().nullable(),
         language: z.string(),
       })
     )
@@ -114,6 +117,8 @@ export const contentSourcesContract = {
         episodeTitle: z.string(),
         year: z.number().int().nullable(),
         posterUrl: z.string().nullable(),
+        backdropUrl: z.string().nullable(),
+        stillUrl: z.string().nullable(),
         language: z.string(),
       })
     )

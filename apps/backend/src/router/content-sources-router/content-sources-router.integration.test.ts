@@ -57,6 +57,7 @@ describe('content-sources-router guest source cap', () => {
       originalTitle: 'Some movie',
       year: 2020,
       posterUrl: null,
+      backdropUrl: 'https://image.tmdb.org/t/p/w780/test-backdrop.jpg',
       language: 'de',
     })
 
@@ -70,6 +71,8 @@ describe('content-sources-router guest source cap', () => {
       episodeTitle: 'Pilot',
       year: 2020,
       posterUrl: null,
+      backdropUrl: 'https://image.tmdb.org/t/p/w780/test-backdrop.jpg',
+      stillUrl: 'https://image.tmdb.org/t/p/w342/test-still.jpg',
       language: 'de',
     })
 
@@ -117,8 +120,13 @@ describe('content-sources-router guest source cap', () => {
     const tmdbShowId = uniqueTmdbId()
     const existingMovie = await createMovie(creatorToken, tmdbId)
     expect(existingMovie.status).toBe(201)
+    // The landscape images for the media cards are snapshotted into metadata
+    // at creation time.
+    expect(existingMovie.body.data.metadata.backdropUrl).toBe('https://image.tmdb.org/t/p/w780/test-backdrop.jpg')
     const existingEpisode = await createTvEpisode(creatorToken, tmdbShowId)
     expect(existingEpisode.status).toBe(201)
+    expect(existingEpisode.body.data.metadata.backdropUrl).toBe('https://image.tmdb.org/t/p/w780/test-backdrop.jpg')
+    expect(existingEpisode.body.data.metadata.stillUrl).toBe('https://image.tmdb.org/t/p/w342/test-still.jpg')
 
     const { id: guestId, token: guestToken } = await __getAnonymousSupabaseToken()
     await fillLibrary(guestId, creatorId, limit)
