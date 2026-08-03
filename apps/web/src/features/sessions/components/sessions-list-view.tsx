@@ -9,8 +9,9 @@ import { useListStudySessions, useSessionDifficulties } from '../api/sessions-ho
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { createSearchMatcher } from '@flicktionary/core/utils/search-match'
 import { buildSessionListItems } from '../utils/session-list-items'
-import { SessionCard, SessionCardSkeleton } from './session-card'
-import { ShowGroupCard } from './show-group-card'
+import { SessionListItem } from './session-card'
+import { ShowGroupListItem } from './show-group-card'
+import { MediaListItemSkeleton } from './media-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { SessionsEmptyState } from './sessions-empty-state'
 import { SessionsFilterControl, type SessionsSort } from './sessions-filter-control'
@@ -139,17 +140,17 @@ export const SessionsListView = () => {
           <div className='text-muted-foreground mt-3 text-xs tabular-nums'>{t`${sessionCount} sessions`}</div>
         )}
 
-        <div className='mt-3 flex flex-col gap-2'>
-          {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
+        <div className='mt-3 flex flex-col gap-3'>
+          {isLoading && <SkeletonList count={4} renderItem={() => <MediaListItemSkeleton />} />}
           {!isLoading && (data?.length ?? 0) === 0 && <SessionsEmptyState />}
           {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
             <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
           )}
           {items.map((item) =>
             item.kind === 'group' ? (
-              <ShowGroupCard key={item.key} group={item.group} />
+              <ShowGroupListItem key={item.key} group={item.group} />
             ) : (
-              <SessionCard
+              <SessionListItem
                 key={item.key}
                 session={item.session}
                 difficulty={difficulties[item.session.id]}

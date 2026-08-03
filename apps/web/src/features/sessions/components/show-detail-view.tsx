@@ -8,6 +8,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useListStudySessions, useSessionDifficulties } from '../api/sessions-hooks'
 import { deriveTvShows, latestEpisode } from '../utils/derive-tv-shows'
+import { MediaThumb } from './media-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 
@@ -33,7 +34,7 @@ export const ShowDetailView = () => {
   )
 
   // Episode rows carry the per-session difficulty stat (they don't render
-  // through SessionCard).
+  // through SessionListItem).
   const episodeSessionIds = useMemo(() => (group?.episodes ?? []).map((ep) => ep.sessionId), [group])
   const { difficulties, isLoading: isDifficultiesLoading } = useSessionDifficulties(episodeSessionIds)
 
@@ -65,11 +66,28 @@ export const ShowDetailView = () => {
             const code = `S${pad2(ep.seasonNumber)}E${pad2(ep.episodeNumber)}`
             const label = ep.episodeTitle ? `${code} · ${ep.episodeTitle}` : code
             return (
-              <Card key={ep.sessionId} className='hover:bg-accent active:bg-accent relative transition-colors'>
-                <Link to='/sessions/$sessionId' params={{ sessionId: ep.sessionId }} className='block p-4 pr-14'>
-                  <div className='truncate text-sm font-medium'>{label}</div>
-                  <div className='text-muted-foreground text-xs'>
-                    <SessionDifficultyStat difficulty={difficulties[ep.sessionId]} isLoading={isDifficultiesLoading} />
+              <Card key={ep.sessionId} className='hover:bg-accent active:bg-accent relative py-0 transition-colors'>
+                <Link
+                  to='/sessions/$sessionId'
+                  params={{ sessionId: ep.sessionId }}
+                  className='flex items-center gap-3 p-3 pr-14'
+                >
+                  {/* Episode-specific still when TMDB has one; the show
+                      backdrop keeps the row from going blank otherwise. */}
+                  <MediaThumb
+                    imageUrl={ep.stillUrl ?? group.backdropUrl}
+                    title={label}
+                    type='tv'
+                    className='w-28 shrink-0 rounded'
+                  />
+                  <div className='min-w-0 flex-1'>
+                    <div className='truncate text-sm font-medium'>{label}</div>
+                    <div className='text-muted-foreground text-xs'>
+                      <SessionDifficultyStat
+                        difficulty={difficulties[ep.sessionId]}
+                        isLoading={isDifficultiesLoading}
+                      />
+                    </div>
                   </div>
                 </Link>
                 <Button

@@ -7,6 +7,7 @@ export type TvShowEpisode = {
   episodeTitle: string | null
   createdAt: string
   contentSourceTitle: string | null
+  stillUrl: string | null
 }
 
 export type TvShowGroup = {
@@ -15,6 +16,7 @@ export type TvShowGroup = {
   originalTitle: string | null
   year: number | null
   posterUrl: string | null
+  backdropUrl: string | null
   language: string
   episodes: TvShowEpisode[]
   latestCreatedAt: string
@@ -40,6 +42,7 @@ export const deriveTvShows = (sessions: StudySession[]): TvShowGroup[] => {
       episodeTitle: s.episodeTitle,
       createdAt: s.createdAt,
       contentSourceTitle: s.contentSourceTitle,
+      stillUrl: s.contentSourceStillUrl,
     }
 
     const existing = groups.get(s.tmdbShowId)
@@ -53,6 +56,7 @@ export const deriveTvShows = (sessions: StudySession[]): TvShowGroup[] => {
         originalTitle: s.originalTitle,
         year: s.contentSourceYear,
         posterUrl: s.contentSourcePosterUrl,
+        backdropUrl: s.contentSourceBackdropUrl,
         language: s.targetLanguage,
         episodes: [episode],
         latestCreatedAt: s.createdAt,

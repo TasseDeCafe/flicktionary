@@ -13,6 +13,7 @@ export type TmdbMoviePick = {
   originalTitle: string
   year: number | null
   posterUrl: string | null
+  backdropUrl: string | null
 }
 
 type Props = {
@@ -60,6 +61,7 @@ export const TmdbSearch = ({ onPick, disabled }: Props) => {
                   originalTitle: movie.originalTitle,
                   year: movie.year,
                   posterUrl: movie.posterUrl,
+                  backdropUrl: movie.backdropUrl,
                 })
               }
             />

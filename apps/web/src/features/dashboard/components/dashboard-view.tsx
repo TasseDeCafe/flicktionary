@@ -5,8 +5,9 @@ import { PageContainer } from '@/components/page-container'
 import { SeeMoreLink } from '@/components/ui/see-more-link'
 import { useListStudySessions, useSessionDifficulties } from '@/features/sessions/api/sessions-hooks'
 import { buildSessionListItems } from '@/features/sessions/utils/session-list-items'
-import { SessionCard, SessionCardSkeleton } from '@/features/sessions/components/session-card'
-import { ShowGroupCard } from '@/features/sessions/components/show-group-card'
+import { SessionMediaCard } from '@/features/sessions/components/session-card'
+import { ShowGroupMediaCard } from '@/features/sessions/components/show-group-card'
+import { MediaCardSkeleton } from '@/features/sessions/components/media-card'
 import { SessionRemoveDialog } from '@/features/sessions/components/session-remove-dialog'
 import { SessionsEmptyState } from '@/features/sessions/components/sessions-empty-state'
 import { GettingStartedChecklist } from '@/features/sessions/components/getting-started-checklist'
@@ -18,9 +19,18 @@ import { ActivityCalendarCard } from './activity-calendar-card'
 import { DailyMixBanner } from './daily-mix-banner'
 import { DashboardCarousel } from './dashboard-carousel'
 import { ExploreFeaturedSection } from './explore-featured-section'
+import { FromCommunitySection } from './from-community-section'
+import { MediaRail } from './media-rail'
 
-// The dashboard previews this many recent rows; the full list lives on /sessions.
-const RECENT_COUNT = 12
+// The dashboard previews this many recent items; the full list lives on
+// /sessions. Two grid rows on desktop, one swipeable rail on mobile.
+const RECENT_COUNT = 8
+
+// MediaRail on mobile (edge fades like the shared-content rails), a wrapping
+// 4-column grid on desktop — the grid never overflows horizontally, so the
+// rail's fades and chevrons hide themselves there.
+const RECENT_SCROLLER_CLASS = 'md:grid md:grid-cols-4 md:overflow-visible'
+const RECENT_CARD_CLASS = 'w-[230px] shrink-0 snap-start md:w-auto'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -87,30 +97,36 @@ export const DashboardView = () => {
       <ExploreFeaturedSection />
 
       <div className='mt-6 flex items-baseline justify-between'>
-        <h2 className='text-base font-semibold'>{t`Recent`}</h2>
+        <h2 className='text-base font-semibold'>{t`Continue learning`}</h2>
         <SeeMoreLink to='/sessions'>{t`All sessions`}</SeeMoreLink>
       </div>
-      <div className='mt-2 grid grid-cols-1 gap-3 md:grid-cols-2'>
-        {isLoading && <SkeletonList count={Math.min(RECENT_COUNT, 6)} renderItem={() => <SessionCardSkeleton />} />}
-        {!isLoading && (data?.length ?? 0) === 0 && (
-          <div className='md:col-span-2'>
-            <SessionsEmptyState />
-          </div>
-        )}
-        {recentItems.map((item) =>
-          item.kind === 'group' ? (
-            <ShowGroupCard key={item.key} group={item.group} />
-          ) : (
-            <SessionCard
-              key={item.key}
-              session={item.session}
-              difficulty={difficulties[item.session.id]}
-              difficultyLoading={isDifficultiesLoading}
-              onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
-            />
-          )
-        )}
-      </div>
+      {!isLoading && (data?.length ?? 0) === 0 ? (
+        <div className='mt-2'>
+          <SessionsEmptyState />
+        </div>
+      ) : (
+        <MediaRail itemCount={recentItems.length} scrollerClassName={RECENT_SCROLLER_CLASS}>
+          {isLoading && (
+            <SkeletonList count={4} renderItem={() => <MediaCardSkeleton className={RECENT_CARD_CLASS} />} />
+          )}
+          {recentItems.map((item) =>
+            item.kind === 'group' ? (
+              <ShowGroupMediaCard key={item.key} group={item.group} className={RECENT_CARD_CLASS} />
+            ) : (
+              <SessionMediaCard
+                key={item.key}
+                session={item.session}
+                difficulty={difficulties[item.session.id]}
+                difficultyLoading={isDifficultiesLoading}
+                onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
+                className={RECENT_CARD_CLASS}
+              />
+            )
+          )}
+        </MediaRail>
+      )}
+
+      <FromCommunitySection />
 
       <SessionRemoveDialog
         open={removeTarget !== null}

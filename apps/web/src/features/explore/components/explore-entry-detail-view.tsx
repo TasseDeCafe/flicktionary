@@ -22,7 +22,7 @@ const routeApi = getRouteApi('/_authenticated/_app/explore/$entryId')
 const ExploreEntryDetailSkeleton = () => (
   <div className='mx-auto w-full max-w-2xl px-4 py-6'>
     <div className='flex items-center gap-4'>
-      <Skeleton className='h-20 w-14 shrink-0 rounded' />
+      <Skeleton className='aspect-video w-36 shrink-0 rounded' />
       <div className='flex min-w-0 flex-1 flex-col gap-2'>
         <Skeleton className='h-6 w-2/3' />
         <Skeleton className='h-4 w-40' />
@@ -88,7 +88,7 @@ export const ExploreEntryDetailView = () => {
           <>
             <div className='mx-auto w-full max-w-2xl flex-1 px-4 py-6'>
               <div className='flex items-center gap-4'>
-                <ExploreThumb entry={entry} className='h-20 w-14' />
+                <ExploreThumb entry={entry} className='w-36 shrink-0 rounded' />
                 <div className='min-w-0 flex-1'>
                   <h2 className='text-lg font-semibold'>{entry.title}</h2>
                   <div className='text-muted-foreground truncate text-sm'>{metaParts.join(' · ')}</div>
