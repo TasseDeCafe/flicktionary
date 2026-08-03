@@ -32,10 +32,12 @@ export const SIGNING_KEY_PATH = path.join(__dirname, '../../supabase/supabase-te
 const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Promise<string> => {
   const supabaseClaims: SupabaseClaims = {
     sub: id,
+    // The top-level claim is where GoTrue puts the verified email — the only
+    // email source the auth middleware trusts. Metadata carries cosmetics.
+    email,
     user_metadata: {
       name: 'John',
       full_name: 'Doe',
-      email: email,
       avatar_url: 'https://www.example.com/john-doe.png',
     },
   }
@@ -64,7 +66,7 @@ export const __getAnonymousSupabaseToken = async (): Promise<{ id: string; token
   }
   const id = data?.user?.id || ''
   await sql`UPDATE auth.users SET is_anonymous = true WHERE id = ${id}`
-  const token = await signSupabaseToken({ sub: id, is_anonymous: true, user_metadata: {} }, SIGNING_KEY_PATH)
+  const token = await signSupabaseToken({ sub: id, is_anonymous: true, email: '', user_metadata: {} }, SIGNING_KEY_PATH)
   return { id, token }
 }
 

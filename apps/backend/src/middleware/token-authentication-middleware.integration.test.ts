@@ -53,8 +53,9 @@ describe('token-authentication-middleware guest gate', () => {
 
 // Invokes the middleware directly (no HTTP round-trip) to inspect res.locals:
 // the email it resolves feeds every email-assuming handler (extension pairing,
-// billing, removals). A guest converted via updateUser({ email }) carries the
-// verified address only in the top-level claim — user_metadata stays empty.
+// billing, removals) plus the test-user gate. Only the verified top-level
+// claim may count — user_metadata is client-writable, so a guest could spoof
+// any address into it via updateUser({ data: { email } }).
 describe('token-authentication-middleware email resolution', () => {
   const invokeMiddleware = async (token: string) => {
     const middleware = tokenAuthenticationMiddleware({ isGuestModeEnabled: true })
@@ -67,13 +68,9 @@ describe('token-authentication-middleware email resolution', () => {
     return { locals: res.locals, nextCalled }
   }
 
-  test('prefers the top-level verified email claim over user_metadata', async () => {
+  test('resolves the email from the top-level verified claim', async () => {
     const token = await signSupabaseToken(
-      {
-        sub: __generateUniqueId('sub'),
-        email: 'verified@example.com',
-        user_metadata: { email: 'metadata@example.com' },
-      },
+      { sub: __generateUniqueId('sub'), email: 'verified@example.com', user_metadata: {} },
       SIGNING_KEY_PATH
     )
 
@@ -83,21 +80,26 @@ describe('token-authentication-middleware email resolution', () => {
     expect(locals.email).toBe('verified@example.com')
   })
 
-  test('falls back to the user_metadata email when the top-level claim is absent', async () => {
+  test('ignores a spoofed user_metadata email on an anonymous token (GoTrue stamps an empty claim)', async () => {
     const token = await signSupabaseToken(
-      { sub: __generateUniqueId('sub'), user_metadata: { email: 'metadata@example.com' } },
+      {
+        sub: __generateUniqueId('sub'),
+        is_anonymous: true,
+        email: '',
+        user_metadata: { email: 'spoofed-test-user@example.com' },
+      },
       SIGNING_KEY_PATH
     )
 
     const { locals, nextCalled } = await invokeMiddleware(token)
 
     expect(nextCalled).toBe(true)
-    expect(locals.email).toBe('metadata@example.com')
+    expect(locals.email).toBeUndefined()
   })
 
-  test('resolves no email for anonymous tokens (GoTrue stamps an empty claim)', async () => {
+  test('ignores the user_metadata email even when the top-level claim is absent entirely', async () => {
     const token = await signSupabaseToken(
-      { sub: __generateUniqueId('sub'), is_anonymous: true, email: '', user_metadata: {} },
+      { sub: __generateUniqueId('sub'), user_metadata: { email: 'metadata@example.com' } },
       SIGNING_KEY_PATH
     )
 

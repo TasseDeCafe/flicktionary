@@ -7,22 +7,16 @@ export const adminClient = () =>
   })
 
 // Idempotent: creating an already-registered email is treated as success.
-// user_metadata.email matters: the backend auth middleware reads the email
-// from there (normal signups get it from GoTrue; admin-created users don't).
+// The backend reads the email from the token's top-level claim, which GoTrue
+// mints from auth.users.email — no user_metadata needed.
 export const ensureUser = async (admin, email) => {
   const { error } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
-    user_metadata: { email },
   })
   if (error && error.code !== 'email_exists' && !/already.*registered/i.test(error.message)) {
     throw error
   }
-}
-
-export const ensureUserMetadataEmail = async (admin, userId, email) => {
-  const { error } = await admin.auth.admin.updateUserById(userId, { user_metadata: { email } })
-  if (error) throw error
 }
 
 export const mintTokenHash = async (admin, email) => {
