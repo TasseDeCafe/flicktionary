@@ -45,14 +45,13 @@ type MediaCardProps = {
 // Vertical card: media on top (flush, zero padding), 2-line clamped title,
 // meta line below with room reserved for the action overlay.
 export const MediaCard = ({ linkProps, ariaLabel, media, title, meta, action, className }: MediaCardProps) => (
-  <Card
-    className={cn(
-      'hover:bg-accent active:bg-accent relative h-full gap-0 overflow-hidden py-0 transition-colors',
-      className
-    )}
-  >
+  <Card className={cn('hover:bg-accent active:bg-accent relative h-full gap-0 py-0 transition-colors', className)}>
     <Link {...linkProps} className='flex h-full flex-col' aria-label={ariaLabel}>
-      {media}
+      {/* The media covers the card's 1px border via negative margins and
+          rounds its own top corners, so the image runs truly edge-to-edge —
+          the border reads as an outline of the text area only, not a rim
+          around the image. */}
+      <div className='-mx-px -mt-px overflow-hidden rounded-t-xl'>{media}</div>
       <div className='flex-1 p-3 pt-2'>
         <div className='line-clamp-2 text-sm font-semibold'>{title}</div>
         <div className={cn('text-muted-foreground mt-1 truncate text-xs', action ? 'pr-8' : undefined)}>{meta}</div>
@@ -63,8 +62,8 @@ export const MediaCard = ({ linkProps, ariaLabel, media, title, meta, action, cl
 )
 
 export const MediaCardSkeleton = ({ className }: { className?: string }) => (
-  <Card className={cn('gap-0 overflow-hidden py-0', className)}>
-    <Skeleton className='aspect-video w-full rounded-none' />
+  <Card className={cn('gap-0 py-0', className)}>
+    <Skeleton className='-mx-px -mt-px aspect-video rounded-none rounded-t-xl' />
     <div className='flex flex-col gap-1.5 p-3 pt-2'>
       <Skeleton className='h-4 w-5/6' />
       <Skeleton className='h-3 w-2/3' />
@@ -98,9 +97,13 @@ export const MediaListItem = ({
   action,
   chevron,
 }: MediaListItemProps) => (
-  <Card className='hover:bg-accent active:bg-accent relative gap-0 overflow-hidden py-0 transition-colors'>
+  <Card className='hover:bg-accent active:bg-accent relative gap-0 py-0 transition-colors'>
     <Link {...linkProps} className='flex flex-col md:flex-row md:items-stretch' aria-label={ariaLabel}>
-      <div className='md:w-[172px] md:shrink-0'>{media}</div>
+      {/* Same border-covering bleed as MediaCard: over the top edge when
+          stacked (mobile), over the left edge in the desktop row. */}
+      <div className='-mx-px -mt-px overflow-hidden rounded-t-xl md:-my-px md:mr-0 md:w-[172px] md:shrink-0 md:rounded-l-xl md:rounded-tr-none'>
+        {media}
+      </div>
       <div className='min-w-0 flex-1 p-3 md:flex md:flex-col md:justify-center md:px-4'>
         <div className='line-clamp-2 text-base font-semibold md:truncate'>{title}</div>
         <div
@@ -126,9 +129,9 @@ export const MediaListItem = ({
 )
 
 export const MediaListItemSkeleton = () => (
-  <Card className='gap-0 overflow-hidden py-0'>
+  <Card className='gap-0 py-0'>
     <div className='flex flex-col md:flex-row md:items-stretch'>
-      <Skeleton className='aspect-video w-full rounded-none md:w-[172px] md:shrink-0' />
+      <Skeleton className='-mx-px -mt-px aspect-video rounded-none rounded-t-xl md:-my-px md:mr-0 md:w-[172px] md:shrink-0 md:rounded-l-xl md:rounded-tr-none' />
       <div className='flex min-w-0 flex-1 flex-col gap-2 p-3 md:justify-center md:px-4'>
         <Skeleton className='h-5 w-2/3' />
         <Skeleton className='h-3 w-40' />
