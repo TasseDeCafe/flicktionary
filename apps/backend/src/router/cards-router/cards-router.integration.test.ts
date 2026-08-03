@@ -12,7 +12,8 @@ import { UserTargetLanguagePrefsRepository } from '../../transport/database/user
 
 // One scripted basicDataPass row; bindChunksToSingleHighlight re-points the
 // highlightId/segmentId to the synthetic adhoc highlight, so placeholders are
-// fine here. Spanish target: no kaikki dump → no Wiktionary grounding runs.
+// fine here. Spanish is kaikki-allowlisted, but the test DB has no dump rows,
+// so no Wiktionary grounding fires.
 const scriptedChunk = {
   source: 'highlight' as const,
   headword: 'correr',

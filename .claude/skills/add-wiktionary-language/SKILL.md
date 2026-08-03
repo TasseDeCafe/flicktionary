@@ -9,7 +9,7 @@ You are adding a language code (e.g. `de`, `fr`, `es`) to the set of languages w
 
 The grounding pipeline has three moving parts, all keyed on a two/three-letter `lang_code` matching kaikki's value:
 
-1. **Loader** — `apps/backend/scripts/load-kaikki.ts` decides which `lang_code` values survive the filter when streaming the raw `raw-wiktextract-data.jsonl.gz` dump into `wiktionary_entries` / `wiktionary_forms`. The standalone redirect rebuilder (`scripts/build-wiktionary-redirects.ts`) and the lemma-ranks scripts keep their own `DEFAULT_LANGUAGES` lists in sync.
+1. **Loader** — `LOAD_LANGUAGES` in `apps/backend/scripts/kaikki-languages.ts` decides which `lang_code` values survive the filter when `scripts/load-kaikki.ts` streams the raw `raw-wiktextract-data.jsonl.gz` dump into `wiktionary_entries` / `wiktionary_forms`. The standalone redirect rebuilder (`scripts/build-wiktionary-redirects.ts`) and `scripts/build-lemma-ranks.ts` import the same list; only `scripts/export-wordfreq.py` keeps its own `DEFAULT_LANGUAGES`.
 2. **Grounding allowlist** — `KAIKKI_LANGUAGES` in `packages/core/src/constants/language-grammar.ts` is the single set gating everything: backend grounding, the focus view's "Wiktionary" badge, and checkpoint reviews. (There is no separate backend config file.)
 3. **Per-language extractor** — `apps/backend/src/service/wiktionary-grounding/extract.ts` owns a `LANGUAGE_EXTRACTORS` registry (per-POS parsers + a `skipDisplayForm` flag per language; no if/else chain — adding a language is one registry entry at most). The default path (generic POS + IPA) works for most languages. IPA bucketing lives in `extract/ipa.ts`: English GA/RP from region tags, Portuguese BR/EU from bare `Brazil`/`Portugal` tags, Spanish Castilian/LatAm via the θ-twin rule over untagged variants; every other language keeps the `untagged` bucket.
 
@@ -19,15 +19,15 @@ Always read the current state of these files before editing — the example valu
 
 For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for German):
 
-1. **Loader** — in `apps/backend/scripts/load-kaikki.ts`, append `<code>` to `LOAD_LANGUAGES`:
+1. **Loader** — in `apps/backend/scripts/kaikki-languages.ts`, append `<code>` to `LOAD_LANGUAGES`:
 
    ```ts
-   const LOAD_LANGUAGES = ['ru', 'en', '<code>'] as const
+   export const LOAD_LANGUAGES = ['ru', 'en', '<code>'] as const
    ```
 
    No other loader change is needed: the filter writes `lang_code` per row, the CSVs are language-tagged, and the workflow caches by gzipped raw dump.
 
-2. **Redirects/ranks defaults** — add `<code>` to `DEFAULT_LANGUAGES` in `scripts/build-wiktionary-redirects.ts` so standalone no-arg rebuilds cover it (the ranks-script lists come later, step 10).
+2. **Redirects/ranks defaults** — nothing to do for the TS scripts (`build-wiktionary-redirects.ts` and `build-lemma-ranks.ts` import `LOAD_LANGUAGES`); the Python wordfreq list comes later, step 11.
 
 3. **Grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the code to `KAIKKI_LANGUAGES` (the single set — backend gates and web badges both read it). Note the blast radius: this set also hard-gates **checkpoint reviews** (docs/SRS.md §6b) — adding the language turns on the reader-footer / close-out / extension checkpoint affordances for it, so the checkpoint-matching decisions in the step below are part of shipping, not optional polish.
 
@@ -72,18 +72,21 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
 6. **Checkpoint-matching decisions** — checkpoint reviews (docs/SRS.md §6b) match span tokens against the user's vocab through language-keyed folding and particle rules. For each, the default path may be fine, but decide explicitly:
 
-   - **Fold twins.** `foldCheckpointToken` in `packages/core/src/utils/checkpoint-fold.ts` and the SQL function `public.checkpoint_fold` are byte-for-byte twins (the SQL side feeds expression indexes on `wiktionary_forms`/`wiktionary_entries`/`wiktionary_form_redirects`). The default fold (strip U+0301, NFC, trim, lowercase) covers most languages; add a per-language orthography fold ONLY if the language has variant spellings that must unify (existing: ru `ё`→`е`, de `ß`→`ss`). If you add one, change BOTH sides in lockstep — the SQL side via a NEW migration that re-creates the function AND rebuilds the expression indexes (the fold's output changed) — and extend the shared vectors in `checkpoint-fold.unit.test.ts` plus the SQL-vs-TS parity test (`checkpoint-fold-parity.integration.test.ts`).
+   - **Fold twins.** `foldCheckpointToken` in `packages/core/src/utils/checkpoint-fold.ts` and the SQL function `public.checkpoint_fold` are byte-for-byte twins (the SQL side feeds expression indexes on `wiktionary_forms`/`wiktionary_entries`/`wiktionary_form_redirects`). The default fold (strip U+0301, NFC, trim, lowercase) covers most languages; add a per-language orthography fold ONLY if the language has variant spellings that must unify (existing: ru `ё`→`е`, de `ß`→`ss`, fr `’`→`'` + `œ`/`æ` digraphs + leading elision-clitic strip). If you add one, change BOTH sides in lockstep — the SQL side via a NEW migration that re-creates the function AND rebuilds the expression indexes (the fold's output changed) — and extend the shared vectors in `checkpoint-fold.unit.test.ts` plus the SQL-vs-TS parity test (`checkpoint-fold-parity.integration.test.ts`).
    - **Headword particles.** `foldUserHeadwordCandidates` (same file) de-particles LLM-normalized headwords so `to run`/`sich freuen` match the kaikki lemma. If the new language's citation convention prefixes a particle, add the strip rule.
-   - **MWE particles.** `MWE_PARTICLES` in `apps/backend/src/service/checkpoint/checkpoint-matching.ts` lists function words dropped when splitting a multi-word headword into content lemmas. Add the language's function words if MWEs are common in it; an absent entry just means no words are dropped.
+   - **MWE particles.** `MWE_PARTICLES` in `apps/backend/src/service/checkpoint/checkpoint-matching.ts` lists function words dropped when splitting a multi-word headword into content lemmas. Add the language's function words if MWEs are common in it; an absent entry just means no words are dropped. `isMweHeadword` (same file) decides what even counts as an MWE — French adds hyphens because its compounds (`peut-être`) tokenize apart; consider whether the new language needs the same.
+   - **Real-word token pattern.** `REAL_WORD_TOKEN_PATTERNS` in `apps/backend/src/service/lemma-ranks/build-ranking.ts` needs a regex for the language (it THROWS for unknown languages, and checkpoint claims/known-lemma flows run tokens through it). The pattern sees checkpoint_fold OUTPUT — write it for post-fold text (e.g. fr never sees `œ` or a leading `l'` because the fold rewrote them).
    - A redirects rebuild needs no separate step — `load-kaikki.ts` rebuilds `wiktionary_form_redirects` in the same run (locally and in the prod workflow).
 
-7. **Unit tests** — extend `apps/backend/src/service/wiktionary-grounding/extract.unit.test.ts`. At minimum, add:
+7. **LLM steering** — add a language block in `apps/backend/src/transport/third-party/anthropic/language-instructions.ts` (headword citation conventions, per-field fill rules, which `grammar.ipa` bucket to fill) and register its aliases in `LANGUAGE_INSTRUCTIONS` (or a builder if the language has a dialect pref). Without one the model gets zero language-specific guidance. The grammar tool schema needs no per-language change — it derives from `LANGUAGE_GRAMMAR`.
+
+8. **Unit tests** — extend `apps/backend/src/service/wiktionary-grounding/extract.unit.test.ts`. At minimum, add:
 
    - A fixture for the new langCode that exercises the generic POS fallback and asserts the Russian-specific extractors do *not* fire (`gender`, `aspect`, etc. should be undefined for non-`ru`).
    - An IPA fixture covering the untagged path.
    - If you added 5a/5b/5c logic, fixtures for the new behavior.
 
-8. **Type / lint check**:
+9. **Type / lint check**:
 
    ```bash
    pnpm check:types
@@ -91,7 +94,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
    pnpm --filter @flicktionary/backend exec vitest run src/service/wiktionary-grounding
    ```
 
-9. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, rebuilds `wiktionary_form_redirects`, and rewrites the on-disk reference-table snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` (see `scripts/snapshot-reference-tables.ts`) that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
+10. **Local data load** — the loader downloads the raw dump (~2.5 GB gz) once, filters by `LOAD_LANGUAGES`, COPYs into the tables, rebuilds `wiktionary_form_redirects`, and rewrites the on-disk reference-table snapshot at `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` (see `scripts/snapshot-reference-tables.ts`) that `pnpm db:reset` replays. After changing `LOAD_LANGUAGES`, the existing snapshot is stale (it doesn't have the new language). Run:
 
    ```bash
    doppler run -- pnpm --filter @flicktionary/backend load:kaikki
@@ -106,7 +109,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
    From then on `pnpm db:reset` will restore all enabled languages from the snapshot in seconds.
 
-10. **Lemma-ranks build** — the personalized difficulty stat and coverage read only treat a language as supported once it has a `lemma_rank_builds` row (docs/DATA-MODEL.md § Lemma frequency ranks), so a new grounded language also needs a ranks build. Check first that wordfreq even covers the language (`top_n_list` in `scripts/export-wordfreq.py` throws for unsupported codes) — if it doesn't, the language ships without difficulty support and you're done. Otherwise, add `<code>` to `DEFAULT_LANGUAGES` in both `scripts/export-wordfreq.py` and `scripts/build-lemma-ranks.ts`, then:
+11. **Lemma-ranks build** — the personalized difficulty stat and coverage read only treat a language as supported once it has a `lemma_rank_builds` row (docs/DATA-MODEL.md § Lemma frequency ranks), so a new grounded language also needs a ranks build. Check first that wordfreq even covers the language (`top_n_list` in `scripts/export-wordfreq.py` throws for unsupported codes) — if it doesn't, the language ships without difficulty support and you're done. Otherwise, add `<code>` to `DEFAULT_LANGUAGES` in `scripts/export-wordfreq.py` (the TS ranks script already imports `LOAD_LANGUAGES`), then:
 
     ```bash
     pnpm --filter @flicktionary/backend export:wordfreq <code>
@@ -115,7 +118,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
     The build fails loud below the 95% mass-matched acceptance threshold instead of publishing a degraded list — investigate resolution misses rather than lowering the bar. A successful local run also refreshes the reference-table snapshot, so `pnpm db:reset` keeps the ranks.
 
-11. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards (and checkpoint matching with it), so don't auto-trigger. The run rebuilds `wiktionary_form_redirects` too — no separate redirect step. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`). The prod lemma-ranks build is a separate manual step after the load lands: `doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts <code>` (per-language atomic publish; safe while the app is live).
+12. **Production data load** — done out-of-band by manually triggering `.github/workflows/load-kaikki-prod.yaml` from `main` during a low-traffic window. The TRUNCATE+COPY temporarily knocks grounding offline for in-flight cards (and checkpoint matching with it), so don't auto-trigger. The run rebuilds `wiktionary_form_redirects` too — no separate redirect step. If the cached gz dump is stale and you want to force a fresh download, bump the cache key in the workflow (`kaikki-raw-v1` → `kaikki-raw-v2`). The prod lemma-ranks build is a separate manual step after the load lands: `doppler run --config prd -- npx tsx scripts/build-lemma-ranks.ts <code>` (per-language atomic publish; safe while the app is live).
 
 ## Removing a language
 

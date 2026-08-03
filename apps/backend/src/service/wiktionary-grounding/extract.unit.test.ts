@@ -680,3 +680,111 @@ describe('extractGrammarPatch — es/pt end to end', () => {
     expect(patch.ipa).toEqual({ cas: '/θeɾˈbeθa/', lam: '/seɾˈbesa/' })
   })
 })
+
+// French fixtures mirror real entries from the raw dump (maison, chien,
+// ciseaux, parler).
+describe('extractGrammarPatch — French nouns', () => {
+  it('reads gender from fr-noun args.1 and skips the noisy display form', () => {
+    const entry: KaikkiEntry = {
+      word: 'maison',
+      pos: 'noun',
+      head_templates: [{ name: 'fr-noun', args: { '1': 'f' }, expansion: 'maison f (plural maisons)' }],
+      sounds: [{ ipa: '/mɛ.zɔ̃/' }, { ipa: '/me.zɔ̃/' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(entry, 'fr')).toEqual({
+      pos: 'noun',
+      gender: 'f',
+      ipa: { untagged: '/mɛ.zɔ̃/' },
+    })
+  })
+
+  it('flags pluralia tantum via the -p suffix', () => {
+    const entry: KaikkiEntry = {
+      word: 'ciseaux',
+      pos: 'noun',
+      head_templates: [{ name: 'fr-noun', args: { '1': 'm-p' }, expansion: 'ciseaux m pl (plural only)' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(entry, 'fr')).toEqual({ pos: 'noun', gender: 'm', number_only: 'plurale_tantum' })
+  })
+
+  it('leaves dual-gender and head-template rows ungendered', () => {
+    const dual: KaikkiEntry = {
+      word: 'après-midi',
+      pos: 'noun',
+      head_templates: [{ name: 'fr-noun', args: { '1': 'm,f' }, expansion: 'après-midi m or f' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(dual, 'fr').gender).toBeUndefined()
+    // `head|fr|noun form` rows are inflected forms / misspellings — no gender.
+    const form: KaikkiEntry = {
+      word: 'tables',
+      pos: 'noun',
+      head_templates: [{ name: 'head', args: { '1': 'fr', '2': 'noun form', g: 'f' }, expansion: 'tables f' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(form, 'fr').gender).toBeUndefined()
+  })
+
+  it('does NOT run French extraction when langCode is not fr', () => {
+    const entry: KaikkiEntry = {
+      word: 'maison',
+      pos: 'noun',
+      head_templates: [{ name: 'fr-noun', args: { '1': 'f' }, expansion: 'maison f (plural maisons)' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(entry, 'en').gender).toBeUndefined()
+  })
+})
+
+describe('extractIpaBag — French', () => {
+  it('keeps untagged sounds and drops overseas variants', () => {
+    // Real `cœur` sounds: untagged standard + Canada/Newfoundland/Louisiana rows.
+    const entry: KaikkiEntry = {
+      word: 'cœur',
+      pos: 'noun',
+      sounds: [
+        { ipa: '/kœʁ/' },
+        { ipa: '/kœʁ/', tags: ['Canada'] },
+        { ipa: '[kaœ̯ʁ]', tags: ['Canada'] },
+        { ipa: '[tʃœʁ]', tags: ['Newfoundland'] },
+        { ipa: '[kœɾ]', tags: ['Louisiana'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'fr')).toEqual({ untagged: '/kœʁ/' })
+  })
+
+  it('accepts metropolitan-tagged sounds when there is no untagged one', () => {
+    // Real `chien` sounds: the standard row is tagged [Belgium, France].
+    const entry: KaikkiEntry = {
+      word: 'chien',
+      pos: 'noun',
+      sounds: [
+        { ipa: '/ʃjɛ̃/', tags: ['Belgium', 'France'] },
+        { ipa: '/ʃjẽ/', tags: ['Quebec'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'fr')).toEqual({ untagged: '/ʃjɛ̃/' })
+  })
+
+  it('drops sounds mixing a metropolitan tag with a non-accepted one', () => {
+    const entry: KaikkiEntry = {
+      word: 'x',
+      pos: 'noun',
+      sounds: [{ ipa: '/a/', tags: ['France', 'Southern'] }],
+    }
+    expect(extractIpaBag(entry, 'fr')).toEqual({})
+  })
+
+  it('generic POS fallback applies to French verbs (no bespoke verb extractor)', () => {
+    const entry: KaikkiEntry = {
+      word: 'parler',
+      pos: 'verb',
+      head_templates: [{ name: 'fr-verb', args: {}, expansion: 'parler' }],
+      sounds: [{ ipa: '/paʁ.le/' }],
+      senses: [{}],
+    }
+    expect(extractGrammarPatch(entry, 'fr')).toEqual({ pos: 'verb', ipa: { untagged: '/paʁ.le/' } })
+  })
+})

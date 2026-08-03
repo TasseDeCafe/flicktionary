@@ -179,6 +179,18 @@ describe('splitMweContentLemmas', () => {
     // Ordinary -se words are untouched (only infinitive endings strip).
     expect(splitMweContentLemmas('clase de baile', 'es')).toEqual(['clase', 'baile'])
   })
+
+  test('French splits on hyphens, re-folds interior elided clitics, and drops fr particles', () => {
+    // The segmenter never emits hyphenated tokens, so hyphen parts are the
+    // matchable units.
+    expect(splitMweContentLemmas('peut-être', 'fr')).toEqual(['peut', 'être'])
+    // Interior `d'` folds off on the part, matching the folded token `état`.
+    expect(splitMweContentLemmas("coup d'état", 'fr')).toEqual(['coup', 'état'])
+    expect(splitMweContentLemmas('coup de foudre', 'fr')).toEqual(['coup', 'foudre'])
+    expect(splitMweContentLemmas('ne pas savoir', 'fr')).toEqual(['pas', 'savoir'])
+    // Leading clitic strips via the fold before splitting.
+    expect(splitMweContentLemmas("c'est-à-dire", 'fr')).toEqual(['est', 'dire'])
+  })
 })
 
 describe('findMweCandidates', () => {
@@ -205,5 +217,40 @@ describe('findMweCandidates', () => {
   test('single-word headwords are never MWE candidates', () => {
     const single = makeRow(null, { target_language: 'de', headword: 'Tür', sense: '' })
     expect(findMweCandidates({ vocab: [single], span, lemmasByToken, targetLanguage: 'de' })).toHaveLength(0)
+  })
+
+  test('a French hyphenated headword matches through its hyphen parts', () => {
+    const frSpan = tokenizeSegments([{ index: 0, text: 'Il viendra peut-être demain.' }], 'fr')
+    const hyphenated = makeRow(null, { target_language: 'fr', headword: 'peut-être', sense: '' })
+    const candidates = findMweCandidates({
+      vocab: [hyphenated],
+      span: frSpan,
+      lemmasByToken: new Map(),
+      targetLanguage: 'fr',
+    })
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0]!.matchedLemmas).toEqual(new Set(['peut', 'être']))
+    // Hyphenated headwords stay single-word in non-fr languages.
+    const enSpan = tokenizeSegments([{ index: 0, text: 'A passer by walked.' }], 'en')
+    const enHyphenated = makeRow(null, { target_language: 'en', headword: 'passer-by', sense: '' })
+    expect(
+      findMweCandidates({ vocab: [enHyphenated], span: enSpan, lemmasByToken: new Map(), targetLanguage: 'en' })
+    ).toHaveLength(0)
+  })
+
+  test('a French elided text token matches an elided vocab headword through the fold', () => {
+    const frSpan = tokenizeSegments([{ index: 0, text: "L'homme s'appelle Jean." }], 'fr')
+    // Token side: l'homme → homme, s'appelle → appelle.
+    expect(frSpan.foldedTokens.has('homme')).toBe(true)
+    expect(frSpan.foldedTokens.has('appelle')).toBe(true)
+    const row = makeRow(null, { target_language: 'fr', headword: "s'appeler", sense: '' })
+    const matched = matchVocabAgainstSpanLemmas({
+      vocab: [row],
+      spanLemmas: new Set(['homme', 'appeler']),
+      contextByLemma: new Map([['appeler', "L'homme s'appelle Jean."]]),
+      targetLanguage: 'fr',
+    })
+    expect(matched).toHaveLength(1)
+    expect(matched[0]!.matchedLemmas).toEqual(new Set(['appeler']))
   })
 })

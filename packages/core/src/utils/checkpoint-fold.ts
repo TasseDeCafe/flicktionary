@@ -13,17 +13,34 @@
 //   2. strip combining acute U+0301 (Russian stress mark) — `стола́` → `стола`
 //   3. trim surrounding whitespace
 //   4. lowercase
-//   5. per-language orthography fold: ru `ё`→`е`, de `ß`→`ss`
+//   5. per-language orthography fold: ru `ё`→`е`, de `ß`→`ss`, fr `’`→`'` +
+//      `œ`→`oe` / `æ`→`ae` + leading elision clitic strip (see below)
 //
 // NFC runs BEFORE the strip so orthographic acutes survive decomposed input:
 // NFD `más` composes to precomposed `á` (no U+0301 left to strip) instead of
 // folding to the different word `mas`. A U+0301 still present after NFC is by
 // definition a mark with no precomposed form — a Russian-style stress mark —
 // so stripping it is always safe.
+// French elision glues a clitic onto the next word with an apostrophe
+// (`l'homme`, `j'arrive`, `jusqu'à`) and Intl.Segmenter keeps the pair as ONE
+// word token, so without a strip the token `l'homme` could never match the
+// lemma `homme`. The fold removes exactly one leading clitic on BOTH sides of
+// the match, so elided lemmas (`s'appeler`→`appeler`) and elided tokens
+// converge. Interior apostrophes survive (`aujourd'hui`, `quelqu'un`).
+// Alternation lists the multi-letter qu-compounds before bare `qu`; JS
+// first-match and POSIX longest-match agree on every input here (a compound
+// prefix and `qu'` can never match at the same position).
+const FRENCH_ELISION_PREFIX = /^(?:jusqu|lorsqu|puisqu|quoiqu|presqu|qu|[cdjlmnst])'/
+
 export const foldCheckpointToken = (text: string, lang: string): string => {
   const base = text.normalize('NFC').replace(/́/g, '').trim().toLowerCase()
   if (lang === 'ru') return base.replace(/ё/g, 'е')
   if (lang === 'de') return base.replace(/ß/g, 'ss')
+  if (lang === 'fr') {
+    // Curly → straight apostrophe first so the clitic strip sees one shape;
+    // œ/æ ligatures unify with their digraph spellings (`cœur`/`coeur`).
+    return base.replace(/’/g, "'").replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(FRENCH_ELISION_PREFIX, '')
+  }
   return base
 }
 
@@ -50,6 +67,10 @@ export const foldUserHeadwordCandidates = (headword: string, lang: string): stri
   const candidates = [folded]
   if (lang === 'en' && folded.startsWith('to ')) candidates.push(folded.slice('to '.length))
   if (lang === 'de' && folded.startsWith('sich ')) candidates.push(folded.slice('sich '.length))
+  // French pronominal citation forms: `se laver` → `laver`. The elided shape
+  // (`s'appeler`) needs no rule here — the fold's clitic strip already
+  // reduced it to `appeler`.
+  if (lang === 'fr' && folded.startsWith('se ')) candidates.push(folded.slice('se '.length))
   const deReflexivized = stripReflexiveSuffix(folded, lang)
   if (deReflexivized) candidates.push(deReflexivized)
   return [...new Set(candidates.filter((c) => c.length > 0))]

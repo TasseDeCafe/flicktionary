@@ -28,7 +28,7 @@ from pathlib import Path
 from wordfreq import top_n_list, word_frequency
 
 TOP_N = 100_000
-DEFAULT_LANGUAGES = ["ru", "en", "de", "es", "pt"]
+DEFAULT_LANGUAGES = ["ru", "en", "de", "es", "pt", "fr"]
 CACHE_DIR = Path(__file__).parent / ".cache" / "wordfreq"
 
 

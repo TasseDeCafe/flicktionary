@@ -578,7 +578,11 @@ wiktionary_form_redirects          -- precomputed stub resolution (form-of /
 
 Checkpoint-review matching folds BOTH sides of every comparison through
 `public.checkpoint_fold(input, lang)` (NFC → strip U+0301 → trim → lower, then
-ru `ё→е`, de `ß→ss`; NFC runs first so orthographic acutes arriving decomposed
+ru `ё→е`, de `ß→ss`, fr `’`→`'` + `œ`→`oe` / `æ`→`ae` + strip of exactly one
+leading elision clitic (`l'` / `d'` / `j'` / `n'` / `m'` / `t'` / `s'` / `c'` /
+`qu'` and the `jusqu'`-family compounds) so elided tokens and lemmas converge
+(`l'homme` → `homme`, `s'appeler` → `appeler`) while interior apostrophes
+survive (`aujourd'hui`); NFC runs first so orthographic acutes arriving decomposed
 compose and survive the strip — only non-composable marks, i.e. Russian-style
 stress accents, are removed). Expression indexes
 `(target_language, checkpoint_fold(form|headword, target_language))` on

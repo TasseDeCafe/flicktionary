@@ -6,6 +6,7 @@ import {
   checkAcceptance,
   isRealWordToken,
   rankLemmas,
+  remapTokenizerClitics,
   splitFormMass,
   type FormCandidate,
 } from '../src/service/lemma-ranks/build-ranking'
@@ -186,11 +187,13 @@ const buildLanguage = async (sql: Sql, lang: string): Promise<void> => {
   const freqByFoldedForm = await foldForms(sql, lang, data)
 
   // Denominator = real word tokens only; digits/symbols/foreign-script tokens
-  // never enter the mass accounting.
-  const wordTokens = new Map<string, number>()
+  // never enter the mass accounting. Detached elision clitics merge into the
+  // word they elide (fr "l" → "le") before resolution.
+  const filteredTokens = new Map<string, number>()
   for (const [foldedForm, frequency] of freqByFoldedForm) {
-    if (isRealWordToken(foldedForm, lang)) wordTokens.set(foldedForm, frequency)
+    if (isRealWordToken(foldedForm, lang)) filteredTokens.set(foldedForm, frequency)
   }
+  const wordTokens = remapTokenizerClitics(filteredTokens, lang)
   console.log(
     `  ${wordTokens.size.toLocaleString()} folded word tokens (${(freqByFoldedForm.size - wordTokens.size).toLocaleString()} non-word forms excluded)`
   )
