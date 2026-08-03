@@ -1,3 +1,4 @@
+import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import type { DbTextTrackWithSourceType } from '../../transport/database/text-tracks/text-tracks-repository'
@@ -21,6 +22,7 @@ export type ProfileReadinessDependencies = {
   textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   processingJobsRepository: ProcessingJobsRepositoryInterface
+  lemmaRanksRepository: LemmaRanksRepositoryInterface
 }
 
 export const resolveTrackProfileReadiness = async (
@@ -48,6 +50,23 @@ export const resolveTrackProfileReadiness = async (
     if (latestJobStatus === 'failed') return 'failed'
     await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
     return 'pending'
+  }
+
+  // A stamped profile whose build matched ZERO tokens over a non-empty text is
+  // the fingerprint of a build that ran while the wiktionary/rank reference
+  // data was missing or mid-reload: it reads as 'available' forever while
+  // every consumer (difficulty stat, mark-known sweep) computes over nothing.
+  // Rebuild only when the language's ranks were (re)built AFTER the profile —
+  // a zero-match profile newer than the current reference data is genuinely
+  // empty and must stay 'available' rather than rebuild-loop on every poll.
+  if ((track.profile_word_token_count ?? 0) > 0 && track.profile_matched_token_count === 0) {
+    const rankBuildTime = await deps.lemmaRanksRepository.getRankBuildTime(track.language)
+    if (rankBuildTime !== null && new Date(track.profile_built_at).getTime() < rankBuildTime.getTime()) {
+      const latestJobStatus = await deps.processingJobsRepository.getLatestBuildProfileJobStatus(track.id)
+      if (latestJobStatus === 'failed') return 'failed'
+      await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
+      return 'pending'
+    }
   }
 
   return 'available'

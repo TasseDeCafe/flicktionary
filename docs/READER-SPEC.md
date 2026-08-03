@@ -434,8 +434,14 @@ stat is always a live query — never pre-aggregated or snapshotted.
   known marks) in the language, the headline verdict is suppressed — the
   result stays `available` but percent/label are null (a brand-new user would
   otherwise see ~0% "frustrating" on every card). The breakdown counts still
-  flow, so the detail sheet stays honest. UI-side, the null shape renders
-  nothing and the session header skips the (otherwise empty) tappable wrapper.
+  flow, so the detail sheet stays honest. UI-side, the suppressed verdict
+  falls back to a neutral **unknown-word count** ("1,344 unknown words") in
+  the compact stat, so the session header's tappable chip — the entry to the
+  coverage sheet and its mark-known CTAs — survives below the floor (sweeping
+  words as known is exactly how a new user crosses it). Only a stat with
+  nothing to show at all (unknown count 0 too) renders nothing, and the header
+  skips the (otherwise empty) tappable wrapper via the shared
+  `hasDifficultyStatContent` predicate.
 - **Statuses**: `unsupported` (ad-hoc/lesson sessions — synthetic,
   non-narrative content — and languages without both kaikki data and a
   `lemma_rank_builds` manifest row), `pending` (profile build enqueued /
@@ -451,7 +457,16 @@ stat is always a live query — never pre-aggregated or snapshotted.
   unconditional enqueue on a polling path would mint a fresh job per poll
   forever. A stale profile whose rebuild terminally failed likewise reads
   `failed` rather than requeue-looping. Only ingestion-time ensure (an
-  explicit re-import event) retries after a terminal failure.
+  explicit re-import event) retries after a terminal failure. Besides
+  segment-count drift, the resolver treats a **zero-match stamped profile**
+  (`profile_matched_token_count = 0` over a non-empty
+  `profile_word_token_count`) as stale **when the language's ranks were
+  (re)built after the profile** (`lemma_rank_builds.built_at`): that
+  fingerprint means the build ran while the wiktionary/rank reference data
+  was missing or mid-reload (the dev reload lifecycle), and without the
+  rebuild it would read `available` forever while every consumer computes
+  over nothing. A zero-match profile *newer* than the current rank build is
+  genuinely empty and stays `available` — no rebuild loop.
 
 ### Web surfaces
 
