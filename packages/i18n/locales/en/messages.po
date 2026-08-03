@@ -1218,6 +1218,10 @@ msgstr "Context (optional)"
 msgid "Continue"
 msgstr "Continue"
 
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx
+msgid "Continue learning"
+msgstr "Continue learning"
+
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Continue with {nextLanguageName}"
 msgstr "Continue with {nextLanguageName}"
@@ -1904,6 +1908,7 @@ msgid "Explore"
 msgstr "Explore"
 
 #: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+#: apps/web/src/features/dashboard/components/from-community-section.tsx
 msgid "Explore all"
 msgstr "Explore all"
 
@@ -2438,6 +2443,10 @@ msgstr "French"
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Frequency"
 msgstr "Frequency"
+
+#: apps/web/src/features/dashboard/components/from-community-section.tsx
+msgid "From the community"
+msgstr "From the community"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "From the notes"
@@ -4126,10 +4135,6 @@ msgstr "Recap"
 msgid "Recap done!"
 msgstr "Recap done!"
 
-#: apps/web/src/features/dashboard/components/dashboard-view.tsx
-msgid "Recent"
-msgstr "Recent"
-
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Recently added"
@@ -4484,11 +4489,11 @@ msgstr "Say it out loud"
 msgid "Scope"
 msgstr "Scope"
 
-#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+#: apps/web/src/features/dashboard/components/media-rail.tsx
 msgid "Scroll back"
 msgstr "Scroll back"
 
-#: apps/web/src/features/dashboard/components/explore-featured-section.tsx
+#: apps/web/src/features/dashboard/components/media-rail.tsx
 msgid "Scroll forward"
 msgstr "Scroll forward"
 
@@ -5449,7 +5454,7 @@ msgid "To change your current plan type, please click on \"Manage Subscription\"
 msgstr "To change your current plan type, please click on \"Manage Subscription\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
-#: apps/web/src/features/sessions/components/session-card.tsx
+#: apps/web/src/features/sessions/hooks/use-relative-date-label.ts
 msgid "Today"
 msgstr "Today"
 
@@ -6130,7 +6135,7 @@ msgstr "Write your sentence…"
 msgid "Yearly"
 msgstr "Yearly"
 
-#: apps/web/src/features/sessions/components/session-card.tsx
+#: apps/web/src/features/sessions/hooks/use-relative-date-label.ts
 msgid "Yesterday"
 msgstr "Yesterday"
 
