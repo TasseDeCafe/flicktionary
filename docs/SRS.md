@@ -590,7 +590,7 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   track's real max index. Undo is the only non-monotonic write (exact restore,
   including NULL for a first checkpoint).
 - **Language gate.** Hard-gated to `KAIKKI_LANGUAGES` (loaded wiktionary
-  dumps — ru/en/de/es/pt today). No degraded fallback: collect returns
+  dumps — ru/en/de/es/pt/fr today). No degraded fallback: collect returns
   UNPROCESSABLE_ENTITY (`UNSUPPORTED_LANGUAGE`), preview reports
   `supported: false`, and the UI hides the affordances.
 - **Matching.** Span segments tokenize server-side with the same
@@ -599,7 +599,9 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   `docs/DATA-MODEL.md`). Tokens resolve to real-lemma headwords through three
   arms (inflected-form join, direct headword hit, stub redirects); the user's
   vocab folds via `foldUserHeadwordCandidates` (en strips leading `to `, de
-  `sich `) and intersects with the span's lemma set. Ambiguous forms credit
+  `sich `, fr `se ` — fr's elided shape `s'appeler` needs no rule because the
+  fold's clitic strip already reduces it) and intersects with the span's
+  lemma set. Ambiguous forms credit
   every saved candidate. When the user holds 2+ saved senses of one matched
   headword, a Haiku pass (`checkpointSensePass`) picks the sense used — before
   lane partitioning, so a rejected sense can neither credit nor surface as
@@ -608,7 +610,11 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   matching structurally misses separable verbs, free word order, and
   interruptions — so MWEs run two stages instead. (1) Liberal recall filter
   (`findMweCandidates`): the saved headword splits into folded content lemmas
-  (per-language particles dropped — en `to`, de `sich`); it is a candidate iff
+  (per-language particles dropped — en `to`, de `sich`, fr articles /
+  prepositions / `se` / `que` / `ne`; French also treats hyphenated headwords
+  as MWEs and splits on hyphens — `peut-être` tokenizes apart, so its hyphen
+  parts are the only matchable units — with each part re-folded so interior
+  elisions reduce, `coup d'état` → `état`); it is a candidate iff
   every content lemma appears within ONE segment, either as a resolved lemma
   of that segment's tokens (inflected occurrences count) or as a raw folded
   token. (2) Haiku confirm (`checkpointMwePass`): judges whether the

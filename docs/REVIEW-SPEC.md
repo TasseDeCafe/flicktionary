@@ -138,10 +138,10 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   session's `target_language` — the per-language allowlist + label /
   placeholder hints live in
   `packages/core/src/constants/language-grammar.ts` (explicit configs for
-  `en`, `es`, `ru`, `fr`, `pt`; other supported languages fall through to a
-  conservative default of `pos` / `display_form` / `government` /
-  `number_only` / `notable_forms` / `notes`; English intentionally omits
-  editable `display_form`). Same debounced-PATCH path, with `grammarPatch`
+  `en`, `es`, `ru`, `fr`, `pt`, `de`; other supported languages fall through
+  to a conservative default of `pos` / `display_form` / `government` /
+  `number_only` / `notable_forms` / `notes`; English and French intentionally
+  omit editable `display_form`). Same debounced-PATCH path, with `grammarPatch`
   shallow-merged into the JSONB column server-side; hidden fields' stored
   values are preserved untouched. Provenance is **per field**, not per card
   (the old card-level grounding badge is gone; the external Wiktionary link
