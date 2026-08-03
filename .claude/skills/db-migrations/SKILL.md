@@ -3,11 +3,12 @@ name: db-migrations
 description: Creates a database migration against the local dev-tunnel Supabase stack and regenerates the TypeScript DB types. Use whenever changing the database schema (new table, column, enum, index, RLS policy, or data migration), or when database.public.types.ts is out of sync with the schema.
 ---
 
-You are changing the database schema. Two invariants, then the workflow.
+You are changing the database schema. Three invariants, then the workflow.
 
 ## Invariants
 
 - **Migrations are append-only.** The app is deployed, so never edit an existing migration to change the schema unless the user explicitly asks for a history rewrite before that migration has been applied anywhere. Every schema/data change is a new migration. Historical docs or resume notes that mention editing a consolidated or initial migration in place are stale — do not follow them.
+- **Migrations run against LIVE prod — no long exclusive locks.** The Supabase GitHub integration applies pending migrations to the production database on every merge to main, with traffic flowing. A statement that holds a heavy lock for minutes (`REINDEX` of a large index, a full-table rewrite like changing a column type, an unbatched `UPDATE` backfill over millions of rows) blocks live queries and can take the instance down — the 2026-08-03 French checkpoint_fold migration crashed prod mid-`REINDEX` of a 5.6M-row expression index (~9 min outage). Keep migrations to fast DDL and small data changes; run heavy rebuilds/backfills out-of-band via psql (`REINDEX INDEX CONCURRENTLY`, batched updates) during a low-traffic window. If a migration half-applies and the integration's check fails, fix prod manually and record the version in `supabase_migrations.schema_migrations` so the integration doesn't replay it.
 - **One canonical directory, four symlinks.** The canonical migrations directory is `apps/backend/supabase/migrations/`. The four Supabase environment folders each have a `supabase/migrations` symlink pointing to it:
   - `apps/backend/supabase/supabase-dev-tunnel/supabase/migrations` → `../../migrations` (local dev — the one you reset and iterate against)
   - `apps/backend/supabase/supabase-dev/supabase/migrations` → `../../migrations` (the non-tunnelled local dev stack)
