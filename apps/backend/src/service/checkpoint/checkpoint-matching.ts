@@ -4,11 +4,56 @@ import {
   foldUserHeadwordCandidates,
   stripReflexiveSuffix,
 } from '@flicktionary/core/utils/checkpoint-fold'
+import type { LemmaRankInfo } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import type { CheckpointVocabRow } from '../../transport/database/user-lookups/user-lookups-repository'
 
 // Pure matching/partitioning logic for checkpoint reviews (docs/SRS.md
 // "Checkpoint reviews"). The collector orchestrates DB/LLM calls in
 // collect-checkpoint.ts; everything here is deterministic and unit-tested.
+
+// One sighting of a token: the original cased slice plus a match-centered
+// window of its segment — the claims-sheet evidence and the backlog confirm
+// pass's context (segments can be whole pasted paragraphs, so never carry the
+// full text here).
+export type TokenOccurrence = {
+  surface: string
+  context: string
+  segmentIndex: number
+}
+
+// Occurrences kept per folded token / per matched candidate. More than one
+// matters because an early homograph must not hide a genuine later occurrence
+// from the confirm pass; three is plenty for that purpose.
+const MAX_OCCURRENCES = 3
+
+// Characters kept on each side of the matched surface in an evidence window —
+// sized for a ~2-line claims-sheet snippet (it doubles as the confirm pass's
+// context, where clause-scale context is enough).
+const OCCURRENCE_WINDOW_RADIUS = 80
+
+const windowAroundRange = (text: string, start: number, end: number): string => {
+  let from = Math.max(0, start - OCCURRENCE_WINDOW_RADIUS)
+  let to = Math.min(text.length, end + OCCURRENCE_WINDOW_RADIUS)
+  // Snap cut points to word boundaries so the window never opens or closes
+  // mid-word (the ellipsis then reads as elided words, not a chopped one).
+  if (from > 0) {
+    const space = text.indexOf(' ', from)
+    if (space !== -1 && space < start) from = space + 1
+  }
+  if (to < text.length) {
+    const space = text.lastIndexOf(' ', to)
+    if (space !== -1 && space > end) to = space
+  }
+  return `${from > 0 ? '…' : ''}${text.slice(from, to)}${to < text.length ? '…' : ''}`
+}
+
+// Digit-hyphen compounds («27-летний», de «27-jährige») split at the hyphen
+// under Intl.Segmenter, and the letter part is a different lexeme from the
+// standalone word — never a real occurrence of a saved term. Typographic
+// hyphens/dashes (U+2010–U+2015, notably the non-breaking hyphen U+2011)
+// split the same way as ASCII '-'; the class mirrors JOINER_PUNCTUATION in
+// packages/core/src/utils/search-match.ts.
+const HYPHEN_CHARS = /[-‐-―]/
 
 export type TokenizedSpan = {
   // Every distinct folded word token in the span.
@@ -22,6 +67,8 @@ export type TokenizedSpan = {
   // Segment text by index — the MWE confirm pass's context (the whole
   // candidate segment, not one token's line).
   textBySegment: Map<number, string>
+  // Up to MAX_OCCURRENCES sightings per folded token, one per segment at most.
+  occurrencesByToken: Map<string, TokenOccurrence[]>
 }
 
 // Server-side tokenization uses the same Intl.Segmenter wrapper as the web
@@ -34,26 +81,44 @@ export const tokenizeSegments = (
   const tokensBySegment = new Map<number, Set<string>>()
   const contextByToken = new Map<string, string>()
   const textBySegment = new Map<number, string>()
+  const occurrencesByToken = new Map<string, TokenOccurrence[]>()
   for (const segment of segments) {
     const segmentTokens = new Set<string>()
     for (const [start, end] of getWordRanges(segment.text, targetLanguage)) {
+      if (HYPHEN_CHARS.test(segment.text[start - 1] ?? '') && /\d/.test(segment.text[start - 2] ?? '')) continue
       const folded = foldCheckpointToken(segment.text.slice(start, end), targetLanguage)
       if (!folded) continue
       foldedTokens.add(folded)
-      segmentTokens.add(folded)
       if (!contextByToken.has(folded)) contextByToken.set(folded, segment.text)
+      // One occurrence per segment per token: the first sighting stands in for
+      // the segment, later segments add breadth for the confirm pass.
+      if (!segmentTokens.has(folded)) {
+        const occurrences = occurrencesByToken.get(folded) ?? []
+        if (occurrences.length < MAX_OCCURRENCES) {
+          occurrences.push({
+            surface: segment.text.slice(start, end),
+            context: windowAroundRange(segment.text, start, end),
+            segmentIndex: segment.index,
+          })
+          occurrencesByToken.set(folded, occurrences)
+        }
+      }
+      segmentTokens.add(folded)
     }
     if (segmentTokens.size > 0) {
       tokensBySegment.set(segment.index, segmentTokens)
       textBySegment.set(segment.index, segment.text)
     }
   }
-  return { foldedTokens, tokensBySegment, contextByToken, textBySegment }
+  return { foldedTokens, tokensBySegment, contextByToken, textBySegment, occurrencesByToken }
 }
 
 // A gloss/highlight selection can span several words — tokenize it with the
 // SAME segmenter and fold each token, so a multi-word selection suppresses
-// every lemma it touches.
+// every lemma it touches. Deliberately NOT digit-hyphen-guarded: broader
+// suppression is strictly conservative (it can only prevent a credit/claim,
+// never create one), and someone who highlighted «27-летний» plausibly did
+// care about «летний».
 export const foldSelectionTokens = (selectionText: string, targetLanguage: string): string[] => {
   const tokens: string[] = []
   for (const [start, end] of getWordRanges(selectionText, targetLanguage)) {
@@ -71,6 +136,14 @@ export type MatchedVocabRow = {
   // Sentence context for the sense pass; null only if bookkeeping failed to
   // find one (defensive — a match always came from some token).
   contextSegmentText: string | null
+  // Windowed sightings backing this match (claims-sheet evidence + the
+  // backlog confirm pass's contexts). Capped at MAX_OCCURRENCES.
+  occurrences: TokenOccurrence[]
+  // True when a matched lemma appeared verbatim as a span token (the saved
+  // headword itself was in the text) — such matches skip the backlog confirm
+  // pass. MWE candidates are also marked direct: checkpointMwePass already
+  // confirmed their occurrence.
+  directTokenMatch: boolean
 }
 
 // Intersect the user's vocabulary (folded via foldUserHeadwordCandidates)
@@ -81,6 +154,8 @@ export const matchVocabAgainstSpanLemmas = (params: {
   vocab: readonly CheckpointVocabRow[]
   spanLemmas: ReadonlySet<string>
   contextByLemma: ReadonlyMap<string, string>
+  occurrencesByLemma: ReadonlyMap<string, readonly TokenOccurrence[]>
+  spanTokens: ReadonlySet<string>
   targetLanguage: string
 }): MatchedVocabRow[] => {
   const matched: MatchedVocabRow[] = []
@@ -92,14 +167,16 @@ export const matchVocabAgainstSpanLemmas = (params: {
     }
     if (matchedLemmas.size === 0) continue
     let context: string | null = null
+    const occurrences: TokenOccurrence[] = []
+    let directTokenMatch = false
     for (const lemma of matchedLemmas) {
-      const c = params.contextByLemma.get(lemma)
-      if (c) {
-        context = c
-        break
+      if (params.spanTokens.has(lemma)) directTokenMatch = true
+      if (!context) context = params.contextByLemma.get(lemma) ?? null
+      for (const occurrence of params.occurrencesByLemma.get(lemma) ?? []) {
+        if (occurrences.length < MAX_OCCURRENCES) occurrences.push(occurrence)
       }
     }
-    matched.push({ row, matchedLemmas, contextSegmentText: context })
+    matched.push({ row, matchedLemmas, contextSegmentText: context, occurrences, directTokenMatch })
   }
   return matched
 }
@@ -177,11 +254,90 @@ export const findMweCandidates = (params: {
         row,
         matchedLemmas: new Set(contentLemmas),
         contextSegmentText: params.span.textBySegment.get(segmentIndex) ?? null,
+        occurrences: findMweAnchorOccurrence(params, segmentIndex, contentLemmas),
+        // The MWE confirm pass judges the actual occurrence; the backlog
+        // confirm pass must not second-guess it with a single-word prompt.
+        directTokenMatch: true,
       })
       break
     }
   }
   return candidates
+}
+
+// An MWE has no single matched surface, so its evidence anchors on ONE content
+// word's occurrence in the matched segment. Content lemmas are tried longest
+// first: languages without an MWE particle list (ru) keep function words like
+// «в» as content lemmas, and anchoring on the first token resolving to one
+// would center the window on an early stray «в»/«во» far from the expression —
+// the longest lemma is the distinctive one («преддверии» for «в преддверии»).
+const findMweAnchorOccurrence = (
+  params: {
+    span: TokenizedSpan
+    lemmasByToken: ReadonlyMap<string, Set<string>>
+  },
+  segmentIndex: number,
+  contentLemmas: readonly string[]
+): TokenOccurrence[] => {
+  const byDistinctiveness = [...contentLemmas].sort((a, b) => b.length - a.length)
+  const segmentTokens = params.span.tokensBySegment.get(segmentIndex) ?? new Set<string>()
+  for (const lemma of byDistinctiveness) {
+    for (const token of segmentTokens) {
+      const resolvesToLemma = token === lemma || (params.lemmasByToken.get(token)?.has(lemma) ?? false)
+      if (!resolvesToLemma) continue
+      const occurrence = params.span.occurrencesByToken.get(token)?.find((o) => o.segmentIndex === segmentIndex)
+      if (occurrence) return [occurrence]
+    }
+  }
+  return []
+}
+
+// A token→lemma edge is a homograph liability when the token's plausible
+// readings differ wildly in frequency: «при» resolves to both the preposition
+// «при» and «переть» (imperative «при́»), but a text containing «при» is
+// essentially never an occurrence of «переть». Drop the dramatically rarer
+// readings of an ambiguous token; a reading at least this many times rarer
+// (by lemma_ranks rank) than the token's best reading goes.
+export const HOMOGRAPH_RANK_FACTOR = 50
+// ...unless the lemma is itself common: frequent lemmas (fr «suivre» behind
+// «suis», es «comer» behind «como») are plausible readings even next to a
+// top-rank sibling, so they always survive.
+export const NEVER_DROP_RANK = 3000
+
+// Filters the resolver's token→lemma map. Identity edges (the token IS that
+// lemma's headword — fr «été») are never dropped, and a token whose readings
+// are all unranked keeps everything, which makes the guard a natural no-op for
+// languages without built lemma ranks.
+export const applyFrequencyAsymmetryGuard = (
+  lemmasByToken: ReadonlyMap<string, Set<string>>,
+  ranks: ReadonlyMap<string, LemmaRankInfo>
+): Map<string, Set<string>> => {
+  const result = new Map<string, Set<string>>()
+  for (const [token, lemmas] of lemmasByToken) {
+    if (lemmas.size < 2) {
+      result.set(token, lemmas)
+      continue
+    }
+    let bestRank: number | null = null
+    for (const lemma of lemmas) {
+      const rank = ranks.get(lemma)?.rank
+      if (rank !== undefined && (bestRank === null || rank < bestRank)) bestRank = rank
+    }
+    if (bestRank === null) {
+      result.set(token, lemmas)
+      continue
+    }
+    const kept = new Set<string>()
+    for (const lemma of lemmas) {
+      const rank = ranks.get(lemma)?.rank
+      const isIdentity = lemma === token
+      const isCommon = rank !== undefined && rank <= NEVER_DROP_RANK
+      const isDramaticallyRarer = rank === undefined || rank >= HOMOGRAPH_RANK_FACTOR * bestRank
+      if (isIdentity || isCommon || !isDramaticallyRarer) kept.add(lemma)
+    }
+    result.set(token, kept)
+  }
+  return result
 }
 
 export type PartitionedMatches = {

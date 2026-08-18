@@ -1329,6 +1329,7 @@ export type Database = {
       study_session_checkpoints: {
         Row: {
           backlog_candidate_ids: string[]
+          backlog_evidence: Json | null
           created_at: string
           credited_count: number
           from_segment_index: number | null
@@ -1340,6 +1341,7 @@ export type Database = {
         }
         Insert: {
           backlog_candidate_ids?: string[]
+          backlog_evidence?: Json | null
           created_at?: string
           credited_count: number
           from_segment_index?: number | null
@@ -1351,6 +1353,7 @@ export type Database = {
         }
         Update: {
           backlog_candidate_ids?: string[]
+          backlog_evidence?: Json | null
           created_at?: string
           credited_count?: number
           from_segment_index?: number | null

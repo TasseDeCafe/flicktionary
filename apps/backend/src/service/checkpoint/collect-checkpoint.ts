@@ -17,17 +17,20 @@ import {
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import type { CheckpointSenseItem } from '../../transport/third-party/anthropic/passes/checkpoint-sense-pass'
 import { applyTermRating, type WithTransaction } from '../practice/rate-term'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import {
+  applyFrequencyAsymmetryGuard,
   findMweCandidates,
   foldSelectionTokens,
   matchVocabAgainstSpanLemmas,
   partitionMatches,
   tokenizeSegments,
   type MatchedVocabRow,
+  type TokenOccurrence,
 } from './checkpoint-matching'
 
 export type CheckpointDependencies = {
@@ -40,13 +43,22 @@ export type CheckpointDependencies = {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
+  lemmaRanksRepository: LemmaRanksRepositoryInterface
   anthropicPasses: AnthropicPassesInterface
   withTransaction: WithTransaction
 }
 
 export type PreviewedSpan = { segmentIndex: number; selectionText: string }
 
-export type BacklogCandidate = { userLookupId: string; headword: string; sense: string }
+export type BacklogCandidate = {
+  userLookupId: string
+  headword: string
+  sense: string
+  // Evidence for the claims sheet: the surface form seen in the span (for
+  // MWEs, the anchor content word) and a match-centered context window.
+  matchedSurface: string | null
+  context: string | null
+}
 
 export type CollectCheckpointResult =
   | { ok: false; reason: 'not_found' | 'unsupported_language' | 'conflict' }
@@ -142,20 +154,39 @@ const computeSpanMatch = async (
 
   // One resolver round trip covers span tokens AND suppression tokens.
   const allTokens = [...new Set([...span.foldedTokens, ...suppressionTokens, ...backlogExclusionTokens])]
-  const lemmasByToken = await deps.wiktionaryMatchRepository.resolveFoldedLemmasForTokens({
+  const rawLemmasByToken = await deps.wiktionaryMatchRepository.resolveFoldedLemmasForTokens({
     targetLanguage: lang,
     foldedTokens: allTokens,
   })
 
+  // Homograph guard on the resolved edges, before ANY consumer — credits,
+  // backlog, MWE recall, suppression, and the preview path all see the same
+  // filtered map. One batched rank read covers every ambiguous token's lemmas.
+  const ambiguousLemmas = new Set<string>()
+  for (const lemmas of rawLemmasByToken.values()) {
+    if (lemmas.size < 2) continue
+    for (const lemma of lemmas) ambiguousLemmas.add(lemma)
+  }
+  const ranks =
+    ambiguousLemmas.size > 0
+      ? await deps.lemmaRanksRepository.listRanksForLemmas({ targetLanguage: lang, lemmas: [...ambiguousLemmas] })
+      : new Map()
+  const lemmasByToken = applyFrequencyAsymmetryGuard(rawLemmasByToken, ranks)
+
   const spanLemmas = new Set<string>()
   const contextByLemma = new Map<string, string>()
+  const occurrencesByLemma = new Map<string, TokenOccurrence[]>()
   for (const token of span.foldedTokens) {
     const lemmas = lemmasByToken.get(token)
     if (!lemmas) continue
     const context = span.contextByToken.get(token)
+    const occurrences = span.occurrencesByToken.get(token) ?? []
     for (const lemma of lemmas) {
       spanLemmas.add(lemma)
       if (context && !contextByLemma.has(lemma)) contextByLemma.set(lemma, context)
+      const existing = occurrencesByLemma.get(lemma)
+      if (existing) existing.push(...occurrences)
+      else occurrencesByLemma.set(lemma, [...occurrences])
     }
   }
   const collectLemmas = (tokens: ReadonlySet<string>): Set<string> => {
@@ -167,7 +198,14 @@ const computeSpanMatch = async (
   }
 
   const vocab = await deps.userLookupsRepository.listCheckpointVocab({ userId, targetLanguage: lang })
-  const matched = matchVocabAgainstSpanLemmas({ vocab, spanLemmas, contextByLemma, targetLanguage: lang })
+  const matched = matchVocabAgainstSpanLemmas({
+    vocab,
+    spanLemmas,
+    contextByLemma,
+    occurrencesByLemma,
+    spanTokens: span.foldedTokens,
+    targetLanguage: lang,
+  })
 
   // MWE recall filter, minus rows the single-token pass already matched (a
   // particle-stripped two-worder like "to run" resolves there).
@@ -209,6 +247,40 @@ const confirmMweCandidates = async (
   } catch (error) {
     logError({ message: 'checkpointMwePass failed; dropping MWE candidates', params: {}, error })
     return []
+  }
+}
+
+// Precision stage for backlog candidates (collect only): a candidate matched
+// only through inflected forms may be a homograph false positive that
+// survived the mechanical frequency guard («стих»-class equal-frequency
+// collisions). Direct matches — the saved headword verbatim in the text, and
+// MWEs already confirmed by checkpointMwePass — skip the LLM. A pass failure
+// keeps only the direct matches: never offer a known-assertion on a guess.
+const confirmBacklogCandidates = async (
+  candidates: MatchedVocabRow[],
+  targetLanguage: string,
+  deps: CheckpointDependencies
+): Promise<MatchedVocabRow[]> => {
+  const needing = candidates.filter((m) => !m.directTokenMatch)
+  if (needing.length === 0) return candidates
+  const direct = candidates.filter((m) => m.directTokenMatch)
+  try {
+    const verdicts = await deps.anthropicPasses.checkpointBacklogPass({
+      targetLanguage,
+      items: needing.map((m) => ({
+        headword: m.row.lookup.headword,
+        sense: m.row.lookup.sense,
+        contexts: m.occurrences.map((o) => o.context),
+      })),
+    })
+    const confirmed = new Set(
+      needing.filter((_, index) => verdicts[index]?.occurs === true).map((m) => m.row.lookup.id)
+    )
+    // Preserve the original candidate order (the sheet shows it as-is).
+    return candidates.filter((m) => m.directTokenMatch || confirmed.has(m.row.lookup.id))
+  } catch (error) {
+    logError({ message: 'checkpointBacklogPass failed; dropping inflected-only backlog candidates', params: {}, error })
+    return direct
   }
 }
 
@@ -331,7 +403,24 @@ export const collectCheckpoint = async (
     suppressedCount,
     backlog: backlogUncapped,
   } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
-  const backlog = backlogUncapped.slice(0, MAX_BACKLOG_CANDIDATES)
+  // Cap BEFORE the confirm pass so LLM cost is bounded by the cap; a
+  // pass-rejected candidate does not free a slot for one past the cap
+  // (realistic counts sit far below 200 — same loss semantics as before).
+  const backlog = await confirmBacklogCandidates(
+    backlogUncapped.slice(0, MAX_BACKLOG_CANDIDATES),
+    session.target_language,
+    deps
+  )
+
+  // Evidence for the claims sheet, persisted on the checkpoint row so the
+  // getCheckpointClaims rehydration can re-offer it. For MWEs the surface is
+  // the anchor content word findMweAnchorOccurrence picked, not the whole
+  // (possibly inflected/reordered) expression.
+  const toEvidence = (m: MatchedVocabRow): { surface: string | null; context: string | null } => ({
+    surface: m.occurrences[0]?.surface ?? null,
+    context: m.occurrences[0]?.context ?? null,
+  })
+  const backlogEvidence = Object.fromEntries(backlog.map((m) => [m.row.lookup.id, toEvidence(m)]))
 
   const allMatchedIds = [...new Set(resolved.map((m) => m.row.lookup.id))]
   const creditableById = new Map(creditable.map((m) => [m.row.lookup.id, m]))
@@ -368,6 +457,7 @@ export const collectCheckpoint = async (
         toSegmentIndex: span.clampedTo,
         creditedCount: survivors.length,
         backlogCandidateIds: backlog.map((m) => m.row.lookup.id),
+        backlogEvidence,
       },
       tx
     )
@@ -411,10 +501,15 @@ export const collectCheckpoint = async (
     toSegmentIndex: span.clampedTo,
     creditedCount: txResult.creditedCount,
     suppressedCount,
-    backlogCandidates: backlog.map((m) => ({
-      userLookupId: m.row.lookup.id,
-      headword: m.row.lookup.headword,
-      sense: m.row.lookup.sense,
-    })),
+    backlogCandidates: backlog.map((m) => {
+      const evidence = toEvidence(m)
+      return {
+        userLookupId: m.row.lookup.id,
+        headword: m.row.lookup.headword,
+        sense: m.row.lookup.sense,
+        matchedSurface: evidence.surface,
+        context: evidence.context,
+      }
+    }),
   }
 }

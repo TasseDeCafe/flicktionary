@@ -435,6 +435,9 @@ study_session_checkpoints            -- one row per checkpoint press ("I've foll
   credited_count      int
   backlog_candidate_ids uuid[]      -- user_lookup ids offered as backlog known-assertion
                                     -- candidates; assert-known verifies membership here
+  backlog_evidence    jsonb?        -- {userLookupId: {surface, context}} — the matched
+                                    -- surface + context window the claims sheet shows;
+                                    -- NULL on rows predating the column
   created_at          timestamptz
   reverted_at         timestamptz?  -- checkpoint undo tombstone
 

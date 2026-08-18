@@ -107,10 +107,6 @@ msgstr "{count, plural, one {# mot de la dernière fois n'est pas encore marqué
 msgid "{count, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
 msgstr "{count, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}}"
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "{count, plural, one {Mark # word as known} other {Mark # words as known}}"
-msgstr "{count, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
-
 #: apps/web/src/features/sessions/components/show-group-card.tsx
 msgid "{count} episodes"
 msgstr "{count} épisodes"
@@ -243,6 +239,10 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "{removedCount, plural, one {# known mark removed} other {# known marks removed}}"
 msgstr "{removedCount, plural, one {# marque connue supprimée} other {# marques connues supprimées}}"
+
+#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+msgid "{selectedCount, plural, one {Mark # word as known} other {Mark # words as known}}"
+msgstr "{selectedCount, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
@@ -5342,8 +5342,8 @@ msgid "There's no way to sign back in to a guest session. If you sign out now, e
 msgstr "Il n'y a aucun moyen de se reconnecter à une session invité. Si vous vous déconnectez maintenant, tout ce que vous avez enregistré — sessions, vocabulaire et progression — sera définitivement perdu. Créez d'abord un compte gratuit pour le conserver."
 
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "These saved words appeared in what you just read. Mark them as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
-msgstr "Ces mots sauvegardés sont apparus dans ce que vous venez de lire. Marquez-les comme connus pour ignorer leur phase d'apprentissage — chacun d'eux bénéficiera d'une première révision dans environ trois semaines, et vous pourrez annuler juste après."
+msgid "These saved words appeared in what you just read. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
+msgstr "Ces mots enregistrés sont apparus dans ce que vous venez de lire. Décochez ceux qui ne semblent pas corrects, puis marquez les autres comme connus pour passer leur phase d'apprentissage — chacun aura une première révision dans environ trois semaines, et vous pourrez annuler juste après."
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "These settings have been modified."

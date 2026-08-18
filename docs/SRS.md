@@ -596,13 +596,27 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
 - **Matching.** Span segments tokenize server-side with the same
   `Intl.Segmenter` wrapper the reader uses; both sides of every comparison fold
   through `checkpoint_fold` / `foldCheckpointToken` (byte-pinned twins — see
-  `docs/DATA-MODEL.md`). Tokens resolve to real-lemma headwords through three
+  `docs/DATA-MODEL.md`). The tokenizer skips word ranges immediately preceded
+  by digit+hyphen (ASCII or typographic U+2010–U+2015): the letter part of
+  «27-летний» / de «27-jährige» is a compound piece, not an occurrence of the
+  standalone word. Selection folding (`foldSelectionTokens`, the suppression
+  input) is deliberately NOT guarded — broader suppression is strictly
+  conservative. Tokens resolve to real-lemma headwords through three
   arms (inflected-form join, direct headword hit, stub redirects); the user's
   vocab folds via `foldUserHeadwordCandidates` (en strips leading `to `, de
   `sich `, fr `se ` — fr's elided shape `s'appeler` needs no rule because the
   fold's clitic strip already reduces it) and intersects with the span's
-  lemma set. Ambiguous forms credit
-  every saved candidate. When the user holds 2+ saved senses of one matched
+  lemma set. Ambiguous forms credit every saved candidate, AFTER a
+  frequency-asymmetry guard (`applyFrequencyAsymmetryGuard`) prunes homograph
+  liabilities from the resolved edges: for a token resolving to 2+ lemmas, a
+  non-identity reading (token ≠ lemma headword) at least
+  `HOMOGRAPH_RANK_FACTOR` (50)× rarer by `lemma_ranks` rank than the token's
+  best reading is dropped, unless the lemma itself is common
+  (`NEVER_DROP_RANK` 3000 — protects fr `suivre` behind `suis`) — this kills
+  «при»→«переть»-class edges for every lane, suppression, MWE recall, and the
+  preview alike; identity edges never drop (fr `été` behind `être`), and a
+  token with no ranked reading keeps everything (languages without built
+  ranks no-op). When the user holds 2+ saved senses of one matched
   headword, a Haiku pass (`checkpointSensePass`) picks the sense used — before
   lane partitioning, so a rejected sense can neither credit nor surface as
   backlog; a pass failure drops those headwords (conservative).
@@ -639,7 +653,21 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
     returned capped at 200 (`MAX_BACKLOG_CANDIDATES` — the assert contract's
     max batch, so the claims sheet's single confirm can never exceed it);
     the preview's backlog count is capped to match. Candidates past the cap
-    re-surface in any later span they appear in.
+    re-surface in any later span they appear in. Capped candidates matched
+    ONLY through inflected forms (no matched lemma is itself a span token;
+    MWEs are exempt — `checkpointMwePass` already confirmed them) then pass a
+    Haiku confirm (`checkpointBacklogPass`, collect-only, chunked internally):
+    given headword, saved sense, and up to 3 match-centered occurrence
+    windows, it judges whether the word actually occurs with that meaning in
+    any of them — the equal-frequency homograph tail the mechanical guard
+    can't rank apart. Denied or unverdicted candidates drop from BOTH the
+    response and the stored claim set; a pass failure keeps only
+    direct-token matches (never offer a known-assertion on a guess). A
+    pass-rejected candidate does not free a cap slot (accepted: realistic
+    counts sit far below 200). Deliberate residual: a verbatim-headword hit
+    whose in-context word is a different same-spelling lexeme (saved «стих»
+    "poem" vs «ветер стих») skips the pass — the claims sheet's per-row
+    evidence is the mitigation for that class.
 - **Suppression, never punishment.** A term glossed (preview glosses included —
   client-tracked `previewedSpans`, since the gloss endpoint is stateless) or
   highlighted inside the span has its credit suppressed — never converted to an
@@ -680,9 +708,9 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   (incl. NULL); budgets refund via the `reverted_at` filters.
 - **Preview.** `getCheckpointPreview` (GET) powers the footer badge: counts the
   would-be credits/backlog for a span without writing. It cannot see the
-  client's previewed-gloss spans and skips the sense pass (multi-sense counted
-  optimistically) — a documented slight overcount; the collect toast shows the
-  real number.
+  client's previewed-gloss spans and skips every LLM pass (multi-sense, MWE,
+  and backlog confirmation all counted optimistically) — a documented slight
+  overcount; the collect toast and claims sheet show the real numbers.
 
 ## 6c. Backlog known-assertions ("I already know this")
 
@@ -694,11 +722,24 @@ terms straight into review state. Service:
 `assertKnownBacklog` / `undoKnownAssertions` / `getCheckpointClaims` on the
 study-sessions contract.
 
+- **Evidence + per-row selection.** Every candidate carries `matchedSurface`
+  (the cased surface form seen in the span; for MWEs the anchor content word —
+  the longest content lemma's occurrence, so ru's particle-less split can't
+  anchor «в преддверии» on a stray «в») and `context` (a match-centered
+  window, ~80 chars each side, cut points snapped to word boundaries with
+  ellipses). The sheet bolds the surface inside the context so the user can
+  catch a residual false positive, and each row is a toggle (all selected by
+  default, deselections keyed to the checkpoint id); the confirm CTA sends
+  only the selected subset — the endpoint was always subset-tolerant.
+  Evidence persists in `study_session_checkpoints.backlog_evidence` (JSONB,
+  `{userLookupId: {surface, context}}`; NULL on pre-evidence rows, every
+  reader falls back to null fields).
 - **Rehydration across remounts.** The collect response's candidate list
   lives only in client memory, but the ids persist on the checkpoint row —
   `getCheckpointClaims` (GET) re-offers the latest LIVE checkpoint's
   candidates that still pass the assert eligibility (recognition facet never
-  introduced, enabled, ready; parked or not), preserving the stored order, so
+  introduced, enabled, ready; parked or not), preserving the stored order and
+  re-attaching the stored evidence, so
   a reload or navigation can't strand the claims re-entry. Client precedence:
   a local collect/assert/undo this mount overrides the server copy (an
   exhausted batch stays gone while the invalidated query catches up). Earlier

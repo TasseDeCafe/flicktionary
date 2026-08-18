@@ -454,6 +454,7 @@ export const buildApp = ({
   app.use(API_V1, TextSegmentsRouter(textSegmentsRepository, studySessionsRepository))
   const wiktionaryMatchRepository = WiktionaryMatchRepository()
   const knownLemmasRepository = KnownLemmasRepository()
+  const lemmaRanksRepository = LemmaRanksRepository()
   const checkpointDependencies = {
     studySessionsRepository,
     studySessionCheckpointsRepository: StudySessionCheckpointsRepository(),
@@ -464,11 +465,11 @@ export const buildApp = ({
     practiceRatingEventsRepository,
     userTargetLanguagePrefsRepository,
     wiktionaryMatchRepository,
+    lemmaRanksRepository,
     anthropicPasses,
     withTransaction,
   }
   const textTrackLemmaProfilesRepository = TextTrackLemmaProfilesRepository()
-  const lemmaRanksRepository = LemmaRanksRepository()
   const markKnownDependencies = {
     studySessionsRepository,
     textTracksRepository,

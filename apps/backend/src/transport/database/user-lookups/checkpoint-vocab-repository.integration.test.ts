@@ -73,6 +73,7 @@ describe('checkpoint vocab repository methods', () => {
       toSegmentIndex: 3,
       creditedCount: 1,
       backlogCandidateIds: [],
+      backlogEvidence: {},
     })
     const events = PracticeRatingEventsRepository()
     const baseEvent = {

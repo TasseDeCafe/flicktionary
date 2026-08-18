@@ -27,10 +27,17 @@ import {
 describe('study-sessions checkpoints', () => {
   const basicDataPass = vi.fn()
   const senseMock = vi.fn()
+  // Persistent yes-mock: the fixtures match through inflected forms, so every
+  // backlog candidate needs the confirm pass; an unscripted mock would throw
+  // and fail-closed would silently empty the backlog lane.
+  const backlogMock = vi.fn((params: { items: Array<{ headword: string }> }) =>
+    Promise.resolve(params.items.map((item) => ({ headword: item.headword, occurs: true })))
+  )
   const testApp = buildTestApp({
     anthropicPasses: MockAnthropicPasses({
       basicDataPass: basicDataPass as never,
       checkpointSensePass: senseMock as never,
+      checkpointBacklogPass: backlogMock as never,
     }),
   })
 
@@ -129,8 +136,20 @@ describe('study-sessions checkpoints', () => {
     expect(collected.body.data.toSegmentIndex).toBe(lastIndex)
     expect(collected.body.data.creditedCount).toBe(2)
     expect(collected.body.data.suppressedCount).toBe(0)
-    expect(collected.body.data.backlogCandidates).toEqual([{ userLookupId: idD, headword: wordD, sense: 'river' }])
+    expect(collected.body.data.backlogCandidates).toEqual([
+      {
+        userLookupId: idD,
+        headword: wordD,
+        sense: 'river',
+        matchedSurface: `${wordD}а`,
+        context: `Тут ${wordD}а и ${wordP}а.`,
+      },
+    ])
     expect(senseMock).toHaveBeenCalledTimes(1)
+    // Only the backlog-lane candidate reaches the confirm pass — the bake
+    // sense was dropped by the sense pass before partitioning.
+    expect(backlogMock).toHaveBeenCalledTimes(1)
+    expect(backlogMock.mock.calls.at(-1)![0].items.map((i) => i.headword)).toEqual([wordD])
 
     // Event rows: implicit, checkpoint-stamped, budget-counted.
     const events = (await sql`

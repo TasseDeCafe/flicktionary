@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import type { DbUserLookup, CheckpointVocabRow } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
+  applyFrequencyAsymmetryGuard,
   findMweCandidates,
   foldSelectionTokens,
+  HOMOGRAPH_RANK_FACTOR,
   matchVocabAgainstSpanLemmas,
+  NEVER_DROP_RANK,
   partitionMatches,
   splitMweContentLemmas,
   tokenizeSegments,
@@ -54,6 +57,8 @@ const asMatch = (row: CheckpointVocabRow): MatchedVocabRow => ({
   row,
   matchedLemmas: new Set(['стол']),
   contextSegmentText: 'context',
+  occurrences: [],
+  directTokenMatch: false,
 })
 
 describe('tokenizeSegments', () => {
@@ -78,6 +83,128 @@ describe('foldSelectionTokens', () => {
   test('a multi-word selection folds to several tokens', () => {
     expect(foldSelectionTokens('Straßen entlang', 'de')).toEqual(['strassen', 'entlang'])
   })
+
+  test('is deliberately NOT digit-hyphen-guarded (broader suppression is conservative)', () => {
+    expect(foldSelectionTokens('27-летний', 'ru')).toContain('летний')
+  })
+})
+
+describe('tokenizeSegments digit-hyphen guard', () => {
+  test('the letter part of a digit-hyphen compound never becomes a token', () => {
+    const span = tokenizeSegments([{ index: 0, text: 'Пострадали 10-летняя девочка и 27-летний мужчина.' }], 'ru')
+    expect(span.foldedTokens.has('летний')).toBe(false)
+    expect(span.foldedTokens.has('летняя')).toBe(false)
+    expect(span.foldedTokens.has('девочка')).toBe(true)
+  })
+
+  test('typographic hyphens (non-breaking U+2011, en dash U+2013) guard the same way', () => {
+    const span = tokenizeSegments([{ index: 0, text: 'Ein 27‑jähriger Mann und ein 30–jähriger Mann.' }], 'de')
+    expect(span.foldedTokens.has('jähriger')).toBe(false)
+    expect(span.foldedTokens.has('mann')).toBe(true)
+  })
+
+  test('standalone words and letter-hyphen compounds are unaffected, including at offset 0', () => {
+    const span = tokenizeSegments([{ index: 0, text: 'Летний жёлто-синий флаг.' }], 'ru')
+    expect(span.foldedTokens.has('летний')).toBe(true)
+    expect(span.foldedTokens.has('синий')).toBe(true)
+  })
+})
+
+describe('tokenizeSegments occurrences', () => {
+  test('keeps the cased surface and one occurrence per segment, capped at three', () => {
+    const span = tokenizeSegments(
+      [
+        { index: 0, text: 'При атаке был шум.' },
+        { index: 1, text: 'При этом при пожаре тоже.' },
+        { index: 2, text: 'При обстреле снова.' },
+        { index: 3, text: 'При налете опять.' },
+      ],
+      'ru'
+    )
+    const occurrences = span.occurrencesByToken.get('при')!
+    expect(occurrences).toHaveLength(3)
+    expect(occurrences[0]!.surface).toBe('При')
+    expect(occurrences.map((o) => o.segmentIndex)).toEqual([0, 1, 2])
+  })
+
+  test('long segments window around the match with ellipses, keeping the surface inside', () => {
+    const long = `${'а'.repeat(400)} летели ${'б'.repeat(400)}`
+    const span = tokenizeSegments([{ index: 0, text: long }], 'ru')
+    const occurrence = span.occurrencesByToken.get('летели')![0]!
+    expect(occurrence.context.startsWith('…')).toBe(true)
+    expect(occurrence.context.endsWith('…')).toBe(true)
+    expect(occurrence.context).toContain('летели')
+    expect(occurrence.context.length).toBeLessThan(200)
+  })
+
+  test('window cut points snap to word boundaries (no chopped words next to the ellipses)', () => {
+    const words = Array.from({ length: 60 }, (_, i) => `слово${i}`)
+    words[30] = 'якорь'
+    const span = tokenizeSegments([{ index: 0, text: words.join(' ') }], 'ru')
+    const occurrence = span.occurrencesByToken.get('якорь')![0]!
+    const inner = occurrence.context.replaceAll('…', '')
+    // Every word in the window is a complete word from the source text.
+    for (const piece of inner.split(' ').filter(Boolean)) {
+      expect(words).toContain(piece)
+    }
+    expect(inner).toContain('якорь')
+  })
+})
+
+describe('applyFrequencyAsymmetryGuard', () => {
+  const ranks = (entries: Record<string, number>) =>
+    new Map(Object.entries(entries).map(([lemma, rank]) => [lemma, { rank, freqMass: 0 }]))
+
+  test('drops a dramatically rarer non-identity reading of an ambiguous token', () => {
+    // The «при»→«переть» shape: preposition rank 25, verb rank far beyond
+    // both the factor threshold and the keep-floor.
+    const filtered = applyFrequencyAsymmetryGuard(
+      new Map([['при', new Set(['при', 'переть'])]]),
+      ranks({ при: 25, переть: 20000 })
+    )
+    expect(filtered.get('при')).toEqual(new Set(['при']))
+  })
+
+  test('an unranked sibling of a ranked common reading is dropped too', () => {
+    const filtered = applyFrequencyAsymmetryGuard(new Map([['были', new Set(['быть', 'быль'])]]), ranks({ быть: 10 }))
+    expect(filtered.get('были')).toEqual(new Set(['быть']))
+  })
+
+  test('identity edges survive regardless of rank (fr «été»)', () => {
+    const filtered = applyFrequencyAsymmetryGuard(
+      new Map([['été', new Set(['être', 'été'])]]),
+      ranks({ être: 5, été: NEVER_DROP_RANK + 5000 })
+    )
+    expect(filtered.get('été')).toEqual(new Set(['être', 'été']))
+  })
+
+  test('the keep-floor protects a common lemma behind a top-rank sibling (fr «suis»)', () => {
+    const filtered = applyFrequencyAsymmetryGuard(
+      new Map([['suis', new Set(['être', 'suivre'])]]),
+      ranks({ être: 5, suivre: 1500 })
+    )
+    expect(filtered.get('suis')).toEqual(new Set(['être', 'suivre']))
+  })
+
+  test('a moderate ratio below the factor keeps both readings (es «como»)', () => {
+    const comerRank = 300
+    expect(comerRank).toBeLessThan(HOMOGRAPH_RANK_FACTOR * 20)
+    const filtered = applyFrequencyAsymmetryGuard(
+      new Map([['como', new Set(['como', 'comer'])]]),
+      ranks({ como: 20, comer: comerRank })
+    )
+    expect(filtered.get('como')).toEqual(new Set(['como', 'comer']))
+  })
+
+  test('keeps everything when no reading is ranked (unbuilt language / test fixtures)', () => {
+    const filtered = applyFrequencyAsymmetryGuard(new Map([['слово', new Set(['слово', 'словить'])]]), new Map())
+    expect(filtered.get('слово')).toEqual(new Set(['слово', 'словить']))
+  })
+
+  test('single-lemma tokens are untouched even when very rare', () => {
+    const filtered = applyFrequencyAsymmetryGuard(new Map([['летели', new Set(['лететь'])]]), ranks({ лететь: 90000 }))
+    expect(filtered.get('летели')).toEqual(new Set(['лететь']))
+  })
 })
 
 describe('matchVocabAgainstSpanLemmas', () => {
@@ -87,11 +214,14 @@ describe('matchVocabAgainstSpanLemmas', () => {
       vocab: [row],
       spanLemmas: new Set(['run']),
       contextByLemma: new Map([['run', 'I run fast.']]),
+      occurrencesByLemma: new Map([['run', [{ surface: 'run', context: 'I run fast.', segmentIndex: 0 }]]]),
+      spanTokens: new Set(['run']),
       targetLanguage: 'en',
     })
     expect(matched).toHaveLength(1)
     expect(matched[0]!.matchedLemmas).toEqual(new Set(['run']))
     expect(matched[0]!.contextSegmentText).toBe('I run fast.')
+    expect(matched[0]!.occurrences).toEqual([{ surface: 'run', context: 'I run fast.', segmentIndex: 0 }])
   })
 
   test('an MWE headword does not single-token match', () => {
@@ -100,9 +230,26 @@ describe('matchVocabAgainstSpanLemmas', () => {
       vocab: [row],
       spanLemmas: new Set(['run', 'out', 'of']),
       contextByLemma: new Map(),
+      occurrencesByLemma: new Map(),
+      spanTokens: new Set(),
       targetLanguage: 'en',
     })
     expect(matched).toHaveLength(0)
+  })
+
+  test('directTokenMatch is true for a verbatim headword, false for an inflected-only match', () => {
+    const direct = makeRow(null, { headword: 'согласно', sense: '' })
+    const inflected = makeRow(null, { id: '00000000-0000-0000-0000-0000000000ab', headword: 'лететь', sense: '' })
+    const matched = matchVocabAgainstSpanLemmas({
+      vocab: [direct, inflected],
+      // «согласно» is its own token; «лететь» was reached via «летели» only.
+      spanLemmas: new Set(['согласно', 'лететь']),
+      contextByLemma: new Map(),
+      occurrencesByLemma: new Map(),
+      spanTokens: new Set(['согласно', 'летели']),
+      targetLanguage: 'ru',
+    })
+    expect(matched.map((m) => m.directTokenMatch)).toEqual([true, false])
   })
 })
 
@@ -212,6 +359,30 @@ describe('findMweCandidates', () => {
     expect(candidates[0]!.row.lookup.headword).toBe('auf machen')
     expect(candidates[0]!.contextSegmentText).toBe('Er macht die Tür sofort auf.')
     expect(candidates[0]!.matchedLemmas).toEqual(new Set(['auf', 'machen']))
+    // MWE candidates skip the backlog confirm pass (the MWE pass owns them)
+    // and anchor their evidence on the LONGEST content lemma's occurrence —
+    // 'machen' beats 'auf', so a stray early «auf» can't steal the window.
+    expect(candidates[0]!.directTokenMatch).toBe(true)
+    expect(candidates[0]!.occurrences).toHaveLength(1)
+    expect(candidates[0]!.occurrences[0]!.surface).toBe('macht')
+    expect(candidates[0]!.occurrences[0]!.context).toContain('macht')
+  })
+
+  test('the MWE evidence anchor prefers the distinctive content word over a function word', () => {
+    // Russian has no MWE particle list, so «в» stays a content lemma of
+    // «в преддверии» — the anchor must still land on «преддверии» even though
+    // an unrelated «в» appears earlier in the segment.
+    const text = 'Он вошел в дом и заявил о росте числа ударов в преддверии зимы.'
+    const ruSpan = tokenizeSegments([{ index: 0, text }], 'ru')
+    const mwe = makeRow(null, { target_language: 'ru', headword: 'в преддверии', sense: '' })
+    const candidates = findMweCandidates({
+      vocab: [mwe],
+      span: ruSpan,
+      lemmasByToken: new Map(),
+      targetLanguage: 'ru',
+    })
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0]!.occurrences[0]!.surface).toBe('преддверии')
   })
 
   test('single-word headwords are never MWE candidates', () => {
@@ -248,6 +419,8 @@ describe('findMweCandidates', () => {
       vocab: [row],
       spanLemmas: new Set(['homme', 'appeler']),
       contextByLemma: new Map([['appeler', "L'homme s'appelle Jean."]]),
+      occurrencesByLemma: new Map(),
+      spanTokens: frSpan.foldedTokens,
       targetLanguage: 'fr',
     })
     expect(matched).toHaveLength(1)

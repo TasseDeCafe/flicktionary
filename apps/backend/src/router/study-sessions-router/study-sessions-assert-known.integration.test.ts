@@ -21,8 +21,17 @@ import {
 // budget-neutrality and lane-isolation invariants.
 describe('study-sessions assert-known', () => {
   const basicDataPass = vi.fn()
+  // Persistent yes-mock: the fixtures match through inflected forms, so every
+  // backlog candidate needs the confirm pass; an unscripted mock would throw
+  // and fail-closed would silently empty the backlog lane.
+  const backlogMock = vi.fn((params: { items: Array<{ headword: string }> }) =>
+    Promise.resolve(params.items.map((item) => ({ headword: item.headword, occurs: true })))
+  )
   const testApp = buildTestApp({
-    anthropicPasses: MockAnthropicPasses({ basicDataPass: basicDataPass as never }),
+    anthropicPasses: MockAnthropicPasses({
+      basicDataPass: basicDataPass as never,
+      checkpointBacklogPass: backlogMock as never,
+    }),
   })
 
   // Seed a session whose single segment contains the given words' inflected
@@ -62,7 +71,9 @@ describe('study-sessions assert-known', () => {
     const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'boot')
     await insertWiktionaryLemma(word, [`${word}а`])
     const { session, collected } = await collectWithWords(userId, token, [word])
-    expect(collected.backlogCandidates).toEqual([{ userLookupId: id, headword: word, sense: 'boot' }])
+    expect(collected.backlogCandidates).toEqual([
+      { userLookupId: id, headword: word, sense: 'boot', matchedSurface: `${word}а`, context: `Вот ${word}а.` },
+    ])
     const checkpointId = collected.checkpointId as string
 
     // Not in the checkpoint's candidate set — must count as skipped.
@@ -252,7 +263,15 @@ describe('study-sessions assert-known', () => {
     const afterMove = await request(testApp)
       .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
       .set(buildAuthorizationHeaders(token))
-    expect(afterMove.body.data.candidates).toEqual([{ userLookupId: idB, headword: wordB, sense: 'lantern' }])
+    expect(afterMove.body.data.candidates).toEqual([
+      {
+        userLookupId: idB,
+        headword: wordB,
+        sense: 'lantern',
+        matchedSurface: `${wordB}а`,
+        context: `Вот ${wordA}а и ${wordB}а.`,
+      },
+    ])
 
     // Asserting the rest empties the offer while the checkpoint stays live.
     const asserted = await request(testApp)
