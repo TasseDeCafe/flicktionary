@@ -71,6 +71,7 @@ describe('listCoverageVocab', () => {
       toSegmentIndex: 1,
       creditedCount: 0,
       backlogCandidateIds: [],
+      backlogEvidence: {},
     })
     return checkpoint.id
   }

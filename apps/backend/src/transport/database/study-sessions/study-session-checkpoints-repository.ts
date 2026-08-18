@@ -6,7 +6,11 @@ import { Tables } from '../database.public.types'
 // batch-undo handle — implicit credits reference it via
 // practice_rating_events.checkpoint_id — and `backlog_candidate_ids` is the
 // server-authoritative claim set the known-assertion action verifies against.
+// `backlog_evidence` maps candidate ids to the surface/context the claims
+// sheet shows (NULL on rows predating the column).
 export type DbStudySessionCheckpoint = Tables<'study_session_checkpoints'>
+
+export type BacklogEvidenceEntry = { surface: string | null; context: string | null }
 
 const insert = async (
   params: {
@@ -16,13 +20,14 @@ const insert = async (
     toSegmentIndex: number
     creditedCount: number
     backlogCandidateIds: string[]
+    backlogEvidence: Record<string, BacklogEvidenceEntry>
   },
   executor: postgres.Sql = sql
 ): Promise<DbStudySessionCheckpoint> => {
   const rows = (await executor`
     INSERT INTO public.study_session_checkpoints (
       user_id, study_session_id, from_segment_index, to_segment_index,
-      credited_count, backlog_candidate_ids
+      credited_count, backlog_candidate_ids, backlog_evidence
     )
     VALUES (
       ${params.userId},
@@ -30,7 +35,8 @@ const insert = async (
       ${params.fromSegmentIndex},
       ${params.toSegmentIndex},
       ${params.creditedCount},
-      ${params.backlogCandidateIds}::uuid[]
+      ${params.backlogCandidateIds}::uuid[],
+      ${executor.json(params.backlogEvidence)}
     )
     RETURNING *
   `) as DbStudySessionCheckpoint[]
@@ -95,6 +101,7 @@ export interface StudySessionCheckpointsRepositoryInterface {
       toSegmentIndex: number
       creditedCount: number
       backlogCandidateIds: string[]
+      backlogEvidence: Record<string, BacklogEvidenceEntry>
     },
     executor?: postgres.Sql
   ) => Promise<DbStudySessionCheckpoint>

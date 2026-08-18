@@ -1,4 +1,5 @@
 import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
+import type { BacklogEvidenceEntry } from '../../transport/database/study-sessions/study-session-checkpoints-repository'
 import { knownAssertResult } from '../practice/fsrs'
 import type { BacklogCandidate, CheckpointDependencies } from './collect-checkpoint'
 
@@ -29,11 +30,22 @@ export const listBacklogClaims = async (
     userLookupIds: checkpoint.backlog_candidate_ids,
   })
   // Preserve the checkpoint's stored candidate order (the collect's backlog
-  // ordering) rather than the join's row order.
+  // ordering) rather than the join's row order. Evidence rehydrates from the
+  // checkpoint row; rows predating the column fall back to null fields.
+  const evidence = (checkpoint.backlog_evidence ?? {}) as Record<string, BacklogEvidenceEntry>
   const rowById = new Map(rows.map((row) => [row.id, row]))
   const candidates = checkpoint.backlog_candidate_ids.flatMap((id) => {
     const row = rowById.get(id)
-    return row ? [{ userLookupId: row.id, headword: row.headword, sense: row.sense }] : []
+    if (!row) return []
+    return [
+      {
+        userLookupId: row.id,
+        headword: row.headword,
+        sense: row.sense,
+        matchedSurface: evidence[id]?.surface ?? null,
+        context: evidence[id]?.context ?? null,
+      },
+    ]
   })
   return { ok: true, checkpointId: checkpoint.id, candidates }
 }

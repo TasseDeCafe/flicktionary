@@ -34,6 +34,20 @@ const ExtensionSubtitlePayloadSchema = z.object({
   contentHash: z.string().min(1),
 })
 
+// One backlog claims-sheet candidate — shared between the collect response and
+// the getCheckpointClaims rehydration so both paths carry identical evidence.
+const CheckpointBacklogCandidateSchema = z.object({
+  userLookupId: z.string().uuid(),
+  headword: z.string(),
+  sense: z.string(),
+  // The surface form seen in the span (original casing). For multi-word
+  // expressions this is the anchor content word (the expression itself may be
+  // inflected/reordered). Null for checkpoints stored before evidence existed.
+  matchedSurface: z.string().nullable(),
+  // Match-centered window of the segment the surface was seen in.
+  context: z.string().nullable(),
+})
+
 export const studySessionsContract = {
   list: oc
     .route({ method: 'GET', path: '/study-sessions', successStatus: 200 })
@@ -143,6 +157,10 @@ export const studySessionsContract = {
   // The checkpoint press: credit implicit `good` ratings to saved due terms in
   // the span (reviewedUntil, toSegmentIndex], advance the monotonic pointer,
   // and return the backlog known-assertion candidates for the claims sheet.
+  // Each candidate carries its evidence: the surface form actually seen in the
+  // span (for multi-word expressions, the anchor content word) and a
+  // match-centered context window, so the sheet can show WHERE the word
+  // supposedly appeared before the user asserts it as known.
   // `previewedSpans` is the client-tracked list of preview-gloss selections
   // (the server stores nothing for preview glosses) — matched terms there are
   // suppressed, never converted to a worse rating. `checkpointId: null` means
@@ -180,13 +198,7 @@ export const studySessionsContract = {
           toSegmentIndex: z.number().int(),
           creditedCount: z.number().int(),
           suppressedCount: z.number().int(),
-          backlogCandidates: z.array(
-            z.object({
-              userLookupId: z.string().uuid(),
-              headword: z.string(),
-              sense: z.string(),
-            })
-          ),
+          backlogCandidates: z.array(CheckpointBacklogCandidateSchema),
         }),
       })
     ),
@@ -276,13 +288,7 @@ export const studySessionsContract = {
       z.object({
         data: z.object({
           checkpointId: z.string().uuid().nullable(),
-          candidates: z.array(
-            z.object({
-              userLookupId: z.string().uuid(),
-              headword: z.string(),
-              sense: z.string(),
-            })
-          ),
+          candidates: z.array(CheckpointBacklogCandidateSchema),
         }),
       })
     ),
