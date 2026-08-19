@@ -2,7 +2,7 @@
 name: dev-worktree
 description: Creates a git worktree that's fully set up to run the local dev servers (deps + Doppler auth), or switches the running dev server from one worktree to another. Use this when the user wants an isolated checkout/branch for a feature (e.g. to open in a separate editor window) without disturbing the primary checkout, or asks how to run `pnpm dev:tunnel` from a worktree. NOT for plain branch switching in place.
 disable-model-invocation: true
-allowed-tools: Read, Bash(git:*), Bash(pnpm:*), Bash(doppler:*), Bash(ls:*)
+allowed-tools: Read, Bash(git:*), Bash(pnpm:*), Bash(doppler:*), Bash(railway:*), Bash(ls:*)
 ---
 
 You are creating (or switching to) a git worktree set up for local development. A worktree is a second working directory backed by the same `.git`, on its own branch — ideal for a separate editor window with a clean context. The non-obvious snags this skill handles are **Doppler auth**, **gitignored codegen that doesn't carry into a worktree**, and **single-instance dev**.
@@ -55,6 +55,14 @@ Ask the user for a branch/feature name if they didn't give one. Then, from anywh
    env -u DOPPLER_TOKEN doppler secrets --project <root-project> --config <dev-config> --only-names >/dev/null && echo "doppler OK"
    ```
 
+7. **Link the worktree to the Railway project** (run from the worktree root). The Railway CLI resolves its project context per-directory (walking up parents), and worktrees are *siblings* of the primary checkout, so a fresh worktree inherits nothing — `railway status`/`logs` there would either fail or, worse, resolve to an unrelated project via a stray parent-directory link:
+
+   ```bash
+   railway link --project Flicktionary --environment production --workspace "My Projects"
+   ```
+
+   Don't pass `--service` — the project has several ([`@flicktionary/backend`, `@flicktionary/web`, `@flicktionary/landing`]); pick one per command with `--service` when needed.
+
 Then tell the user they can open the new folder in a separate editor window and run the dev command there.
 
 ## Running / switching the dev server
@@ -73,7 +81,7 @@ git worktree remove ../<worktree-dir>     # add --force if it has build artifact
 git branch -d <branch>                     # -d works once merged
 ```
 
-Use `git worktree remove`, not `rm -rf` (if you do delete manually, run `git worktree prune`). The Doppler scope entry for the deleted path lingers in `~/.doppler/.doppler.yaml` — harmless, but prune stale ones occasionally.
+Use `git worktree remove`, not `rm -rf` (if you do delete manually, run `git worktree prune`). The Doppler scope entry for the deleted path lingers in `~/.doppler/.doppler.yaml`, and the Railway link for it lingers in `~/.railway/config.json` — both harmless (they're keyed to a path that no longer exists), but prune stale ones occasionally.
 
 ## Adapting this to another project
 
@@ -81,4 +89,5 @@ The mechanics are general; only the specifics change. When reusing elsewhere, re
 - the project/config names the dev scripts pass to `doppler` (grep the scripts),
 - whether the project even uses Doppler (if not, the Doppler steps drop away),
 - which gitignored build artifacts the dev/build needs (grep `.gitignore` for generated output, or just run the build once and see what fails to resolve) — step 4 is this repo's instance,
+- the deploy platform's per-directory link, if any (step 7 is Railway's; drop it if the project isn't on Railway),
 - the "single-instance" constraint — it only applies if the project shares one tunnel token or binds fixed ports. Stateless dev servers can instead run on different ports in parallel.
