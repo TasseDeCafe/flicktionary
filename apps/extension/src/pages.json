@@ -44,6 +44,7 @@
         {
             "key": "amazonPrime",
             "host": "www\\.amazon\\..+|www\\.primevideo\\.com",
+            "activateAt": "^www\\.primevideo\\.com/|^www\\.amazon\\.[^/]+(/-/[^/]+)?/(gp/video(/|$)|[Pp]rime-[Vv]ideo/|[Aa]mazon-[Vv]ideo/)",
             "pageScript": "amazon-prime-page.js",
             "syncAllowedAtPath": ".*",
             "autoSync": {

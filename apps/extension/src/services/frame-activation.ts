@@ -9,9 +9,12 @@ import { currentPageDelegate } from './pages'
 // platforms (see pages.json), matching how the popup and context menus already
 // gate on `isVideoPlatformUrl`. The decision is made against the TOP-LEVEL page,
 // not the individual frame, so that:
-//   - an unrecognized site (e.g. smotri) never activates, and
+//   - an unrecognized site (e.g. smotri) never activates,
 //   - a platform clip embedded in a third-party page (e.g. a YouTube video in a
-//     Guardian article) stays inert, while
+//     Guardian article) stays inert,
+//   - a platform host's non-player pages stay inert when its row scopes
+//     activation with `activateAt` (Amazon's shopping pages autoplay ad videos
+//     on the same `www.amazon.*` host as Prime Video), while
 //   - a platform that renders its player in a same-site iframe still works
 //     (its top frame is the platform, so child frames activate).
 //
@@ -51,7 +54,7 @@ export function installTopFrameActivationResponder() {
   let cachedIsPlatform: boolean | undefined
   const isPlatform = async () => {
     if (cachedIsPlatform === undefined) {
-      cachedIsPlatform = (await currentPageDelegate()) !== undefined
+      cachedIsPlatform = await isActivationPage()
     }
     return cachedIsPlatform
   }
@@ -81,10 +84,15 @@ export function installTopFrameActivationResponder() {
 
 export async function shouldActivateInThisFrame(): Promise<boolean> {
   if (window.self === window.top) {
-    return (await currentPageDelegate()) !== undefined
+    return isActivationPage()
   }
 
   return queryTopFrame()
+}
+
+const isActivationPage = async (): Promise<boolean> => {
+  const page = await currentPageDelegate()
+  return page !== undefined && page.isActivationPage()
 }
 
 function queryTopFrame(): Promise<boolean> {

@@ -1,6 +1,7 @@
 import pagesConfig from '../pages.json'
 import type { PublicPath } from 'wxt/browser'
 import { ExtensionSettingsStorage } from './extension-settings-storage'
+import { matchesActivationUrl } from './activation-url'
 import { SettingsProvider } from '@asbplayer-fork/common/settings/settings-provider'
 import { SettingsFormPageConfig, PageSettings } from '@asbplayer-fork/common/settings'
 
@@ -14,6 +15,15 @@ interface PageConfig {
 
   // Hosts specified as literal strings, not to be evaluated as regexes
   literalHosts?: string[]
+
+  // Regex over `host + pathname` (no scheme, query or hash) that the TOP-LEVEL
+  // page must match for the extension to activate there (bind videos, show the
+  // overlay, load the page script, treat the tab as a video platform). Absent
+  // means every page on a matching host activates. Host-qualified because one
+  // row can span hosts with different URL layouts — Amazon's shopping site
+  // shares `www.amazon.*` with Prime Video, so only its `/gp/video/` area
+  // should activate, while every page on `www.primevideo.com` should.
+  activateAt?: string
 
   // Key to link this config with page-specific settings
   key?: string
@@ -133,7 +143,8 @@ export async function isVideoPlatformUrl(urlString: string | undefined): Promise
   }
 
   const mergedPageConfig = await pageConfigsMergedWithSettingsOverrides()
-  return matchPageConfig(mergedPageConfig.pages, urlObj.host) !== undefined
+  const matched = matchPageConfig(mergedPageConfig.pages, urlObj.host)
+  return matched !== undefined && new PageDelegate(matched, urlObj).isActivationPage()
 }
 
 export async function currentPageDelegate(): Promise<PageDelegate | undefined> {
@@ -204,6 +215,13 @@ export class PageDelegate {
       (this.config.autoSync.elementId === undefined || element.id === this.config.autoSync.elementId) &&
       (this.config.autoSync.videoSrc === undefined || new RegExp(this.config.autoSync.videoSrc).test(element.src))
     )
+  }
+
+  // Whether the extension should activate at all on this URL — see
+  // `PageConfig.activateAt`. Distinct from `isVideoPage()`, which only gates
+  // subtitle-track syncing on an already-activated page.
+  isActivationPage() {
+    return matchesActivationUrl(this.config.activateAt, this.url)
   }
 
   isVideoPage() {
