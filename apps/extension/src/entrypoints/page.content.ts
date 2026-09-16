@@ -15,6 +15,13 @@ export default defineContentScript({
   runAt: 'document_start',
 
   main(ctx: ContentScriptContext) {
-    currentPageDelegate().then((pageDelegate) => pageDelegate?.loadScripts())
+    // Same scoping as the video content script's activation gate: a platform
+    // row can restrict activation to part of its host (`activateAt`), and the
+    // page script is useless where no video will be bound.
+    currentPageDelegate().then((pageDelegate) => {
+      if (pageDelegate?.isActivationPage()) {
+        pageDelegate.loadScripts()
+      }
+    })
   },
 })
