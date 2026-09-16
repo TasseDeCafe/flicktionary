@@ -201,12 +201,19 @@ cleanup.
     `video-overlay-`, `video-select-`, `notification-`, `controls-`, `drag-`).
     Injected at `<all_urls>`/`allFrames` (upstream binds everywhere), but
     activation is gated to recognized platforms via `services/frame-activation.ts`:
-    each frame binds only if the **top-level** page matches a `pages.json` host.
-    A child frame can't read its top host cross-origin, so the top frame answers
-    a postMessage query (responder installed in every top document, platform or
-    not). This keeps third-party embeds inert — a YouTube clip in a news article,
-    a video on an unrecognized site — while still activating platforms that host
-    their player in a same-site iframe.
+    each frame binds only if the **top-level** page matches a `pages.json` host
+    and, when the row sets `activateAt` (a regex over `host + pathname`), that
+    URL pattern too. Amazon's row scopes activation to Prime Video URLs
+    (`/gp/video/…`, locale-prefixed `/-/xx/gp/video/…`, the `/Prime-Video/b` and
+    `/Amazon-Video/b` storefronts, all of `www.primevideo.com`) so the shopping
+    site's autoplaying ad videos on the same `www.amazon.*` host stay unbound.
+    The same check gates `page.content` (page-script injection) and
+    `isVideoPlatformUrl` (popup subtitle UI vs. import UI, context-menu
+    visibility). A child frame can't read its top host cross-origin, so the top
+    frame answers a postMessage query (responder installed in every top
+    document, platform or not). This keeps third-party embeds inert — a YouTube
+    clip in a news article, a video on an unrecognized site — while still
+    activating platforms that host their player in a same-site iframe.
   - 21 platform **page scripts** (`<site>-page.ts` + `src/pages.json` row each):
     Netflix, YouTube, TVer, Bandai, Amazon Prime, Hulu, iWantTFC, Disney+ (×2),
     U-NEXT, Viki, Emby/Jellyfin, Twitch, OSN+, Bilibili, NRK, Plex, Yle Areena,
