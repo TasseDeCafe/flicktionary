@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 type GenerateContextBlobArgs = {
@@ -42,7 +42,8 @@ ${segmentSample}`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_OPUS,
-    max_tokens: 800,
+    ...reasoningParams(MODEL_OPUS, 'low'),
+    max_tokens: 4000,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })

@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, THINKING_DISABLED } from '../anthropic-client'
+import { getAnthropicClient, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const TOOL_NAME = 'report_extraction'
@@ -141,7 +141,7 @@ Infer the teacher's conventions from the notes themselves (column semantics, err
 
 // One Opus call per lesson section (a dated block of the notes / one sheet).
 // Callers pass the model EXPLICITLY (MODEL_ENRICHMENT from the job handler) —
-// and that model (Opus 4.8) rejects `temperature`, so it is never sent.
+// and Opus rejects `temperature`, so it is never sent.
 export const extractLessonPass = async (params: {
   targetLanguage: string
   sectionMarkdown: string
@@ -150,15 +150,15 @@ export const extractLessonPass = async (params: {
 }): Promise<ExtractedLesson> => {
   const stream = getAnthropicClient().messages.stream({
     model: params.model,
-    thinking: THINKING_DISABLED,
+    ...reasoningParams(params.model, 'low'),
     max_tokens: 16000,
     system: buildSystem(params.targetLanguage, params.teacherProfile),
     tools: [buildTool()],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [
       {
         role: 'user',
-        content: `Extract every item from this lesson's notes:\n\n${params.sectionMarkdown}`,
+        content: `Extract every item from this lesson's notes and submit them with ${TOOL_NAME}:\n\n${params.sectionMarkdown}`,
       },
     ],
   })

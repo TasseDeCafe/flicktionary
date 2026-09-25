@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
@@ -223,7 +223,8 @@ they apply.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_OPUS,
-    max_tokens: 4000,
+    ...reasoningParams(MODEL_OPUS, 'low'),
+    max_tokens: 12000,
     system: buildMethodologySystem({
       nativeLanguage,
       targetLanguage,
@@ -234,7 +235,7 @@ they apply.`
       ipaDialect,
     }),
     tools: [buildTool({ hideTranslationFields, allowL1Notes, targetLanguage })],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: userMessage }],
   })
   logAnthropicCacheUsage('enrichment', response)

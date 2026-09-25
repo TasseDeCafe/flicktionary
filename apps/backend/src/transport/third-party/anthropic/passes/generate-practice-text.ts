@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 
@@ -357,7 +357,8 @@ export const generatePracticeText = async (args: GeneratePracticeTextArgs): Prom
   // for v2 pre-generation that may want incremental UI updates.
   const stream = getAnthropicClient().messages.stream({
     model: MODEL_OPUS,
-    max_tokens: 4000,
+    ...reasoningParams(MODEL_OPUS, 'low'),
+    max_tokens: 12000,
     system: buildPracticeMethodologySystem({
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
@@ -366,7 +367,7 @@ export const generatePracticeText = async (args: GeneratePracticeTextArgs): Prom
       allowL1Notes,
     }),
     tools: [buildTool()],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [
       {
         role: 'user',
