@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DbTextTrackWithSourceType } from '../../transport/database/text-tracks/text-tracks-repository'
 import { resolveTrackProfileReadiness, type ProfileReadinessDependencies } from './profile-readiness'
+import { TRACK_LEMMA_PROFILE_VERSION } from './build-track-lemma-profile'
 
 const track = (overrides: Partial<DbTextTrackWithSourceType> = {}): DbTextTrackWithSourceType =>
   ({
@@ -12,6 +13,7 @@ const track = (overrides: Partial<DbTextTrackWithSourceType> = {}): DbTextTrackW
     profile_max_segment_index: 132,
     profile_word_token_count: 1676,
     profile_matched_token_count: 900,
+    profile_version: TRACK_LEMMA_PROFILE_VERSION,
     ...overrides,
   }) as DbTextTrackWithSourceType
 
@@ -81,6 +83,20 @@ describe('resolveTrackProfileReadiness — zero-match staleness guard', () => {
     const { deps, enqueueBuildTrackLemmaProfile } = buildDeps({ rankBuildTime: new Date('2026-08-03T14:09:12Z') })
     const empty = track({ profile_word_token_count: 0, profile_matched_token_count: 0 })
     await expect(resolveTrackProfileReadiness(empty, 'user-1', deps)).resolves.toBe('available')
+    expect(enqueueBuildTrackLemmaProfile).not.toHaveBeenCalled()
+  })
+
+  it('serves an older-version profile while a background rebuild catches it up', async () => {
+    const { deps, enqueueBuildTrackLemmaProfile } = buildDeps()
+    const older = track({ profile_version: null })
+    await expect(resolveTrackProfileReadiness(older, 'user-1', deps)).resolves.toBe('available')
+    expect(enqueueBuildTrackLemmaProfile).toHaveBeenCalledWith({ textTrackId: 'track-1', userId: 'user-1' })
+  })
+
+  it('keeps serving an older-version profile without retrying a failed rebuild', async () => {
+    const { deps, enqueueBuildTrackLemmaProfile } = buildDeps({ latestJobStatus: 'failed' })
+    const older = track({ profile_version: TRACK_LEMMA_PROFILE_VERSION - 1 })
+    await expect(resolveTrackProfileReadiness(older, 'user-1', deps)).resolves.toBe('available')
     expect(enqueueBuildTrackLemmaProfile).not.toHaveBeenCalled()
   })
 })

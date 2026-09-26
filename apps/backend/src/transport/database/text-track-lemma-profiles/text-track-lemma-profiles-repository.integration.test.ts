@@ -45,6 +45,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: 11,
       wordTokenCount: 40,
       matchedTokenCount: 37,
+      version: 2,
+      bookLemmaCounts: null,
     })
 
     const stored = await repository.listRowsByTrackId(track.id)
@@ -61,6 +63,42 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
     expect(updatedTrack?.profile_matched_token_count).toBe(37)
   })
 
+  test('replaceProfile stamps the version and swaps book lemma counts with the profile', async () => {
+    const { track } = await createTrackFixture()
+    const bookCountsOf = async () =>
+      (await sql`
+        SELECT lemma, occurrences FROM public.book_part_lemma_counts
+        WHERE text_track_id = ${track.id} ORDER BY lemma
+      `) as Array<{ lemma: string; occurrences: number }>
+
+    await repository.replaceProfile({
+      textTrackId: track.id,
+      rows: [{ foldedToken: 'метлу', tokenCount: 4, candidateLemmas: ['метла'] }],
+      segmentCount: 1,
+      maxSegmentIndex: 0,
+      wordTokenCount: 4,
+      matchedTokenCount: 4,
+      version: 2,
+      bookLemmaCounts: [{ lemma: 'метла', occurrences: 4 }],
+    })
+    expect(await bookCountsOf()).toEqual([{ lemma: 'метла', occurrences: 4 }])
+    expect((await textTracksRepository.findById(track.id))?.profile_version).toBe(2)
+
+    // A rebuild replaces the counts wholesale; null clears them.
+    await repository.replaceProfile({
+      textTrackId: track.id,
+      rows: [],
+      segmentCount: 1,
+      maxSegmentIndex: 0,
+      wordTokenCount: 0,
+      matchedTokenCount: 0,
+      version: 3,
+      bookLemmaCounts: null,
+    })
+    expect(await bookCountsOf()).toEqual([])
+    expect((await textTracksRepository.findById(track.id))?.profile_version).toBe(3)
+  })
+
   test('replaceProfile is a whole-profile swap — stale rows never survive a rebuild', async () => {
     const { track } = await createTrackFixture()
     await repository.replaceProfile({
@@ -70,6 +108,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: 0,
       wordTokenCount: 2,
       matchedTokenCount: 2,
+      version: 2,
+      bookLemmaCounts: null,
     })
     await repository.replaceProfile({
       textTrackId: track.id,
@@ -78,6 +118,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: 1,
       wordTokenCount: 5,
       matchedTokenCount: 5,
+      version: 2,
+      bookLemmaCounts: null,
     })
 
     const stored = await repository.listRowsByTrackId(track.id)
@@ -94,6 +136,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: 0,
       wordTokenCount: 1,
       matchedTokenCount: 1,
+      version: 2,
+      bookLemmaCounts: null,
     })
     await repository.replaceProfile({
       textTrackId: track.id,
@@ -102,6 +146,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: null,
       wordTokenCount: 0,
       matchedTokenCount: 0,
+      version: 2,
+      bookLemmaCounts: null,
     })
 
     expect(await repository.listRowsByTrackId(track.id)).toHaveLength(0)
@@ -129,6 +175,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
         maxSegmentIndex: 0,
         wordTokenCount: 3,
         matchedTokenCount: 3,
+        version: 2,
+        bookLemmaCounts: null,
       }),
       repository.replaceProfile({
         textTrackId: track.id,
@@ -137,6 +185,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
         maxSegmentIndex: 1,
         wordTokenCount: 7,
         matchedTokenCount: 7,
+        version: 2,
+        bookLemmaCounts: null,
       }),
     ])
 
@@ -157,6 +207,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
         maxSegmentIndex: 0,
         wordTokenCount: 1,
         matchedTokenCount: 1,
+        version: 2,
+        bookLemmaCounts: null,
       })
     ).rejects.toThrow()
     await expect(
@@ -167,6 +219,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
         maxSegmentIndex: 0,
         wordTokenCount: 1,
         matchedTokenCount: 1,
+        version: 2,
+        bookLemmaCounts: null,
       })
     ).rejects.toThrow()
   })
@@ -180,6 +234,8 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       maxSegmentIndex: 0,
       wordTokenCount: 1,
       matchedTokenCount: 1,
+      version: 2,
+      bookLemmaCounts: null,
     })
     await sql`DELETE FROM public.text_tracks WHERE id = ${track.id}`
     expect(await repository.listRowsByTrackId(track.id)).toHaveLength(0)

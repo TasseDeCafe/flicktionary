@@ -24,6 +24,12 @@ describe('countFoldedTokens', () => {
     expect(counts.get('hallo')).toBe(1)
   })
 
+  it('skips the letter part of digit-hyphen compounds (ASCII and typographic hyphens)', () => {
+    const counts = countFoldedTokens([{ text: '27-летний мальчик, 5\u2011летний и просто летний день' }], 'ru')
+    expect(counts.get('летний')).toBe(1)
+    expect(counts.get('мальчик')).toBe(1)
+  })
+
   it('ignores punctuation and empty segments', () => {
     const counts = countFoldedTokens([{ text: '…—!!' }, { text: '' }], 'en')
     expect(counts.size).toBe(0)

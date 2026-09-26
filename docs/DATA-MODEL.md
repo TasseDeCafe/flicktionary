@@ -63,6 +63,9 @@ text_track
   profile_max_segment_index int?   -- built_at doubles as "profile exists";
   profile_word_token_count int?    -- segment count + max index are the
   profile_matched_token_count int? -- staleness check
+  profile_version     int?         -- builder logic version (TRACK_LEMMA_PROFILE_VERSION);
+                                   -- older/NULL = served as-is while a background
+                                   -- rebuild catches it up
   moderation_status   'clean' | 'flagged' | 'blocked' | null -- moderation verdict
                                    -- (null = pre-feature / unchecked / failed-open;
                                    -- gated ingest surfaces reject hard-blocked
@@ -735,12 +738,18 @@ stored on the track next to `profile_word_token_count` for honesty).
 
 Lifecycle: a `build_track_lemma_profile` job is enqueued at every prose-track
 creation point (SRT upload, OpenSubtitles import, paste, extension
-YouTube/streaming ingest, text import incl. the Telegram bot) when the track
-has no profile yet; a partial unique index coalesces concurrent enqueues to
-one live job per track. The build (service/lemma-profiles/) batch-tokenizes
-segments with occurrence counts, resolves through the shared checkpoint
+YouTube/streaming ingest, text import incl. the Telegram bot, book parts) when
+the track has no profile yet; a partial unique index coalesces concurrent
+enqueues to one live job per track. The build (service/lemma-profiles/)
+batch-tokenizes segments with occurrence counts (same Intl.Segmenter ranges,
+fold and digit-hyphen skip as the checkpoint tokenizer — the letter part of
+«27-летний» is not an occurrence), resolves through the shared checkpoint
 matcher, and swaps rows + bookkeeping in one transaction serialized by a
-per-track advisory lock. Ad-hoc tracks (mutable, "headword — context" lines)
+per-track advisory lock. The track is stamped with the builder's
+`profile_version`; readiness serves an older-version profile as `available`
+and enqueues a rebuild in the background (never after a terminal failure), so
+a builder change reaches existing tracks without consumers flickering to
+`pending`. Ad-hoc tracks (mutable, "headword — context" lines)
 and lesson tracks (independent imported vocabulary items, non-narrative) are
 never profiled — difficulty treats them as unsupported. Missing/stale
 profiles at difficulty-read time re-enqueue and report `pending`; builds are
@@ -768,6 +777,29 @@ lang)`, the SQL twin of `foldUserHeadwordCandidates` (en `to `, de `sich `,
 fr `se `, es/pt reflexive strips on top of `checkpoint_fold`), pinned by a
 SQL-vs-TS parity test. The watermark is what makes save-time crediting
 idempotent: an enrichment retry or a re-save finds nothing uncredited.
+
+### Book part lemma counts
+
+Per-lemma occurrences for each book part — the input of the pinned-book
+"occurrences ahead" priority (docs/proposals/book-aware-new-term-priority.md).
+Backend reads/writes only; RLS enabled with no policies.
+
+```
+book_part_lemma_counts
+  text_track_id       uuid -> text_track.id (ON DELETE CASCADE)
+  lemma               text         -- checkpoint_fold-folded; pk (text_track_id, lemma)
+  occurrences         int          -- CHECK > 0
+  index (lemma, text_track_id)     -- lemma-driven lookups across a book's parts
+```
+
+Written by the profile build for book parts only, in the same transaction as
+the profile swap (`book-lemma-counts.ts`): each token group runs through the
+checkpoint homograph guard (`applyFrequencyAsymmetryGuard` with
+`lemma_ranks`), then every surviving candidate is credited the group's FULL
+token count — the question is "will I meet this word", so the equal-frequency
+survivors each count rather than splitting. A `lemma_ranks` rebuild does not
+re-trigger it (accepted: rank builds are rare, and a stale guard decision
+costs ordering precision, not correctness).
 
 ### Known lemmas
 

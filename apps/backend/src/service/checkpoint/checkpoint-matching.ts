@@ -52,8 +52,12 @@ const windowAroundRange = (text: string, start: number, end: number): string => 
 // standalone word — never a real occurrence of a saved term. Typographic
 // hyphens/dashes (U+2010–U+2015, notably the non-breaking hyphen U+2011)
 // split the same way as ASCII '-'; the class mirrors JOINER_PUNCTUATION in
-// packages/core/src/utils/search-match.ts.
+// packages/core/src/utils/search-match.ts. Shared by every tokenizer that
+// counts or matches occurrences (checkpoints, the lemma-profile counter).
 const HYPHEN_CHARS = /[-‐-―]/
+
+export const isDigitHyphenCompoundPiece = (text: string, wordStart: number): boolean =>
+  HYPHEN_CHARS.test(text[wordStart - 1] ?? '') && /\d/.test(text[wordStart - 2] ?? '')
 
 export type TokenizedSpan = {
   // Every distinct folded word token in the span.
@@ -85,7 +89,7 @@ export const tokenizeSegments = (
   for (const segment of segments) {
     const segmentTokens = new Set<string>()
     for (const [start, end] of getWordRanges(segment.text, targetLanguage)) {
-      if (HYPHEN_CHARS.test(segment.text[start - 1] ?? '') && /\d/.test(segment.text[start - 2] ?? '')) continue
+      if (isDigitHyphenCompoundPiece(segment.text, start)) continue
       const folded = foldCheckpointToken(segment.text.slice(start, end), targetLanguage)
       if (!folded) continue
       foldedTokens.add(folded)
