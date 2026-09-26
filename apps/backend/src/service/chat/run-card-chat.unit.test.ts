@@ -206,3 +206,105 @@ describe('runCardChat — updatedChunk', () => {
     expect(result.updatedChunk).toBeNull()
   })
 })
+
+describe('runCardChat — tool_result follow-up turn', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(buildPromptContext).mockResolvedValue({ systemBlocks: [] } as unknown as Awaited<
+      ReturnType<typeof buildPromptContext>
+    >)
+    vi.mocked(getLanguageMode).mockResolvedValue({
+      ...prefOffMode,
+      showTranslationsEnabled: true,
+      hideTranslationFields: false,
+    } as LanguagePrefs)
+  })
+
+  // Opus 5.5 shape: no text, only a (hidden) thinking block and the tool call.
+  const silentToolTurn = {
+    stop_reason: 'tool_use',
+    content: [
+      { type: 'thinking', thinking: '', signature: 'sig' },
+      { type: 'tool_use', id: 'tu_1', name: 'update_card_fields', input: { translation: 'le mot' } },
+    ],
+  }
+
+  it('sends the first response back with a tool_result and uses the follow-up text as the reply', async () => {
+    const { deps } = createDeps()
+    const createChatCompletion = vi.mocked(deps.anthropicPasses.createChatCompletion)
+    createChatCompletion.mockReset()
+    createChatCompletion
+      .mockResolvedValueOnce(silentToolTurn as never)
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: 'Changed it — "le mot" is neutral.' }] } as never)
+
+    const result = await runCardChat({ cardId, userId, content: 'Change the translation and explain' }, deps)
+
+    expect(createChatCompletion).toHaveBeenCalledTimes(2)
+    const followUp = createChatCompletion.mock.calls[1]![0]
+    expect(followUp.tool_choice).toEqual({ type: 'none' })
+    expect(followUp.tools).toHaveLength(1)
+    const [assistantTurn, toolResultTurn] = followUp.messages.slice(-2)
+    // Passed back unchanged, thinking block included.
+    expect(assistantTurn).toEqual({ role: 'assistant', content: silentToolTurn.content })
+    expect(toolResultTurn!.content).toEqual([
+      { type: 'tool_result', tool_use_id: 'tu_1', content: 'Applied: translation.' },
+    ])
+    expect(result.assistantMessage.content).toBe('Changed it — "le mot" is neutral.\n\n_Updated: translation_')
+  })
+
+  it('tells the model why a rename was rejected', async () => {
+    const { deps } = createDeps()
+    vi.mocked(deps.userLookupsRepository.renameKey).mockResolvedValue({ ok: false, reason: 'CONFLICT' })
+    const createChatCompletion = vi.mocked(deps.anthropicPasses.createChatCompletion)
+    createChatCompletion.mockReset()
+    createChatCompletion
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', id: 'tu_1', name: 'update_card_fields', input: { headword: 'palabrita' } }],
+      } as never)
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: 'That headword already exists.' }] } as never)
+
+    const result = await runCardChat({ cardId, userId, content: 'Rename it to palabrita' }, deps)
+
+    const toolResult = createChatCompletion.mock.calls[1]![0].messages.at(-1)!.content as Array<{ content: string }>
+    expect(toolResult[0]!.content).toContain('No card fields were changed.')
+    expect(toolResult[0]!.content).toContain('headword/sense were not changed')
+    expect(result.assistantMessage.content).toBe('That headword already exists.')
+  })
+
+  it('answers every tool_use block, flagging extra update calls as errors', async () => {
+    const { deps, updateContent } = createDeps()
+    const createChatCompletion = vi.mocked(deps.anthropicPasses.createChatCompletion)
+    createChatCompletion.mockReset()
+    createChatCompletion
+      .mockResolvedValueOnce({
+        content: [
+          { type: 'tool_use', id: 'tu_1', name: 'update_card_fields', input: { translation: 'le mot' } },
+          { type: 'tool_use', id: 'tu_2', name: 'update_card_fields', input: { definition: 'autre' } },
+        ],
+      } as never)
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: 'Done with the translation.' }] } as never)
+
+    await runCardChat({ cardId, userId, content: 'Fix both' }, deps)
+
+    expect(updateContent).toHaveBeenCalledTimes(1)
+    const toolResults = createChatCompletion.mock.calls[1]![0].messages.at(-1)!.content as Array<{
+      tool_use_id: string
+      is_error?: boolean
+    }>
+    expect(toolResults.map((r) => [r.tool_use_id, r.is_error ?? false])).toEqual([
+      ['tu_1', false],
+      ['tu_2', true],
+    ])
+  })
+
+  it('makes a single call for a conversational turn', async () => {
+    const { deps } = createDeps()
+    vi.mocked(deps.anthropicPasses.createChatCompletion).mockResolvedValue({
+      content: [{ type: 'text', text: 'It means "word".' }],
+    } as never)
+
+    await runCardChat({ cardId, userId, content: 'What does it mean?' }, deps)
+
+    expect(deps.anthropicPasses.createChatCompletion).toHaveBeenCalledTimes(1)
+  })
+})

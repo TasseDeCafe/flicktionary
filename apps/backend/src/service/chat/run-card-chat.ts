@@ -175,7 +175,7 @@ ${surroundingSegmentsBlock}`
 
 When the learner asks you to change something on the card (${editableFields}),
 call the \`${UPDATE_TOOL_NAME}\` tool with only the fields that should change. Do not echo unchanged fields.
-Confirm the change briefly in your reply.${translationModeNote}
+Once the tool result comes back, confirm the change briefly and answer anything else the learner asked.${translationModeNote}
 
 When the learner asks you to fill in, create, or generate the card's data without specifying how deep to go, populate only the basic fields (translation, definition, target_example, native_example) plus the core \`grammar_patch\` keys — leave \`extras_patch\` (the full-exploration bag: frequency, register, register_alternatives, more_frequent_synonym, more_examples, regionalism, collocations, etymology, l1_notes, context_segment) empty. Only populate \`extras_patch\` when the learner explicitly asks for a full / deep / complete exploration, or asks for one of those specific extras by name.`
 }
@@ -273,6 +273,13 @@ const parseToolInput = (raw: unknown): ParsedPatch | null => {
   }
 }
 
+const extractText = (content: Anthropic.ContentBlock[]): string =>
+  content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n')
+    .trim()
+
 export const runCardChat = async (
   input: RunCardChatInput,
   deps: RunCardChatDependencies
@@ -368,43 +375,49 @@ export const runCardChat = async (
     { role: 'user', content: input.content },
   ]
 
-  const response = await deps.anthropicPasses.createChatCompletion({
+  const request = {
     model: MODEL_OPUS,
     ...reasoningParams(MODEL_OPUS, 'low'),
     max_tokens: 6000,
     system: promptContext.systemBlocks,
     // Withhold the editing tool for non-editable (auto-seeded) turns.
     ...(allowCardEdits ? { tools: [updateCardFieldsTool] } : {}),
-    messages,
-  })
+  }
+  const response = await deps.anthropicPasses.createChatCompletion({ ...request, messages })
   logAnthropicCacheUsage('card-chat', response)
 
-  const assistantText = response.content
-    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n')
-    .trim()
-
-  const toolUse = response.content.find((block) => block.type === 'tool_use')
+  const firstText = extractText(response.content)
+  const toolUses = response.content.filter((block): block is Anthropic.ToolUseBlock => block.type === 'tool_use')
 
   let updatedFieldNames: string[] = []
   let chunkPatched = false
-  if (toolUse && toolUse.type === 'tool_use' && toolUse.name === UPDATE_TOOL_NAME) {
+  // What the model is told happened, sent back as the tool_result so its
+  // follow-up reply can confirm (or explain a rejection) accurately.
+  const toolResultNotes: string[] = []
+  const toolUse = toolUses[0]
+  if (toolUse && toolUse.name === UPDATE_TOOL_NAME) {
     const parsed = parseToolInput(toolUse.input)
-    if (parsed) {
+    if (!parsed) {
+      toolResultNotes.push('The call contained no recognized fields.')
+    } else {
       // Translation fields are blocked only for sameLanguage (where they are
       // meaningless). With translations-off they pass through — the seed turn
       // instructs the model to set them only on explicit learner request.
       if (languagePrefs.sameLanguage) {
+        const hadTranslationFields = parsed.patch.translation !== null || parsed.patch.nativeExample !== null
         parsed.patch.translation = null
         parsed.patch.nativeExample = null
         parsed.changedFieldNames = parsed.changedFieldNames.filter(
           (name) => name !== 'translation' && name !== 'native_example'
         )
+        if (hadTranslationFields) {
+          toolResultNotes.push('translation and native_example were ignored: they do not apply to this card.')
+        }
       }
       parsed.patch.extrasPatch = sanitizeExplorationExtrasForLanguageMode(parsed.patch.extrasPatch, languagePrefs)
-      if (parsed.patch.extrasPatch === null) {
+      if (parsed.patch.extrasPatch === null && parsed.changedFieldNames.includes('extras')) {
         parsed.changedFieldNames = parsed.changedFieldNames.filter((name) => name !== 'extras')
+        toolResultNotes.push("extras_patch was ignored: none of its keys apply to this learner's language settings.")
       }
       // surface_form lives on the card itself; everything else lives on the
       // canonical chunk (user_lookups). We split the patch across the two
@@ -447,10 +460,10 @@ export const runCardChat = async (
           sense: parsed.patch.sense ?? card.chunk.sense ?? '',
         })
         if (!result.ok) {
-          // Drop the rename from the changed-field list silently — the chat
-          // reply still lists what we did manage to apply. A future iteration
-          // could surface a typed warning to the assistant.
           parsed.changedFieldNames = parsed.changedFieldNames.filter((n) => n !== 'headword' && n !== 'sense')
+          toolResultNotes.push(
+            'headword/sense were not changed: the learner already has another card with that headword and sense.'
+          )
         } else {
           chunkPatched = true
         }
@@ -459,13 +472,42 @@ export const runCardChat = async (
     }
   }
 
+  // The first response rarely carries the confirmation itself (Opus 5.5 turns
+  // pre-tool prose into hidden progress-update thinking), so an edit turn gets
+  // a second call: the first response goes back unchanged (thinking blocks
+  // included) with a tool_result per tool_use, and the model writes its reply.
+  // `tool_choice: none` keeps that reply from re-editing the card.
+  let followUpText = ''
+  if (toolUses.length > 0) {
+    const appliedNote =
+      updatedFieldNames.length > 0 ? `Applied: ${updatedFieldNames.join(', ')}.` : 'No card fields were changed.'
+    const toolResults = toolUses.map((block, index): Anthropic.ToolResultBlockParam =>
+      index === 0 && block.name === UPDATE_TOOL_NAME
+        ? { type: 'tool_result', tool_use_id: block.id, content: [appliedNote, ...toolResultNotes].join('\n') }
+        : {
+            type: 'tool_result',
+            tool_use_id: block.id,
+            is_error: true,
+            content: `Ignored: only one ${UPDATE_TOOL_NAME} call is applied per turn.`,
+          }
+    )
+    const followUp = await deps.anthropicPasses.createChatCompletion({
+      ...request,
+      tool_choice: { type: 'none' },
+      messages: [...messages, { role: 'assistant', content: response.content }, { role: 'user', content: toolResults }],
+    })
+    logAnthropicCacheUsage('card-chat-follow-up', followUp)
+    followUpText = extractText(followUp.content)
+  }
+
   // Refetch after the patch so the response carries the chunk as persisted
   // (JSONB merges and the rename may differ from the raw tool input).
   const updatedChunk = chunkPatched
     ? ((await deps.cardsRepository.findByIdForUser(input.cardId, input.userId))?.chunk ?? null)
     : null
 
-  const baseText = assistantText || (updatedFieldNames.length > 0 ? 'Done.' : '')
+  const replyText = [firstText, followUpText].filter(Boolean).join('\n\n')
+  const baseText = replyText || (updatedFieldNames.length > 0 ? 'Done.' : '')
   if (!baseText) {
     throw new Error('Anthropic returned an empty response')
   }

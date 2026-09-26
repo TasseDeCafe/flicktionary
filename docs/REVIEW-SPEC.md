@@ -179,7 +179,10 @@ review-and-prune list of the session's kept terms, not a keep/reject queue.
   is cross-device; the `cards.*` read paths return a derived `hasUnreadChat`
   (true when the newest assistant turn is newer than `last_read_at`). The chat
   tool can call `update_card_fields` to patch any basic column or merge into
-  `exploration_extras` / `grammar` server-side; the assistant body gets a
+  `exploration_extras` / `grammar` server-side. An edit turn makes a second
+  model call: the server reports what it applied (or why a field was rejected —
+  e.g. a rename conflict) as the tool result, and the model writes its
+  confirmation/explanation from that. The assistant body gets a
   `_Updated: …_` italic line and the focus view re-fetches the card. When a
   turn patched the chunk, the `sendMessage` response also carries the persisted
   result as `updatedChunk` (null on conversational turns), which the client
