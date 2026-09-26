@@ -17,6 +17,11 @@ export type ReplaceProfileInput = {
   maxSegmentIndex: number | null
   wordTokenCount: number
   matchedTokenCount: number
+  version: number
+  // Book parts only (null otherwise): the guarded per-lemma counts, swapped
+  // atomically with the profile so a part never pairs one build's profile
+  // with another build's counts.
+  bookLemmaCounts: Array<{ lemma: string; occurrences: number }> | null
 }
 
 const INSERT_CHUNK = 1_000
@@ -37,13 +42,24 @@ const replaceProfile = async (input: ReplaceProfileInput): Promise<void> => {
       }))
       await tx`INSERT INTO public.text_track_lemma_profiles ${tx(chunk)}`
     }
+    await tx`DELETE FROM public.book_part_lemma_counts WHERE text_track_id = ${input.textTrackId}`
+    const bookLemmaCounts = input.bookLemmaCounts ?? []
+    for (let i = 0; i < bookLemmaCounts.length; i += INSERT_CHUNK) {
+      const chunk = bookLemmaCounts.slice(i, i + INSERT_CHUNK).map((row) => ({
+        text_track_id: input.textTrackId,
+        lemma: row.lemma,
+        occurrences: row.occurrences,
+      }))
+      await tx`INSERT INTO public.book_part_lemma_counts ${tx(chunk)}`
+    }
     await tx`
       UPDATE public.text_tracks
       SET profile_built_at = now(),
           profile_segment_count = ${input.segmentCount},
           profile_max_segment_index = ${input.maxSegmentIndex},
           profile_word_token_count = ${input.wordTokenCount},
-          profile_matched_token_count = ${input.matchedTokenCount}
+          profile_matched_token_count = ${input.matchedTokenCount},
+          profile_version = ${input.version}
       WHERE id = ${input.textTrackId}
     `
   })

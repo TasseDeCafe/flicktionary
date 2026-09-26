@@ -4,6 +4,7 @@ import type { TextSegmentsRepositoryInterface } from '../../transport/database/t
 import type { DbTextTrackWithSourceType } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { ensureTrackLemmaProfileJob } from './ensure-profile-job'
+import { TRACK_LEMMA_PROFILE_VERSION } from './build-track-lemma-profile'
 
 // The single source of truth for the profile lifecycle at read time, shared by
 // every consumer of the stored profile (the difficulty batch AND the
@@ -66,6 +67,18 @@ export const resolveTrackProfileReadiness = async (
       if (latestJobStatus === 'failed') return 'failed'
       await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
       return 'pending'
+    }
+  }
+
+  // A profile from an older builder version is still a usable profile (the
+  // logic change is a refinement, not a correctness break), so it stays
+  // 'available' — no consumer flickers to pending — while a background
+  // rebuild catches it up. A terminally failed rebuild is not retried here
+  // (the old profile keeps serving), so a broken build can't loop.
+  if (track.profile_version !== TRACK_LEMMA_PROFILE_VERSION) {
+    const latestJobStatus = await deps.processingJobsRepository.getLatestBuildProfileJobStatus(track.id)
+    if (latestJobStatus !== 'failed') {
+      await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({ textTrackId: track.id, userId })
     }
   }
 

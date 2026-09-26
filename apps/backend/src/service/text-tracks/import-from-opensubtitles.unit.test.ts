@@ -28,6 +28,7 @@ const buildTrack = (overrides: Partial<DbTextTrack> = {}): DbTextTrack => ({
   profile_max_segment_index: null,
   profile_word_token_count: null,
   profile_matched_token_count: null,
+  profile_version: null,
   moderation_status: null,
   moderation_category: null,
   book_part_index: null,

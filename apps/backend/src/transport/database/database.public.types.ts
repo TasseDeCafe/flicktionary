@@ -28,6 +28,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      book_part_lemma_counts: {
+        Row: {
+          lemma: string
+          occurrences: number
+          text_track_id: string
+        }
+        Insert: {
+          lemma: string
+          occurrences: number
+          text_track_id: string
+        }
+        Update: {
+          lemma?: string
+          occurrences?: number
+          text_track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'book_part_lemma_counts_text_track_id_fkey'
+            columns: ['text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       card_chat_messages: {
         Row: {
           card_id: string
@@ -1661,6 +1687,7 @@ export type Database = {
           profile_matched_token_count: number | null
           profile_max_segment_index: number | null
           profile_segment_count: number | null
+          profile_version: number | null
           profile_word_token_count: number | null
           source: Database['public']['Enums']['text_track_source']
         }
@@ -1679,6 +1706,7 @@ export type Database = {
           profile_matched_token_count?: number | null
           profile_max_segment_index?: number | null
           profile_segment_count?: number | null
+          profile_version?: number | null
           profile_word_token_count?: number | null
           source: Database['public']['Enums']['text_track_source']
         }
@@ -1697,6 +1725,7 @@ export type Database = {
           profile_matched_token_count?: number | null
           profile_max_segment_index?: number | null
           profile_segment_count?: number | null
+          profile_version?: number | null
           profile_word_token_count?: number | null
           source?: Database['public']['Enums']['text_track_source']
         }

@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { TRACK_LEMMA_PROFILE_VERSION } from '../../service/lemma-profiles/build-track-lemma-profile'
 import request from 'supertest'
 import { randomUUID } from 'crypto'
 import { buildAuthorizationHeaders, buildTestApp } from '../../test/test-utils'
@@ -97,6 +98,8 @@ describe('study-sessions difficulties', () => {
       maxSegmentIndex: null,
       wordTokenCount: 10,
       matchedTokenCount: 10,
+      version: TRACK_LEMMA_PROFILE_VERSION,
+      bookLemmaCounts: null,
     })
 
     // Below the tracked-vocab floor (3 tracked lemmas) the headline verdict is
@@ -150,6 +153,8 @@ describe('study-sessions difficulties', () => {
       maxSegmentIndex: null,
       wordTokenCount: 1,
       matchedTokenCount: 1,
+      version: TRACK_LEMMA_PROFILE_VERSION,
+      bookLemmaCounts: null,
     })
 
     const missingId = randomUUID()
@@ -228,6 +233,8 @@ describe('study-sessions difficulties', () => {
       maxSegmentIndex: 6,
       wordTokenCount: 1,
       matchedTokenCount: 1,
+      version: TRACK_LEMMA_PROFILE_VERSION,
+      bookLemmaCounts: null,
     })
 
     const stale = await getDifficulties(token, [session.id])

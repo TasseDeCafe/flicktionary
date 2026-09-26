@@ -3,7 +3,9 @@ import type { TextSegmentsRepositoryInterface } from '../../transport/database/t
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextTrackLemmaProfilesRepositoryInterface } from '../../transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
+import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import { countFoldedTokens } from './count-tokens'
+import { countBookPartLemmas, lemmasNeedingRanks } from './book-lemma-counts'
 
 // Builds (or rebuilds) a track's lemma profile: batch-tokenize the segments
 // with occurrence counts, resolve every distinct folded token to its candidate
@@ -11,7 +13,14 @@ import { countFoldedTokens } from './count-tokens'
 // track bookkeeping in one transaction (see the repository). Synthetic tracks
 // (adhoc: mutable, "headword — context" lines; lesson: independent imported
 // vocabulary items, non-narrative) and languages without loaded wiktionary
-// data are skipped — the difficulty stat treats them as unsupported.
+// data are skipped — the difficulty stat treats them as unsupported. Book
+// parts additionally get their guarded per-lemma counts
+// (book_part_lemma_counts) in the same swap.
+
+// The builder's logic version, stamped on the track. Bump it whenever the
+// build output changes shape or semantics: readiness serves an older-version
+// profile as-is while a background rebuild catches it up.
+export const TRACK_LEMMA_PROFILE_VERSION = 2
 
 const SEGMENT_BATCH_SIZE = 500
 const RESOLVE_CHUNK_SIZE = 5_000
@@ -21,6 +30,7 @@ export type BuildTrackLemmaProfileDependencies = {
   textSegmentsRepository: TextSegmentsRepositoryInterface
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
   textTrackLemmaProfilesRepository: TextTrackLemmaProfilesRepositoryInterface
+  lemmaRanksRepository: LemmaRanksRepositoryInterface
 }
 
 export type BuildTrackLemmaProfileResult =
@@ -86,6 +96,16 @@ export const buildTrackLemmaProfile = async (
     rows.push({ foldedToken, tokenCount, candidateLemmas: [...lemmas] })
   }
 
+  let bookLemmaCounts: Array<{ lemma: string; occurrences: number }> | null = null
+  if (track.content_source_type === 'book') {
+    const rankLemmas = lemmasNeedingRanks(rows)
+    const ranks =
+      rankLemmas.length > 0
+        ? await deps.lemmaRanksRepository.listRanksForLemmas({ targetLanguage: track.language, lemmas: rankLemmas })
+        : new Map()
+    bookLemmaCounts = [...countBookPartLemmas(rows, ranks)].map(([lemma, occurrences]) => ({ lemma, occurrences }))
+  }
+
   await deps.textTrackLemmaProfilesRepository.replaceProfile({
     textTrackId,
     rows,
@@ -93,6 +113,8 @@ export const buildTrackLemmaProfile = async (
     maxSegmentIndex,
     wordTokenCount,
     matchedTokenCount,
+    version: TRACK_LEMMA_PROFILE_VERSION,
+    bookLemmaCounts,
   })
   return { status: 'built', wordTokenCount, matchedTokenCount }
 }

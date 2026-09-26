@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { TRACK_LEMMA_PROFILE_VERSION } from '../../service/lemma-profiles/build-track-lemma-profile'
 import request from 'supertest'
 import { buildAuthorizationHeaders, buildTestApp } from '../../test/test-utils'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
@@ -46,6 +47,8 @@ describe('study-sessions known lemmas', () => {
       maxSegmentIndex: null,
       wordTokenCount: Object.keys(candidateLemmasByToken).length,
       matchedTokenCount: Object.keys(candidateLemmasByToken).length,
+      version: TRACK_LEMMA_PROFILE_VERSION,
+      bookLemmaCounts: null,
     })
   }
 
