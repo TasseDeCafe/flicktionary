@@ -280,9 +280,10 @@ active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) an
 SQL fragments). Both new buckets order by a computed tier, then `zipf_estimate DESC NULLS
 LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
 the stable tiebreak, closed by `headword ASC, sense ASC, id ASC` so the ordering is strictly
-unique — the Vocabulary tab's `Up next` filter pages this exact ordering with a keyset
-cursor, so the list a user inspects there is the introduction order. The tier, from three
-signal columns on `user_lookups`:
+unique. With a pinned book, the recognition order interleaves the book stream on top of
+this (see **Pinned book** below). The Vocabulary tab's `Up next` filter pages that final
+order with a keyset cursor, so the list a user inspects there is the introduction order.
+The tier, from three signal columns on `user_lookups`:
 
 1. **revealed demand** — `encounter_count >= 2`: the term was encountered again at a
    user-intent boundary (a re-save, or a lesson import confirming it as a duplicate).
@@ -321,6 +322,69 @@ never count an episode twice. A word looked up on two earlier days and saved tod
 at tier 1. Combined with the tier-2 Zipf floor, rare words need a second piece of
 evidence — a re-save, a repeated lookup, or a lesson confirm — before they outrank the
 backlog.
+
+**Pinned book** (`book-priority.ts`, `book-quota.ts`; pin endpoints on the `books`
+router). A user can pin one book per language (`book_pins`). While it's pinned,
+never-introduced **recognition** terms that occur often in its **unread** parts form a
+book stream that gets up to `BOOK_NEW_SHARE` (0.5) of the combined daily new budget. It
+reallocates the existing budget and never adds to it. Everything is computed live at
+queue time, so pinning, unpinning and reading take effect on the next fetch with no
+backfill.
+
+- **Occurrences ahead.** Per-part counts come from `book_part_lemma_counts` (the profile
+  build, homograph-guarded; docs/DATA-MODEL.md). The anchor is the **furthest-reached
+  part**: the highest `book_part_index` among the book's live sessions with a
+  `furthest_read_segment_index`. Rereading an early chapter never re-inflates "ahead".
+  - That part counts pro-rated by what's left of it, `1 − (furthest + 1) / segments`.
+  - Later parts count fully; earlier parts don't count at all.
+  - A term's `ahead` is the max over its `user_headword_lemma_keys`. Summing would
+    double-count the liberal reflexive strips.
+  - Before any reading, the whole book is ahead.
+- **Membership.** `ahead ≥ MIN_BOOK_OCCURRENCES_AHEAD` (3) and **no enabled production
+  citation facet**: production-marked words keep their own ordering. Membership is by
+  occurrences, not provenance, so a word saved from an article that recurs in the book
+  counts. Multi-word headwords never match single-token counts. The 90-day decay still
+  applies.
+- **Quota.** `book_quota = ceil(0.5 × daily max)`. Usage is the count of citation facets
+  introduced today with `book_quota_source_id` set. **Both introduction guards** stamp that
+  column, at introduction time, with the pinned book when the term is in its stream
+  (`bookStreamSourceForTermSql`):
+  - the warm-up park guard, which Learn extra also goes through;
+  - the rating/reading guard.
+
+  Undo of an introduction clears the stamp. Because the stamp is durable, replacing the
+  pin mid-day or reading past a word's last occurrence never refills the quota.
+- **Order** (`introductionOrderCtesSql`, one builder for every consumer). The population
+  is the `Up next` stage. **Master** rows are the introduction candidates (no live
+  production sibling). Among them:
+  - the first `remaining` book-stream terms by `ahead DESC` are **boosted**, at fair-share
+    positions `k / 0.5`;
+  - every other master row is **normal**, at `j / 0.5` in `newTermOrderSql` order.
+
+  Ties go to the book, so the order reads B N B N…. Book terms past the quota are simply
+  normal rows. Non-master rows (bridge-pending, listed only by `Up next`) are slotted
+  immediately before the next normal row in tier order and take no position, so filtering
+  them out of any consumer yields discovery's order exactly. Interleaving, rather than
+  book-first, matters because production is allocated first from the shared budget: a
+  busy production day leaves recognition fewer slots, and the book still gets only half
+  of them, so it can't starve the normal stream. With no pin, or no quota left, the order
+  equals the tier order.
+- **Consumers.**
+  - `listEligibleNewCitationFacets` (recognition; production keeps the tier order).
+  - `listReviewTerms`' recognition capped new bucket, which reading mode uses. The
+    position rides through the `spaced` window and the final `ORDER BY`; other buckets
+    carry NULL positions.
+  - `Up next`: cursor `(pos, lane, seq, id)`, and boosted rows carry
+    `pinnedBookPriority` for the row's "Book" badge. Positions are recomputed per
+    request, so an introduction between page loads can shift them.
+  - The planner is unchanged: it still takes each ordered list's head.
+- **Unpin / finish / remove.**
+  - Unpin deletes the row, and unstarted book words fall back to their tier position on
+    the next fetch. Introduced words keep their schedules, and parked onboarding gates
+    stay.
+  - Finishing writes nothing: `ahead` reaches 0 by itself.
+  - `books.remove` deletes the pin in the same transaction as the session soft-delete,
+    since the source row survives for dedup.
 
 **Decay (virtual shelf)**: never-introduced terms with `last_encountered_at` older than 90
 days are excluded from both new buckets, from warm-up discovery

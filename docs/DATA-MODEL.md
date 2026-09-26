@@ -778,6 +778,27 @@ fr `se `, es/pt reflexive strips on top of `checkpoint_fold`), pinned by a
 SQL-vs-TS parity test. The watermark is what makes save-time crediting
 idempotent: an enrichment retry or a re-save finds nothing uncredited.
 
+### Book pins
+
+The pinned book per (user, language) — docs/SRS.md §4 "Pinned book". Backend
+reads/writes only; RLS enabled with no policies.
+
+```
+book_pins
+  user_id             uuid -> auth.users.id (ON DELETE CASCADE)
+  target_language     text         -- pk (user_id, target_language): one pin per language
+  content_source_id   uuid -> content_sources.id (ON DELETE CASCADE)
+  pinned_at           timestamptz
+```
+
+Pinning another book of the same language upserts the row. `books.remove`
+deletes it in the same transaction as the session soft-delete (the source
+survives removal for dedup). `study_facets.book_quota_source_id` (uuid? ->
+content_sources, ON DELETE SET NULL) is stamped by both introduction guards
+with the pinned book when the term was in its stream at introduction time;
+the daily book quota counts today's stamped introductions, so it survives
+pin changes. Undo of an introduction clears it.
+
 ### Book part lemma counts
 
 Per-lemma occurrences for each book part — the input of the pinned-book
