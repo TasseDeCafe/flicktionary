@@ -1300,6 +1300,10 @@ msgstr "Continue reading"
 msgid "Continue reading {bookTitle}"
 msgstr "Continue reading {bookTitle}"
 
+#: apps/web/src/features/sessions/components/book-group-card.tsx
+msgid "Continue reading {bookTitle}, prioritized book"
+msgstr "Continue reading {bookTitle}, prioritized book"
+
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Continue with {nextLanguageName}"
 msgstr "Continue with {nextLanguageName}"
