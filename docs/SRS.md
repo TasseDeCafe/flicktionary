@@ -286,7 +286,12 @@ signal columns on `user_lookups`:
 
 1. **revealed demand** — `encounter_count >= 2`: the term was encountered again at a
    user-intent boundary (a re-save, or a lesson import confirming it as a duplicate).
-2. **fresh saves** — `last_encountered_at` within the 14-day freshness window.
+2. **fresh saves** — `last_encountered_at` within the 14-day freshness window, **and**
+   `zipf_estimate >= FRESH_SAVE_MIN_ZIPF` (3.5) or not yet estimated. A rarer fresh save
+   gets no boost: it waits in the backlog (at its zipf position, so near the tail) until
+   a second encounter lifts it to tier 1. Cheap binge-saves of rare words therefore can't
+   crowd out more frequent backlog terms. The floor was tuned on prod saves: the LLM
+   estimates run high, and 3.5 demotes about a fifth of them.
 3. **the backlog** — everything else, served most-frequent-first via `zipf_estimate`
    (LLM-estimated continuous Zipf, 0–8 one decimal, emitted by the basic-data pass;
    NULL — not yet estimated — sorts last).

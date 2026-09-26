@@ -15,6 +15,15 @@ import { sql } from '../../transport/database/postgres-client'
 // (tier 2) even with a single recorded encounter.
 export const NEW_TERM_FRESHNESS_DAYS = 14
 
+// A fresh save below this LLM-estimated Zipf doesn't get the tier-2 boost: it
+// waits in the backlog until a second piece of evidence (a re-save, a lookup,
+// a lesson confirm) lifts it to tier 1. Tuned on prod saves — the estimates
+// run high (rare words land around 2–3), and 3.5 splits "fine to wait"
+// (чечевица, шмон) from everyday vocabulary (ночлег, часовой пояс), demoting
+// about a fifth of saves. NULL (not yet estimated) passes: the estimate lands
+// seconds after the save.
+export const FRESH_SAVE_MIN_ZIPF = 3.5
+
 // Virtual shelf: a never-introduced term whose last encounter is older than
 // this stops being served (and counted) as a new term. It stays visible in
 // the Vocabulary list, and any re-encounter (recordEncounter) revives it.
@@ -25,12 +34,14 @@ export const NEW_TERM_DECAY_DAYS = 90
 // Tier for a never-introduced row, lower = served first:
 //   1 — revealed demand: encountered at least twice (re-saved, or a lesson
 //       import confirmed it as a duplicate)
-//   2 — fresh saves: last encountered inside the freshness window
+//   2 — fresh saves: last encountered inside the freshness window, and not
+//       rarer than FRESH_SAVE_MIN_ZIPF
 //   3 — the backlog (ordered by frequency prior within the tier)
 // `ul` must be the user_lookups alias in the enclosing query.
 export const newTermTierSql = () => sql`
   CASE WHEN ul.encounter_count >= 2 THEN 1
-       WHEN ul.last_encountered_at > NOW() - make_interval(days => ${NEW_TERM_FRESHNESS_DAYS}) THEN 2
+       WHEN ul.last_encountered_at > NOW() - make_interval(days => ${NEW_TERM_FRESHNESS_DAYS})
+         AND (ul.zipf_estimate IS NULL OR ul.zipf_estimate >= ${FRESH_SAVE_MIN_ZIPF}) THEN 2
        ELSE 3 END
 `
 

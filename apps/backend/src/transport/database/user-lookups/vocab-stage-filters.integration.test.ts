@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { UserLookupsRepository, type ChunkRow, type ChunksCursor, type VocabStage } from './user-lookups-repository'
+import { FRESH_SAVE_MIN_ZIPF } from '../../../service/practice/new-term-priority'
 import { sql } from '../postgres-client'
 import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-utils'
 
@@ -137,24 +138,28 @@ describe('listChunksForLanguage: stage filters', () => {
     const sameCreatedAt = daysAgo(10)
 
     // Expected newTermOrderSql order:
-    //   tier 1 (encounter_count >= 2): zipf DESC, NULLS LAST
-    //   tier 2 (fresh single save):    tie on (zipf, created_at) -> headword ASC
-    //   tier 3 (older, not decayed):   last
+    //   tier 1 (encounter_count >= 2, any zipf): zipf DESC, NULLS LAST
+    //   tier 2 (fresh single save, zipf >= FRESH_SAVE_MIN_ZIPF or NULL):
+    //     tie on (zipf, created_at) -> headword ASC; NULL zipf last
+    //   tier 3 (older, or fresh but rarer than the floor): zipf DESC
     const a = await makeTerm({ userId, headword: 'aaa', encounterCount: 3, zipf: 5 })
+    const rareResaved = await makeTerm({ userId, headword: 'abb', encounterCount: 2, zipf: 2 })
     const b = await makeTerm({ userId, headword: 'bbb', encounterCount: 2, zipf: null })
     const c = await makeTerm({ userId, headword: 'ccc', zipf: 6, createdAt: sameCreatedAt })
     const d = await makeTerm({ userId, headword: 'ddd', zipf: 6, createdAt: sameCreatedAt })
-    const e = await makeTerm({ userId, headword: 'eee', zipf: 3 })
+    const e = await makeTerm({ userId, headword: 'eee', zipf: FRESH_SAVE_MIN_ZIPF })
+    const unestimated = await makeTerm({ userId, headword: 'eff', zipf: null })
     const f = await makeTerm({ userId, headword: 'fff', lastEncounteredAt: daysAgo(30), zipf: 7 })
-    const expectedOrder = [a.id, b.id, c.id, d.id, e.id, f.id]
-    for (const term of [a, b, c, d, e, f]) {
+    const rareFresh = await makeTerm({ userId, headword: 'ggg', zipf: 3 })
+    const expectedOrder = [a.id, rareResaved.id, b.id, c.id, d.id, e.id, unestimated.id, f.id, rareFresh.id]
+    for (const term of [a, rareResaved, b, c, d, e, unestimated, f, rareFresh]) {
       await insertRecognitionFacet({ userLookupId: term.id, userId, srsState: null })
     }
 
     const singleShot = await listStage(userId, 'up_next')
     expect(singleShot.map((r) => r.id)).toEqual(expectedOrder)
 
-    // Page size 3 puts a page boundary exactly between the tied rows c and d:
+    // Page size 4 puts a page boundary exactly between the tied rows c and d:
     // the cursor must resume INTO the tie, not skip or repeat it.
     const paged: string[] = []
     let cursor: ChunksCursor | null = null
@@ -165,7 +170,7 @@ describe('listChunksForLanguage: stage filters', () => {
         targetLanguage: 'es',
         sort: 'recent',
         cursor,
-        limit: 3,
+        limit: 4,
         q: null,
         status: 'up_next',
       })
@@ -175,6 +180,6 @@ describe('listChunksForLanguage: stage filters', () => {
     } while (cursor !== null && pages < 10)
 
     expect(paged).toEqual(expectedOrder)
-    expect(pages).toBe(2)
+    expect(pages).toBe(3)
   })
 })
