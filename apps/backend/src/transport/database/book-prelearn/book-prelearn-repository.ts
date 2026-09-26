@@ -58,7 +58,10 @@ const listCandidates = async (params: {
         AND t.book_part_index >= bp.idx
       GROUP BY c.lemma
     ),
-    saved_keys AS (
+    -- MATERIALIZED: referenced once, Postgres would otherwise inline it into
+    -- the per-lemma EXISTS below and recompute every lookup's keys for each
+    -- eligible lemma (minutes for an account with thousands of lookups).
+    saved_keys AS MATERIALIZED (
       SELECT DISTINCT k.lemma
       FROM public.user_lookups ul
       CROSS JOIN LATERAL unnest(public.user_headword_lemma_keys(ul.headword, ul.target_language)) AS k(lemma)
