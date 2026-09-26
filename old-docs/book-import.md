@@ -1,6 +1,6 @@
 # Book import (EPUB / FB2 / MOBI)
 
-> **Status: proposal.** Design and implementation plan for uploading whole books and reading them chapter by chapter (issue #474). Not current behavior until the checklist below ships; follow-ups #475 (fresh-save frequency floor) and #476 (pinned-book priority) build on it.
+> **Status: historical** (archived 2026-09-26). Design and implementation plan for book import (issue #474), implemented by PR #477; kept for design rationale. Current behavior lives in `../docs/READER-SPEC.md` (book sources and reading), `../docs/DATA-MODEL.md` (book tracks, per-track lemma profiles) and `../SPEC.md`. Follow-ups #475 (fresh-save frequency floor) and #476 (pinned-book priority) are tracked as issues.
 
 ## Goal
 
