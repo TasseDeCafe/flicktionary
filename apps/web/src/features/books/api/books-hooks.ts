@@ -1,8 +1,12 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { BOOK_UPLOAD_BATCH_MAX_CHARS } from '@flicktionary/api-client/orpc-contracts/books-contract'
+import {
+  BOOK_UPLOAD_BATCH_MAX_CHARS,
+  type PrelearnHorizon,
+  type PrelearnItem,
+} from '@flicktionary/api-client/orpc-contracts/books-contract'
 import { orpcClient, orpcQuery } from '@/lib/transport/orpc-client'
-import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
+import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import { hashBookParts, type BookPartDraft } from '../utils/build-book-parts'
 
 // Polls while a pinned book's parts are still being analyzed, so the pin card
@@ -154,4 +158,90 @@ export const useUploadBook = () => {
       showErrorToast: false,
     },
   })
+}
+
+// "Learn before you read": only fetched while the book page's section is open.
+export const useGetPrelearnCandidates = (contentSourceId: string, horizon: PrelearnHorizon, enabled: boolean) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.books.getPrelearnCandidates.queryOptions({
+      input: { contentSourceId, horizon },
+      select: (response) => response.data,
+      enabled,
+      meta: { errorMessage: t`Failed to load the words ahead` },
+    })
+  )
+}
+
+// Glosses of the listed words in their listed sentences. The server caches
+// them per occurrence, so they never change for a given key; when the list
+// changes (a word left, the next one came in) the previous glosses stay on
+// screen while the new ones load. A failure just leaves rows without a gloss.
+export const useGetPrelearnGlosses = (contentSourceId: string, items: readonly PrelearnItem[]) => {
+  return useQuery(
+    orpcQuery.books.getPrelearnGlosses.queryOptions({
+      input: {
+        contentSourceId,
+        items: items.map(({ lemma, headword, segmentId, context }) => ({ lemma, headword, segmentId, context })),
+      },
+      select: (response) => new Map(response.data.glosses.map(({ lemma, gloss }) => [lemma, gloss])),
+      enabled: items.length > 0,
+      staleTime: Infinity,
+      placeholderData: keepPreviousData,
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+// A known mark changes the list and every difficulty/coverage read.
+const prelearnKnownInvalidates = (contentSourceId: string) => [
+  orpcQuery.books.getPrelearnCandidates.key({ input: { contentSourceId } }),
+  ...difficultyInvalidates(),
+]
+
+export const useMarkPrelearnKnown = (contentSourceId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.books.markPrelearnKnown.mutationOptions({
+      meta: {
+        invalidates: prelearnKnownInvalidates(contentSourceId),
+        errorMessage: t`Failed to mark the word as known`,
+      },
+    })
+  )
+}
+
+// The Known toast's Undo: the gloss sheet's plain un-mark, refreshing the list
+// so the word comes back.
+export const useUndoPrelearnKnown = (contentSourceId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.unmarkKnownLemma.mutationOptions({
+      meta: {
+        invalidates: prelearnKnownInvalidates(contentSourceId),
+        errorMessage: t`Failed to remove the known mark`,
+      },
+    })
+  )
+}
+
+// A new card: everything that depends on the vocabulary set refreshes (the
+// same set as the "Add a word" flow), plus the list and the book page's split.
+export const useLearnPrelearnWord = (contentSourceId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.books.learnPrelearnWord.mutationOptions({
+      meta: {
+        invalidates: [
+          orpcQuery.books.getPrelearnCandidates.key({ input: { contentSourceId } }),
+          orpcQuery.books.get.key(),
+          orpcQuery.chunks.listChunks.key(),
+          orpcQuery.chunks.listLanguages.key(),
+          ...practiceSummaryKeys(),
+          ...difficultyInvalidates(),
+        ],
+        errorMessage: t`Failed to add the word`,
+      },
+    })
+  )
 }

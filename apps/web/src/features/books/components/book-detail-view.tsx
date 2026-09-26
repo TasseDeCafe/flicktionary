@@ -19,6 +19,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetBook, useOpenBookPart, useRemoveBook } from '../api/books-hooks'
 import { BookPriorityCard } from './book-priority-card'
+import { BookPrelearnSection } from './book-prelearn-section'
 
 const routeApi = getRouteApi('/_authenticated/_app/sessions/book/$contentSourceId')
 
@@ -129,6 +130,11 @@ export const BookDetailView = () => {
               </Card>
             )
           })}
+          {book && (
+            <div className='mt-4'>
+              <BookPrelearnSection book={book} finished={finished} />
+            </div>
+          )}
         </div>
       </div>
 

@@ -810,6 +810,7 @@ book_part_lemma_counts
   text_track_id       uuid -> text_track.id (ON DELETE CASCADE)
   lemma               text         -- checkpoint_fold-folded; pk (text_track_id, lemma)
   occurrences         int          -- CHECK > 0
+  primary_occurrences int?         -- ≤ occurrences; NULL on rows from builder < v3
   index (lemma, text_track_id)     -- lemma-driven lookups across a book's parts
 ```
 
@@ -818,9 +819,38 @@ the profile swap (`book-lemma-counts.ts`): each token group runs through the
 checkpoint homograph guard (`applyFrequencyAsymmetryGuard` with
 `lemma_ranks`), then every surviving candidate is credited the group's FULL
 token count — the question is "will I meet this word", so the equal-frequency
-survivors each count rather than splitting. A `lemma_ranks` rebuild does not
+survivors each count rather than splitting. `primary_occurrences` credits the
+group only to its most likely survivor (highest `freq_mass`, alphabetical on
+ties) — the input of the book page's "Learn before you read" list
+(docs/READER-SPEC.md), which shows words to a person and must list one reading
+of an ambiguous form; readers fall back to `occurrences` while a stale row
+awaits its rebuild. A `lemma_ranks` rebuild does not
 re-trigger it (accepted: rank builds are rare, and a stale guard decision
 costs ordering precision, not correctness).
+
+### Book prelearn glosses
+
+Short glosses for the "Learn before you read" list (docs/READER-SPEC.md), one
+per word per occurrence. Backend reads/writes only; RLS enabled with no
+policies.
+
+```
+book_prelearn_glosses
+  content_source_id   uuid -> content_sources.id (ON DELETE CASCADE)
+  lemma               text         -- checkpoint_fold-folded
+  text_segment_id     uuid -> text_segments.id (ON DELETE CASCADE) -- the sentence glossed
+  gloss_language      text         -- native language, or the target language when
+                                   -- translation fields are hidden (a definition)
+  gloss               text
+  created_at          timestamptz
+  pk (content_source_id, lemma, text_segment_id, gloss_language)
+  index (text_segment_id)
+```
+
+The occurrence is part of the key because a book can use one word in several
+senses: the gloss always describes the sentence a Learn card from the list
+would be built from. Written once (ON CONFLICT DO NOTHING) by
+`books.getPrelearnGlosses`.
 
 ### Known lemmas
 
@@ -833,8 +863,10 @@ known_lemmas
   user_id             uuid -> auth.users.id (ON DELETE CASCADE)
   target_language     text         -- pk (user_id, target_language, lemma)
   lemma               text         -- checkpoint_fold-folded canonical key
-  source              text         -- 'bulk_text' (the per-session sweep)
-  source_id           uuid?        -- e.g. the sweeping session; FIRST writer
+  source              text         -- 'bulk_text' (the per-session sweep) |
+                                   -- 'book_prelearn' (the book page list)
+  source_id           uuid?        -- the sweeping session, or the book's
+                                   -- content source; FIRST writer
                                    -- wins (ON CONFLICT DO NOTHING) — later
                                    -- overlapping sweeps don't take ownership
   sweep_batch_id      uuid?        -- one fresh uuid per sweep press; a batch
@@ -843,7 +875,10 @@ known_lemmas
   marked_at           timestamptz
 ```
 
-Write paths: the per-session "mark the rest as known" sweep
+Write paths: the book page's "Learn before you read" **Known** button
+(`books.markPrelearnKnown`, one lemma, no batch id; its toast Undo is the
+plain `unmarkKnownLemma` delete — the list only offers lemmas not yet known,
+so the row it inserted is the only one); and the per-session "mark the rest as known" sweep
 (`studySessions.markRemainingKnown`, preview via `getMarkKnownPreview`) —
 per-token candidate lemmas (profile rows for the whole-text scope, live
 resolution for the span scope) filtered to the CREDITABLE candidates

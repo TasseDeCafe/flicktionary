@@ -17,6 +17,10 @@ msgstr ""
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "« {headword} » vous pose problème — il est mis de côté pour des exercices de révision."
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "\"{headword}\" marked as known"
+msgstr "« {headword} » marqué comme connu"
+
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "“{headword}” moved to your flashcards."
 msgstr "« {headword} » déplacé vers vos cartes mémoire."
@@ -256,6 +260,10 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 msgid "{removedCount, plural, one {# known mark removed} other {# known marks removed}}"
 msgstr "{removedCount, plural, one {# marque connue supprimée} other {# marques connues supprimées}}"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "{savedCount, plural, one {# more word from this book is already in your vocabulary.} other {# more words from this book are already in your vocabulary.}}"
+msgstr "{savedCount, plural, one {# mot supplémentaire de ce livre est déjà dans votre vocabulaire.} other {# mots supplémentaires de ce livre sont déjà dans votre vocabulaire.}}"
+
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "{selectedCount, plural, one {Mark # word as known} other {Mark # words as known}}"
 msgstr "{selectedCount, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
@@ -323,6 +331,10 @@ msgstr "{wholeCount, plural, one {Ou marquer le texte entier (# mot)} other {Ou 
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 msgid "+{hiddenCount} more"
 msgstr "+{hiddenCount} de plus"
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "×{aheadCount}"
+msgstr "×{aheadCount}"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a longer phrase."
@@ -538,6 +550,7 @@ msgstr "Ajouté"
 msgid "Adding..."
 msgstr "Ajout en cours..."
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Adding…"
 msgstr "Ajout…"
@@ -2013,6 +2026,10 @@ msgstr "L'extraction a échoué après plusieurs tentatives. Essayez de téléch
 msgid "Failed to add the cards"
 msgstr "Échec de l'ajout des cartes"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to add the word"
+msgstr "Impossible d'ajouter le mot"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to advance"
 msgstr "Échec de l'avancement"
@@ -2183,6 +2200,10 @@ msgstr "Échec du chargement du livre"
 msgid "Failed to load the import"
 msgstr "Échec du chargement de l'importation"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to load the words ahead"
+msgstr "Échec du chargement des mots à venir"
+
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Failed to load vocabulary"
 msgstr "Échec du chargement du vocabulaire"
@@ -2194,6 +2215,10 @@ msgstr "Échec du chargement de votre progression"
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
+
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to mark the word as known"
+msgstr "Échec du marquage du mot comme connu"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to mark the words as known"
@@ -2251,6 +2276,7 @@ msgstr "Échec de la suppression du terme"
 msgid "Failed to remove the book"
 msgstr "Échec de la suppression du livre"
 
+#: apps/web/src/features/books/api/books-hooks.ts
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to remove the known mark"
 msgstr "Échec de la suppression du marquage connu"
@@ -2532,6 +2558,10 @@ msgstr "Français"
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Frequency"
 msgstr "Fréquence"
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Frequent in the chapters ahead, not yet in your vocabulary."
+msgstr "Fréquent dans les chapitres à venir, pas encore dans votre vocabulaire."
 
 #: apps/web/src/features/dashboard/components/from-community-section.tsx
 msgid "From the community"
@@ -3008,6 +3038,10 @@ msgstr "Conservé ici pour que rien ne soit supprimé silencieusement"
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Known"
+msgstr "Connu"
+
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Korean"
 msgstr "Coréen"
@@ -3061,6 +3095,10 @@ msgstr "Latino-américain"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Layout"
 msgstr "Layout"
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Learn"
+msgstr "Apprendre"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Learn {n} extra"
@@ -3410,6 +3448,10 @@ msgstr "Suivant"
 msgid "Next card"
 msgstr "Carte suivante"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Next chapter"
+msgstr "Chapitre suivant"
+
 #: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
 msgid "Next month"
 msgstr "Mois suivant"
@@ -3582,6 +3624,10 @@ msgstr "Notes"
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 msgid "Notes, copyright pages and other back matter start unchecked. Long chapters are split into shorter parts."
 msgstr "Les notes, pages de copyright et autres contenus annexes sont décochés par défaut. Les longs chapitres sont divisés en sections plus courtes."
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Nothing left to prepare: every frequent word ahead is already known or saved."
+msgstr "Rien à préparer : chaque mot fréquent à venir est déjà connu ou enregistré."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Nothing new to learn right now."
@@ -4450,6 +4496,10 @@ msgstr "Réinitialiser"
 msgid "Reset subtitle offset"
 msgstr "Réinitialiser le décalage des sous-titres"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Rest of book"
+msgstr "Reste du livre"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "Restore"
@@ -5125,6 +5175,10 @@ msgstr "Statut"
 msgid "Step {stepCurrent} of {stepTotal}"
 msgstr "Étape {stepCurrent} sur {stepTotal}"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Still analyzing some chapters — more words may appear."
+msgstr "Analyse de certains chapitres en cours — d'autres mots peuvent apparaître."
+
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Still analyzing this text — check back in a moment."
 msgstr "Analyse de ce texte en cours — revenez dans un instant."
@@ -5628,6 +5682,10 @@ msgstr "Cette valeur diffère de celle fournie par le Wiktionnaire."
 msgid "This value was taken from Wiktionary's dictionary data during processing."
 msgstr "Cette valeur provient des données du Wiktionnaire, intégrées lors du traitement."
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Times it comes up ahead"
+msgstr "Fois où il apparaît plus loin"
+
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
@@ -5814,6 +5872,10 @@ msgstr "Désactiver Flicktionary"
 msgid "Turn Flicktionary on"
 msgstr "Activer Flicktionary"
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Turn on \"Prioritize words from this book\" above to learn these words first."
+msgstr "Activez « Prioriser les mots de ce livre » ci-dessus pour apprendre ces mots en premier."
+
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Turn your teacher's notes into cards"
 msgstr "Transformez les notes de votre professeur en cartes"
@@ -5872,6 +5934,7 @@ msgid "Understand it when you read or hear it"
 msgstr "Comprendre lorsque vous le lisez ou l'entendez"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
@@ -6338,6 +6401,10 @@ msgstr "mots"
 #: apps/web/src/features/books/components/book-priority-card.tsx
 msgid "Words that come up often in the chapters ahead get up to half of your new words each day."
 msgstr "Les mots qui apparaissent souvent dans les chapitres à venir représentent jusqu'à la moitié de vos nouveaux mots chaque jour."
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Words worth knowing for this book"
+msgstr "Mots utiles à connaître pour ce livre"
 
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Words you've read"

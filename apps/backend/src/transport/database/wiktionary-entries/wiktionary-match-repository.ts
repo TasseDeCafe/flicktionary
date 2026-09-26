@@ -68,12 +68,43 @@ const resolveFoldedLemmasForTokens = async (params: ResolveFoldedLemmasParams): 
   return result
 }
 
+// Folded lemma → a real dictionary spelling for display: the fold drops what
+// a reader needs (ё, German noun capitals). Among real-lemma entries folding
+// to the same string, the spelling with the most entries (POS rows) wins,
+// then the alphabetically first for determinism. Lemmas with no real entry
+// are absent from the map.
+const resolveDisplayHeadwords = async (params: {
+  targetLanguage: string
+  foldedLemmas: readonly string[]
+}): Promise<Map<string, string>> => {
+  const result = new Map<string, string>()
+  if (params.foldedLemmas.length === 0) return result
+  const rows = (await sql`
+    SELECT DISTINCT ON (folded) folded, headword
+    FROM (
+      SELECT checkpoint_fold(e.headword, e.target_language) AS folded, e.headword, count(*) AS entry_count
+      FROM public.wiktionary_entries e
+      WHERE e.target_language = ${params.targetLanguage}
+        AND checkpoint_fold(e.headword, e.target_language) = ANY(${sql.array([...params.foldedLemmas])}::text[])
+        AND e.data ? 'head_templates'
+        AND NOT (e.data->'senses'->0 ? 'form_of')
+        AND NOT (e.data->'senses'->0 ? 'alt_of')
+      GROUP BY 1, 2
+    ) spellings
+    ORDER BY folded, entry_count DESC, headword
+  `) as Array<{ folded: string; headword: string }>
+  for (const row of rows) result.set(row.folded, row.headword)
+  return result
+}
+
 export interface WiktionaryMatchRepositoryInterface {
   resolveFoldedLemmasForTokens: (params: ResolveFoldedLemmasParams) => Promise<Map<string, Set<string>>>
+  resolveDisplayHeadwords: typeof resolveDisplayHeadwords
 }
 
 export const WiktionaryMatchRepository = (): WiktionaryMatchRepositoryInterface => {
   return {
     resolveFoldedLemmasForTokens,
+    resolveDisplayHeadwords,
   }
 }

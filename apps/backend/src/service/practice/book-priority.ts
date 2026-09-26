@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { sql } from '../../transport/database/postgres-client'
 import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
 import { newTermNotDecayedSql, newTermOrderSql } from './new-term-priority'
@@ -23,31 +24,19 @@ const LAST_POSITION = 1e15
 // The daily quota: ceil(share × combined daily max).
 export const bookDailyQuota = (maxNewTerms: number): number => Math.ceil(BOOK_NEW_SHARE * maxNewTerms)
 
-// CTEs computing each term's estimated occurrences in the pinned book's
-// unread parts. The caller defines `book_keys(id, lemma)` — its terms'
-// user_headword_lemma_keys — BEFORE these. Emits:
-//   book_pin(content_source_id)       — zero rows when nothing is pinned
-//   book_pos(idx, f)                  — the furthest-reached part and the
-//                                       fraction of it read (0/0 before any
-//                                       reading). FURTHEST, not most recent:
-//                                       rereading an early chapter must not
-//                                       re-inflate "ahead".
-//   book_term_ahead(id, ahead)        — MAX over a term's keys (the reflexive
-//                                       strips are liberal; summing would
-//                                       double-count). The current part is
-//                                       pro-rated by what's left of it.
-export const bookAheadCtesSql = (userId: string, targetLanguage: string) => sql`
-  book_pin AS (
-    SELECT content_source_id FROM public.book_pins
-    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
-  ),
+// CTEs locating the reader in a book. `contentSourceId` is a SQL expression
+// for the book (a literal id, or a subquery). Emits:
+//   book_pos(idx, f) — the furthest-reached part and the fraction of it read
+//                      (0/0 before any reading). FURTHEST, not most recent:
+//                      rereading an early chapter must not re-inflate "ahead".
+export const bookPositionCtesSql = (userId: string, contentSourceId: postgres.Fragment | string) => sql`
   book_cur AS (
     SELECT t.book_part_index AS idx,
       LEAST(1.0, (s.furthest_read_segment_index + 1)::numeric / NULLIF(t.profile_segment_count, 0)) AS f
     FROM public.study_sessions s
     JOIN public.text_tracks t ON t.id = s.text_track_id
     WHERE s.user_id = ${userId}
-      AND s.content_source_id = (SELECT content_source_id FROM book_pin)
+      AND s.content_source_id = ${contentSourceId}
       AND s.deleted_at IS NULL
       AND s.furthest_read_segment_index IS NOT NULL
       AND t.book_part_index IS NOT NULL
@@ -57,10 +46,33 @@ export const bookAheadCtesSql = (userId: string, targetLanguage: string) => sql`
   book_pos AS (
     SELECT COALESCE((SELECT idx FROM book_cur), 0) AS idx,
       COALESCE((SELECT f FROM book_cur), 0) AS f
+  )
+`
+
+// Occurrences of a lemma still ahead of the reader in one part: the current
+// part is pro-rated by what's left of it, later parts count in full. Needs
+// `c` (a book_part_lemma_counts row), `t` (its text_tracks row) and `bp`
+// (book_pos) in scope; `count` is the column expression to pro-rate.
+export const lemmaOccurrencesAheadSql = (count: postgres.Fragment = sql`c.occurrences`) =>
+  sql`CASE WHEN t.book_part_index = bp.idx THEN ${count} * (1 - bp.f) ELSE ${count} END`
+
+// CTEs computing each term's estimated occurrences in the pinned book's
+// unread parts. The caller defines `book_keys(id, lemma)` — its terms'
+// user_headword_lemma_keys — BEFORE these. Emits:
+//   book_pin(content_source_id)       — zero rows when nothing is pinned
+//   book_pos(idx, f)                  — see bookPositionCtesSql
+//   book_term_ahead(id, ahead)        — MAX over a term's keys (the reflexive
+//                                       strips are liberal; summing would
+//                                       double-count).
+export const bookAheadCtesSql = (userId: string, targetLanguage: string) => sql`
+  book_pin AS (
+    SELECT content_source_id FROM public.book_pins
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
   ),
+  ${bookPositionCtesSql(userId, sql`(SELECT content_source_id FROM book_pin)`)},
   book_lemma_ahead AS (
     SELECT c.lemma,
-      SUM(CASE WHEN t.book_part_index = bp.idx THEN c.occurrences * (1 - bp.f) ELSE c.occurrences END) AS ahead
+      SUM(${lemmaOccurrencesAheadSql()}) AS ahead
     FROM public.book_part_lemma_counts c
     JOIN public.text_tracks t ON t.id = c.text_track_id
     CROSS JOIN book_pos bp

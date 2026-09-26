@@ -331,8 +331,8 @@ reallocates the existing budget and never adds to it. Everything is computed liv
 queue time, so pinning, unpinning and reading take effect on the next fetch with no
 backfill.
 
-- **Occurrences ahead.** Per-part counts come from `book_part_lemma_counts` (the profile
-  build, homograph-guarded; docs/DATA-MODEL.md). The anchor is the **furthest-reached
+- **Occurrences ahead.** Per-part counts come from `book_part_lemma_counts.occurrences`
+  (the profile build, homograph-guarded, every surviving reading credited; docs/DATA-MODEL.md). The anchor is the **furthest-reached
   part**: the highest `book_part_index` among the book's live sessions with a
   `furthest_read_segment_index`. Rereading an early chapter never re-inflates "ahead".
   - That part counts pro-rated by what's left of it, `1 − (furthest + 1) / segments`.
@@ -343,8 +343,10 @@ backfill.
 - **Membership.** `ahead ≥ MIN_BOOK_OCCURRENCES_AHEAD` (3) and **no enabled production
   citation facet**: production-marked words keep their own ordering. Membership is by
   occurrences, not provenance, so a word saved from an article that recurs in the book
-  counts. Multi-word headwords never match single-token counts. The 90-day decay still
-  applies.
+  counts — including recognition cards created from the book page's "Learn before you
+  read" list (docs/READER-SPEC.md), whose ≥ 3 threshold on primary occurrences guarantees
+  membership while the book is pinned. Multi-word headwords never match single-token
+  counts. The 90-day decay still applies.
 - **Quota.** `book_quota = ceil(0.5 × daily max)`. Usage is the count of citation facets
   introduced today with `book_quota_source_id` set. **Both introduction guards** stamp that
   column, at introduction time, with the pinned book when the term is in its stream

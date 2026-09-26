@@ -31,7 +31,7 @@ const MAX_OCCURRENCES = 3
 // context, where clause-scale context is enough).
 const OCCURRENCE_WINDOW_RADIUS = 80
 
-const windowAroundRange = (text: string, start: number, end: number): string => {
+export const windowAroundRange = (text: string, start: number, end: number): string => {
   let from = Math.max(0, start - OCCURRENCE_WINDOW_RADIUS)
   let to = Math.min(text.length, end + OCCURRENCE_WINDOW_RADIUS)
   // Snap cut points to word boundaries so the window never opens or closes

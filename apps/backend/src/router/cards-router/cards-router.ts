@@ -161,7 +161,7 @@ export const CardsRouter = (
           studyIntent: input.studyIntent ?? null,
           deps: createAdhocCardDependencies,
         })
-        return { data: result }
+        return { data: { cardId: result.cardId, sessionId: result.sessionId } }
       } catch (e) {
         if (e instanceof AdhocCardCreationError) {
           if (e.code === 'cefr_not_set' || e.code === 'native_language_not_set') {

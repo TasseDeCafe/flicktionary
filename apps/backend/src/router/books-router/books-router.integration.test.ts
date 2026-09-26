@@ -16,6 +16,7 @@ import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthr
 import type { ModerationVerdict } from '../../transport/third-party/anthropic/passes/moderation-pass'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { TRACK_LEMMA_PROFILE_VERSION } from '../../service/lemma-profiles/build-track-lemma-profile'
 
 const buildApp = (moderationPass: (chunk: string) => Promise<ModerationVerdict | null>) =>
   buildTestApp({ anthropicPasses: MockAnthropicPasses({ moderationPass: moderationPass as never }) })
@@ -469,12 +470,40 @@ describe('books-router', () => {
       expect(refused.body.data.errors[0].code).toBe('UNSUPPORTED_LANGUAGE')
     })
 
+    test('viewing a book re-queues parts analyzed by an older builder version', async () => {
+      const testApp = buildApp(allowAll)
+      const reader = await createReader(testApp)
+      const book = await uploadReadyBook(testApp, reader.auth, 'ru')
+      await sql`
+        UPDATE public.text_tracks SET profile_built_at = NOW(), profile_version = ${TRACK_LEMMA_PROFILE_VERSION - 1}
+        WHERE content_source_id = ${book}
+      `
+      await sql`
+        UPDATE public.processing_jobs SET status = 'done'
+        WHERE kind = 'build_track_lemma_profile'
+          AND text_track_id IN (SELECT id FROM public.text_tracks WHERE content_source_id = ${book})
+      `
+      const liveJobs = async () =>
+        (await sql`
+          SELECT count(*)::int AS count FROM public.processing_jobs
+          WHERE kind = 'build_track_lemma_profile' AND status = 'pending'
+            AND text_track_id IN (SELECT id FROM public.text_tracks WHERE content_source_id = ${book})
+        `) as [{ count: number }]
+      expect((await liveJobs())[0].count).toBe(0)
+
+      expect((await getPriority(testApp, reader.auth, book)).analysis.status).toBe('analyzing')
+      const [{ count: partCount }] = (await sql`
+        SELECT count(*)::int AS count FROM public.text_tracks WHERE content_source_id = ${book}
+      `) as [{ count: number }]
+      expect((await liveJobs())[0].count).toBe(partCount)
+    })
+
     test('a terminally failed part reports partly_failed until retryAnalysis re-queues it', async () => {
       const testApp = buildApp(allowAll)
       const reader = await createReader(testApp)
       const book = await uploadReadyBook(testApp, reader.auth, 'ru')
       await sql`
-        UPDATE public.text_tracks SET profile_built_at = NOW(), profile_version = 2
+        UPDATE public.text_tracks SET profile_built_at = NOW(), profile_version = ${TRACK_LEMMA_PROFILE_VERSION}
         WHERE content_source_id = ${book} AND book_part_index = 0
       `
       await sql`

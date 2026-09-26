@@ -15,6 +15,7 @@ import { gradeUseInSentencePass } from './passes/grade-use-in-sentence-pass'
 import { languageDetectionPass } from './passes/language-detection-pass'
 import { moderationPass } from './passes/moderation-pass'
 import { nominateCandidatesPass } from './passes/nominate-candidates-pass'
+import { prelearnGlossPass } from './passes/prelearn-gloss-pass'
 import { verifyExercisePass } from './passes/verify-exercise-pass'
 
 // The injection seam for every LLM call the app makes. Services and routers
@@ -39,6 +40,7 @@ export type AnthropicPassesInterface = {
   languageDetectionPass: typeof languageDetectionPass
   moderationPass: typeof moderationPass
   nominateCandidatesPass: typeof nominateCandidatesPass
+  prelearnGlossPass: typeof prelearnGlossPass
   verifyExercisePass: typeof verifyExercisePass
   // Card chat builds a bespoke prompt (seeded turn, history split, edit tool)
   // in the service layer; only the raw completion call crosses the seam.
@@ -61,6 +63,7 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   languageDetectionPass,
   moderationPass,
   nominateCandidatesPass,
+  prelearnGlossPass,
   verifyExercisePass,
   createChatCompletion: (params) => getAnthropicClient().messages.create(params),
 })
@@ -87,6 +90,7 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   languageDetectionPass: notScripted('languageDetectionPass'),
   moderationPass: notScripted('moderationPass'),
   nominateCandidatesPass: notScripted('nominateCandidatesPass'),
+  prelearnGlossPass: notScripted('prelearnGlossPass'),
   verifyExercisePass: notScripted('verifyExercisePass'),
   createChatCompletion: notScripted('createChatCompletion'),
   ...overrides,

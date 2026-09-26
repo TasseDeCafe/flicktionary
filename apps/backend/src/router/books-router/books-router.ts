@@ -16,6 +16,14 @@ import { ensureBookAnalysis, pinBook, summarizeBookAnalysis } from '../../servic
 import { resolveBookQuota } from '../../service/practice/book-quota'
 import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import { toIsoString } from '../router-utils'
+import {
+  getPrelearnGlosses,
+  learnPrelearnWord,
+  listPrelearnCandidates,
+  markPrelearnKnown,
+  type BookPrelearnDependencies,
+} from '../../service/books/book-prelearn'
+import { AdhocCardCreationError } from '../../service/adhoc/create-adhoc-card'
 
 const bookNotFound = { data: { errors: [{ message: 'Book not found' }] } }
 const staleUpload = {
@@ -38,7 +46,10 @@ const unsupportedLanguage = {
 }
 
 export const BooksRouter = (
-  deps: BookUploadDependencies & { bookPinsRepository: BookPinsRepositoryInterface }
+  deps: BookUploadDependencies & {
+    bookPinsRepository: BookPinsRepositoryInterface
+    bookPrelearnDependencies: BookPrelearnDependencies
+  }
 ): Router => {
   const implementer = implement(booksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
   const { booksRepository } = deps
@@ -99,6 +110,13 @@ export const BooksRouter = (
         booksRepository.listPartAnalysis(source.id),
         deps.bookPinsRepository.getPin(userId, source.language),
       ])
+      const analysis = summarizeBookAnalysis(source.language, partAnalysis)
+      // Parts analyzed by an older builder version (or never) are rebuilt in
+      // the background when the book is viewed; they keep serving their old
+      // counts meanwhile.
+      if (analysis.status === 'analyzing') {
+        await ensureBookAnalysis({ contentSourceId: source.id, userId, retryFailed: false }, deps)
+      }
       const pinned = pin?.content_source_id === source.id
       const quota = pinned ? await resolveBookQuota(userId, source.language, deps) : null
       const pinnedElsewhere = pin && !pinned ? await booksRepository.findOwnedBook(pin.content_source_id, userId) : null
@@ -124,7 +142,7 @@ export const BooksRouter = (
           priority: {
             pinned,
             pinnedElsewhereTitle: pinnedElsewhere?.title ?? null,
-            analysis: summarizeBookAnalysis(source.language, partAnalysis),
+            analysis,
             quota: quota ? { quota: quota.quota, introducedToday: quota.introducedToday } : null,
           },
         },
@@ -159,6 +177,52 @@ export const BooksRouter = (
       if (result.ok) return { data: { sessionId: result.sessionId } }
       if (result.reason === 'not-found') throw errors.NOT_FOUND(bookNotFound)
       throw errors.PRECONDITION_FAILED(missingPrefs(result.reason))
+    }),
+
+    getPrelearnCandidates: implementer.getPrelearnCandidates.handler(async ({ input, context, errors }) => {
+      const result = await listPrelearnCandidates(
+        { contentSourceId: input.contentSourceId, userId: context.res.locals.userId, horizon: input.horizon },
+        deps.bookPrelearnDependencies
+      )
+      if (!result.ok) throw errors.NOT_FOUND(bookNotFound)
+      return { data: result.value }
+    }),
+
+    getPrelearnGlosses: implementer.getPrelearnGlosses.handler(async ({ input, context, errors }) => {
+      const result = await getPrelearnGlosses(
+        { contentSourceId: input.contentSourceId, userId: context.res.locals.userId, items: input.items },
+        deps.bookPrelearnDependencies
+      )
+      if (!result.ok) throw errors.NOT_FOUND(bookNotFound)
+      return { data: { glosses: result.value } }
+    }),
+
+    markPrelearnKnown: implementer.markPrelearnKnown.handler(async ({ input, context, errors }) => {
+      const result = await markPrelearnKnown(
+        { contentSourceId: input.contentSourceId, userId: context.res.locals.userId, lemma: input.lemma },
+        deps.bookPrelearnDependencies
+      )
+      if (!result.ok) throw errors.NOT_FOUND(bookNotFound)
+      return { data: result.value }
+    }),
+
+    learnPrelearnWord: implementer.learnPrelearnWord.handler(async ({ input, context, errors }) => {
+      try {
+        const result = await learnPrelearnWord(
+          { ...input, userId: context.res.locals.userId },
+          deps.bookPrelearnDependencies
+        )
+        if (!result.ok) throw errors.NOT_FOUND(bookNotFound)
+        return { data: result.value }
+      } catch (e) {
+        if (e instanceof AdhocCardCreationError) {
+          if (e.code === 'cefr_not_set' || e.code === 'native_language_not_set') {
+            throw errors.BAD_REQUEST({ data: { errors: [{ message: e.message, code: e.code }] } })
+          }
+          throw errors.INTERNAL_SERVER_ERROR({ data: { errors: [{ message: e.message, code: e.code }] } })
+        }
+        throw e
+      }
     }),
 
     remove: implementer.remove.handler(async ({ input, context, errors }) => {
