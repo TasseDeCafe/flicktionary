@@ -635,6 +635,11 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   popover; right-button presses are exempt — right-click is the save/remove
   toggle and morphs the popover instead), play, cue change, overlay hide, or
   by hovering another word (the new gloss replaces it and starts unpinned).
+  The first entry (the unpinned → pinned transition) is the explicit-lookup
+  moment: the overlay sends `flicktionary-record-lookup` and the background
+  calls `glosses.recordLookup` with the existing auth (never mints a guest
+  session; failures are swallowed), a new-term demand signal. A bare hover
+  never records, and chunk glosses are born pinned, so they never do either.
   Presses on the SUBTITLE SURFACE itself are also exempt
   (`ignoreOutsidePointerDownSelector` covers the overlay host + lines
   container, web-reader parity with its word/highlight spans): a press on a
