@@ -570,6 +570,33 @@ export type Database = {
         }
         Relationships: []
       }
+      lemma_lookups: {
+        Row: {
+          credited_count: number
+          last_looked_up_at: string
+          lemma: string
+          lookup_count: number
+          target_language: string
+          user_id: string
+        }
+        Insert: {
+          credited_count?: number
+          last_looked_up_at?: string
+          lemma: string
+          lookup_count?: number
+          target_language: string
+          user_id: string
+        }
+        Update: {
+          credited_count?: number
+          last_looked_up_at?: string
+          lemma?: string
+          lookup_count?: number
+          target_language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lemma_rank_builds: {
         Row: {
           built_at: string
@@ -1701,6 +1728,7 @@ export type Database = {
           headword: string
           id: string
           last_content_encounter_at: string | null
+          last_demand_at: string
           last_encountered_at: string
           native_example: string | null
           sense: string
@@ -1727,6 +1755,7 @@ export type Database = {
           headword: string
           id?: string
           last_content_encounter_at?: string | null
+          last_demand_at?: string
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
@@ -1753,6 +1782,7 @@ export type Database = {
           headword?: string
           id?: string
           last_content_encounter_at?: string | null
+          last_demand_at?: string
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
@@ -1956,6 +1986,10 @@ export type Database = {
       checkpoint_fold: {
         Args: { input: string; lang: string }
         Returns: string
+      }
+      user_headword_lemma_keys: {
+        Args: { headword: string; lang: string }
+        Returns: string[]
       }
     }
     Enums: {

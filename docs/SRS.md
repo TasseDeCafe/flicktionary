@@ -297,9 +297,30 @@ signal columns on `user_lookups`:
    NULL — not yet estimated — sorts last).
 
 Signals are maintained by `recordEncounter` (user-lookups repository), called only at
-user-intent boundaries — highlight-save enrichment and lesson-import confirm — with a 1-hour
-collapse window so worker retries / multi-chunk runs can never inflate a single save into
-tier 1. `findOrCreate` never bumps them (it fires from background materialization).
+user-intent boundaries — highlight-save enrichment, lesson-import confirm, and an explicit
+lookup of an already-saved term — with a 1-hour collapse window so worker retries /
+multi-chunk runs can never inflate a single save into tier 1. The window runs on
+`last_demand_at`, a clock only these demand writes stamp (creation defaults it to NOW()):
+checkpoint content encounters bump `last_encountered_at` but must not swallow a re-save or
+lookup made within the hour. `findOrCreate` never bumps them (it fires from background
+materialization).
+
+**Lookups as demand** (`glosses.recordLookup`, `service/lemma-lookups/record-lookup.ts`).
+An explicit lookup is a tap that opens a gloss sheet (web reader preview, practice
+LookupSheet) or the pointer pinning an extension hover gloss; a bare hover never records.
+Single-word selections in `KAIKKI_LANGUAGES` only: the token resolves through the
+checkpoint matcher plus the homograph guard (`applyFrequencyAsymmetryGuard`), and each
+surviving lemma gets a collapsed episode in `lemma_lookups` (same 1-hour window). If the
+user already saved a term whose `user_headword_lemma_keys` contain the lemma, the episode
+goes straight to that term (`recordEncounter`) and the lemma's `credited_count` watermark
+advances. Otherwise it waits: every save path (highlight enrichment, adhoc, lesson-confirm
+duplicates) calls `creditLookupDemand`, which adds the uncredited episodes (max over the
+term's keys, minus the latest one when it is inside the collapse window — that lookup led
+to this save) to `encounter_count` and advances the watermark, so retries and re-saves
+never count an episode twice. A word looked up on two earlier days and saved today starts
+at tier 1. Combined with the tier-2 Zipf floor, rare words need a second piece of
+evidence — a re-save, a repeated lookup, or a lesson confirm — before they outrank the
+backlog.
 
 **Decay (virtual shelf)**: never-introduced terms with `last_encountered_at` older than 90
 days are excluded from both new buckets, from warm-up discovery

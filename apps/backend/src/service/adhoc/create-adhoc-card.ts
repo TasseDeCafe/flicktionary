@@ -1,3 +1,4 @@
+import type { LemmaLookupsRepositoryInterface } from '../../transport/database/lemma-lookups/lemma-lookups-repository'
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
@@ -34,6 +35,7 @@ export type CreateAdhocCardDependencies = {
   highlightsRepository: HighlightsRepositoryInterface
   cardsRepository: CardsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  lemmaLookupsRepository: LemmaLookupsRepositoryInterface
   studyFacetsRepository: StudyFacetsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -227,6 +229,9 @@ export const createAdhocCard = async (params: {
     userLookupId: insertedCard.user_lookup_id,
     cardId: insertedCard.id,
   })
+  // Explicit lookups of the word before adding it are demand (idempotent via
+  // the lemma_lookups watermark).
+  await deps.lemmaLookupsRepository.creditLookupDemand([insertedCard.user_lookup_id])
 
   // Awaited deliberately (decided): the save is already an LLM-backed spinner
   // and navigates straight to the card — arriving at a ready form facet beats

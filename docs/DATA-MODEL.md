@@ -318,14 +318,25 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- headword (0-8, one decimal; ~7 = "the", ~2 =
                                     -- rare). Emitted by the basic-data pass. NULL =
                                     -- not yet estimated (sorts last). Orders tier 3
-                                    -- of the new-term queue (docs/SRS.md §4).
+                                    -- of the new-term queue, and a fresh save below
+                                    -- FRESH_SAVE_MIN_ZIPF (3.5) gets no tier 2
+                                    -- (docs/SRS.md §4).
   last_encountered_at timestamptz   -- refreshed by recordEncounter() at user-intent
-                                    -- boundaries only (highlight-save enrichment,
-                                    -- lesson-import confirm). Drives the tier-2
-                                    -- freshness window and the 90-day new-term decay.
+                                    -- boundaries (highlight-save enrichment,
+                                    -- lesson-import confirm, an explicit lookup of the
+                                    -- saved term) and by checkpoint content encounters.
+                                    -- Drives the tier-2 freshness window and the
+                                    -- 90-day new-term decay.
+  last_demand_at      timestamptz default now() -- the collapse clock for explicit demand:
+                                    -- stamped only by recordEncounter (creation is the
+                                    -- first episode). Kept apart from
+                                    -- last_encountered_at so a checkpoint can't
+                                    -- swallow a re-save or lookup within the hour.
   encounter_count     int default 1 -- bumped by the same boundaries, 1-hour collapse
-                                    -- window (retries can't inflate it). >= 2 = tier-1
-                                    -- "revealed demand" in the new-term queue.
+                                    -- window on last_demand_at (retries can't inflate
+                                    -- it), plus lookup episodes credited at save
+                                    -- (lemma_lookups below). >= 2 = tier-1 "revealed
+                                    -- demand" in the new-term queue.
                                     -- NEVER bumped by checkpoint passes.
   content_encounter_count int default 0 -- checkpoint-review aggregate: how many collected
                                     -- spans this term appeared in (recordContentEncounter;
@@ -734,6 +745,29 @@ and lesson tracks (independent imported vocabulary items, non-narrative) are
 never profiled — difficulty treats them as unsupported. Missing/stale
 profiles at difficulty-read time re-enqueue and report `pending`; builds are
 never run synchronously inside a request.
+
+### Lemma lookups
+
+Explicit gloss lookups as new-term demand (docs/SRS.md §4 "Lookups as
+demand"). Backend reads/writes only; RLS enabled with no policies.
+
+```
+lemma_lookups
+  user_id             uuid -> auth.users.id (ON DELETE CASCADE)
+  target_language     text         -- pk (user_id, target_language, lemma)
+  lemma               text         -- checkpoint_fold-folded, homograph-guarded
+  lookup_count        int          -- collapsed episodes (1-hour window)
+  credited_count      int          -- watermark: episodes already folded into a
+                                   -- saved term's encounter_count; CHECK
+                                   -- 0 <= credited_count <= lookup_count
+  last_looked_up_at   timestamptz
+```
+
+Saved terms match lemmas through `public.user_headword_lemma_keys(headword,
+lang)`, the SQL twin of `foldUserHeadwordCandidates` (en `to `, de `sich `,
+fr `se `, es/pt reflexive strips on top of `checkpoint_fold`), pinned by a
+SQL-vs-TS parity test. The watermark is what makes save-time crediting
+idempotent: an enrichment retry or a re-save finds nothing uncredited.
 
 ### Known lemmas
 

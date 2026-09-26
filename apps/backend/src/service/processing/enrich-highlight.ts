@@ -43,6 +43,7 @@ export const enrichHighlight = async (
     highlightsRepository,
     cardsRepository,
     userLookupsRepository,
+    lemmaLookupsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository,
     processingTelemetryRepository,
@@ -153,6 +154,9 @@ export const enrichHighlight = async (
   // fallback stub is the highlight too). recordEncounter's collapse window
   // absorbs worker retries, so a single save can never reach tier 1 on its own.
   await userLookupsRepository.recordEncounter([...touchedLookups.keys()])
+  // Explicit lookups of the word before this save are demand too. The
+  // watermark in creditLookupDemand makes a worker retry credit nothing twice.
+  await lemmaLookupsRepository.creditLookupDemand([...touchedLookups.keys()])
 
   if (KAIKKI_LANGUAGES.has(session.target_language)) {
     await runWiktionaryGrounding({

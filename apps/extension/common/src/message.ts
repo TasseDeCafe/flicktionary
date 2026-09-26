@@ -407,6 +407,14 @@ export interface FlicktionaryStartPairingMessage extends MessageWithId {
   readonly command: 'flicktionary-start-pairing'
 }
 
+// Fire-and-forget: an EXPLICIT lookup (the pointer entered and pinned a hover
+// gloss) recorded as a new-term demand signal. A bare hover never sends it.
+export interface FlicktionaryRecordLookupMessage extends MessageWithId {
+  readonly command: 'flicktionary-record-lookup'
+  readonly selectionText: string
+  readonly targetLanguage: string
+}
+
 export interface FlicktionaryStartPairingResponse {
   readonly success: boolean
   readonly error?: string

@@ -59,6 +59,7 @@ const createDeps = () => {
     highlightsRepository: { insertHighlight },
     cardsRepository: { updateStatus },
     userLookupsRepository: { applyKeepTransition },
+    lemmaLookupsRepository: { creditLookupDemand: vi.fn().mockResolvedValue(undefined) },
     studyFacetsRepository: {},
     usersRepository: {
       setLastTargetLanguage: vi.fn().mockResolvedValue(undefined),

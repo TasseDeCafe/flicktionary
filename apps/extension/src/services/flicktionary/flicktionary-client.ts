@@ -5,6 +5,7 @@ import {
   FlicktionaryGlossMessage,
   FlicktionaryGlossResponse,
   FlicktionarySavedGlossMessage,
+  FlicktionaryRecordLookupMessage,
   FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
   FlicktionaryStudyFacetDto,
@@ -120,6 +121,22 @@ export async function requestGloss(
   }
 
   return await browser.runtime.sendMessage(message)
+}
+
+// Fire-and-forget demand signal for an explicit lookup (see
+// FlicktionaryRecordLookupMessage). Never throws.
+export function recordLookup(word: string, targetLanguage: string): void {
+  const message: TabToExtensionCommand<FlicktionaryRecordLookupMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'flicktionary-record-lookup',
+      messageId: uuidv4(),
+      selectionText: word,
+      targetLanguage,
+    },
+  }
+
+  browser.runtime.sendMessage(message).catch(() => {})
 }
 
 // Starts the Flicktionary pairing ("sign in") flow from the in-video overlay.

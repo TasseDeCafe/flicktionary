@@ -81,6 +81,7 @@ import { WiktionaryMatchRepository } from './transport/database/wiktionary-entri
 import { KnownLemmasRepository } from './transport/database/known-lemmas/known-lemmas-repository'
 import { TextTrackLemmaProfilesRepository } from './transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { LemmaRanksRepository } from './transport/database/lemma-ranks/lemma-ranks-repository'
+import { LemmaLookupsRepository } from './transport/database/lemma-lookups/lemma-lookups-repository'
 import { StudySessionCheckpointsRepository } from './transport/database/study-sessions/study-session-checkpoints-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
 import { GhostCandidatesRepository } from './transport/database/ghost-candidates/ghost-candidates-repository'
@@ -375,6 +376,7 @@ export const buildApp = ({
   const cardChatMessagesRepository = CardChatMessagesRepository()
   const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
   const userLookupsRepository = UserLookupsRepository()
+  const lemmaLookupsRepository = LemmaLookupsRepository()
   const studyFacetsRepository = StudyFacetsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
   const practiceExercisesRepository = PracticeExercisesRepository()
@@ -410,6 +412,7 @@ export const buildApp = ({
     highlightsRepository,
     cardsRepository,
     userLookupsRepository,
+    lemmaLookupsRepository,
     studyFacetsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository,
@@ -614,7 +617,14 @@ export const buildApp = ({
       wiktionaryEntriesRepository,
       anthropicPasses,
       wiktionaryMatchRepository,
-      knownLemmasRepository
+      knownLemmasRepository,
+      {
+        wiktionaryMatchRepository,
+        lemmaRanksRepository,
+        lemmaLookupsRepository,
+        userLookupsRepository,
+        withTransaction,
+      }
     )
   )
   app.use(
@@ -626,6 +636,7 @@ export const buildApp = ({
       processingJobsRepository,
       textSegmentsRepository,
       userLookupsRepository,
+      lemmaLookupsRepository,
       studyFacetsRepository,
       practiceRatingEventsRepository,
       userTargetLanguagePrefsRepository,

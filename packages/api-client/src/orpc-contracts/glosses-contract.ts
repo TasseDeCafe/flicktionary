@@ -53,4 +53,29 @@ export const glossesContract = {
         }),
       })
     ),
+
+  // Records an EXPLICIT lookup (a tap that opens the gloss sheet, a pinned
+  // extension hover gloss — never a bare hover, which calls fastGloss on a
+  // debounce) as a new-term demand signal: repeated lookups of a word lift it
+  // to the "revealed demand" priority tier. Fire-and-forget; single-word
+  // selections in languages with wiktionary data only, anything else is a
+  // no-op. Returns the folded lemmas recorded (empty = nothing recorded).
+  recordLookup: oc
+    .route({ method: 'POST', path: '/glosses/record-lookup', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        selectionText: z.string().trim().min(1).max(200),
+        targetLanguage: z.string().trim().min(1).max(40),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          lemmas: z.array(z.string()),
+        }),
+      })
+    ),
 }

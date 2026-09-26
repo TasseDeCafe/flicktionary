@@ -24,7 +24,12 @@ import {
 } from '@flicktionary/ui/components/floating-sheet'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { KnownLemmaChip } from '@/features/sessions/components/known-lemma-chip'
-import { useGetUserPrefs, useSetCefrForLanguage, useStatelessGloss } from '@/features/sessions/api/sessions-hooks'
+import {
+  useGetUserPrefs,
+  useRecordLookup,
+  useSetCefrForLanguage,
+  useStatelessGloss,
+} from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
 import type { PlainSelection } from './annotated-text'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
@@ -71,6 +76,7 @@ export const LookupSheet = ({
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
   const { mutateAsync: fetchGloss } = useStatelessGloss()
+  const { mutate: recordLookup } = useRecordLookup()
   const { mutateAsync: createAdhoc } = useCreateAdhocCard()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
 
@@ -101,6 +107,8 @@ export const LookupSheet = ({
     const run = async () => {
       try {
         setState({ kind: 'loading' })
+        // Opening the sheet on a word is an explicit lookup: a demand signal.
+        recordLookup({ selectionText: selection.text, targetLanguage })
         const result = await fetchGloss({
           selectionText: selection.text,
           contextLine: contextText.slice(0, CONTEXT_MAX),
@@ -124,7 +132,7 @@ export const LookupSheet = ({
     return () => {
       cancelled = true
     }
-  }, [open, selection?.text, contextText, targetLanguage, fetchGloss, selection])
+  }, [open, selection?.text, contextText, targetLanguage, fetchGloss, recordLookup, selection])
 
   const submitAdhoc = (lang: string) => {
     if (!selection) return
