@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ListTree } from 'lucide-react'
+import { ListTree, Pin } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import type { BookGroup } from '../utils/derive-books'
 import { useRelativeDateLabel } from '../hooks/use-relative-date-label'
@@ -12,20 +12,28 @@ type Props = {
 
 // One entry per book in session lists. Tapping resumes reading: it opens the
 // part read most recently, where the reader restores the saved line. The
-// contents button (outside the card's Link) opens the book page.
+// contents button (outside the card's Link) opens the book page. A pinned book
+// leads its meta line with the same pin glyph as the book page's Prioritize card.
 const useBookGroupParts = (book: BookGroup) => {
   const { t } = useLingui()
   const relativeDate = useRelativeDateLabel()
   const partTitle = book.currentSession.bookPartTitle
   const bookTitle = book.title
   const metaParts = [book.language.toUpperCase(), book.author, partTitle].filter((part): part is string => !!part)
+  const renderMeta = (metaText: string) => (
+    <>
+      {book.pinned && <Pin aria-hidden className='mr-1 inline size-3 -translate-y-px' />}
+      {metaText}
+    </>
+  )
   return {
     title: book.title || t`Untitled`,
     dateLabel: relativeDate(book.latestActivityAt),
     linkProps: { to: '/sessions/$sessionId', params: { sessionId: book.currentSession.id } } as const,
-    ariaLabel: t`Continue reading ${bookTitle}`,
+    ariaLabel: book.pinned ? t`Continue reading ${bookTitle}, prioritized book` : t`Continue reading ${bookTitle}`,
     media: <MediaThumb imageUrl={null} title={book.title} type='book' />,
-    meta: metaParts.join(' · '),
+    metaText: metaParts.join(' · '),
+    renderMeta,
     action: (
       <Button
         asChild
@@ -48,14 +56,14 @@ const useBookGroupParts = (book: BookGroup) => {
 }
 
 export const BookGroupListItem = ({ book }: Props) => {
-  const { title, dateLabel, linkProps, ariaLabel, media, meta, action } = useBookGroupParts(book)
+  const { title, dateLabel, linkProps, ariaLabel, media, metaText, renderMeta, action } = useBookGroupParts(book)
   return (
     <MediaListItem
       linkProps={linkProps}
       ariaLabel={ariaLabel}
       media={media}
       title={title}
-      meta={meta}
+      meta={renderMeta(metaText)}
       dateLabel={dateLabel}
       action={action}
     />
@@ -63,14 +71,14 @@ export const BookGroupListItem = ({ book }: Props) => {
 }
 
 export const BookGroupMediaCard = ({ book, className }: Props & { className?: string }) => {
-  const { title, dateLabel, linkProps, ariaLabel, media, meta, action } = useBookGroupParts(book)
+  const { title, dateLabel, linkProps, ariaLabel, media, metaText, renderMeta, action } = useBookGroupParts(book)
   return (
     <MediaCard
       linkProps={linkProps}
       ariaLabel={ariaLabel}
       media={media}
       title={title}
-      meta={`${meta} · ${dateLabel}`}
+      meta={renderMeta(`${metaText} · ${dateLabel}`)}
       action={action}
       className={className}
     />

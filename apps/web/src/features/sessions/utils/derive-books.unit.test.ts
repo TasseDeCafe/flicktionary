@@ -33,6 +33,7 @@ const session = (overrides: Partial<StudySession>): StudySession => ({
   bookPartTitle: 'Глава 1',
   bookPartCount: 17,
   bookAuthor: 'Филип К. Дик',
+  bookPinned: false,
   lastReadAt: null,
   ...overrides,
 })

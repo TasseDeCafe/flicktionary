@@ -27,8 +27,14 @@ export const useGetBook = (contentSourceId: string) => {
 }
 
 // Pinning reorders the new-card queue, so the practice plan/landing and the
-// Vocabulary Up next list refresh with the book page.
-const pinInvalidates = () => [orpcQuery.books.get.key(), orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()]
+// Vocabulary Up next list refresh with the book page; the sessions list carries
+// the pin glyph on book cards.
+const pinInvalidates = () => [
+  orpcQuery.books.get.key(),
+  orpcQuery.studySessions.list.key(),
+  orpcQuery.chunks.listChunks.key(),
+  ...practiceSummaryKeys(),
+]
 
 export const usePinBook = () => {
   const { t } = useLingui()
@@ -83,7 +89,7 @@ export const useRemoveBook = () => {
   return useMutation(
     orpcQuery.books.remove.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.studySessions.list.key(), ...pinInvalidates()],
+        invalidates: pinInvalidates(),
         errorMessage: t`Failed to remove the book`,
       },
     })

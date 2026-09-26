@@ -20,6 +20,8 @@ export type DbStudySessionWithSource = DbStudySession & {
   // Book parts only (null elsewhere): the part's position + title in its book.
   book_part_index: number | null
   book_part_title: string | null
+  // Whether this session's book is the user's pinned book for its language.
+  book_pinned: boolean
 }
 
 // Find-or-create: one study_session per (user, text_track, target_language) —
@@ -614,7 +616,13 @@ const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWit
            cs.type AS content_source_type,
            cs.metadata AS content_source_metadata,
            t.book_part_index,
-           t.book_part_title
+           t.book_part_title,
+           EXISTS (
+             SELECT 1 FROM public.book_pins bp
+             WHERE bp.user_id = s.user_id
+               AND bp.target_language = s.target_language
+               AND bp.content_source_id = s.content_source_id
+           ) AS book_pinned
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
     LEFT JOIN public.text_tracks t ON t.id = s.text_track_id
@@ -633,7 +641,13 @@ const findByIdForUserWithSource = async (
            cs.type AS content_source_type,
            cs.metadata AS content_source_metadata,
            t.book_part_index,
-           t.book_part_title
+           t.book_part_title,
+           EXISTS (
+             SELECT 1 FROM public.book_pins bp
+             WHERE bp.user_id = s.user_id
+               AND bp.target_language = s.target_language
+               AND bp.content_source_id = s.content_source_id
+           ) AS book_pinned
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
     LEFT JOIN public.text_tracks t ON t.id = s.text_track_id
@@ -655,7 +669,13 @@ const listByIdsForUserWithSource = async (
            cs.type AS content_source_type,
            cs.metadata AS content_source_metadata,
            t.book_part_index,
-           t.book_part_title
+           t.book_part_title,
+           EXISTS (
+             SELECT 1 FROM public.book_pins bp
+             WHERE bp.user_id = s.user_id
+               AND bp.target_language = s.target_language
+               AND bp.content_source_id = s.content_source_id
+           ) AS book_pinned
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
     LEFT JOIN public.text_tracks t ON t.id = s.text_track_id

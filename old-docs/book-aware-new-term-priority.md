@@ -1,6 +1,6 @@
 # Book-aware new-term priority (#476, with #475)
 
-> **Status: proposal.** Design for pinning a book so words frequent in its unread chapters get a share of the daily new-card budget (#476), plus the fresh-save frequency floor and lookup-demand signal (#475) where they interact. Not current behavior; current new-term ordering lives in `docs/SRS.md` §4.
+> **Status: historical** (archived 2026-09-26). Design for pinned-book priority (#476) with the fresh-save frequency floor and lookup-demand signal (#475), implemented by PRs #479–#482 and #484 (learn before you read); kept for design rationale. Current behavior lives in `../docs/SRS.md` §4 (new-term order, pinned book), `../docs/READER-SPEC.md` (book page) and `../docs/DATA-MODEL.md` (book pins, part lemma counts).
 
 ## Problem
 
