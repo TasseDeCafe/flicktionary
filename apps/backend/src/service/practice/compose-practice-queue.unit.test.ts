@@ -101,6 +101,10 @@ const createDeps = (params: {
     },
     studyFacetsRepository: { initializeAndParkCitationFacetIfUnderDailyCap },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
+    bookPinsRepository: {
+      getPin: vi.fn().mockResolvedValue(null),
+      countBookIntroductionsToday: vi.fn().mockResolvedValue(0),
+    },
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
     practiceExercisesRepository: { selectNextExercise, reserveSlots, listBonusForTerms, countGateBankSlots },
     usersRepository: {},

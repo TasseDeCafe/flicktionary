@@ -56,16 +56,15 @@ export const ChunksCursorSchema = z.union([
     phase: z.literal('unscheduled'),
     id: z.string().uuid(),
   }),
-  // status='up_next' pages in introduction order (newTermOrderSql): tier, zipf
-  // DESC, created_at, headword, sense, id. All keys ride the cursor so one row
-  // comparison resumes the scan; zipfKey carries COALESCE(zipf_estimate, -1).
+  // status='up_next' pages in introduction order (introductionOrderCtesSql:
+  // the pinned-book interleave over the tier order). All keys ride the cursor
+  // so one row comparison resumes the scan. Positions are computed per
+  // request, so an introduction between page loads can shift them.
   z.object({
     sort: z.literal('queue'),
-    tier: z.number().int(),
-    zipfKey: z.number(),
-    createdAt: z.string(),
-    headword: z.string(),
-    sense: z.string(),
+    pos: z.number(),
+    lane: z.number().int(),
+    seq: z.number().int(),
     id: z.string().uuid(),
   }),
 ])

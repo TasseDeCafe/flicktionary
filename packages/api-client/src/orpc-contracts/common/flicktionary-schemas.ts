@@ -370,6 +370,9 @@ export const ChunkRowSchema = ChunkSchema.extend({
   firstCardSegmentId: z.string().uuid().nullable(),
   studySessionId: z.string().uuid().nullable(),
   sourceAvailable: z.boolean(),
+  // Up next only: the term takes one of today's pinned-book slots (its
+  // position comes from the book quota, not its tier). False everywhere else.
+  pinnedBookPriority: z.boolean(),
 })
 export type ChunkRow = z.infer<typeof ChunkRowSchema>
 

@@ -54,6 +54,35 @@ export type Database = {
           },
         ]
       }
+      book_pins: {
+        Row: {
+          content_source_id: string
+          pinned_at: string
+          target_language: string
+          user_id: string
+        }
+        Insert: {
+          content_source_id: string
+          pinned_at?: string
+          target_language: string
+          user_id: string
+        }
+        Update: {
+          content_source_id?: string
+          pinned_at?: string
+          target_language?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'book_pins_content_source_id_fkey'
+            columns: ['content_source_id']
+            isOneToOne: false
+            referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       card_chat_messages: {
         Row: {
           card_id: string
@@ -1289,6 +1318,7 @@ export type Database = {
       }
       study_facets: {
         Row: {
+          book_quota_source_id: string | null
           created_at: string
           data_status: string
           disabled_at: string | null
@@ -1316,6 +1346,7 @@ export type Database = {
           user_lookup_id: string
         }
         Insert: {
+          book_quota_source_id?: string | null
           created_at?: string
           data_status?: string
           disabled_at?: string | null
@@ -1343,6 +1374,7 @@ export type Database = {
           user_lookup_id: string
         }
         Update: {
+          book_quota_source_id?: string | null
           created_at?: string
           data_status?: string
           disabled_at?: string | null
@@ -1370,6 +1402,13 @@ export type Database = {
           user_lookup_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'study_facets_book_quota_source_id_fkey'
+            columns: ['book_quota_source_id']
+            isOneToOne: false
+            referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'study_facets_lookup_fkey'
             columns: ['user_lookup_id']

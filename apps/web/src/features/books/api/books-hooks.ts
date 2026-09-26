@@ -2,15 +2,62 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { BOOK_UPLOAD_BATCH_MAX_CHARS } from '@flicktionary/api-client/orpc-contracts/books-contract'
 import { orpcClient, orpcQuery } from '@/lib/transport/orpc-client'
+import { practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 import { hashBookParts, type BookPartDraft } from '../utils/build-book-parts'
 
+// Polls while a pinned book's parts are still being analyzed, so the pin card
+// moves from "Analyzing…" to its daily split without a manual refresh.
 export const useGetBook = (contentSourceId: string) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.books.get.queryOptions({
       input: { contentSourceId },
       select: (response) => response.data,
+      refetchInterval: (query) => {
+        const priority = query.state.data?.data.priority
+        return priority?.pinned && priority.analysis.status === 'analyzing' ? 5000 : false
+      },
       meta: { errorMessage: t`Failed to load the book` },
+    })
+  )
+}
+
+// Pinning reorders the new-card queue, so the practice plan/landing and the
+// Vocabulary Up next list refresh with the book page.
+const pinInvalidates = () => [orpcQuery.books.get.key(), orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys()]
+
+export const usePinBook = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.books.pin.mutationOptions({
+      meta: {
+        invalidates: pinInvalidates(),
+        errorMessage: t`Failed to prioritize this book`,
+      },
+    })
+  )
+}
+
+export const useUnpinBook = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.books.unpin.mutationOptions({
+      meta: {
+        invalidates: pinInvalidates(),
+        errorMessage: t`Failed to stop prioritizing this book`,
+      },
+    })
+  )
+}
+
+export const useRetryBookAnalysis = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.books.retryAnalysis.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.books.get.key()],
+        errorMessage: t`Failed to retry the analysis`,
+      },
     })
   )
 }
@@ -32,7 +79,7 @@ export const useRemoveBook = () => {
   return useMutation(
     orpcQuery.books.remove.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.studySessions.list.key(), orpcQuery.books.get.key()],
+        invalidates: [orpcQuery.studySessions.list.key(), ...pinInvalidates()],
         errorMessage: t`Failed to remove the book`,
       },
     })

@@ -300,12 +300,42 @@ const listPartsForUser = async (contentSourceId: string, userId: string): Promis
   `) as DbBookPart[]
 }
 
+// Soft-deletes every part session AND unpins the book in one transaction: the
+// source row survives removal for dedup, so a re-upload must not come back
+// pinned.
 const removeForUser = async (contentSourceId: string, userId: string): Promise<void> => {
-  await sql`
-    UPDATE public.study_sessions
-    SET deleted_at = NOW()
-    WHERE content_source_id = ${contentSourceId} AND user_id = ${userId} AND deleted_at IS NULL
-  `
+  await beginTx(async (tx) => {
+    await tx`
+      UPDATE public.study_sessions
+      SET deleted_at = NOW()
+      WHERE content_source_id = ${contentSourceId} AND user_id = ${userId} AND deleted_at IS NULL
+    `
+    await tx`DELETE FROM public.book_pins WHERE content_source_id = ${contentSourceId} AND user_id = ${userId}`
+  })
+}
+
+export type DbBookPartAnalysis = {
+  text_track_id: string
+  profile_built_at: string | null
+  profile_version: number | null
+  latest_job_status: 'pending' | 'processing' | 'done' | 'failed' | null
+}
+
+// Per-part lemma-profile state for the pinned-book analysis status: the
+// profile bookkeeping plus the latest build job's status, in one read.
+const listPartAnalysis = async (contentSourceId: string): Promise<DbBookPartAnalysis[]> => {
+  return (await sql`
+    SELECT t.id AS text_track_id, t.profile_built_at, t.profile_version,
+      (
+        SELECT j.status FROM public.processing_jobs j
+        WHERE j.text_track_id = t.id AND j.kind = 'build_track_lemma_profile'
+        ORDER BY j.created_at DESC
+        LIMIT 1
+      ) AS latest_job_status
+    FROM public.text_tracks t
+    WHERE t.content_source_id = ${contentSourceId}
+    ORDER BY t.book_part_index
+  `) as DbBookPartAnalysis[]
 }
 
 export interface BooksRepositoryInterface {
@@ -317,6 +347,7 @@ export interface BooksRepositoryInterface {
   findOwnedBook: typeof findOwnedBook
   listPartsForUser: typeof listPartsForUser
   removeForUser: typeof removeForUser
+  listPartAnalysis: typeof listPartAnalysis
 }
 
 export const BooksRepository = (): BooksRepositoryInterface => ({
@@ -328,4 +359,5 @@ export const BooksRepository = (): BooksRepositoryInterface => ({
   findOwnedBook,
   listPartsForUser,
   removeForUser,
+  listPartAnalysis,
 })

@@ -64,6 +64,10 @@ const createDeps = (params: {
   const deps = {
     userLookupsRepository: { listParkedTerms, listEligibleNewCitationFacets, listReviewTerms, listDueSummary },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
+    bookPinsRepository: {
+      getPin: vi.fn().mockResolvedValue(null),
+      countBookIntroductionsToday: vi.fn().mockResolvedValue(0),
+    },
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
   } as unknown as PlanPracticeQueueDependencies
 

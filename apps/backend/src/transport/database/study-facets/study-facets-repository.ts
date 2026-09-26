@@ -1,4 +1,5 @@
 import postgres from 'postgres'
+import { bookStreamSourceForTermSql } from '../../../service/practice/book-priority'
 import { beginTx, sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
@@ -284,6 +285,20 @@ const citationIntroductionsTodaySql = (userId: string, targetLanguage: string) =
     AND f2.introduced_at >= CURRENT_DATE
     AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
 `
+// The pinned book whose stream the term is in right now, for a recognition
+// introduction (NULL otherwise). Stamped on the facet at introduction so the
+// daily book quota counts it even after the pin changes or the reader moves
+// past the word's last occurrence (docs/SRS.md §4 "Pinned book").
+const bookQuotaSourceSql = (params: {
+  userLookupId: string
+  userId: string
+  targetLanguage: string
+  skill: 'meaning_recognition' | 'meaning_production'
+}) =>
+  params.skill === 'meaning_recognition'
+    ? sql`(${bookStreamSourceForTermSql(params.userLookupId, params.userId, params.targetLanguage)})`
+    : sql`NULL::uuid`
+
 const initializeCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
@@ -319,6 +334,7 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
       SET srs_state = 'new',
           srs_due = NOW(),
           introduced_at = NOW(),
+          book_quota_source_id = ${bookQuotaSourceSql(params)},
           updated_at = NOW()
       FROM public.user_lookups ul
       WHERE f.user_lookup_id = ul.id
@@ -424,6 +440,7 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
     await tx`
       UPDATE public.study_facets
       SET introduced_at = NOW(),
+          book_quota_source_id = ${bookQuotaSourceSql(params)},
           leech_parked_at = NOW(),
           leech_rehab_correct_days = 0,
           leech_rehab_last_correct_on = NULL,
@@ -653,6 +670,7 @@ const restoreSrsSnapshotForFacet = async (
         srs_lapses = ${params.prevLapses ?? 0},
         srs_learning_steps = ${params.prevLearningSteps ?? 0},
         introduced_at = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE introduced_at END,
+        book_quota_source_id = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE book_quota_source_id END,
         leech_parked_at = CASE
           WHEN ${params.causedParking} THEN NULL
           WHEN ${causedUnparking} THEN ${params.prevLeechParkedAt ?? null}::timestamptz

@@ -18,6 +18,7 @@ import {
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetBook, useOpenBookPart, useRemoveBook } from '../api/books-hooks'
+import { BookPriorityCard } from './book-priority-card'
 
 const routeApi = getRouteApi('/_authenticated/_app/sessions/book/$contentSourceId')
 
@@ -64,6 +65,8 @@ export const BookDetailView = () => {
   const bookTitle = book?.title ?? ''
   const currentPart = book?.parts.find((part) => part.partIndex === book.currentPartIndex) ?? book?.parts[0]
   const hasStarted = book?.parts.some((part) => part.lastReadAt !== null) ?? false
+  const lastPart = book?.parts[book.parts.length - 1]
+  const finished = lastPart ? readFraction(lastPart) >= 1 : false
 
   return (
     <ModalScreen
@@ -91,6 +94,7 @@ export const BookDetailView = () => {
               {[book.author, book.language.toUpperCase(), t`${partCount} parts`].filter(Boolean).join(' · ')}
             </p>
           )}
+          {book && <BookPriorityCard book={book} finished={finished} />}
           {isLoading && <SkeletonList count={6} renderItem={() => <PartRowSkeleton />} />}
           {isError && <p className='text-muted-foreground text-sm'>{t`This book isn't in your library.`}</p>}
           {book?.parts.map((part) => {

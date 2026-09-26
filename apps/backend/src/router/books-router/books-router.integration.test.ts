@@ -385,4 +385,110 @@ describe('books-router', () => {
       expect(retried.status).toBe(200)
     })
   })
+
+  describe('pinned-book priority', () => {
+    const uploadReadyBook = async (testApp: Express, auth: Record<string, string>, language: string) => {
+      const parts = buildParts(2)
+      const created = await request(testApp)
+        .post('/api/v1/books')
+        .set(auth)
+        .send({
+          title: 'Книга',
+          author: null,
+          language,
+          fileName: 'book.fb2',
+          contentHash: hashParts(parts),
+          partCount: parts.length,
+        })
+      const { contentSourceId, uploadId } = created.body.data
+      await request(testApp).post(`/api/v1/books/${contentSourceId}/parts`).set(auth).send({ uploadId, parts })
+      const finalized = await request(testApp)
+        .post(`/api/v1/books/${contentSourceId}/finalize`)
+        .set(auth)
+        .send({ uploadId })
+      expect(finalized.status).toBe(200)
+      return contentSourceId as string
+    }
+    const getPriority = async (testApp: Express, auth: Record<string, string>, contentSourceId: string) =>
+      (await request(testApp).get(`/api/v1/books/${contentSourceId}`).set(auth)).body.data.priority
+
+    test('returns 401 when unauthenticated', async () => {
+      const response = await request(buildApp(allowAll))
+        .post(`/api/v1/books/${randomUUID()}/pin`)
+        .set({ Authorization: 'Bearer wrong-token' })
+      expect(response.status).toBe(401)
+    })
+
+    test('pin, replace, unpin and remove; the book page reports pin, analysis and quota', async () => {
+      const testApp = buildApp(allowAll)
+      const reader = await createReader(testApp)
+      const first = await uploadReadyBook(testApp, reader.auth, 'ru')
+      const second = await uploadReadyBook(testApp, reader.auth, 'ru')
+
+      expect(await getPriority(testApp, reader.auth, first)).toMatchObject({ pinned: false, quota: null })
+
+      expect((await request(testApp).post(`/api/v1/books/${first}/pin`).set(reader.auth)).status).toBe(200)
+      const pinned = await getPriority(testApp, reader.auth, first)
+      expect(pinned).toMatchObject({ pinned: true, quota: { quota: 10, introducedToday: 0 } })
+      // Parts were queued for analysis at upload/pin time; nothing has built yet.
+      expect(pinned.analysis.status).toBe('analyzing')
+
+      // Pinning another book of the same language replaces the pin.
+      await request(testApp).post(`/api/v1/books/${second}/pin`).set(reader.auth)
+      expect(await getPriority(testApp, reader.auth, first)).toMatchObject({
+        pinned: false,
+        pinnedElsewhereTitle: 'Книга',
+      })
+      expect((await getPriority(testApp, reader.auth, second)).pinned).toBe(true)
+
+      // Unpinning a book that isn't the pinned one is a no-op.
+      await request(testApp).delete(`/api/v1/books/${first}/pin`).set(reader.auth)
+      expect((await getPriority(testApp, reader.auth, second)).pinned).toBe(true)
+      await request(testApp).delete(`/api/v1/books/${second}/pin`).set(reader.auth)
+      expect((await getPriority(testApp, reader.auth, second)).pinned).toBe(false)
+
+      // Removing the pinned book unpins it in the same step.
+      await request(testApp).post(`/api/v1/books/${first}/pin`).set(reader.auth)
+      await request(testApp).delete(`/api/v1/books/${first}`).set(reader.auth)
+      const pins = await sql`SELECT 1 FROM public.book_pins WHERE user_id = ${reader.id}`
+      expect(pins).toHaveLength(0)
+    })
+
+    test("another user's book is not found, and a language without dictionary data is refused", async () => {
+      const testApp = buildApp(allowAll)
+      const owner = await createReader(testApp)
+      const book = await uploadReadyBook(testApp, owner.auth, 'ru')
+      const stranger = await createReader(testApp)
+      expect((await request(testApp).post(`/api/v1/books/${book}/pin`).set(stranger.auth)).status).toBe(404)
+
+      await UserTargetLanguagePrefsRepository().upsertCefr(owner.id, 'it', 'B1')
+      const italian = await uploadReadyBook(testApp, owner.auth, 'it')
+      expect((await getPriority(testApp, owner.auth, italian)).analysis.status).toBe('unsupported')
+      const refused = await request(testApp).post(`/api/v1/books/${italian}/pin`).set(owner.auth)
+      expect(refused.status).toBe(422)
+      expect(refused.body.data.errors[0].code).toBe('UNSUPPORTED_LANGUAGE')
+    })
+
+    test('a terminally failed part reports partly_failed until retryAnalysis re-queues it', async () => {
+      const testApp = buildApp(allowAll)
+      const reader = await createReader(testApp)
+      const book = await uploadReadyBook(testApp, reader.auth, 'ru')
+      await sql`
+        UPDATE public.text_tracks SET profile_built_at = NOW(), profile_version = 2
+        WHERE content_source_id = ${book} AND book_part_index = 0
+      `
+      await sql`
+        UPDATE public.processing_jobs SET status = 'failed'
+        WHERE kind = 'build_track_lemma_profile'
+          AND text_track_id IN (SELECT id FROM public.text_tracks WHERE content_source_id = ${book})
+      `
+      expect((await getPriority(testApp, reader.auth, book)).analysis).toEqual({
+        status: 'partly_failed',
+        failedPartCount: 1,
+      })
+
+      expect((await request(testApp).post(`/api/v1/books/${book}/retry-analysis`).set(reader.auth)).status).toBe(200)
+      expect((await getPriority(testApp, reader.auth, book)).analysis.status).toBe('analyzing')
+    })
+  })
 })

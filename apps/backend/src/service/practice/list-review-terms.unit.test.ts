@@ -22,6 +22,10 @@ const createDeps = (
         .fn()
         .mockResolvedValue([{ targetLanguage: 'es', newIntroducedTodayCount: opts.introducedToday ?? 0 }]),
     },
+    bookPinsRepository: {
+      getPin: vi.fn().mockResolvedValue(null),
+      countBookIntroductionsToday: vi.fn().mockResolvedValue(0),
+    },
     practiceRatingEventsRepository: {
       countReviewBudgetConsumedToday,
     },

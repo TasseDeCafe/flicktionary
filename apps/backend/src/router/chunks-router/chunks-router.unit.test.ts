@@ -15,25 +15,10 @@ describe('chunks cursor codec', () => {
       id: '9f2b6f4e-0000-4000-8000-000000000002',
     },
     { sort: 'due', phase: 'unscheduled', id: '9f2b6f4e-0000-4000-8000-000000000003' },
-    {
-      sort: 'queue',
-      tier: 2,
-      zipfKey: 5.42,
-      createdAt: '2026-07-03T00:00:00Z',
-      headword: ' höchstens',
-      sense: '',
-      id: '9f2b6f4e-0000-4000-8000-000000000004',
-    },
-    // NULL zipf rides as -1 (COALESCE), and sense can be non-empty.
-    {
-      sort: 'queue',
-      tier: 3,
-      zipfKey: -1,
-      createdAt: '2026-07-03T00:00:00Z',
-      headword: 'банк',
-      sense: 'financial institution',
-      id: '9f2b6f4e-0000-4000-8000-000000000005',
-    },
+    { sort: 'queue', pos: 4, lane: 0, seq: 7, id: '9f2b6f4e-0000-4000-8000-000000000004' },
+    // Fractional fair-share positions and the after-everything sentinel.
+    { sort: 'queue', pos: 2.5, lane: 1, seq: 12, id: '9f2b6f4e-0000-4000-8000-000000000005' },
+    { sort: 'queue', pos: 1e15, lane: 1, seq: 40, id: '9f2b6f4e-0000-4000-8000-000000000006' },
   ]
 
   test.each(variants.map((cursor) => [cursor.sort, cursor] as const))('round-trips the %s cursor', (_sort, cursor) => {

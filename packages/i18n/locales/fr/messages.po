@@ -148,6 +148,10 @@ msgstr "{episodeCount} épisodes"
 msgid "{exactCount, plural, one {Mark # word as known?} other {Mark # words as known?}}"
 msgstr "{exactCount, plural, one {Marquer # mot comme connu ?} other {Marquer # mots comme connus ?}}"
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "{failedPartCount} chapters couldn't be analyzed."
+msgstr "{failedPartCount} chapitres n'ont pas pu être analysés."
+
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "{fieldLabel}: {title}"
 msgstr "{fieldLabel} : {title}"
@@ -179,6 +183,10 @@ msgstr "{intake} entrent dans votre prochaine session"
 #: apps/web/src/features/practice/components/session-plan-card.tsx
 msgid "{introducedToday} of {budgetMax} new introductions used today"
 msgstr "{introducedToday} nouvelles introductions sur {budgetMax} utilisées aujourd'hui"
+
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "{introducedToday} of {quota} book words introduced today. Up to half of your new words each day come from the chapters ahead."
+msgstr "{introducedToday} sur {quota} mots du livre introduits aujourd'hui. Jusqu'à la moitié de vos nouveaux mots chaque jour proviennent des chapitres à venir."
 
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
 msgid "{languageName} — done"
@@ -699,6 +707,10 @@ msgstr "Un service externe est occupé pour le moment. Veuillez réessayer dans 
 msgid "An unexpected error occurred"
 msgstr "Une erreur inattendue s'est produite"
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Analyzing the chapters… Words from the chapters already analyzed get priority now."
+msgstr "Analyse des chapitres en cours… Les mots des chapitres déjà analysés sont prioritaires maintenant."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Animacy"
 msgstr "Animéité"
@@ -926,6 +938,7 @@ msgid "Bonus"
 msgstr "Bonus"
 
 #: apps/web/src/features/books/components/book-detail-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 msgid "Book"
 msgstr "Livre"
 
@@ -964,6 +977,7 @@ msgstr "Par bande de fréquence"
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/books/components/book-detail-view.tsx
+#: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
@@ -2201,6 +2215,10 @@ msgstr "Échec de l'ouverture du vocabulaire de la session"
 msgid "Failed to open this part"
 msgstr "Impossible d'ouvrir cette partie"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to prioritize this book"
+msgstr "Impossible de prioriser ce livre"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to record rating"
 msgstr "Échec de l'enregistrement de l'évaluation"
@@ -2261,6 +2279,10 @@ msgstr "Échec de la reprise de votre importation Telegram"
 msgid "Failed to retry enrichment"
 msgstr "Échec de la nouvelle tentative d'enrichissement"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to retry the analysis"
+msgstr "Échec de la nouvelle tentative d'analyse"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to save highlight"
 msgstr "Échec de l'enregistrement du surlignage"
@@ -2314,6 +2336,10 @@ msgstr "Échec du démarrage de cet exercice"
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to start warm-up"
 msgstr "Échec du démarrage de l'échauffement"
+
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to stop prioritizing this book"
+msgstr "Échec de l'arrêt de la priorisation de ce livre"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to submit answer"
@@ -3635,6 +3661,10 @@ msgstr "Un point par mot, classé par fréquence — les mots les plus courants 
 msgid "One quick thing before you start: pin Flicktionary so it's always one click away."
 msgstr "Une petite chose avant de commencer : épinglez Flicktionary pour qu'il soit toujours accessible en un clic."
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Only one book per language gets priority. \"{replacedTitle}\" will stop getting it. Words you've already started keep their schedule."
+msgstr "Un seul livre par langue peut être prioritaire. « {replacedTitle} » ne le sera plus. Les mots déjà commencés conservent leur planning."
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Only production practice — flashcards and exercises."
 msgstr "Seulement pratique de production — cartes et exercices."
@@ -4061,6 +4091,18 @@ msgstr "Précédent : {previousTitle}"
 msgid "Primary"
 msgstr "Principal"
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Prioritize this book"
+msgstr "Prioriser ce livre"
+
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Prioritize this book instead?"
+msgstr "Prioriser ce livre à la place ?"
+
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Prioritize words from this book"
+msgstr "Prioriser les mots de ce livre"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Process a session and keep some cards. They'll show up here automatically."
 msgstr "Traitez une session et conservez quelques cartes. Elles apparaîtront ici automatiquement."
@@ -4429,6 +4471,7 @@ msgstr "Restauration…"
 msgid "Resumed here"
 msgstr "Repris ici"
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
@@ -6292,6 +6335,10 @@ msgstr "Mot ou expression"
 msgid "words"
 msgstr "mots"
 
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "Words that come up often in the chapters ahead get up to half of your new words each day."
+msgstr "Les mots qui apparaissent souvent dans les chapitres à venir représentent jusqu'à la moitié de vos nouveaux mots chaque jour."
+
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Words you've read"
 msgstr "Mots que vous avez lus"
@@ -6387,6 +6434,10 @@ msgstr "Vous naviguez en tant qu'invité et l'appairage de l'extension nécessit
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 msgid "You've filled your guest library"
 msgstr "Vous avez rempli votre bibliothèque d'invité"
+
+#: apps/web/src/features/books/components/book-priority-card.tsx
+msgid "You've finished this book, so its words no longer get priority."
+msgstr "Vous avez terminé ce livre, ses mots ne sont donc plus prioritaires."
 
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"
