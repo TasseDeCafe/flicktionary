@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, FileText, FileUp, Sparkles, type LucideIcon } from 'lucide-react'
+import { BookOpen, Clapperboard, FileText, FileUp, Sparkles, type LucideIcon } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -51,6 +51,14 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
       description: t`Paste an article, comment, or post`,
       onSelect: () => {
         void navigate({ to: '/sessions/new-text' })
+      },
+    },
+    {
+      icon: BookOpen,
+      label: t`Upload a book`,
+      description: t`Read an EPUB, FB2 or MOBI book chapter by chapter`,
+      onSelect: () => {
+        void navigate({ to: '/books/import' })
       },
     },
     {

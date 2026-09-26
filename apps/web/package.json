@@ -54,6 +54,7 @@
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-prettier": "catalog:",
     "express": "catalog:",
+    "foliate-js": "catalog:",
     "js-sha256": "catalog:",
     "lucide-react": "catalog:",
     "posthog-js": "catalog:",

@@ -7,6 +7,7 @@ import { useListStudySessions, useSessionDifficulties } from '@/features/session
 import { buildSessionListItems } from '@/features/sessions/utils/session-list-items'
 import { SessionMediaCard } from '@/features/sessions/components/session-card'
 import { ShowGroupMediaCard } from '@/features/sessions/components/show-group-card'
+import { BookGroupMediaCard } from '@/features/sessions/components/book-group-card'
 import { MediaCardSkeleton } from '@/features/sessions/components/media-card'
 import { SessionRemoveDialog } from '@/features/sessions/components/session-remove-dialog'
 import { SessionsEmptyState } from '@/features/sessions/components/sessions-empty-state'
@@ -112,6 +113,8 @@ export const DashboardView = () => {
           {recentItems.map((item) =>
             item.kind === 'group' ? (
               <ShowGroupMediaCard key={item.key} group={item.group} className={RECENT_CARD_CLASS} />
+            ) : item.kind === 'book' ? (
+              <BookGroupMediaCard key={item.key} book={item.book} className={RECENT_CARD_CLASS} />
             ) : (
               <SessionMediaCard
                 key={item.key}

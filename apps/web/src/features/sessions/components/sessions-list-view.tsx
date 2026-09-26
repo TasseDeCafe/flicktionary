@@ -11,13 +11,14 @@ import { createSearchMatcher } from '@flicktionary/core/utils/search-match'
 import { buildSessionListItems } from '../utils/session-list-items'
 import { SessionListItem } from './session-card'
 import { ShowGroupListItem } from './show-group-card'
+import { BookGroupListItem } from './book-group-card'
 import { MediaListItemSkeleton } from './media-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { SessionsEmptyState } from './sessions-empty-state'
 import { SessionsFilterControl, type SessionsSort } from './sessions-filter-control'
 import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab-header'
 
-type TypeFilter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
+type TypeFilter = 'all' | 'movie' | 'tv' | 'book' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -118,6 +119,9 @@ export const SessionsListView = () => {
             <FilterChip active={filter === 'tv'} onClick={() => setFilter('tv')}>
               {t`TV`}
             </FilterChip>
+            <FilterChip active={filter === 'book'} onClick={() => setFilter('book')}>
+              {t`Books`}
+            </FilterChip>
             <FilterChip active={filter === 'text'} onClick={() => setFilter('text')}>
               {t`Texts`}
             </FilterChip>
@@ -149,6 +153,8 @@ export const SessionsListView = () => {
           {items.map((item) =>
             item.kind === 'group' ? (
               <ShowGroupListItem key={item.key} group={item.group} />
+            ) : item.kind === 'book' ? (
+              <BookGroupListItem key={item.key} book={item.book} />
             ) : (
               <SessionListItem
                 key={item.key}

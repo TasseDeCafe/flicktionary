@@ -23,9 +23,11 @@ import type { AnthropicPassesInterface } from '../../transport/third-party/anthr
 // hands other users a session on the source (which exposes its id), and that
 // must never grant write access to it. Movie/TV sources stay open — they are
 // global by design (community SRT uploads). Applies to EVERY track-creating
-// handler, not just paste.
+// handler, not just paste. Book tracks are written only through the books
+// router (part indexing, upload generations, sampled moderation), so book
+// sources are refused here outright.
 const canWriteTracksToSource = (source: DbContentSource | null, userId: string): source is DbContentSource => {
-  if (!source) return false
+  if (!source || source.type === 'book') return false
   const isGlobalType = source.type === 'movie' || source.type === 'tv'
   return isGlobalType || source.created_by_user_id === userId
 }

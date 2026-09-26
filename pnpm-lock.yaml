@@ -399,6 +399,9 @@ catalogs:
     fast-xml-parser:
       specifier: 5.10.0
       version: 5.10.0
+    foliate-js:
+      specifier: 1.0.1
+      version: 1.0.1
     gettext-parser:
       specifier: 9.1.1
       version: 9.1.1
@@ -1470,6 +1473,9 @@ importers:
       express:
         specifier: 'catalog:'
         version: 5.2.1
+      foliate-js:
+        specifier: 'catalog:'
+        version: 1.0.1
       js-sha256:
         specifier: 'catalog:'
         version: 0.11.1
@@ -7743,6 +7749,9 @@ packages:
     resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
     engines: {node: ^14.18.0 || >=16.10.0}
 
+  construct-style-sheets-polyfill@3.1.0:
+    resolution: {integrity: sha512-HBLKP0chz8BAY6rBdzda11c3wAZeCZ+kIG4weVC2NM3AXzxx09nhe8t0SQNdloAvg5GLuHwq/0SPOOSPvtCcKw==}
+
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
     engines: {node: '>= 0.6'}
@@ -8875,6 +8884,9 @@ packages:
 
   flow-enums-runtime@0.0.6:
     resolution: {integrity: sha512-3PYnM29RFXwvAN6Pc/scUfkI7RwhQ/xqyLUyPNlXUp9S40zI8nup9tUSrTLSVnWGBN38FNiGWbwZOB6uR4OGdw==}
+
+  foliate-js@1.0.1:
+    resolution: {integrity: sha512-Cj4h2ub5aVA+yUgbhvVhCyxwi0GPF4pyNBa6Lw9+6WKY1ReBxipItn2kEBO6u7Vu/xYXjK711R74+t+yW/0u5w==}
 
   follow-redirects@1.16.0:
     resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
@@ -20063,6 +20075,8 @@ snapshots:
 
   consola@3.4.2: {}
 
+  construct-style-sheets-polyfill@3.1.0: {}
+
   content-disposition@0.5.4:
     dependencies:
       safe-buffer: 5.2.1
@@ -21546,6 +21560,10 @@ snapshots:
   flattie@1.1.1: {}
 
   flow-enums-runtime@0.0.6: {}
+
+  foliate-js@1.0.1:
+    dependencies:
+      construct-style-sheets-polyfill: 3.1.0
 
   follow-redirects@1.16.0: {}
 

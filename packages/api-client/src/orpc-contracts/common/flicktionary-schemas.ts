@@ -459,6 +459,17 @@ export const StudySessionSchema = z.object({
   showTitle: z.string().nullable(),
   originalTitle: z.string().nullable(),
   episodeTitle: z.string().nullable(),
+  // Book-only part identity (null for every other source type): the part's
+  // 0-based position in its book, its display title, the book's part count and
+  // author. Powers grouping the Sessions list by book and the reader's
+  // previous/next part navigation.
+  bookPartIndex: z.number().int().nullable(),
+  bookPartTitle: z.string().nullable(),
+  bookPartCount: z.number().int().nullable(),
+  bookAuthor: z.string().nullable(),
+  // Last time the reading position advanced or was set; null = never read. A
+  // book's current part is its session with the latest value.
+  lastReadAt: z.string().nullable(),
 })
 export type StudySession = z.infer<typeof StudySessionSchema>
 

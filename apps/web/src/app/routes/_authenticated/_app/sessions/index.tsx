@@ -7,7 +7,10 @@ import { SessionsListView } from '@/features/sessions/components/sessions-list-v
 // malformed token degrades to the default instead of a route error. Search
 // text stays local state — transient typing doesn't belong in history.
 const sessionsSearchSchema = z.object({
-  type: z.enum(['movie', 'tv', 'text', 'article', 'youtube', 'streaming', 'lesson']).optional().catch(undefined),
+  type: z
+    .enum(['movie', 'tv', 'book', 'text', 'article', 'youtube', 'streaming', 'lesson'])
+    .optional()
+    .catch(undefined),
   lang: z.string().optional().catch(undefined),
   sort: z.enum(['newest', 'oldest']).optional().catch(undefined),
 })

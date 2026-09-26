@@ -29,6 +29,7 @@ import { lessonImportContract } from './lesson-import-contract'
 import { coverageContract } from './coverage-contract'
 import { statsContract } from './stats-contract'
 import { sharedContentContract } from './shared-content-contract'
+import { booksContract } from './books-contract'
 
 export const rootOrpcContract = {
   authentication: authenticationContract,
@@ -62,4 +63,5 @@ export const rootOrpcContract = {
   coverage: coverageContract,
   stats: statsContract,
   sharedContent: sharedContentContract,
+  books: booksContract,
 } as const
