@@ -6,6 +6,8 @@ export type BookGroup = {
   author: string | null
   language: string
   partCount: number | null
+  // The user's pinned book for its language (words from it are prioritized).
+  pinned: boolean
   // The part session read most recently (else the latest opened) — where
   // tapping the book resumes.
   currentSession: StudySession
@@ -30,6 +32,7 @@ export const deriveBooks = (sessions: readonly StudySession[]): BookGroup[] => {
         author: session.bookAuthor,
         language: session.targetLanguage,
         partCount: session.bookPartCount,
+        pinned: session.bookPinned,
         currentSession: session,
         openedPartCount: 1,
         latestActivityAt: activityAt(session),

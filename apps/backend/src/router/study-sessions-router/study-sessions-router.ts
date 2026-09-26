@@ -107,6 +107,7 @@ export const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   bookPartTitle: row.book_part_title,
   bookPartCount: row.content_source_type === 'book' ? readMetaInt(row.content_source_metadata, 'partCount') : null,
   bookAuthor: row.content_source_type === 'book' ? readMetaString(row.content_source_metadata, 'author') : null,
+  bookPinned: row.book_pinned,
   lastReadAt: toIsoString(row.last_read_at),
 })
 

@@ -114,6 +114,7 @@ describe('books-router', () => {
       bookPartTitle: 'Глава 1',
       bookPartCount: 3,
       bookAuthor: 'Филип К. Дик',
+      bookPinned: false,
       lastReadAt: null,
     })
 
@@ -433,6 +434,13 @@ describe('books-router', () => {
       expect(pinned).toMatchObject({ pinned: true, quota: { quota: 10, introducedToday: 0 } })
       // Parts were queued for analysis at upload/pin time; nothing has built yet.
       expect(pinned.analysis.status).toBe('analyzing')
+      // The sessions list flags the pinned book's part sessions (the card glyph).
+      const sessionsPinned = async (contentSourceId: string) =>
+        (await request(testApp).get('/api/v1/study-sessions').set(reader.auth)).body.data
+          .filter((session: { contentSourceId: string }) => session.contentSourceId === contentSourceId)
+          .map((session: { bookPinned: boolean }) => session.bookPinned)
+      expect(await sessionsPinned(first)).toEqual([true])
+      expect(await sessionsPinned(second)).toEqual([false])
 
       // Pinning another book of the same language replaces the pin.
       await request(testApp).post(`/api/v1/books/${second}/pin`).set(reader.auth)

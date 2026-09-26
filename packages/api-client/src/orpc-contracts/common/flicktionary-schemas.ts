@@ -470,6 +470,9 @@ export const StudySessionSchema = z.object({
   bookPartTitle: z.string().nullable(),
   bookPartCount: z.number().int().nullable(),
   bookAuthor: z.string().nullable(),
+  // The book is the user's pinned book for this language (books.pin); false
+  // for every non-book session. Drives the pin glyph on book cards.
+  bookPinned: z.boolean(),
   // Last time the reading position advanced or was set; null = never read. A
   // book's current part is its session with the latest value.
   lastReadAt: z.string().nullable(),
