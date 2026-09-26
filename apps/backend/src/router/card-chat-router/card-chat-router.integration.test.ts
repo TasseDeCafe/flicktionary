@@ -28,12 +28,13 @@ const scriptedChunk = {
   zipf: 4.8,
 }
 
-// An Opus turn that patches the translation via the editing tool.
+// An Opus turn that patches the translation via the editing tool, then the
+// follow-up turn that confirms it after the tool_result.
 const toolPatchTurn = {
-  content: [
-    { type: 'text', text: 'Changed the translation.' },
-    { type: 'tool_use', id: 'tu_1', name: 'update_card_fields', input: { translation: 'to sprint' } },
-  ],
+  content: [{ type: 'tool_use', id: 'tu_1', name: 'update_card_fields', input: { translation: 'to sprint' } }],
+}
+const toolConfirmationTurn = {
+  content: [{ type: 'text', text: 'Changed the translation.' }],
 }
 
 const conversationalTurn = {
@@ -80,7 +81,7 @@ describe('card-chat-router', () => {
 
   test('golden path: a tool-patched turn persists the edit and returns the updated chunk', async () => {
     const { token, cardId } = await onboardedUserWithCard()
-    createChatCompletion.mockResolvedValue(toolPatchTurn)
+    createChatCompletion.mockResolvedValueOnce(toolPatchTurn).mockResolvedValueOnce(toolConfirmationTurn)
 
     const response = await request(testApp)
       .post(`/api/v1/cards/${cardId}/chat`)
@@ -89,6 +90,7 @@ describe('card-chat-router', () => {
 
     expect(response.status).toBe(201)
     expect(response.body.data.userMessage.role).toBe('user')
+    expect(response.body.data.assistantMessage.content).toContain('Changed the translation.')
     expect(response.body.data.assistantMessage.content).toContain('Updated: translation')
     // The response carries the chunk as persisted, not the raw tool input.
     expect(response.body.data.updatedChunk).toMatchObject({
