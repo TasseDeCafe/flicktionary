@@ -802,7 +802,7 @@ pin changes. Undo of an introduction clears it.
 ### Book part lemma counts
 
 Per-lemma occurrences for each book part — the input of the pinned-book
-"occurrences ahead" priority (docs/proposals/book-aware-new-term-priority.md).
+"occurrences ahead" priority (docs/SRS.md §4 "Pinned book").
 Backend reads/writes only; RLS enabled with no policies.
 
 ```
