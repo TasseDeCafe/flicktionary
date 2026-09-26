@@ -33,6 +33,30 @@ export const BookPartSchema = z.object({
 })
 export type BookPart = z.infer<typeof BookPartSchema>
 
+// Pinned-book priority state (docs/SRS.md §4 "Pinned book"). `analysis`
+// reports the per-part lemma analysis the boost reads: 'unsupported' (no
+// dictionary data for the language — pinning is refused), 'analyzing' (some
+// parts pending; the analyzed ones already count), 'partly_failed' (some parts
+// terminally failed — retryAnalysis), 'ready'. `quota` is today's book share
+// of the daily new budget and how much of it is used; null when unpinned.
+// `pinnedElsewhereTitle` names the language's currently pinned OTHER book, so
+// pinning this one can say which book it replaces.
+export const BookPrioritySchema = z.object({
+  pinned: z.boolean(),
+  pinnedElsewhereTitle: z.string().nullable(),
+  analysis: z.object({
+    status: z.enum(['unsupported', 'analyzing', 'partly_failed', 'ready']),
+    failedPartCount: z.number().int(),
+  }),
+  quota: z
+    .object({
+      quota: z.number().int(),
+      introducedToday: z.number().int(),
+    })
+    .nullable(),
+})
+export type BookPriority = z.infer<typeof BookPrioritySchema>
+
 export const BookSchema = z.object({
   contentSourceId: z.string().uuid(),
   title: z.string(),
@@ -41,6 +65,7 @@ export const BookSchema = z.object({
   parts: z.array(BookPartSchema),
   // The part read most recently (latest lastReadAt), else the first part.
   currentPartIndex: z.number().int(),
+  priority: BookPrioritySchema,
 })
 export type Book = z.infer<typeof BookSchema>
 
@@ -140,10 +165,46 @@ export const booksContract = {
     .input(z.object({ contentSourceId: z.string().uuid(), partIndex: z.coerce.number().int().min(0) }))
     .output(z.object({ data: z.object({ sessionId: z.string().uuid() }) })),
 
+  // Pins the book for its language: never-introduced words frequent in its
+  // unread parts get up to half of the daily new budget. Replaces any other
+  // pinned book of the same language. UNPROCESSABLE_ENTITY
+  // (`UNSUPPORTED_LANGUAGE`) when the language has no dictionary data.
+  pin: oc
+    .route({ method: 'POST', path: '/books/{contentSourceId}/pin', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ contentSourceId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
+  // Unpins the book if it is the pinned one (idempotent). Words already
+  // introduced keep their schedules.
+  unpin: oc
+    .route({ method: 'DELETE', path: '/books/{contentSourceId}/pin', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ contentSourceId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
+  // Re-enqueues the lemma analysis of every part that isn't analyzed,
+  // including terminally failed ones (the 'partly_failed' Retry).
+  retryAnalysis: oc
+    .route({ method: 'POST', path: '/books/{contentSourceId}/retry-analysis', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ contentSourceId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
   // Removes the book from the library: every part session is soft-deleted in
-  // one statement (kept vocabulary survives, like single-session removal).
-  // The source and its tracks stay for dedup — re-uploading starts fresh
-  // sessions.
+  // one statement (kept vocabulary survives, like single-session removal) and
+  // the book is unpinned. The source and its tracks stay for dedup —
+  // re-uploading starts fresh sessions, unpinned.
   remove: oc
     .route({ method: 'DELETE', path: '/books/{contentSourceId}', successStatus: 200 })
     .errors({

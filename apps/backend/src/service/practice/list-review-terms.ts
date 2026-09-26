@@ -3,10 +3,12 @@ import type { PracticePool } from '../../transport/database/user-lookups/user-lo
 import type { PracticeTextsRepositoryInterface } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveReviewCaps, type ReviewCapsDependencies } from './review-caps'
+import { resolveBookQuota, type BookQuotaDependencies } from './book-quota'
 
-export type ListReviewTermsDependencies = ReviewCapsDependencies & {
-  practiceTextsRepository?: PracticeTextsRepositoryInterface
-}
+export type ListReviewTermsDependencies = ReviewCapsDependencies &
+  BookQuotaDependencies & {
+    practiceTextsRepository?: PracticeTextsRepositoryInterface
+  }
 
 type RawAnnotation = { headword?: unknown; sense?: unknown; user_lookup_id?: unknown }
 
@@ -74,6 +76,9 @@ export const listReviewTerms = async (
   const excludeUserLookupIds = options?.excludeCurrentReadingTerms
     ? await listCurrentReadingLookupIds(userId, targetLanguage, pool, deps)
     : []
+  // Only the recognition new bucket follows the pinned-book order.
+  const bookQuota =
+    pool === 'recognition' && caps.maxNewTerms > 0 ? await resolveBookQuota(userId, targetLanguage, deps) : null
   return deps.userLookupsRepository.listReviewTerms({
     userId,
     targetLanguage,
@@ -84,5 +89,6 @@ export const listReviewTerms = async (
     maxNewTerms: caps.maxNewTerms,
     maxOptInNewTerms: caps.maxOptInNewTerms,
     excludeUserLookupIds,
+    bookRemaining: bookQuota?.remaining ?? 0,
   })
 }

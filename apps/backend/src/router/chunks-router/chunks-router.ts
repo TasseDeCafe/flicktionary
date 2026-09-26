@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
+import { resolveBookQuota } from '../../service/practice/book-quota'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
@@ -72,6 +74,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   firstCardSegmentId: row.firstCardSegmentId,
   studySessionId: row.studySessionId,
   sourceAvailable: row.sourceAvailable,
+  pinnedBookPriority: row.pinnedBookPriority,
 })
 
 // Opaque base64-of-JSON wire format for the listChunks cursor. Returning null
@@ -111,6 +114,8 @@ export const ChunksRouter = (
     // Content edits clear the term's terminally-failed exercise slots so the
     // practice bank can regenerate against the corrected data.
     practiceExercisesRepository: PracticeExercisesRepositoryInterface
+    // Up next lists the introduction order, which the pinned-book quota shapes.
+    bookPinsRepository: BookPinsRepositoryInterface
   }
 ): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -197,6 +202,13 @@ export const ChunksRouter = (
     listChunks: implementer.listChunks.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
       const trimmedQ = input.q?.trim() ?? ''
+      const bookQuota =
+        input.status === 'up_next'
+          ? await resolveBookQuota(userId, input.targetLanguage, {
+              bookPinsRepository: deps.bookPinsRepository,
+              userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+            })
+          : null
       const { rows, nextCursor } = await userLookupsRepository.listChunksForLanguage({
         userId,
         targetLanguage: input.targetLanguage,
@@ -207,6 +219,7 @@ export const ChunksRouter = (
         skills: input.skills ?? null,
         status: input.status ?? null,
         hasMultipleForms: input.hasMultipleForms ?? null,
+        bookRemaining: bookQuota?.remaining ?? 0,
       })
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
     }),

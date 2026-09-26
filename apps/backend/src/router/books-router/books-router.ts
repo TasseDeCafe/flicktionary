@@ -12,6 +12,9 @@ import {
   type BookUploadDependencies,
 } from '../../service/books/book-upload'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
+import { ensureBookAnalysis, pinBook, summarizeBookAnalysis } from '../../service/books/book-pin'
+import { resolveBookQuota } from '../../service/practice/book-quota'
+import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import { toIsoString } from '../router-utils'
 
 const bookNotFound = { data: { errors: [{ message: 'Book not found' }] } }
@@ -28,7 +31,15 @@ const missingPrefs = (reason: 'needs-onboarding' | 'missing-cefr') => ({
   },
 })
 
-export const BooksRouter = (deps: BookUploadDependencies): Router => {
+const unsupportedLanguage = {
+  data: {
+    errors: [{ code: 'UNSUPPORTED_LANGUAGE', message: "Word priority isn't available for this book's language yet" }],
+  },
+}
+
+export const BooksRouter = (
+  deps: BookUploadDependencies & { bookPinsRepository: BookPinsRepositoryInterface }
+): Router => {
   const implementer = implement(booksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
   const { booksRepository } = deps
 
@@ -83,7 +94,14 @@ export const BooksRouter = (deps: BookUploadDependencies): Router => {
       const userId = context.res.locals.userId
       const source = await booksRepository.findOwnedBook(input.contentSourceId, userId)
       if (!source || !isBookReady(source)) throw errors.NOT_FOUND(bookNotFound)
-      const parts = await booksRepository.listPartsForUser(source.id, userId)
+      const [parts, partAnalysis, pin] = await Promise.all([
+        booksRepository.listPartsForUser(source.id, userId),
+        booksRepository.listPartAnalysis(source.id),
+        deps.bookPinsRepository.getPin(userId, source.language),
+      ])
+      const pinned = pin?.content_source_id === source.id
+      const quota = pinned ? await resolveBookQuota(userId, source.language, deps) : null
+      const pinnedElsewhere = pin && !pinned ? await booksRepository.findOwnedBook(pin.content_source_id, userId) : null
       const lastRead = parts
         .filter((part) => part.last_read_at !== null)
         .sort((a, b) => new Date(b.last_read_at!).getTime() - new Date(a.last_read_at!).getTime())[0]
@@ -103,8 +121,37 @@ export const BooksRouter = (deps: BookUploadDependencies): Router => {
             furthestReadSegmentIndex: part.furthest_read_segment_index,
             lastReadAt: toIsoString(part.last_read_at),
           })),
+          priority: {
+            pinned,
+            pinnedElsewhereTitle: pinnedElsewhere?.title ?? null,
+            analysis: summarizeBookAnalysis(source.language, partAnalysis),
+            quota: quota ? { quota: quota.quota, introducedToday: quota.introducedToday } : null,
+          },
         },
       }
+    }),
+
+    pin: implementer.pin.handler(async ({ input, context, errors }) => {
+      const result = await pinBook({ contentSourceId: input.contentSourceId, userId: context.res.locals.userId }, deps)
+      if (result.ok) return { data: { ok: true as const } }
+      if (result.reason === 'not-found') throw errors.NOT_FOUND(bookNotFound)
+      throw errors.UNPROCESSABLE_ENTITY(unsupportedLanguage)
+    }),
+
+    unpin: implementer.unpin.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const source = await booksRepository.findOwnedBook(input.contentSourceId, userId)
+      if (!source) throw errors.NOT_FOUND(bookNotFound)
+      await deps.bookPinsRepository.deletePinForSource({ userId, contentSourceId: source.id })
+      return { data: { ok: true as const } }
+    }),
+
+    retryAnalysis: implementer.retryAnalysis.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const source = await booksRepository.findOwnedBook(input.contentSourceId, userId)
+      if (!source || !isBookReady(source)) throw errors.NOT_FOUND(bookNotFound)
+      await ensureBookAnalysis({ contentSourceId: source.id, userId, retryFailed: true }, deps)
+      return { data: { ok: true as const } }
     }),
 
     openPart: implementer.openPart.handler(async ({ input, context, errors }) => {

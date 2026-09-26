@@ -1,4 +1,5 @@
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
+import { resolveBookQuota } from './book-quota'
 import type { ComposeQueueFilter } from './compose-practice-queue'
 import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
 import { listReviewTerms, type ListReviewTermsDependencies } from './list-review-terms'
@@ -119,11 +120,23 @@ export const planPracticeQueue = async (params: {
 
   // Intro candidates per pool (introduction-ordered). Recognition candidates
   // are needed even at parkBudget 0 — learn-extra and canLearnExtra read them.
+  // A pinned book interleaves its stream into the recognition order up to
+  // today's remaining book quota; the allocation below is unchanged (it takes
+  // the head of each ordered list).
+  const bookQuota =
+    runParking && pools.includes('recognition') ? await resolveBookQuota(userId, targetLanguage, deps) : null
   const introCandidatesByPool = new Map<PracticePool, string[]>()
   for (const pool of pools) {
     introCandidatesByPool.set(
       pool,
-      runParking ? await deps.userLookupsRepository.listEligibleNewCitationFacets({ userId, targetLanguage, pool }) : []
+      runParking
+        ? await deps.userLookupsRepository.listEligibleNewCitationFacets({
+            userId,
+            targetLanguage,
+            pool,
+            bookRemaining: pool === 'recognition' ? (bookQuota?.remaining ?? 0) : 0,
+          })
+        : []
     )
   }
 

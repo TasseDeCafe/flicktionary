@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import { implement } from '@orpc/server'
 import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
@@ -63,6 +64,7 @@ export type PracticeRouterDependencies = {
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
+  bookPinsRepository: BookPinsRepositoryInterface
 }
 
 type RawAnnotation = {
@@ -262,6 +264,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const composeDeps: ComposePracticeQueueDependencies = {
     ...exerciseBankDeps,
     practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+    bookPinsRepository: deps.bookPinsRepository,
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
@@ -281,6 +284,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+    bookPinsRepository: deps.bookPinsRepository,
     withTransaction,
     warmExerciseBank: warmBank,
   }

@@ -3,6 +3,7 @@ import type {
   DbPracticeText,
   ReadingGroup,
 } from '../../transport/database/practice-texts/practice-texts-repository'
+import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import type {
   DbUserLookup,
   PracticePool,
@@ -38,6 +39,8 @@ export type GenerateReadingTextDependencies = {
   // Review-budget source for the candidate-set caps (resolveReviewCaps) and
   // the event log written by the reading finalizer's ratings.
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
+  // The pinned-book quota source for the recognition new bucket's order.
+  bookPinsRepository: BookPinsRepositoryInterface
   // Optional exercise-bank warmer threaded through to applyTermRating so
   // reading-mode again/hard ratings pre-generate Strengthen exercises too.
   warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void

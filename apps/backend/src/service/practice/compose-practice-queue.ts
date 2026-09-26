@@ -1,4 +1,5 @@
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
@@ -7,6 +8,7 @@ import { planPracticeQueue } from './plan-practice-queue'
 
 export type ComposePracticeQueueDependencies = ExerciseBankDependencies & {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
+  bookPinsRepository: BookPinsRepositoryInterface
 }
 
 // Which terms are in scope, and how they render. Planned citation introductions

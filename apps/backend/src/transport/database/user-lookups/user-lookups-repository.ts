@@ -1,6 +1,7 @@
 import postgres from 'postgres'
 import { beginTx, sql } from '../postgres-client'
 import { newTermNotDecayedSql, newTermOrderSql, newTermTierSql } from '../../../service/practice/new-term-priority'
+import { introductionOrderCtesSql } from '../../../service/practice/book-priority'
 import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
 import {
@@ -1058,6 +1059,8 @@ const listReviewTerms = async (params: {
   maxNewTerms: number
   maxOptInNewTerms: number
   excludeUserLookupIds?: string[]
+  // Today's remaining pinned-book quota (resolveBookQuota); 0 = no book stream.
+  bookRemaining?: number
 }): Promise<DbUserLookupWithFacet[]> => {
   const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
   const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
@@ -1105,6 +1108,20 @@ const listReviewTerms = async (params: {
   // here would spend a daily-new slot on a facet the bridge covers for free.
   const newBucketBridgeGuard = params.pool === 'recognition' ? noLiveProductionSiblingSql() : sql`TRUE`
 
+  // The recognition pool's capped new bucket serves in introduction order
+  // (introductionOrderCtesSql — the pinned-book interleave, equal to the tier
+  // order with no pin). Every other bucket, and the production pool, carries
+  // NULL positions and keeps the tier order below them.
+  const withRecognitionOrder = params.pool === 'recognition' && newLimit > 0
+  const introCtes = withRecognitionOrder
+    ? sql`${introductionOrderCtesSql({
+        userId: params.userId,
+        targetLanguage: params.targetLanguage,
+        bookRemaining: params.bookRemaining ?? 0,
+      })},`
+    : sql``
+  const noIntroCols = sql`NULL::numeric AS intro_pos, NULL::int AS intro_lane, NULL::bigint AS intro_seq`
+
   // Four capped buckets unioned, then spaced. Priority: 1 due-review,
   // 2 due-learning, 3 new. A bucket with a 0 LIMIT contributes nothing.
   //
@@ -1113,11 +1130,11 @@ const listReviewTerms = async (params: {
   // tier is selected as a column (due buckets emit a constant) because the
   // spaced CTE window and the final ORDER BY re-order after the bucket LIMITs
   // — tiering only the bucket ORDER BY would tier *selection* while still
-  // *serving* FIFO.
+  // *serving* FIFO. The introduction position rides along the same way.
   const rows = (await sql`
-    WITH selected AS (
+    WITH ${introCtes} selected AS (
       (
-        SELECT ul.*, ${facetCols}, 1 AS facet_priority, 0 AS new_tier
+        SELECT ul.*, ${facetCols}, 1 AS facet_priority, 0 AS new_tier, ${noIntroCols}
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
@@ -1128,7 +1145,7 @@ const listReviewTerms = async (params: {
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 2 AS facet_priority, 0 AS new_tier
+        SELECT ul.*, ${facetCols}, 2 AS facet_priority, 0 AS new_tier, ${noIntroCols}
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
@@ -1139,20 +1156,26 @@ const listReviewTerms = async (params: {
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier,
+          ${withRecognitionOrder ? sql`io.intro_pos, io.intro_lane::int AS intro_lane, io.intro_seq` : noIntroCols}
         FROM public.user_lookups ul
         ${facetJoin}
+        ${withRecognitionOrder ? sql`LEFT JOIN intro_order io ON io.id = ul.id` : sql``}
         WHERE ${eligible}
           AND f.srs_state IS NULL
           AND ${primaryCitation}
           AND ${newBucketBridgeGuard}
           AND ${newTermNotDecayedSql()}
-        ORDER BY ${newTermOrderSql()}, f.target_form ASC
+        ORDER BY ${
+          withRecognitionOrder
+            ? sql`io.intro_pos ASC NULLS LAST, io.intro_lane ASC NULLS LAST, io.intro_seq ASC NULLS LAST,`
+            : sql``
+        } ${newTermOrderSql()}, f.target_form ASC
         LIMIT ${newLimit}
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier, ${noIntroCols}
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
@@ -1166,13 +1189,17 @@ const listReviewTerms = async (params: {
     spaced AS (
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY id
-        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST, new_tier ASC, zipf_estimate DESC NULLS LAST,
+        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST,
+          intro_pos ASC NULLS LAST, intro_lane ASC NULLS LAST, intro_seq ASC NULLS LAST,
+          new_tier ASC, zipf_estimate DESC NULLS LAST,
           created_at ASC, headword ASC, sense ASC, target_form ASC
       ) AS sibling_rank
       FROM selected
     )
     SELECT * FROM spaced
-    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST, new_tier ASC, zipf_estimate DESC NULLS LAST,
+    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST,
+      intro_pos ASC NULLS LAST, intro_lane ASC NULLS LAST, intro_seq ASC NULLS LAST,
+      new_tier ASC, zipf_estimate DESC NULLS LAST,
       created_at ASC, headword ASC, sense ASC, target_form ASC
   `) as DbUserLookupWithFacet[]
   return rows
@@ -1476,19 +1503,36 @@ const noLiveProductionSiblingSql = () => sql`
 // candidates additionally exclude terms with a live production sibling (the
 // bridge covers those); NOTE this makes recognition eligibility strictly
 // narrower than the vocab 'up_next' stage, which deliberately keeps counting
-// bridge-pending terms until the bridge moves them to review.
+// bridge-pending terms until the bridge moves them to review. Recognition
+// candidates follow the introduction order (introductionOrderCtesSql — the
+// pinned-book interleave over the tier order, which it equals with no pin);
+// production candidates keep the tier order (production-marked words never
+// join a book stream).
 const listEligibleNewCitationFacets = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
+  // Today's remaining pinned-book quota (resolveBookQuota); 0 = no book stream.
+  bookRemaining?: number
 }): Promise<string[]> => {
-  const skill = skillForPool(params.pool)
-  const bridgeGuard = params.pool === 'recognition' ? noLiveProductionSiblingSql() : sql`TRUE`
+  if (params.pool === 'recognition') {
+    const ordered = (await sql`
+      WITH ${introductionOrderCtesSql({
+        userId: params.userId,
+        targetLanguage: params.targetLanguage,
+        bookRemaining: params.bookRemaining ?? 0,
+      })}
+      SELECT id FROM intro_order
+      WHERE is_master
+      ORDER BY intro_pos ASC, intro_lane ASC, intro_seq ASC
+    `) as Array<{ id: string }>
+    return ordered.map((row) => row.id)
+  }
   const rows = (await sql`
     SELECT ul.id
     FROM public.user_lookups ul
     JOIN public.study_facets f
-      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
+      ON f.user_lookup_id = ul.id AND f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM}
     WHERE ul.user_id = ${params.userId}
       AND ul.target_language = ${params.targetLanguage}
       AND ul.count > 0
@@ -1496,7 +1540,6 @@ const listEligibleNewCitationFacets = async (params: {
       AND f.disabled_at IS NULL
       AND f.srs_state IS NULL
       AND f.leech_parked_at IS NULL
-      AND ${bridgeGuard}
       AND ${newTermNotDecayedSql()}
     ORDER BY ${newTermOrderSql()}
   `) as Array<{ id: string }>
@@ -1649,7 +1692,7 @@ export type ChunksCursor =
   | { sort: 'recent'; createdAt: string; id: string }
   | { sort: 'due'; phase: 'scheduled'; srsDue: string; id: string }
   | { sort: 'due'; phase: 'unscheduled'; id: string }
-  | { sort: 'queue'; tier: number; zipfKey: number; createdAt: string; headword: string; sense: string; id: string }
+  | { sort: 'queue'; pos: number; lane: number; seq: number; id: string }
 
 export type ChunkRow = {
   id: string
@@ -1679,6 +1722,7 @@ export type ChunkRow = {
   firstCardSegmentId: string | null
   studySessionId: string | null
   sourceAvailable: boolean
+  pinnedBookPriority: boolean
 }
 
 // Projection and FROM/joins kept separate so a branch can append extra
@@ -1759,6 +1803,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   firstCardSegmentId: (row.first_card_segment_id as string | null) ?? null,
   studySessionId: (row.study_session_id as string | null) ?? null,
   sourceAvailable: row.source_available === true,
+  pinnedBookPriority: row.pinned_book_priority === true,
 })
 
 // Single chunk row (facet-joined, so isProductionEnabled is the DERIVED
@@ -2069,6 +2114,8 @@ const listChunksForLanguage = async (params: {
   skills?: string | null
   status?: VocabStatus | null
   hasMultipleForms?: boolean | null
+  // Today's remaining pinned-book quota (resolveBookQuota); 0 = no book stream.
+  bookRemaining?: number
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
@@ -2120,12 +2167,22 @@ const listChunksForLanguage = async (params: {
   // negative, so COALESCE(zipf, -1) reproduces DESC NULLS LAST).
   if (params.status === 'up_next') {
     const cursor = params.cursor && params.cursor.sort === 'queue' ? params.cursor : null
+    // The stage population IS introductionOrderCtesSql's population, so every
+    // row has a position (bridge-pending terms are slotted, not dropped).
     const rows = (await sql`
+      WITH ${introductionOrderCtesSql({
+        userId: params.userId,
+        targetLanguage: params.targetLanguage,
+        bookRemaining: params.bookRemaining ?? 0,
+      })}
       SELECT
         ${CHUNK_ROW_COLUMNS_SQL},
-        ${newTermTierSql()} AS queue_tier,
-        COALESCE(ul.zipf_estimate, -1) AS queue_zipf_key
+        io.intro_pos AS queue_pos,
+        io.intro_lane AS queue_lane,
+        io.intro_seq AS queue_seq,
+        io.boosted AS pinned_book_priority
       ${CHUNK_ROW_FROM_SQL}
+      JOIN intro_order io ON io.id = ul.id
       WHERE ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
@@ -2134,11 +2191,11 @@ const listChunksForLanguage = async (params: {
         ${filterClause}
         AND ${
           cursor
-            ? sql`(${newTermTierSql()}, -COALESCE(ul.zipf_estimate, -1), ul.created_at, ul.headword, ul.sense, ul.id)
-                > (${cursor.tier}, ${-cursor.zipfKey}, ${cursor.createdAt}::timestamptz, ${cursor.headword}, ${cursor.sense}, ${cursor.id}::uuid)`
+            ? sql`(io.intro_pos, io.intro_lane, io.intro_seq, ul.id)
+                > (${cursor.pos}::numeric, ${cursor.lane}::int, ${cursor.seq}::bigint, ${cursor.id}::uuid)`
             : sql`TRUE`
         }
-      ORDER BY ${newTermOrderSql()}
+      ORDER BY io.intro_pos ASC, io.intro_lane ASC, io.intro_seq ASC, ul.id ASC
       LIMIT ${fetchLimit}
     `) as Array<Record<string, unknown>>
 
@@ -2149,11 +2206,9 @@ const listChunksForLanguage = async (params: {
       hasMore && last
         ? {
             sort: 'queue',
-            tier: last.queue_tier as number,
-            zipfKey: Number(last.queue_zipf_key),
-            createdAt: last.created_at as string,
-            headword: last.headword as string,
-            sense: (last.sense as string) ?? '',
+            pos: Number(last.queue_pos),
+            lane: Number(last.queue_lane),
+            seq: Number(last.queue_seq),
             id: last.id as string,
           }
         : null
@@ -2450,6 +2505,7 @@ export interface UserLookupsRepositoryInterface {
     maxNewTerms: number
     maxOptInNewTerms: number
     excludeUserLookupIds?: string[]
+    bookRemaining?: number
   }) => Promise<DbUserLookupWithFacet[]>
   findByKey: (params: {
     userId: string
@@ -2498,6 +2554,7 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     targetLanguage: string
     pool: PracticePool
+    bookRemaining?: number
   }) => Promise<string[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
@@ -2511,6 +2568,7 @@ export interface UserLookupsRepositoryInterface {
     skills?: string | null
     status?: VocabStatus | null
     hasMultipleForms?: boolean | null
+    bookRemaining?: number
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
   restoreChunk: (id: string, userId: string) => Promise<void>
