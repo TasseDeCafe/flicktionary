@@ -1147,10 +1147,15 @@ export const SessionView = () => {
               variant='ghost'
               size='icon'
               aria-label={t`Contents`}
+              // The contents page is a step inside the book, not a layer on
+              // top of the reader: it takes the reader's history entry, and
+              // the state tells it which part its chevron returns to.
               onClick={() =>
                 void navigate({
                   to: '/sessions/book/$contentSourceId',
                   params: { contentSourceId: session.contentSourceId },
+                  state: { bookContentsFromSessionId: sessionId },
+                  replace: true,
                 })
               }
             >
