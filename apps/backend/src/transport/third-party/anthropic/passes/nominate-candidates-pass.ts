@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_NOMINATE, THINKING_DISABLED } from '../anthropic-client'
+import { getAnthropicClient, MODEL_NOMINATE, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 
@@ -49,13 +49,16 @@ const buildTool = (): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     "Submit the spans in this reading window worth studying for this learner — single words or multi-word units at or above the learner's CEFR level. Each span is anchored to the exact segment and character offsets where it appears.",
+  strict: true,
   input_schema: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       candidates: {
         type: 'array',
         items: {
           type: 'object',
+          additionalProperties: false,
           properties: {
             segment_id: {
               type: 'string',
@@ -85,13 +88,12 @@ const buildTool = (): Anthropic.Tool => ({
   },
 })
 
-// Nominate-only pass: one tool call over one reading window (Sonnet 5 by
-// default, env-overridable back to Opus). Tiny output — no translations,
-// definitions, or grammar (those are produced later by the per-highlight
-// enrichment pass, only if the user adopts the span). On Sonnet the shared
-// methodology system prefix clears the minimum cacheable length, so successive
-// windows reuse the cached prefix (it never did on Opus — the prefix was under
-// Opus's 4096-token minimum); confirm via the per-pass cache-usage log lines.
+// Nominate-only pass: one tool call over one reading window (MODEL_NOMINATE).
+// Tiny output — no translations, definitions, or grammar (those are produced
+// later by the per-highlight enrichment pass, only if the user adopts the
+// span). The shared methodology system prefix clears the minimum cacheable
+// length on Sonnet 5 and Opus 5.5, so successive windows reuse the cached
+// prefix; confirm via the per-pass cache-usage log lines.
 export const nominateCandidatesPass = async ({
   nativeLanguage,
   targetLanguage,
@@ -145,14 +147,16 @@ text.slice(char_start, char_end) === surface_form. If the same unit appears more
 than once in the window, return the specific occurrence you mean via its offsets.
 
 Reading window (segment id followed by text):
-${segmentLines}`
+${segmentLines}
+
+Submit all spans in a single ${TOOL_NAME} call.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_NOMINATE,
-    // Sonnet 5's tokenizer emits ~30% more tokens for the same text, so a
-    // max-candidate window needs more output room than the old 8000.
-    thinking: THINKING_DISABLED,
-    max_tokens: 10000,
+    ...reasoningParams(MODEL_NOMINATE, 'low'),
+    // A max-candidate window needs ~10k output tokens on Sonnet 5's tokenizer;
+    // the rest is room for thinking on always-thinking models.
+    max_tokens: 16000,
     system: buildMethodologySystem({
       nativeLanguage,
       targetLanguage,
@@ -162,7 +166,7 @@ ${segmentLines}`
       allowL1Notes,
     }),
     tools: [buildTool()],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: userMessage }],
   })
   logAnthropicCacheUsage('nominate-candidates', response)
