@@ -1,10 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_SONNET, THINKING_DISABLED } from '../anthropic-client'
+import { getAnthropicClient, MODEL_GRADE_SENTENCE, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 
-// LLM grading for the use-in-a-sentence bonus exercise. Sonnet is plenty for
-// single-sentence judging, and this path NEVER gates anything — callers
+// LLM grading for the use-in-a-sentence bonus exercise (MODEL_GRADE_SENTENCE).
+// This path NEVER gates anything — callers
 // degrade a thrown error to "feedback unavailable" rather than blocking.
 
 const TOOL_NAME = 'submit_grade'
@@ -17,8 +17,10 @@ export type GradeUseInSentenceResult = {
 const buildTool = (): Anthropic.Tool => ({
   name: TOOL_NAME,
   description: "Submit the grade for the learner's sentence.",
+  strict: true,
   input_schema: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       correct: {
         type: 'boolean',
@@ -74,9 +76,10 @@ ${args.userSentence}
 Grade it per the rubric in the system prompt.`
 
   const stream = getAnthropicClient().messages.stream({
-    model: MODEL_SONNET,
-    thinking: THINKING_DISABLED,
-    max_tokens: 1000,
+    model: MODEL_GRADE_SENTENCE,
+    ...reasoningParams(MODEL_GRADE_SENTENCE, 'low'),
+    // Room for thinking tokens when the model is an always-thinking one.
+    max_tokens: 4000,
     system: buildPracticeMethodologySystem({
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
@@ -86,7 +89,7 @@ Grade it per the rubric in the system prompt.`
       extraStableBlocks: [buildGradingRubricBlock(feedbackLanguage)],
     }),
     tools: [buildTool()],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: userMessage }],
   })
   const response = await stream.finalMessage()
