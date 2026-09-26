@@ -12,6 +12,7 @@ import {
 } from '../api/sessions-hooks'
 import { useDetectLanguage } from '../api/languages-hooks'
 import { SrtUploadInput } from './srt-upload-input'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type OpenSubtitlesTrackRow = {
   fileId: number
@@ -198,7 +199,7 @@ export const SrtUploadStep = ({ contentSourceId, defaultLanguage, onImported }: 
           })
         },
         onError: (err) => {
-          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          const code = getBackendErrorCodeFromError(err)
           if (code === 'CONTENT_BLOCKED') {
             toast.error(t`This text appears to contain explicit content and can't be imported.`)
             return

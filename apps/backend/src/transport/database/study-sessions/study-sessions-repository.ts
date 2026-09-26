@@ -17,13 +17,16 @@ export type DbStudySessionWithSource = DbStudySession & {
   content_source_title: string | null
   content_source_type: ContentSourceType | null
   content_source_metadata: Record<string, unknown> | null
+  // Book parts only (null elsewhere): the part's position + title in its book.
+  book_part_index: number | null
+  book_part_title: string | null
 }
 
 // Find-or-create: one study_session per (user, text_track, target_language) —
 // the same identity model as the extension ingest flows. Re-adding the same
 // content with byte-identical subtitles resolves to the same track, so the
 // wizard lands the user back in their existing session instead of erroring.
-type InsertStudySessionParams = {
+export type InsertStudySessionParams = {
   userId: string
   contentSourceId: string
   textTrackId: string
@@ -35,7 +38,7 @@ type InsertStudySessionParams = {
 // Runs on a caller-provided executor so callers that need extra checks in the
 // SAME transaction (the shared-content add flow locks its catalog entry first)
 // stay atomic with the quota check and the insert.
-const insertStudySessionOn = async (
+export const insertStudySessionOn = async (
   db: postgres.Sql,
   params: InsertStudySessionParams
 ): Promise<{ session: DbStudySession; alreadyExisted: boolean } | null> => {
@@ -609,9 +612,12 @@ const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWit
     SELECT s.*,
            cs.title AS content_source_title,
            cs.type AS content_source_type,
-           cs.metadata AS content_source_metadata
+           cs.metadata AS content_source_metadata,
+           t.book_part_index,
+           t.book_part_title
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+    LEFT JOIN public.text_tracks t ON t.id = s.text_track_id
     WHERE s.user_id = ${userId} AND s.deleted_at IS NULL AND cs.type != 'adhoc'
     ORDER BY s.created_at DESC
   `) as DbStudySessionWithSource[]
@@ -625,9 +631,12 @@ const findByIdForUserWithSource = async (
     SELECT s.*,
            cs.title AS content_source_title,
            cs.type AS content_source_type,
-           cs.metadata AS content_source_metadata
+           cs.metadata AS content_source_metadata,
+           t.book_part_index,
+           t.book_part_title
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+    LEFT JOIN public.text_tracks t ON t.id = s.text_track_id
     WHERE s.id = ${sessionId} AND s.user_id = ${userId} AND s.deleted_at IS NULL
   `) as DbStudySessionWithSource[]
   return result[0] ?? null
@@ -644,9 +653,12 @@ const listByIdsForUserWithSource = async (
     SELECT s.*,
            cs.title AS content_source_title,
            cs.type AS content_source_type,
-           cs.metadata AS content_source_metadata
+           cs.metadata AS content_source_metadata,
+           t.book_part_index,
+           t.book_part_title
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
+    LEFT JOIN public.text_tracks t ON t.id = s.text_track_id
     WHERE s.id = ANY(${sql.array([...sessionIds])}::uuid[])
       AND s.user_id = ${userId}
       AND s.deleted_at IS NULL
@@ -693,10 +705,13 @@ const updateContextBlob = async (sessionId: string, userId: string, contextBlob:
 // Records the deepest segment the reader has reached. GREATEST keeps it monotonic
 // server-side too, so an out-of-order (lower) write — e.g. a throttled flush that
 // lands after a later one — can never walk the resume position backwards.
+// last_read_at marks the session as the one read most recently (a book's
+// current part).
 const updateReadingProgress = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
-    SET furthest_read_segment_index = GREATEST(COALESCE(furthest_read_segment_index, -1), ${segmentIndex})
+    SET furthest_read_segment_index = GREATEST(COALESCE(furthest_read_segment_index, -1), ${segmentIndex}),
+        last_read_at = NOW()
     WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
   `
   return result.count === 1
@@ -708,7 +723,7 @@ const updateReadingProgress = async (sessionId: string, userId: string, segmentI
 const setReadingPosition = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
-    SET furthest_read_segment_index = ${segmentIndex}
+    SET furthest_read_segment_index = ${segmentIndex}, last_read_at = NOW()
     WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
   `
   return result.count === 1

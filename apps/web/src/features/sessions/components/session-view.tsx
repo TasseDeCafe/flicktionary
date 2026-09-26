@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { ORPCError } from '@orpc/contract'
-import { Bookmark, ChevronDown, MoreVertical } from 'lucide-react'
+import { Bookmark, ChevronDown, ListTree, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
@@ -62,6 +62,7 @@ import { SessionDifficultySheet } from './session-difficulty-sheet'
 import { hasDifficultyStatContent } from './difficulty-stat-content'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { SessionRemoveDialog } from './session-remove-dialog'
+import { BookPartNav } from '@/features/books/components/book-part-nav'
 
 // The welcome-back card holds back until this many unswept read words exist —
 // no greeting the reader over a handful of words. (The footer pill has no
@@ -1086,11 +1087,13 @@ export const SessionView = () => {
   const readPositionSegmentId = isPlacingBookmark ? placementSegmentId : isSearching ? null : restingDividerSegmentId
 
   const sourceTitle = session.contentSourceTitle ?? t`Untitled`
+  const isBookPart = session.contentSourceType === 'book' && session.bookPartIndex !== null
   const titleNode = (
     <span className='flex min-w-0 flex-col leading-tight'>
       <span className='truncate text-base font-semibold'>
         {sourceTitle}
         {session.contentSourceYear ? ` (${session.contentSourceYear})` : ''}
+        {isBookPart && session.bookPartTitle ? ` · ${session.bookPartTitle}` : ''}
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
         {session.targetLanguage.toUpperCase()} · {session.cefrLevel}
@@ -1137,6 +1140,21 @@ export const SessionView = () => {
               onClick={() => (isPlacingBookmark ? cancelBookmarkPlacement() : enterBookmarkPlacement())}
             >
               <Bookmark className='size-5' />
+            </Button>
+          )}
+          {isBookPart && (
+            <Button
+              variant='ghost'
+              size='icon'
+              aria-label={t`Contents`}
+              onClick={() =>
+                void navigate({
+                  to: '/sessions/book/$contentSourceId',
+                  params: { contentSourceId: session.contentSourceId },
+                })
+              }
+            >
+              <ListTree className='size-5' />
             </Button>
           )}
           <Button variant='ghost' size='icon' aria-label={t`More options`} onClick={() => setActionsOpen(true)}>
@@ -1227,6 +1245,11 @@ export const SessionView = () => {
                     isMarkingKnown={isMarkingKnown}
                     onMarkKnown={() => handleMarkKnown(null)}
                   />
+                )}
+                {/* Book parts end with part-to-part navigation, below the
+                    close-out so collecting reviews comes first. */}
+                {session.bookPartIndex !== null && !isSearching && (
+                  <BookPartNav contentSourceId={session.contentSourceId} partIndex={session.bookPartIndex} />
                 )}
               </>
             )}

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import type { ModerationVerdict } from '../../transport/third-party/anthropic/passes/moderation-pass'
-import { chunkForModeration, moderateIngestText } from './moderate-ingest-text'
+import { buildBookModerationSample, chunkForModeration, moderateIngestText } from './moderate-ingest-text'
 
 const passesWith = (moderationPass: (chunk: string) => Promise<ModerationVerdict | null>) =>
   MockAnthropicPasses({ moderationPass: moderationPass as never })
@@ -77,5 +77,46 @@ describe('moderateIngestText', () => {
     const outcome = await moderateIngestText('   ', passes, { surface: 'paste' })
     expect(outcome).toEqual({ allowed: true, status: null, category: null })
     expect(passes.moderationPass).not.toHaveBeenCalled()
+  })
+})
+
+describe('moderateIngestText hard-block narrowing', () => {
+  test('a block outside the surface hard-block set downgrades to a flag', async () => {
+    const passes = passesWith(vi.fn().mockResolvedValue({ verdict: 'block', category: 'sexual-explicit' }))
+    const outcome = await moderateIngestText('a novel', passes, {
+      surface: 'book-upload',
+      hardBlockCategories: ['csam'],
+    })
+    expect(outcome).toEqual({ allowed: true, status: 'flagged', category: 'sexual-explicit' })
+  })
+
+  test('a block inside the surface hard-block set still rejects', async () => {
+    const passes = passesWith(vi.fn().mockResolvedValue({ verdict: 'block', category: 'csam' }))
+    const outcome = await moderateIngestText('a novel', passes, {
+      surface: 'book-upload',
+      hardBlockCategories: ['csam'],
+    })
+    expect(outcome).toEqual({ allowed: false, category: 'csam' })
+  })
+})
+
+describe('buildBookModerationSample', () => {
+  test('short books are sampled whole', () => {
+    expect(buildBookModerationSample('  short book  ')).toBe('short book')
+  })
+
+  test('long books sample the opening plus spread windows that fit one moderation chunk', () => {
+    // Unique 5-char tokens, so every window's position in the text is unambiguous.
+    const text = Array.from({ length: 200_000 }, (_, i) => String(i).padStart(5, '0')).join('')
+    const sample = buildBookModerationSample(text, () => 0.5)
+    const windows = sample.split('\n\n')
+    expect(windows).toHaveLength(4)
+    expect(windows[0]!.startsWith('00000')).toBe(true)
+    expect(windows.every((w) => w.length === 4_900)).toBe(true)
+    expect(chunkForModeration(sample)).toHaveLength(1)
+    // Each random window lands in its own third of the remaining text.
+    const offsets = windows.slice(1).map((w) => text.indexOf(w))
+    expect(offsets[0]!).toBeLessThan(text.length / 3)
+    expect(offsets[2]!).toBeGreaterThan((2 * text.length) / 3)
   })
 })

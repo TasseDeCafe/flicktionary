@@ -1,3 +1,5 @@
+import { toIsoString } from '../router-utils'
+import { isBookReady } from '../../transport/database/books/books-repository'
 import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
@@ -101,6 +103,11 @@ export const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   showTitle: readMetaString(row.content_source_metadata, 'showTitle'),
   originalTitle: readMetaString(row.content_source_metadata, 'originalTitle'),
   episodeTitle: readMetaString(row.content_source_metadata, 'episodeTitle'),
+  bookPartIndex: row.book_part_index,
+  bookPartTitle: row.book_part_title,
+  bookPartCount: row.content_source_type === 'book' ? readMetaInt(row.content_source_metadata, 'partCount') : null,
+  bookAuthor: row.content_source_type === 'book' ? readMetaString(row.content_source_metadata, 'author') : null,
+  lastReadAt: toIsoString(row.last_read_at),
 })
 
 export type SharedContentHookDeps = {
@@ -209,6 +216,9 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Text track not found for content source' }] },
         })
       if (!source) throw trackNotFoundError()
+      // A book is readable only once its upload finalized (moderated, all
+      // parts present) — until then its tracks must not become sessions.
+      if (source.type === 'book' && !isBookReady(source)) throw trackNotFoundError()
       const isGlobalType = source.type === 'movie' || source.type === 'tv'
       if (!isGlobalType && source.created_by_user_id !== userId) {
         const entry = await sharedContentDeps.sharedContentEntriesRepository.findByTextTrackId(input.textTrackId)

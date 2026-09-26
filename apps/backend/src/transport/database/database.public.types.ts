@@ -1382,6 +1382,7 @@ export type Database = {
           deleted_at: string | null
           furthest_read_segment_index: number | null
           id: string
+          last_read_at: string | null
           native_language: string
           processing_warnings: string[]
           reviewed_until_segment_index: number | null
@@ -1397,6 +1398,7 @@ export type Database = {
           deleted_at?: string | null
           furthest_read_segment_index?: number | null
           id?: string
+          last_read_at?: string | null
           native_language: string
           processing_warnings?: string[]
           reviewed_until_segment_index?: number | null
@@ -1412,6 +1414,7 @@ export type Database = {
           deleted_at?: string | null
           furthest_read_segment_index?: number | null
           id?: string
+          last_read_at?: string | null
           native_language?: string
           processing_warnings?: string[]
           reviewed_until_segment_index?: number | null
@@ -1617,6 +1620,8 @@ export type Database = {
       }
       text_tracks: {
         Row: {
+          book_part_index: number | null
+          book_part_title: string | null
           content_source_id: string
           created_at: string
           external_id: string | null
@@ -1633,6 +1638,8 @@ export type Database = {
           source: Database['public']['Enums']['text_track_source']
         }
         Insert: {
+          book_part_index?: number | null
+          book_part_title?: string | null
           content_source_id: string
           created_at?: string
           external_id?: string | null
@@ -1649,6 +1656,8 @@ export type Database = {
           source: Database['public']['Enums']['text_track_source']
         }
         Update: {
+          book_part_index?: number | null
+          book_part_title?: string | null
           content_source_id?: string
           created_at?: string
           external_id?: string | null

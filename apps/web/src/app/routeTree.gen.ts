@@ -48,7 +48,9 @@ import { Route as AuthenticatedAppExploreEntryIdRouteImport } from './routes/_au
 import { Route as AuthenticatedAppCoverageLangRouteImport } from './routes/_authenticated/_app/coverage/$lang'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppLessonsImportIndexRouteImport } from './routes/_authenticated/_app/lessons/import/index'
+import { Route as AuthenticatedAppBooksImportIndexRouteImport } from './routes/_authenticated/_app/books/import/index'
 import { Route as AuthenticatedAppSessionsShowTmdbShowIdRouteImport } from './routes/_authenticated/_app/sessions/show/$tmdbShowId'
+import { Route as AuthenticatedAppSessionsBookContentSourceIdRouteImport } from './routes/_authenticated/_app/sessions/book/$contentSourceId'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppPracticeWarmupTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/warmup/$targetLanguage'
 import { Route as AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/strengthen/$targetLanguage'
@@ -280,10 +282,22 @@ const AuthenticatedAppLessonsImportIndexRoute =
     path: '/lessons/import/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppBooksImportIndexRoute =
+  AuthenticatedAppBooksImportIndexRouteImport.update({
+    id: '/books/import/',
+    path: '/books/import/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsShowTmdbShowIdRoute =
   AuthenticatedAppSessionsShowTmdbShowIdRouteImport.update({
     id: '/sessions/show/$tmdbShowId',
     path: '/sessions/show/$tmdbShowId',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsBookContentSourceIdRoute =
+  AuthenticatedAppSessionsBookContentSourceIdRouteImport.update({
+    id: '/sessions/book/$contentSourceId',
+    path: '/sessions/book/$contentSourceId',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppSessionsSessionIdProcessingRoute =
@@ -398,7 +412,9 @@ export interface FileRoutesByFullPath {
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/book/$contentSourceId': typeof AuthenticatedAppSessionsBookContentSourceIdRoute
   '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
+  '/books/import/': typeof AuthenticatedAppBooksImportIndexRoute
   '/lessons/import/': typeof AuthenticatedAppLessonsImportIndexRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -449,7 +465,9 @@ export interface FileRoutesByTo {
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/book/$contentSourceId': typeof AuthenticatedAppSessionsBookContentSourceIdRoute
   '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
+  '/books/import': typeof AuthenticatedAppBooksImportIndexRoute
   '/lessons/import': typeof AuthenticatedAppLessonsImportIndexRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -503,7 +521,9 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/_authenticated/_app/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/_authenticated/_app/sessions/book/$contentSourceId': typeof AuthenticatedAppSessionsBookContentSourceIdRoute
   '/_authenticated/_app/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
+  '/_authenticated/_app/books/import/': typeof AuthenticatedAppBooksImportIndexRoute
   '/_authenticated/_app/lessons/import/': typeof AuthenticatedAppLessonsImportIndexRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/_authenticated/_app/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -556,7 +576,9 @@ export interface FileRouteTypes {
     | '/practice/strengthen/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
+    | '/sessions/book/$contentSourceId'
     | '/sessions/show/$tmdbShowId'
+    | '/books/import/'
     | '/lessons/import/'
     | '/sessions/$sessionId/'
     | '/sessions/$sessionId/review/$cardId'
@@ -607,7 +629,9 @@ export interface FileRouteTypes {
     | '/practice/strengthen/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
+    | '/sessions/book/$contentSourceId'
     | '/sessions/show/$tmdbShowId'
+    | '/books/import'
     | '/lessons/import'
     | '/sessions/$sessionId'
     | '/sessions/$sessionId/review/$cardId'
@@ -660,7 +684,9 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/strengthen/$targetLanguage'
     | '/_authenticated/_app/practice/warmup/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
+    | '/_authenticated/_app/sessions/book/$contentSourceId'
     | '/_authenticated/_app/sessions/show/$tmdbShowId'
+    | '/_authenticated/_app/books/import/'
     | '/_authenticated/_app/lessons/import/'
     | '/_authenticated/_app/sessions/$sessionId/'
     | '/_authenticated/_app/sessions/$sessionId/review/$cardId'
@@ -957,11 +983,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppLessonsImportIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/books/import/': {
+      id: '/_authenticated/_app/books/import/'
+      path: '/books/import'
+      fullPath: '/books/import/'
+      preLoaderRoute: typeof AuthenticatedAppBooksImportIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/show/$tmdbShowId': {
       id: '/_authenticated/_app/sessions/show/$tmdbShowId'
       path: '/sessions/show/$tmdbShowId'
       fullPath: '/sessions/show/$tmdbShowId'
       preLoaderRoute: typeof AuthenticatedAppSessionsShowTmdbShowIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/book/$contentSourceId': {
+      id: '/_authenticated/_app/sessions/book/$contentSourceId'
+      path: '/sessions/book/$contentSourceId'
+      fullPath: '/sessions/book/$contentSourceId'
+      preLoaderRoute: typeof AuthenticatedAppSessionsBookContentSourceIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/_app/sessions/$sessionId/processing': {
@@ -1070,7 +1110,9 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   AuthenticatedAppPracticeWarmupTargetLanguageRoute: typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  AuthenticatedAppSessionsBookContentSourceIdRoute: typeof AuthenticatedAppSessionsBookContentSourceIdRoute
   AuthenticatedAppSessionsShowTmdbShowIdRoute: typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
+  AuthenticatedAppBooksImportIndexRoute: typeof AuthenticatedAppBooksImportIndexRoute
   AuthenticatedAppLessonsImportIndexRoute: typeof AuthenticatedAppLessonsImportIndexRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
   AuthenticatedAppSessionsSessionIdReviewCardIdRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -1113,8 +1155,11 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppPracticeWarmupTargetLanguageRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:
     AuthenticatedAppSessionsSessionIdProcessingRoute,
+  AuthenticatedAppSessionsBookContentSourceIdRoute:
+    AuthenticatedAppSessionsBookContentSourceIdRoute,
   AuthenticatedAppSessionsShowTmdbShowIdRoute:
     AuthenticatedAppSessionsShowTmdbShowIdRoute,
+  AuthenticatedAppBooksImportIndexRoute: AuthenticatedAppBooksImportIndexRoute,
   AuthenticatedAppLessonsImportIndexRoute:
     AuthenticatedAppLessonsImportIndexRoute,
   AuthenticatedAppSessionsSessionIdIndexRoute:

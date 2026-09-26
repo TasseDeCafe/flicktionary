@@ -28,6 +28,13 @@ content_source
                                    -- lesson-notes import batch (title = the
                                    -- upload's title) — unlike 'adhoc' they are
                                    -- NOT deduped per (user, language).
+                                   -- 'book' rows are one per uploaded book
+                                   -- (metadata: author, fileName, contentHash,
+                                   -- partCount, importStatus 'uploading'|'ready',
+                                   -- uploadId of the live upload attempt);
+                                   -- deduped per user on metadata->>'contentHash'
+                                   -- via a partial unique index. One text_track
+                                   -- per part.
   title               text
   language            text
   metadata            jsonb        -- tmdbId, year, isbn, url, etc. TMDB image
@@ -46,6 +53,11 @@ text_track
   language            text
   external_id         text?        -- e.g. opensubtitles file id
   hash                text         -- sha256 of normalized text, dedup helper
+                                   -- (book parts hash partIndex + text, so two
+                                   -- identical parts never collide)
+  book_part_index     int?         -- book parts only: 0-based reading order,
+                                   -- unique per content_source
+  book_part_title     text?        -- book parts only: chapter (· n/m) title
   profile_built_at    timestamptz? -- lemma-profile bookkeeping (see
   profile_segment_count int?       -- "Per-track lemma profiles" below):
   profile_max_segment_index int?   -- built_at doubles as "profile exists";
@@ -108,6 +120,9 @@ study_session
   furthest_read_segment_index int? -- resume-reading position: deepest segment index the
                                    -- reader has reached (track-relative, monotonic).
                                    -- NULL until they scroll a normal session view.
+  last_read_at        timestamptz? -- stamped by every reading-progress write and
+                                   -- bookmark set; a book's current part is its
+                                   -- session with the latest value. NULL = never read.
   reviewed_until_segment_index int? -- checkpoint-review pointer: deepest segment index
                                    -- the user explicitly collected reviews up to
                                    -- (docs/SRS.md §6b). Monotonic; NULL until the first

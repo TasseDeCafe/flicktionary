@@ -111,6 +111,8 @@ import { TelegramPairRouter } from './router/telegram-pair-router/telegram-pair-
 import { TelegramAuthRouter } from './router/telegram-auth-router/telegram-auth-router'
 import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
+import { BooksRouter } from './router/books-router/books-router'
+import { BooksRepository } from './transport/database/books/books-repository'
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
 import { AnthropicPasses, type AnthropicPassesInterface } from './transport/third-party/anthropic/anthropic-passes'
@@ -628,6 +630,18 @@ export const buildApp = ({
       practiceRatingEventsRepository,
       userTargetLanguagePrefsRepository,
       usersRepository,
+      anthropicPasses,
+    })
+  )
+  app.use(
+    API_V1,
+    BooksRouter({
+      booksRepository: BooksRepository(),
+      studySessionsRepository,
+      usersRepository,
+      userTargetLanguagePrefsRepository,
+      textTracksRepository,
+      processingJobsRepository,
       anthropicPasses,
     })
   )

@@ -30,6 +30,8 @@ const buildTrack = (overrides: Partial<DbTextTrack> = {}): DbTextTrack => ({
   profile_matched_token_count: null,
   moderation_status: null,
   moderation_category: null,
+  book_part_index: null,
+  book_part_title: null,
   ...overrides,
 })
 
