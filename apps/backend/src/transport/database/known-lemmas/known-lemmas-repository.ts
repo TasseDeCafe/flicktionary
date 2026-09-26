@@ -6,14 +6,17 @@ export type DbKnownLemma = Tables<'known_lemmas'>
 // Stateless known-vocabulary assertions (docs/DATA-MODEL.md "Known lemmas").
 // Lemmas are checkpoint_fold-folded strings; read-time precedence (a live
 // saved lookup beats a known mark) lives in the difficulty query, never here.
-// Consumers are the difficulty/coverage reads and the gloss-sheet chip ONLY —
-// ghost nominations must never read this table.
+// Consumers are the difficulty/coverage reads, the gloss-sheet chip and the
+// book page's "Learn before you read" list ONLY — ghost nominations must
+// never read this table.
 
 export type BulkMarkKnownInput = {
   userId: string
   targetLanguage: string
   lemmas: readonly string[]
-  source: 'bulk_text'
+  // 'bulk_text': a reader sweep (sourceId = the session); 'book_prelearn':
+  // the book page's list (sourceId = the book's content source).
+  source: 'bulk_text' | 'book_prelearn'
   // First writer wins (ON CONFLICT DO NOTHING) — single-source provenance.
   sourceId: string | null
   // Sweep-exact undo handle: one fresh uuid per press. A batch only ever owns

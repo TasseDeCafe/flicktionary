@@ -115,6 +115,7 @@ import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth
 import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
 import { BooksRouter } from './router/books-router/books-router'
 import { BooksRepository } from './transport/database/books/books-repository'
+import { BookPrelearnRepository } from './transport/database/book-prelearn/book-prelearn-repository'
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
 import { TeacherProfilesRepository } from './transport/database/teacher-profiles/teacher-profiles-repository'
 import { AnthropicPasses, type AnthropicPassesInterface } from './transport/third-party/anthropic/anthropic-passes'
@@ -658,6 +659,19 @@ export const buildApp = ({
       processingJobsRepository,
       anthropicPasses,
       bookPinsRepository,
+      bookPrelearnDependencies: {
+        booksRepository: BooksRepository(),
+        bookPrelearnRepository: BookPrelearnRepository(),
+        textSegmentsRepository,
+        textTrackLemmaProfilesRepository,
+        lemmaRanksRepository,
+        wiktionaryMatchRepository,
+        knownLemmasRepository,
+        usersRepository,
+        userTargetLanguagePrefsRepository,
+        anthropicPasses,
+        createAdhocCardDependencies,
+      },
     })
   )
   app.use(

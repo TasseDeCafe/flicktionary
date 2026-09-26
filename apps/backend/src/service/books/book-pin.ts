@@ -46,9 +46,10 @@ export const summarizeBookAnalysis = (language: string, parts: readonly DbBookPa
   return { status: 'ready', failedPartCount: 0 }
 }
 
-// Enqueues a profile build for every part that isn't analyzed yet. Failed
-// parts are only retried on an explicit request (the book page's Retry), so
-// a broken part can't loop; the live-job unique index coalesces the rest.
+// Enqueues a profile build for every part that isn't analyzed yet and has no
+// live build. Failed parts are only retried on an explicit request (the book
+// page's Retry), so a broken part can't loop; the live-job unique index
+// coalesces any race.
 export const ensureBookAnalysis = async (
   params: { contentSourceId: string; userId: string; retryFailed: boolean },
   deps: BookPinDependencies
@@ -57,6 +58,7 @@ export const ensureBookAnalysis = async (
   for (const part of parts) {
     if (isPartAnalyzed(part)) continue
     if (part.latest_job_status === 'failed' && !params.retryFailed) continue
+    if (part.latest_job_status === 'pending' || part.latest_job_status === 'processing') continue
     await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({
       textTrackId: part.text_track_id,
       userId: params.userId,

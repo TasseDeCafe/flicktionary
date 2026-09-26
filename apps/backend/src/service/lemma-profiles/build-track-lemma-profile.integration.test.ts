@@ -48,9 +48,9 @@ describe('buildTrackLemmaProfile', () => {
 
   const bookCountsOf = async (textTrackId: string) =>
     (await sql`
-      SELECT lemma, occurrences FROM public.book_part_lemma_counts
+      SELECT lemma, occurrences, primary_occurrences FROM public.book_part_lemma_counts
       WHERE text_track_id = ${textTrackId} ORDER BY lemma
-    `) as Array<{ lemma: string; occurrences: number }>
+    `) as Array<{ lemma: string; occurrences: number; primary_occurrences: number | null }>
 
   test('a book part gets per-lemma counts, digit-hyphen pieces excluded, and the current version', async () => {
     const suffix = uniqueCyrillicSuffix()
@@ -63,7 +63,9 @@ describe('buildTrackLemmaProfile', () => {
     const result = await buildTrackLemmaProfile(track.id, deps)
     expect(result.status).toBe('built')
 
-    expect((await bookCountsOf(track.id)).find((row) => row.lemma === broom)?.occurrences).toBe(3)
+    const broomCount = (await bookCountsOf(track.id)).find((row) => row.lemma === broom)
+    expect(broomCount?.occurrences).toBe(3)
+    expect(broomCount?.primary_occurrences).toBe(3)
     expect((await TextTracksRepository().findById(track.id))?.profile_version).toBe(TRACK_LEMMA_PROFILE_VERSION)
   })
 

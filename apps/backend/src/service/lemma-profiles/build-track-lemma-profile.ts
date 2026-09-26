@@ -20,7 +20,7 @@ import { countBookPartLemmas, lemmasNeedingRanks } from './book-lemma-counts'
 // The builder's logic version, stamped on the track. Bump it whenever the
 // build output changes shape or semantics: readiness serves an older-version
 // profile as-is while a background rebuild catches it up.
-export const TRACK_LEMMA_PROFILE_VERSION = 2
+export const TRACK_LEMMA_PROFILE_VERSION = 3
 
 const SEGMENT_BATCH_SIZE = 500
 const RESOLVE_CHUNK_SIZE = 5_000
@@ -96,14 +96,14 @@ export const buildTrackLemmaProfile = async (
     rows.push({ foldedToken, tokenCount, candidateLemmas: [...lemmas] })
   }
 
-  let bookLemmaCounts: Array<{ lemma: string; occurrences: number }> | null = null
+  let bookLemmaCounts: Array<{ lemma: string; occurrences: number; primaryOccurrences: number }> | null = null
   if (track.content_source_type === 'book') {
     const rankLemmas = lemmasNeedingRanks(rows)
     const ranks =
       rankLemmas.length > 0
         ? await deps.lemmaRanksRepository.listRanksForLemmas({ targetLanguage: track.language, lemmas: rankLemmas })
         : new Map()
-    bookLemmaCounts = [...countBookPartLemmas(rows, ranks)].map(([lemma, occurrences]) => ({ lemma, occurrences }))
+    bookLemmaCounts = [...countBookPartLemmas(rows, ranks)].map(([lemma, count]) => ({ lemma, ...count }))
   }
 
   await deps.textTrackLemmaProfilesRepository.replaceProfile({

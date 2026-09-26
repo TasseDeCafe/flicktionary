@@ -69,6 +69,29 @@ export const BookSchema = z.object({
 })
 export type Book = z.infer<typeof BookSchema>
 
+// "Learn before you read" (docs/READER-SPEC.md, book page). One row per
+// frequent word in the chapters ahead that the user neither knows nor has
+// saved: `lemma` is the folded key the write endpoints take back, `headword`
+// its dictionary spelling for display, `aheadCount` the estimated occurrences
+// within the requested horizon, and segmentId/surface/context its first
+// occurrence after the reading position (the evidence line, and a Learn
+// card's context).
+export const PrelearnItemSchema = z.object({
+  lemma: z.string(),
+  headword: z.string(),
+  aheadCount: z.number().int(),
+  segmentId: z.string().uuid(),
+  surface: z.string(),
+  context: z.string(),
+})
+export type PrelearnItem = z.infer<typeof PrelearnItemSchema>
+
+export const PrelearnHorizonSchema = z.enum(['next_part', 'rest_of_book'])
+export type PrelearnHorizon = z.infer<typeof PrelearnHorizonSchema>
+
+const PRELEARN_MAX_ITEMS = 30
+const PrelearnLemmaSchema = z.string().trim().min(1).max(100)
+
 const UploadErrors = {
   BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
   NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
@@ -200,6 +223,84 @@ export const booksContract = {
     })
     .input(z.object({ contentSourceId: z.string().uuid() }))
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
+  // The "Learn before you read" list: at most 30 words that occur at least
+  // MIN_BOOK_OCCURRENCES_AHEAD times in the rest of the book (so a card made
+  // from the list joins the pinned-book stream) and at least once within the
+  // horizon, ordered by occurrences within it. `savedCount` counts the words
+  // that qualify but are already saved. Empty for languages without
+  // dictionary data.
+  getPrelearnCandidates: oc
+    .route({ method: 'GET', path: '/books/{contentSourceId}/prelearn', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ contentSourceId: z.string().uuid(), horizon: PrelearnHorizonSchema }))
+    .output(
+      z.object({
+        data: z.object({ items: z.array(PrelearnItemSchema), savedCount: z.number().int() }),
+      })
+    ),
+
+  // Short glosses of listed words in their listed sentence, cached per
+  // occurrence (one batched LLM call for the uncached ones). Words or segments
+  // that aren't this book's are ignored; a word whose gloss couldn't be made
+  // is absent from the result.
+  getPrelearnGlosses: oc
+    .route({ method: 'POST', path: '/books/{contentSourceId}/prelearn/glosses', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        contentSourceId: z.string().uuid(),
+        items: z
+          .array(
+            z.object({
+              lemma: PrelearnLemmaSchema,
+              headword: z.string().trim().min(1).max(200),
+              segmentId: z.string().uuid(),
+              context: z.string().max(400),
+            })
+          )
+          .min(1)
+          .max(PRELEARN_MAX_ITEMS),
+      })
+    )
+    .output(z.object({ data: z.object({ glosses: z.array(z.object({ lemma: z.string(), gloss: z.string() })) }) })),
+
+  // Marks one listed word as known (provenance: this book). Undo is
+  // studySessions.unmarkKnownLemma. NOT_FOUND also for a word not in the book.
+  markPrelearnKnown: oc
+    .route({ method: 'POST', path: '/books/{contentSourceId}/prelearn/known', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ contentSourceId: z.string().uuid(), lemma: PrelearnLemmaSchema }))
+    .output(z.object({ data: z.object({ markedCount: z.number().int() }) })),
+
+  // Saves one listed word as a recognition-only card, built from its upcoming
+  // sentence (an ordinary adhoc save). BAD_REQUEST carries
+  // `native_language_not_set` / `cefr_not_set` like cards.createAdhoc.
+  learnPrelearnWord: oc
+    .route({ method: 'POST', path: '/books/{contentSourceId}/prelearn/learn', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        contentSourceId: z.string().uuid(),
+        lemma: PrelearnLemmaSchema,
+        headword: z.string().trim().min(1).max(200),
+        context: z.string().trim().max(400),
+      })
+    )
+    .output(z.object({ data: z.object({ cardId: z.string().uuid() }) })),
 
   // Removes the book from the library: every part session is soft-deleted in
   // one statement (kept vocabulary survives, like single-session removal) and

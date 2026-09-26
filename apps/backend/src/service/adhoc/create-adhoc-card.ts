@@ -59,6 +59,7 @@ export class AdhocCardCreationError extends Error {
 export type CreateAdhocCardResult = {
   cardId: string
   sessionId: string
+  userLookupId: string
 }
 
 // Single-call ad-hoc card creation. Builds (or reuses) the synthetic per-user-
@@ -259,5 +260,5 @@ export const createAdhocCard = async (params: {
     logCustomErrorMessageAndError(`createAdhocCard: setLastTargetLanguage failed for userId=${userId}`, e)
   })
 
-  return { cardId: insertedCard.id, sessionId: session.id }
+  return { cardId: insertedCard.id, sessionId: session.id, userLookupId: insertedCard.user_lookup_id }
 }

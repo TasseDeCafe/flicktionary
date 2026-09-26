@@ -21,7 +21,7 @@ export type ReplaceProfileInput = {
   // Book parts only (null otherwise): the guarded per-lemma counts, swapped
   // atomically with the profile so a part never pairs one build's profile
   // with another build's counts.
-  bookLemmaCounts: Array<{ lemma: string; occurrences: number }> | null
+  bookLemmaCounts: Array<{ lemma: string; occurrences: number; primaryOccurrences: number }> | null
 }
 
 const INSERT_CHUNK = 1_000
@@ -49,6 +49,7 @@ const replaceProfile = async (input: ReplaceProfileInput): Promise<void> => {
         text_track_id: input.textTrackId,
         lemma: row.lemma,
         occurrences: row.occurrences,
+        primary_occurrences: row.primaryOccurrences,
       }))
       await tx`INSERT INTO public.book_part_lemma_counts ${tx(chunk)}`
     }
@@ -73,14 +74,30 @@ const listRowsByTrackId = async (textTrackId: string): Promise<DbTextTrackLemmaP
   `) as DbTextTrackLemmaProfileRow[]
 }
 
+// The profile groups whose candidate set contains any of `lemmas` — with ALL
+// their candidates, so a homograph guard over them sees every competing reading.
+const listRowsForLemmas = async (params: {
+  textTrackId: string
+  lemmas: readonly string[]
+}): Promise<DbTextTrackLemmaProfileRow[]> => {
+  if (params.lemmas.length === 0) return []
+  return (await sql`
+    SELECT * FROM public.text_track_lemma_profiles
+    WHERE text_track_id = ${params.textTrackId}
+      AND candidate_lemmas && ${sql.array([...params.lemmas])}::text[]
+  `) as DbTextTrackLemmaProfileRow[]
+}
+
 export interface TextTrackLemmaProfilesRepositoryInterface {
   replaceProfile: (input: ReplaceProfileInput) => Promise<void>
   listRowsByTrackId: (textTrackId: string) => Promise<DbTextTrackLemmaProfileRow[]>
+  listRowsForLemmas: typeof listRowsForLemmas
 }
 
 export const TextTrackLemmaProfilesRepository = (): TextTrackLemmaProfilesRepositoryInterface => {
   return {
     replaceProfile,
     listRowsByTrackId,
+    listRowsForLemmas,
   }
 }

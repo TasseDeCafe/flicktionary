@@ -32,16 +32,19 @@ export type Database = {
         Row: {
           lemma: string
           occurrences: number
+          primary_occurrences: number | null
           text_track_id: string
         }
         Insert: {
           lemma: string
           occurrences: number
+          primary_occurrences?: number | null
           text_track_id: string
         }
         Update: {
           lemma?: string
           occurrences?: number
+          primary_occurrences?: number | null
           text_track_id?: string
         }
         Relationships: [
@@ -79,6 +82,48 @@ export type Database = {
             columns: ['content_source_id']
             isOneToOne: false
             referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      book_prelearn_glosses: {
+        Row: {
+          content_source_id: string
+          created_at: string
+          gloss: string
+          gloss_language: string
+          lemma: string
+          text_segment_id: string
+        }
+        Insert: {
+          content_source_id: string
+          created_at?: string
+          gloss: string
+          gloss_language: string
+          lemma: string
+          text_segment_id: string
+        }
+        Update: {
+          content_source_id?: string
+          created_at?: string
+          gloss?: string
+          gloss_language?: string
+          lemma?: string
+          text_segment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'book_prelearn_glosses_content_source_id_fkey'
+            columns: ['content_source_id']
+            isOneToOne: false
+            referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'book_prelearn_glosses_text_segment_id_fkey'
+            columns: ['text_segment_id']
+            isOneToOne: false
+            referencedRelation: 'text_segments'
             referencedColumns: ['id']
           },
         ]

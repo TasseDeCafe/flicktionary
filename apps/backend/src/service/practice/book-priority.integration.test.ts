@@ -7,6 +7,7 @@ import { BookPinsRepository } from '../../transport/database/book-pins/book-pins
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { introductionOrderCtesSql } from './book-priority'
 import { resolveBookQuota } from './book-quota'
+import { TRACK_LEMMA_PROFILE_VERSION } from '../lemma-profiles/build-track-lemma-profile'
 
 // The pinned-book introduction order against a real DB (docs/SRS.md §4
 // "Pinned book"): the interleave and quota overflow, the production and
@@ -58,7 +59,7 @@ describe('pinned-book introduction order', () => {
         INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash, book_part_index,
           book_part_title, profile_built_at, profile_segment_count, profile_version)
         VALUES (${source.id}, 'upload', 'ru', NULL, ${__generateUniqueId('part')}, ${index}, ${`Part ${index}`},
-          NOW(), 10, 2)
+          NOW(), 10, ${TRACK_LEMMA_PROFILE_VERSION})
         RETURNING id
       `) as [{ id: string }]
       for (const [lemma, occurrences] of Object.entries(counts)) {

@@ -67,9 +67,9 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
     const { track } = await createTrackFixture()
     const bookCountsOf = async () =>
       (await sql`
-        SELECT lemma, occurrences FROM public.book_part_lemma_counts
+        SELECT lemma, occurrences, primary_occurrences FROM public.book_part_lemma_counts
         WHERE text_track_id = ${track.id} ORDER BY lemma
-      `) as Array<{ lemma: string; occurrences: number }>
+      `) as Array<{ lemma: string; occurrences: number; primary_occurrences: number | null }>
 
     await repository.replaceProfile({
       textTrackId: track.id,
@@ -79,9 +79,9 @@ describe('text-track-lemma-profiles-repository integration tests', () => {
       wordTokenCount: 4,
       matchedTokenCount: 4,
       version: 2,
-      bookLemmaCounts: [{ lemma: 'метла', occurrences: 4 }],
+      bookLemmaCounts: [{ lemma: 'метла', occurrences: 4, primaryOccurrences: 4 }],
     })
-    expect(await bookCountsOf()).toEqual([{ lemma: 'метла', occurrences: 4 }])
+    expect(await bookCountsOf()).toEqual([{ lemma: 'метла', occurrences: 4, primary_occurrences: 4 }])
     expect((await textTracksRepository.findById(track.id))?.profile_version).toBe(2)
 
     // A rebuild replaces the counts wholesale; null clears them.
