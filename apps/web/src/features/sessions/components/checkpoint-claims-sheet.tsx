@@ -14,6 +14,7 @@ import {
   OverlayFooter,
 } from '@/components/ui/responsive-overlay'
 import { useAssertKnownBacklog, useUndoKnownAssertions } from '../api/sessions-hooks'
+import { EvidenceLine } from './evidence-line'
 
 export type CheckpointBacklogCandidate = {
   userLookupId: string
@@ -43,28 +44,6 @@ type Props = {
 
 // How many candidates show before the rest collapse behind a disclosure.
 const VISIBLE_CANDIDATES = 8
-
-// The matched word emphasized inside its context window. Matching can be
-// homograph-fuzzy, so the sentence is the user's chance to catch a false
-// positive before asserting — when the surface isn't found (or is null, e.g.
-// pre-evidence checkpoints) the plain context still renders.
-const EvidenceLine = ({ surface, context }: { surface: string | null; context: string | null }) => {
-  if (!context) return null
-  const at = surface ? context.toLowerCase().indexOf(surface.toLowerCase()) : -1
-  return (
-    <span className='text-muted-foreground mt-0.5 block text-xs'>
-      {at === -1 || !surface ? (
-        context
-      ) : (
-        <>
-          {context.slice(0, at)}
-          <span className='text-foreground font-semibold'>{context.slice(at, at + surface.length)}</span>
-          {context.slice(at + surface.length)}
-        </>
-      )}
-    </span>
-  )
-}
 
 // Presentational checkbox indicator — deliberately NOT the Radix Checkbox,
 // which renders its own <button> and would nest inside the row button
