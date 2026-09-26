@@ -1,6 +1,6 @@
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useLingui } from '@lingui/react/macro'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Pin } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 
@@ -51,6 +51,15 @@ export const VocabularyRow = ({ chunk, onTap, onOptions, style }: VocabularyRowP
           </div>
           {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
         </div>
+        {/* Up next only: this term holds one of today's pinned-book slots. */}
+        {chunk.pinnedBookPriority && (
+          <div className='flex shrink-0 items-center'>
+            <span className='bg-muted text-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'>
+              <Pin className='h-3 w-3' />
+              {t`Book`}
+            </span>
+          </div>
+        )}
         {chunk.count > 1 && (
           <div className='flex shrink-0 items-center'>
             <span className='bg-muted text-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold'>
