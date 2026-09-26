@@ -30,6 +30,12 @@ export const getBackendErrorCodeFromData = (data: unknown): string | undefined =
   return getBackendErrorsFromData(data).find((error) => typeof error.code === 'string')?.code
 }
 
+// For mutation onError / promise catch handlers, whose error is typed unknown:
+// the backend's machine-readable code (e.g. 'CONTENT_BLOCKED', 'cefr_not_set'),
+// or '' when the failure carries none.
+export const getBackendErrorCodeFromError = (error: unknown): string =>
+  getBackendErrorCodeFromData((error as { data?: unknown } | null | undefined)?.data) ?? ''
+
 export const getBackendErrorMessageFromData = (data: unknown): string | undefined => {
   return getBackendErrorsFromData(data).find((error) => typeof error.message === 'string')?.message
 }

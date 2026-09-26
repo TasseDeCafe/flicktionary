@@ -15,6 +15,7 @@ import { useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { useConfirmLessonBatch, useGetLessonBatch } from '../api/lesson-import-hooks'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type FacetSkill = ImportBatchRow['proposedSkills'][number]
 
@@ -112,7 +113,7 @@ export const LessonImportConfirmView = () => {
           })
         },
         onError: (err) => {
-          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          const code = getBackendErrorCodeFromError(err)
           if (code === 'cefr_not_set') {
             setCefrNeeded(true)
             return

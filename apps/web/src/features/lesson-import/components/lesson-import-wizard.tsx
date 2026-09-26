@@ -26,6 +26,7 @@ import {
   suggestTitleFromFileName,
   type LessonSheet,
 } from '../utils/normalize-lesson-file'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 const TITLE_MAX = 200
 const TEXT_MAX = 500_000
@@ -186,7 +187,7 @@ export const LessonImportWizard = () => {
           void navigate({ to: '/lessons/import/$batchId', params: { batchId: batch.id }, replace: true })
         },
         onError: (err) => {
-          const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          const code = getBackendErrorCodeFromError(err)
           if (code === 'CONTENT_BLOCKED') {
             toast.error(t`This text appears to contain explicit content and can't be imported.`)
             return

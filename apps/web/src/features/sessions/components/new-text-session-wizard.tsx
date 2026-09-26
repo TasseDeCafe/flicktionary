@@ -20,6 +20,7 @@ import { TextPasteFields } from './text-paste-input'
 import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH, suggestTitleFromText } from './text-paste-helpers'
 import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type Step = 'paste' | 'cefr'
 
@@ -141,7 +142,7 @@ export const NewTextSessionWizard = () => {
                 }
               },
               onError: (err) => {
-                const code = (err as { data?: { errors?: Array<{ code?: string }> } })?.data?.errors?.[0]?.code ?? ''
+                const code = getBackendErrorCodeFromError(err)
                 if (code === 'CONTENT_BLOCKED') {
                   toast.error(t`This text appears to contain explicit content and can't be imported.`)
                   return

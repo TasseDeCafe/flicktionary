@@ -18,6 +18,7 @@ import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { shouldUseDetectedLanguage } from '@/features/sessions/utils/detected-language'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 const HEADWORD_MAX = 200
 const CONTEXT_MAX = 2000
@@ -106,8 +107,7 @@ export const NewAdhocCardWizard = () => {
           })
         },
         onError: (err) => {
-          const code =
-            (err as { data?: { errors?: Array<{ code?: string; message?: string }> } })?.data?.errors?.[0]?.code ?? ''
+          const code = getBackendErrorCodeFromError(err)
           if (code === 'cefr_not_set') {
             setPendingCefrLanguage(lang)
             setStep('cefr')

@@ -27,6 +27,7 @@ import { KnownLemmaChip } from '@/features/sessions/components/known-lemma-chip'
 import { useGetUserPrefs, useSetCefrForLanguage, useStatelessGloss } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
 import type { PlainSelection } from './annotated-text'
+import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type GlossState =
   | { kind: 'idle' }
@@ -146,8 +147,7 @@ export const LookupSheet = ({
       studyIntent: draftToStudyIntent(studyDraft),
     }).catch((err: unknown) => {
       const stillCurrent = currentSelectionKeyRef.current === key
-      const code =
-        (err as { data?: { errors?: Array<{ code?: string; message?: string }> } })?.data?.errors?.[0]?.code ?? ''
+      const code = getBackendErrorCodeFromError(err)
       if (stillCurrent) setSaveState('idle')
       if (code === 'cefr_not_set') {
         // The CEFR prompt only makes sense for the selection still on screen;
