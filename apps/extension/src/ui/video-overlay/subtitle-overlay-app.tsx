@@ -15,6 +15,7 @@ import {
   SaveWordSegmentInfo,
   deleteSavedHighlight,
   loadSavedHighlights,
+  recordLookup,
   saveWord,
   setCefr,
   startFlicktionaryPairing,
@@ -323,11 +324,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   }, [cancelGlossHide, hideGloss])
 
   // Hover bridge + pin: entering the popover cancels any pending hide AND pins
-  // the gloss (see glossPinnedRef).
+  // the gloss (see glossPinnedRef). The first entry is the explicit-lookup
+  // moment — a bare hover never records demand. Chunk glosses are born pinned
+  // (multi-word, which the backend ignores anyway), so they never record.
   const onGlossPointerEnter = useCallback(() => {
+    if (!glossPinnedRef.current && gloss && effectiveLanguage) recordLookup(gloss.word, effectiveLanguage)
     glossPinnedRef.current = true
     cancelGlossHide()
-  }, [cancelGlossHide])
+  }, [cancelGlossHide, gloss, effectiveLanguage])
 
   // Outside pointerdown is the dismiss gesture for a PINNED gloss (same
   // gesture as the saved-mode popover). Unpinned glosses ignore it — their

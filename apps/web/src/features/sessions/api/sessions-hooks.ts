@@ -892,6 +892,19 @@ export const useStatelessGloss = () => {
   )
 }
 
+// Fire-and-forget demand signal for an explicit lookup (a tap that opens a
+// gloss sheet): repeated lookups lift a word's new-card priority. The server
+// collapses repeats within an hour, so callers may fire on every open. Silent
+// on failure — a lost signal must never interrupt reading.
+export const useRecordLookup = () =>
+  useMutation(
+    orpcQuery.glosses.recordLookup.mutationOptions({
+      meta: {
+        showErrorToast: false,
+      },
+    })
+  )
+
 export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
   const { t } = useLingui()
   return useMutation(

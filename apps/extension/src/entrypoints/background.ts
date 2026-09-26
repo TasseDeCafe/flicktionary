@@ -31,6 +31,7 @@ import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-ha
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler'
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
+import FlicktionaryRecordLookupHandler from '@/handlers/flicktionary/record-lookup-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
 import FlicktionaryPairFinishedHandler from '@/handlers/flicktionary/flicktionary-pair-finished-handler'
@@ -117,6 +118,7 @@ export default defineBackground(() => {
     new AsbplayerV2ToVideoCommandForwardingHandler(),
     new CaptureVisibleTabHandler(),
     new FlicktionaryGlossHandler(),
+    new FlicktionaryRecordLookupHandler(),
     new SaveWordHandler(),
     new FlicktionaryPairHandler(),
     new FlicktionaryPairFinishedHandler(),

@@ -38,6 +38,7 @@ import {
   useGetUserPrefs,
   useSaveWord,
   useStatelessGloss,
+  useRecordLookup,
   useSwitchGhost,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
@@ -136,6 +137,7 @@ export const SessionGlossSheet = ({
   const { mutateAsync: createHighlight } = useCreateHighlight(sessionId)
   const { mutateAsync: fetchGloss } = useFastGloss()
   const { mutateAsync: fetchStatelessGloss } = useStatelessGloss()
+  const { mutate: recordLookup } = useRecordLookup()
   const { mutate: deleteHighlight, isPending: isDeleting } = useDeleteHighlight(sessionId)
   const { mutate: saveNoteAndTags, isPending: isSavingNote } = useUpdateHighlightNoteAndTags(sessionId)
   const { mutateAsync: switchGhost, isPending: isSwitching } = useSwitchGhost(sessionId)
@@ -343,6 +345,8 @@ export const SessionGlossSheet = ({
           }
         } else {
           // Preview mode: free, stateless gloss — no highlight, no enrich job.
+          // Opening the sheet on a word is an explicit lookup: a demand signal.
+          recordLookup({ selectionText: selection.selectionText, targetLanguage })
           const res = await fetchStatelessGloss({
             selectionText: selection.selectionText,
             contextLine: selection.contextLine,
@@ -380,6 +384,7 @@ export const SessionGlossSheet = ({
     targetLanguage,
     fetchGloss,
     fetchStatelessGloss,
+    recordLookup,
     queryClient,
   ])
 
