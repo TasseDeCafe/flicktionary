@@ -74,6 +74,10 @@ msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 msgid "{cardsDone} cards"
 msgstr "{cardsDone} cards"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "{chapterChars} chars"
+msgstr "{chapterChars} chars"
+
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
@@ -216,6 +220,10 @@ msgstr "{option} days"
 msgid "{parkedTotal} parked"
 msgstr "{parkedTotal} parked"
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "{partCount} parts"
+msgstr "{partCount} parts"
+
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 msgid "{pendingCount, plural, one {# review ready to collect.} other {# reviews ready to collect.}}"
 msgstr "{pendingCount, plural, one {# review ready to collect.} other {# reviews ready to collect.}}"
@@ -243,6 +251,10 @@ msgstr "{removedCount, plural, one {# known mark removed} other {# known marks r
 #: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "{selectedCount, plural, one {Mark # word as known} other {Mark # words as known}}"
 msgstr "{selectedCount, plural, one {Mark # word as known} other {Mark # words as known}}"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "{selectedCount} of {chapterCount} chapters selected"
+msgstr "{selectedCount} of {chapterCount} chapters selected"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
@@ -913,6 +925,14 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 msgid "Bonus"
 msgstr "Bonus"
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "Book"
+msgstr "Book"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Books"
+msgstr "Books"
+
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Bottom"
 msgstr "Bottom"
@@ -943,6 +963,7 @@ msgstr "By frequency band"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
+#: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
@@ -994,6 +1015,10 @@ msgstr "Change your rating"
 msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
 msgstr "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Chapters"
+msgstr "Chapters"
+
 #: apps/web/src/features/review/components/chat-panel.tsx
 msgid "Chat"
 msgstr "Chat"
@@ -1041,6 +1066,10 @@ msgstr "Checkpoint saved"
 msgid "Chinese"
 msgstr "Chinese"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Choose a book file"
+msgstr "Choose a book file"
+
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx
 msgid "Choose a plan to unlock all features"
 msgstr "Choose a plan to unlock all features"
@@ -1052,6 +1081,10 @@ msgstr "Choose how to fill this form's data."
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Choose what to read"
+msgstr "Choose what to read"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Choose what to study for this target."
@@ -1200,6 +1233,11 @@ msgstr "Contact us"
 msgid "Contact Us"
 msgstr "Contact Us"
 
+#: apps/web/src/features/sessions/components/book-group-card.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Contents"
+msgstr "Contents"
+
 #: apps/web/src/features/review/components/per-form-card-editor.tsx
 msgid "Context"
 msgstr "Context"
@@ -1211,6 +1249,7 @@ msgstr "Context (optional)"
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/save-progress-view.tsx
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
@@ -1225,6 +1264,14 @@ msgstr "Continue"
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx
 msgid "Continue learning"
 msgstr "Continue learning"
+
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "Continue reading"
+msgstr "Continue reading"
+
+#: apps/web/src/features/sessions/components/book-group-card.tsx
+msgid "Continue reading {bookTitle}"
+msgstr "Continue reading {bookTitle}"
 
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Continue with {nextLanguageName}"
@@ -1595,6 +1642,7 @@ msgstr "Deleted \"{headword}\""
 msgid "Deleting…"
 msgstr "Deleting…"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Deselect all"
@@ -2114,6 +2162,10 @@ msgstr "Failed to load teacher profiles"
 msgid "Failed to load term"
 msgstr "Failed to load term"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to load the book"
+msgstr "Failed to load the book"
+
 #: apps/web/src/features/lesson-import/api/lesson-import-hooks.ts
 msgid "Failed to load the import"
 msgstr "Failed to load the import"
@@ -2146,6 +2198,10 @@ msgstr "Failed to move the term to flashcards"
 msgid "Failed to open Session vocabulary"
 msgstr "Failed to open Session vocabulary"
 
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to open this part"
+msgstr "Failed to open this part"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
@@ -2173,6 +2229,10 @@ msgstr "Failed to remove session"
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to remove term"
 msgstr "Failed to remove term"
+
+#: apps/web/src/features/books/api/books-hooks.ts
+msgid "Failed to remove the book"
+msgstr "Failed to remove the book"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to remove the known mark"
@@ -2779,6 +2839,10 @@ msgstr "Import Settings"
 msgid "Import this article"
 msgstr "Import this article"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Import this chapter"
+msgstr "Import this chapter"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Import this row"
 msgstr "Import this row"
@@ -2933,6 +2997,7 @@ msgstr "Label (e.g. past.m)"
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/components/language-option-list.tsx
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Language"
@@ -3064,6 +3129,10 @@ msgstr "Log in"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Looking up and saving words"
 msgstr "Looking up and saving words"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Looks like {detectedLanguageName} — use it"
+msgstr "Looks like {detectedLanguageName} — use it"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -3320,6 +3389,10 @@ msgstr "Next card"
 msgid "Next month"
 msgstr "Next month"
 
+#: apps/web/src/features/books/components/book-part-nav.tsx
+msgid "Next: {nextTitle}"
+msgstr "Next: {nextTitle}"
+
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Nice!"
 msgstr "Nice!"
@@ -3481,6 +3554,10 @@ msgstr "Note saved — click to remove highlight"
 msgid "Notes"
 msgstr "Notes"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Notes, copyright pages and other back matter start unchecked. Long chapters are split into shorter parts."
+msgstr "Notes, copyright pages and other back matter start unchecked. Long chapters are split into shorter parts."
+
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Nothing new to learn right now."
 msgstr "Nothing new to learn right now."
@@ -3628,6 +3705,7 @@ msgid "Opening Session vocabulary"
 msgstr "Opening Session vocabulary"
 
 #: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
+#: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Opening…"
 msgstr "Opening…"
@@ -3679,6 +3757,10 @@ msgstr "Pairing complete, but we could not load your profile."
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pairing your browser extension..."
 msgstr "Pairing your browser extension..."
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Part {position}"
+msgstr "Part {position}"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/review/components/grammar-chips.tsx
@@ -3972,6 +4054,10 @@ msgstr "Previous month"
 msgid "Previous text"
 msgstr "Previous text"
 
+#: apps/web/src/features/books/components/book-part-nav.tsx
+msgid "Previous: {previousTitle}"
+msgstr "Previous: {previousTitle}"
+
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 msgid "Primary"
 msgstr "Primary"
@@ -4085,6 +4171,14 @@ msgstr "Rate"
 msgid "Read"
 msgstr "Read"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Read a whole book chapter by chapter, with instant glosses. Works with DRM-free EPUB, FB2 and MOBI files."
+msgstr "Read a whole book chapter by chapter, with instant glosses. Works with DRM-free EPUB, FB2 and MOBI files."
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx
+msgid "Read an EPUB, FB2 or MOBI book chapter by chapter"
+msgstr "Read an EPUB, FB2 or MOBI book chapter by chapter"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Read more in the guide"
@@ -4101,6 +4195,14 @@ msgstr "Read the full guide"
 #: apps/web/src/features/sessions/components/segment-list.tsx
 msgid "Read up to here"
 msgstr "Read up to here"
+
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "Reading"
+msgstr "Reading"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Reading book…"
+msgstr "Reading book…"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Reading file…"
@@ -4215,15 +4317,24 @@ msgstr "Remember these track choices for this site"
 
 #: apps/extension/common/components/MiscSettingsTab.tsx
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "Remove"
 msgstr "Remove"
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "Remove \"{bookTitle}\"?"
+msgstr "Remove \"{bookTitle}\"?"
+
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
+
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "Remove book"
+msgstr "Remove book"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Remove file"
@@ -4251,6 +4362,7 @@ msgstr "Remove session"
 msgid "Remove the known mark"
 msgstr "Remove the known mark"
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "Removing…"
 msgstr "Removing…"
@@ -4538,6 +4650,10 @@ msgstr "Search…"
 msgid "Season {seasonNumber}"
 msgstr "Season {seasonNumber}"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Section {position}"
+msgstr "Section {position}"
+
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 #: apps/extension/common/components/VideoOverlay.tsx
 msgid "Seek backward"
@@ -4582,6 +4698,7 @@ msgstr "Select a video element to sync it with Flicktionary."
 msgid "Select a video element…"
 msgstr "Select a video element…"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Select all"
@@ -4924,6 +5041,8 @@ msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
 msgid "Start reading"
 msgstr "Start reading"
@@ -5292,6 +5411,10 @@ msgstr "Thank you for your feedback!"
 msgid "The answer was:"
 msgstr "The answer was:"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "The book upload failed. Please try again."
+msgstr "The book upload failed. Please try again."
+
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "The collected reviews were kept — a newer checkpoint exists."
@@ -5371,6 +5494,18 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This article is too long to import ({textLength} characters — the limit is {maxLength})."
 msgstr "This article is too long to import ({textLength} characters — the limit is {maxLength})."
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "This book contains content that can't be imported."
+msgstr "This book contains content that can't be imported."
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "This book is DRM-protected. Only DRM-free files can be imported."
+msgstr "This book is DRM-protected. Only DRM-free files can be imported."
+
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "This book isn't in your library."
+msgstr "This book isn't in your library."
+
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
@@ -5408,6 +5543,10 @@ msgstr "This is a note-only card with no flashcard data yet. Click Generate full
 msgid "This product uses the <0>TMDB</0> API but is not endorsed or certified by TMDB."
 msgstr "This product uses the <0>TMDB</0> API but is not endorsed or certified by TMDB."
 
+#: apps/web/src/features/books/components/book-detail-view.tsx
+msgid "This removes the book and its reading progress from your library. Your kept vocabulary stays in your collection."
+msgstr "This removes the book and its reading progress from your library. Your kept vocabulary stays in your collection."
+
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
@@ -5431,6 +5570,10 @@ msgstr "This term is removed from your vocabulary. Restore it to keep practicing
 msgid "This text appears to contain explicit content and can't be imported."
 msgstr "This text appears to contain explicit content and can't be imported."
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "This upload was restarted from another tab or device."
+msgstr "This upload was restarted from another tab or device."
+
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "This value differs from what was originally generated."
 msgstr "This value differs from what was originally generated."
@@ -5443,6 +5586,7 @@ msgstr "This value differs from what Wiktionary provided."
 msgid "This value was taken from Wiktionary's dictionary data during processing."
 msgstr "This value was taken from Wiktionary's dictionary data during processing."
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Title"
@@ -5727,6 +5871,7 @@ msgid "Unshare from Explore"
 msgstr "Unshare from Explore"
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx
+#: apps/web/src/features/sessions/components/book-group-card.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
@@ -5764,6 +5909,11 @@ msgstr "Upload"
 msgid "Upload a .srt file"
 msgstr "Upload a .srt file"
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx
+msgid "Upload a book"
+msgstr "Upload a book"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Upload a file (.md or .xlsx)"
 msgstr "Upload a file (.md or .xlsx)"
@@ -5775,6 +5925,10 @@ msgstr "Upload your .srt file"
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "Uploading…"
 msgstr "Uploading…"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Uploading… {progressPercent}%"
+msgstr "Uploading… {progressPercent}%"
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
@@ -5799,6 +5953,10 @@ msgstr "Use a different email"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Use a subtitle file you already have."
 msgstr "Use a subtitle file you already have."
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "Use an EPUB, FB2 or MOBI file."
+msgstr "Use an EPUB, FB2 or MOBI file."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Use suggested term"
@@ -5973,6 +6131,10 @@ msgstr "Watching videos"
 msgid "We couldn't create an exercise for “{headword}”."
 msgstr "We couldn't create an exercise for “{headword}”."
 
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "We couldn't find any text in this book."
+msgstr "We couldn't find any text in this book."
+
 #: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
 msgid "We couldn't load this content."
 msgstr "We couldn't load this content."
@@ -5988,6 +6150,10 @@ msgstr "We couldn't prepare this answer. Save the note again to retry."
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "We couldn't read these notes"
 msgstr "We couldn't read these notes"
+
+#: apps/web/src/features/books/components/book-import-wizard.tsx
+msgid "We couldn't read this file."
+msgstr "We couldn't read this file."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "We did not hear back from a Flicktionary extension on this device."
@@ -6226,6 +6392,10 @@ msgstr "You've filled your guest library"
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "You've reached the end"
 msgstr "You've reached the end"
+
+#: apps/web/src/features/books/components/book-part-nav.tsx
+msgid "You've reached the end of the book."
+msgstr "You've reached the end of the book."
 
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "You've reviewed every due term for this language. Come back later when more are ready."
