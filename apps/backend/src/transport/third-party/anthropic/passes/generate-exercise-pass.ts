@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 
@@ -10,6 +10,8 @@ import { buildPracticeMethodologySystem } from '../methodology-prompt'
 // exact substrings (reliable) instead of character arithmetic (unreliable).
 
 const TOOL_NAME = 'submit_exercise'
+
+const GENERATE_EFFORT = (process.env.EXERCISE_GENERATE_EFFORT ?? 'low') as 'low' | 'medium' | 'high'
 
 export type ExerciseTermInput = {
   headword: string
@@ -91,8 +93,12 @@ const buildClozeTool = (production: boolean): Anthropic.Tool => ({
   description: production
     ? 'Submit one production-cloze exercise: a sentence using the term, the exact surface form to blank out, and every acceptable answer form.'
     : 'Submit one multiple-choice cloze exercise: a sentence using the term, the exact surface form to blank out, and three distractors.',
+  // Strict: without it Opus 4.8 sometimes sent the array fields as bare
+  // strings, which parsed as zero distractors and burned every attempt.
+  strict: true,
   input_schema: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       sentence: {
         type: 'string',
@@ -130,8 +136,10 @@ const buildComprehensionTool = (): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     'Submit one multiple-choice comprehension exercise: a sentence using the term, a question probing whether the reader understood the term in context, the correct option, and three distractors.',
+  strict: true,
   input_schema: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       sentence: {
         type: 'string',
@@ -299,7 +307,8 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
 
   const stream = getAnthropicClient().messages.stream({
     model: MODEL_OPUS,
-    max_tokens: 2000,
+    ...reasoningParams(MODEL_OPUS, GENERATE_EFFORT),
+    max_tokens: 8000,
     system: buildPracticeMethodologySystem({
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
@@ -308,7 +317,7 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
       allowL1Notes: args.allowL1Notes,
     }),
     tools: [tool],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: buildUserMessage(args) }],
   })
   const response = await stream.finalMessage()

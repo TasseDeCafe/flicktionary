@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
+import { MODEL_OPUS, reasoningParams } from '../../transport/third-party/anthropic/anthropic-client'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/log-cache-usage'
 import { buildPromptContext } from '../processing/build-prompt-context'
@@ -370,7 +370,8 @@ export const runCardChat = async (
 
   const response = await deps.anthropicPasses.createChatCompletion({
     model: MODEL_OPUS,
-    max_tokens: 1500,
+    ...reasoningParams(MODEL_OPUS, 'low'),
+    max_tokens: 6000,
     system: promptContext.systemBlocks,
     // Withhold the editing tool for non-editable (auto-seeded) turns.
     ...(allowCardEdits ? { tools: [updateCardFieldsTool] } : {}),

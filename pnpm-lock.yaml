@@ -10,8 +10,8 @@ catalogs:
       specifier: 4.0.14
       version: 4.0.14
     '@anthropic-ai/sdk':
-      specifier: 0.111.0
-      version: 0.111.0
+      specifier: 0.128.0
+      version: 0.128.0
     '@astrojs/check':
       specifier: 0.9.9
       version: 0.9.9
@@ -703,7 +703,7 @@ importers:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: 'catalog:'
-        version: 0.111.0(zod@4.4.3)
+        version: 0.128.0(zod@4.4.3)
       '@flicktionary/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -1876,8 +1876,8 @@ packages:
       rollup:
         optional: true
 
-  '@anthropic-ai/sdk@0.111.0':
-    resolution: {integrity: sha512-1hUqKi+uJQoS5X90+InwHbFAXMvgq0DnsC5hVLEeSRaODiU5WvmqDAcVCmGS2wC0pN9Z8jtWCbWw7JLzeDdm/Q==}
+  '@anthropic-ai/sdk@0.128.0':
+    resolution: {integrity: sha512-tl5cBFZC1jVFrTuQyvQObA4WmuNgcYVeXfriqOumgtLAHUm4gPUj18YnszBW60v0PrjDB8nBDOC6wd9CmHQFlA==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -8403,6 +8403,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -13840,7 +13841,7 @@ snapshots:
     optionalDependencies:
       rollup: 4.59.0
 
-  '@anthropic-ai/sdk@0.111.0(zod@4.4.3)':
+  '@anthropic-ai/sdk@0.128.0(zod@4.4.3)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0

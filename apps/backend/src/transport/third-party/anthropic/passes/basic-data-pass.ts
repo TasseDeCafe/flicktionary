@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS, THINKING_DISABLED } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
@@ -35,7 +35,7 @@ type BasicDataPassArgs = {
   // bucket the model fills for English targets. Undefined for other languages.
   ipaDialect?: TargetIpaDialect
   // Which model runs the pass. The per-highlight enrichment path passes
-  // MODEL_ENRICHMENT (Opus 4.8 by default).
+  // MODEL_ENRICHMENT (Opus by default).
   model?: string
 }
 
@@ -228,16 +228,15 @@ it is an incomplete fragment of a single fixed unit (a phrasal-verb particle, a
 required preposition/clitic).${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
-${segmentLines}`
+${segmentLines}
+
+Submit all rows in a single ${TOOL_NAME} call.`
 
   // Keep streaming even for highlight-only enrichment so long responses do not hit
   // the SDK's non-streaming duration limit.
   const stream = getAnthropicClient().messages.stream({
     model,
-    // Sonnet 5 runs adaptive thinking when the param is omitted; disable it
-    // explicitly (also accepted on Opus 4.7/4.8) so the pass behaves the same
-    // regardless of which model the env overrides pick.
-    thinking: THINKING_DISABLED,
+    ...reasoningParams(model, 'low'),
     max_tokens: 32000,
     system: buildMethodologySystem({
       nativeLanguage,
@@ -249,7 +248,7 @@ ${segmentLines}`
       ipaDialect,
     }),
     tools: [buildTool(shouldHideTranslationFields, targetLanguage)],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: userMessage }],
   })
   const response = await stream.finalMessage()

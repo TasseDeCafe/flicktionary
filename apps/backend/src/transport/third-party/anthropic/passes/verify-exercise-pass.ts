@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_EXERCISE_VERIFY, THINKING_DISABLED } from '../anthropic-client'
+import { getAnthropicClient, MODEL_EXERCISE_VERIFY, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 import type { GeneratedExercise } from './generate-exercise-pass'
@@ -14,6 +14,8 @@ import type { GeneratedExercise } from './generate-exercise-pass'
 
 const TOOL_NAME = 'submit_verdict'
 
+const VERIFY_EFFORT = (process.env.EXERCISE_VERIFY_EFFORT ?? 'low') as 'low' | 'medium' | 'high'
+
 export type VerifyExerciseResult = {
   pass: boolean
   reasons: string[]
@@ -22,8 +24,13 @@ export type VerifyExerciseResult = {
 const buildTool = (): Anthropic.Tool => ({
   name: TOOL_NAME,
   description: 'Submit the verification verdict for the exercise.',
+  // Strict: without it Opus 4.8 sent `reasons` as a bare string often enough
+  // that genuine rejections parsed as reasonless, starving the regeneration
+  // loop of feedback.
+  strict: true,
   input_schema: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       pass: {
         type: 'boolean',
@@ -115,8 +122,8 @@ type VerifyExerciseArgs = {
 const runVerdictCall = async (args: VerifyExerciseArgs): Promise<VerifyExerciseResult> => {
   const stream = getAnthropicClient().messages.stream({
     model: MODEL_EXERCISE_VERIFY,
-    thinking: THINKING_DISABLED,
-    max_tokens: 1500,
+    ...reasoningParams(MODEL_EXERCISE_VERIFY, VERIFY_EFFORT),
+    max_tokens: 8000,
     system: buildPracticeMethodologySystem({
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
@@ -125,7 +132,7 @@ const runVerdictCall = async (args: VerifyExerciseArgs): Promise<VerifyExerciseR
       allowL1Notes: args.allowL1Notes,
     }),
     tools: [buildTool()],
-    tool_choice: { type: 'tool', name: TOOL_NAME },
+    tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: buildUserMessage(args.exercise, args.targetLanguage) }],
   })
   const response = await stream.finalMessage()
