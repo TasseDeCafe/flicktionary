@@ -26,4 +26,13 @@ declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
     hideAppChrome?: boolean
   }
+
+  // Per-entry history state: survives back/forward and reload but never
+  // appears in the URL, so deep links fall back to the screen's defaults.
+  interface HistoryState {
+    // Set on a book's contents page opened from one of its parts: the reader
+    // session to return to, and the signal that the contents page is a step
+    // inside the book (picking a part replaces it) rather than a layer.
+    bookContentsFromSessionId?: string
+  }
 }

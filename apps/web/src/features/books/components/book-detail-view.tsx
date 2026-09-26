@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getRouteApi, useNavigate } from '@tanstack/react-router'
+import { getRouteApi, useLocation, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { BookOpen, Trash2 } from 'lucide-react'
 import type { BookPart } from '@flicktionary/api-client/orpc-contracts/books-contract'
@@ -46,18 +46,27 @@ export const BookDetailView = () => {
   const { mutate: openPart, isPending: isOpening, variables: openingVariables } = useOpenBookPart()
   const { mutate: removeBook, isPending: isRemoving } = useRemoveBook()
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
-  const close = useModalScreenClose({ to: '/sessions' })
+  const closeToOpener = useModalScreenClose({ to: '/sessions' })
+  // Opened from a part's Contents button, this page replaced that reader: the
+  // chevron steps back into the part, and picking a part replaces the page, so
+  // one close from any part leaves the book. Opened from a book card (or a
+  // deep link), it's a layer: parts push and the chevron returns to the opener.
+  const fromSessionId = useLocation({ select: (location) => location.state.bookContentsFromSessionId })
+  const close = fromSessionId
+    ? () => void navigate({ to: '/sessions/$sessionId', params: { sessionId: fromSessionId }, replace: true })
+    : closeToOpener
+  const replace = fromSessionId !== undefined
 
   const goToPart = (part: BookPart) => {
     if (part.sessionId) {
-      void navigate({ to: '/sessions/$sessionId', params: { sessionId: part.sessionId } })
+      void navigate({ to: '/sessions/$sessionId', params: { sessionId: part.sessionId }, replace })
       return
     }
     openPart(
       { contentSourceId, partIndex: part.partIndex },
       {
         onSuccess: (response) =>
-          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.sessionId } }),
+          void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.sessionId }, replace }),
       }
     )
   }
@@ -169,9 +178,11 @@ export const BookDetailView = () => {
                 removeBook(
                   { contentSourceId },
                   {
+                    // Leave to the opener, never back into a part of the
+                    // removed book (the reader-origin chevron would).
                     onSuccess: () => {
                       setConfirmRemoveOpen(false)
-                      void navigate({ to: '/sessions', replace: true })
+                      closeToOpener()
                     },
                   }
                 )
