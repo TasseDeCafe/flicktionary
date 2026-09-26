@@ -413,22 +413,46 @@ const findOrCreate = async (
 }
 
 // Bump the new-term priority signals at a user-intent boundary (saving a
-// highlight, confirming a lesson import). encounter_count >= 2 is the tier-1
-// "revealed demand" signal, and last_encountered_at drives freshness + decay.
-// The collapse window makes retries and multi-chunk runs idempotent regardless
-// of call site: a bump within an hour of the last one is a no-op, so a worker
-// retry (or a batch touching the same lookup twice) can never inflate a single
-// save into tier 1. Rows created moments ago (last_encountered_at defaults to
-// NOW()) are skipped for the same reason — their creation IS the encounter.
+// highlight, confirming a lesson import, an explicit lookup of a saved term).
+// encounter_count >= 2 is the tier-1 "revealed demand" signal, and
+// last_encountered_at drives freshness + decay. The collapse window makes
+// retries and multi-chunk runs idempotent regardless of call site: a bump
+// within an hour of the last demand is a no-op, so a worker retry (or a batch
+// touching the same lookup twice) can never inflate a single save into tier 1.
+// Rows created moments ago (last_demand_at defaults to NOW()) are skipped for
+// the same reason — their creation IS the encounter. The window runs on
+// last_demand_at, not last_encountered_at: checkpoint content encounters bump
+// the latter, and must not swallow a deliberate re-save or lookup.
 const recordEncounter = async (userLookupIds: string[], executor: postgres.Sql = sql): Promise<void> => {
   if (userLookupIds.length === 0) return
   await executor`
     UPDATE public.user_lookups
     SET encounter_count = encounter_count + 1,
-        last_encountered_at = NOW()
+        last_encountered_at = NOW(),
+        last_demand_at = NOW()
     WHERE id = ANY(${userLookupIds}::uuid[])
-      AND last_encountered_at < NOW() - INTERVAL '1 hour'
+      AND last_demand_at < NOW() - INTERVAL '1 hour'
   `
+}
+
+// Live saved terms whose headword folds to any of the given lemma keys
+// (public.user_headword_lemma_keys, the SQL twin of
+// foldUserHeadwordCandidates) — the lookup-demand path's term resolution.
+const findLiveIdsByLemmaKeys = async (
+  params: { userId: string; targetLanguage: string; lemmas: readonly string[] },
+  executor: postgres.Sql = sql
+): Promise<string[]> => {
+  if (params.lemmas.length === 0) return []
+  const rows = (await executor`
+    SELECT id
+    FROM public.user_lookups
+    WHERE user_id = ${params.userId}
+      AND target_language = ${params.targetLanguage}
+      AND count > 0
+      AND deleted_at IS NULL
+      AND public.user_headword_lemma_keys(headword, target_language) && ${executor.array([...params.lemmas])}::text[]
+  `) as Array<{ id: string }>
+  return rows.map((row) => row.id)
 }
 
 // Aggregate evidence of a term passing in real content (a collected
@@ -2375,6 +2399,10 @@ export interface UserLookupsRepositoryInterface {
     executor?: postgres.Sql
   ) => Promise<DbUserLookup>
   recordEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
+  findLiveIdsByLemmaKeys: (
+    params: { userId: string; targetLanguage: string; lemmas: readonly string[] },
+    executor?: postgres.Sql
+  ) => Promise<string[]>
   recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
   listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
   listAssertableBacklogCandidates: (params: {
@@ -2514,6 +2542,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findPotentialExistingSensesByHeadwords,
     findOrCreate,
     recordEncounter,
+    findLiveIdsByLemmaKeys,
     recordContentEncounter,
     listCheckpointVocab,
     listAssertableBacklogCandidates,

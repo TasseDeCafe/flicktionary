@@ -12,19 +12,23 @@ import type { KnownLemmasRepositoryInterface } from '../../transport/database/kn
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
+import { recordLookup, type RecordLookupDependencies } from '../../service/lemma-lookups/record-lookup'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
 // practice-surface lookup sheet). Takes the context line directly and is bound
-// to no highlight or practice_text — nothing is persisted.
+// to no highlight or practice_text — fastGloss persists nothing. Explicit
+// lookups are recorded separately (recordLookup) so a hover never counts as
+// demand.
 export const GlossesRouter = (
   usersRepository: UsersRepositoryInterface,
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
   anthropicPasses: AnthropicPassesInterface,
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface,
-  knownLemmasRepository: KnownLemmasRepositoryInterface
+  knownLemmasRepository: KnownLemmasRepositoryInterface,
+  recordLookupDependencies: RecordLookupDependencies
 ): Router => {
   const implementer = implement(glossesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -83,6 +87,14 @@ export const GlossesRouter = (
           knownLemmaCandidates,
         },
       }
+    }),
+
+    recordLookup: implementer.recordLookup.handler(async ({ input, context }) => {
+      const result = await recordLookup(
+        { userId: context.res.locals.userId, targetLanguage: input.targetLanguage, selectionText: input.selectionText },
+        recordLookupDependencies
+      )
+      return { data: result }
     }),
   })
 

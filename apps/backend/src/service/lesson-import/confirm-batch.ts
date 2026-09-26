@@ -1,4 +1,5 @@
 import { beginTx } from '../../transport/database/postgres-client'
+import type { LemmaLookupsRepositoryInterface } from '../../transport/database/lemma-lookups/lemma-lookups-repository'
 import type { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ImportBatchesRepositoryInterface } from '../../transport/database/import-batches/import-batches-repository'
 import type { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
@@ -59,6 +60,7 @@ export type ConfirmBatchDeps = {
   processingJobsRepository: ProcessingJobsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  lemmaLookupsRepository: LemmaLookupsRepositoryInterface
   studyFacetsRepository: StudyFacetsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -212,6 +214,7 @@ export const confirmBatch = async (
     }
 
     await deps.userLookupsRepository.recordEncounter(encounteredLookupIds, tx)
+    await deps.lemmaLookupsRepository.creditLookupDemand(encounteredLookupIds, tx)
     return { sessionId: session.id, formatProfile: batch.format_profile, targetLanguage: batch.target_language }
   })
 

@@ -1,3 +1,7 @@
+import {
+  LemmaLookupsRepository,
+  type LemmaLookupsRepositoryInterface,
+} from '../../transport/database/lemma-lookups/lemma-lookups-repository'
 import { ContentSourcesRepository } from '../../transport/database/content-sources/content-sources-repository'
 import { TextTracksRepository } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepository } from '../../transport/database/text-segments/text-segments-repository'
@@ -47,6 +51,7 @@ import type { TextTrackLemmaProfilesRepositoryInterface } from '../../transport/
 import { AnthropicPasses, type AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 export type ProcessingDependencies = {
+  lemmaLookupsRepository: LemmaLookupsRepositoryInterface
   anthropicPasses: AnthropicPassesInterface
   contentSourcesRepository: ContentSourcesRepositoryInterface
   textTracksRepository: TextTracksRepositoryInterface
@@ -86,6 +91,7 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   cardsRepository: CardsRepository(),
   cardChatMessagesRepository: CardChatMessagesRepository(),
   userLookupsRepository: UserLookupsRepository(),
+  lemmaLookupsRepository: LemmaLookupsRepository(),
   usersRepository: UsersRepository(),
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
   processingTelemetryRepository: ProcessingTelemetryRepository(),
