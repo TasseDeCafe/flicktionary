@@ -29,7 +29,7 @@ Every tappable card / row / list item that has a `hover:` transition MUST pair i
 
 Use the standard treatments rather than inventing per-view colors:
 
-- **Plain cards / rows** (white-ish surface on the page background): `transition-colors hover:bg-gray-50 active:bg-gray-100`. Canonical examples: `session-card.tsx`, `vocabulary-row.tsx`, `triage-row.tsx`, `more-list-row.tsx`, `overlay-action-row.tsx`.
+- **Plain cards / rows** (card surface on the page background): `transition-colors hover:bg-accent active:bg-accent`. Canonical examples: `more-list-row.tsx`, `vocabulary-row.tsx`, the part rows in `book-detail-view.tsx`. Never a fixed palette gray (`hover:bg-gray-50`): it stays light in dark mode, so the row's light text vanishes on hover/press. Theme tokens (`accent`, `foreground/10`) flip with the theme.
 - **Selection cards using the accent treatment** (`OptionCard`, `LanguageSelectField`): `transition-colors hover:border-foreground/40 hover:bg-accent/40 active:bg-accent/60`.
 
 Don't use a border-color-only hover (e.g. `hover:border-yellow-300`) for the press affordance — it's invisible on touch and diverges from every other card in the app.
