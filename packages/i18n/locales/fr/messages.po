@@ -3183,6 +3183,7 @@ msgstr "Chargement…"
 msgid "Loading..."
 msgstr "Chargement..."
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
@@ -4967,6 +4968,10 @@ msgstr "Afficher les {count} mots"
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Show answer"
 msgstr "Afficher la réponse"
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Show more"
+msgstr "Afficher plus"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Show suggested terms while reading"

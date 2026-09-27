@@ -3184,6 +3184,7 @@ msgstr "Loading more…"
 msgid "Loading..."
 msgstr "Loading..."
 
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
@@ -4968,6 +4969,10 @@ msgstr "Show all {count} words"
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Show answer"
 msgstr "Show answer"
+
+#: apps/web/src/features/books/components/book-prelearn-section.tsx
+msgid "Show more"
+msgstr "Show more"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Show suggested terms while reading"
