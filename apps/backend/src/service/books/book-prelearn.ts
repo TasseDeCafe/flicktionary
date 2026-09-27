@@ -31,7 +31,6 @@ import { createAdhocCard, type CreateAdhocCardDependencies } from '../adhoc/crea
 // evidence, glossed in that sentence, and used as a "Learn" card's context so
 // the card gets the sense the book uses.
 
-export const PRELEARN_LIST_LIMIT = 30
 // Headroom over the list size: a candidate whose every occurrence turns out
 // to be behind the reader (pro-rating overestimates what's left of the
 // current part) is dropped, and the next one takes its place.
@@ -258,26 +257,27 @@ export type PrelearnItem = {
   context: string
 }
 
-export type PrelearnList = { items: PrelearnItem[]; savedCount: number }
+export type PrelearnList = { items: PrelearnItem[]; hasMore: boolean; savedCount: number }
 
 export type PrelearnResult<T> = { ok: true; value: T } | { ok: false; reason: 'not-found' }
 
 export const listPrelearnCandidates = async (
-  params: { contentSourceId: string; userId: string; horizon: PrelearnHorizon },
+  params: { contentSourceId: string; userId: string; horizon: PrelearnHorizon; limit: number },
   deps: BookPrelearnDependencies
 ): Promise<PrelearnResult<PrelearnList>> => {
   const source = await deps.booksRepository.findOwnedBook(params.contentSourceId, params.userId)
   if (!source || !isBookReady(source)) return { ok: false, reason: 'not-found' }
-  if (!KAIKKI_LANGUAGES.has(source.language)) return { ok: true, value: { items: [], savedCount: 0 } }
+  if (!KAIKKI_LANGUAGES.has(source.language)) return { ok: true, value: { items: [], hasMore: false, savedCount: 0 } }
 
   const { candidates, savedCount } = await deps.bookPrelearnRepository.listCandidates({
     userId: params.userId,
     contentSourceId: source.id,
     targetLanguage: source.language,
     horizon: params.horizon,
-    limit: PRELEARN_LIST_LIMIT + CANDIDATE_OVERFETCH,
+    // +1: one word past the limit tells whether there's more.
+    limit: params.limit + 1 + CANDIDATE_OVERFETCH,
   })
-  if (candidates.length === 0) return { ok: true, value: { items: [], savedCount } }
+  if (candidates.length === 0) return { ok: true, value: { items: [], hasMore: false, savedCount } }
 
   // The same "furthest-reached part" position the candidate SQL uses.
   const parts = await deps.booksRepository.listPartsForUser(source.id, params.userId)
@@ -310,9 +310,9 @@ export const listPrelearnCandidates = async (
       aheadCount: Math.max(1, Math.round(candidate.ahead)),
       ...occurrence,
     })
-    if (items.length === PRELEARN_LIST_LIMIT) break
+    if (items.length > params.limit) break
   }
-  return { ok: true, value: { items, savedCount } }
+  return { ok: true, value: { items: items.slice(0, params.limit), hasMore: items.length > params.limit, savedCount } }
 }
 
 export type PrelearnGlossRequest = { lemma: string; headword: string; segmentId: string; context: string }
