@@ -144,7 +144,7 @@ export const SessionVocabularyFooter = ({
   // left slot shows exactly one thing at a time (confirmation > generating >
   // pill) to keep the row stable.
   return (
-    <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
+    <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
       <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
         <span className='text-muted-foreground flex min-w-0 items-center text-sm'>
           {sweepConfirmation ? (

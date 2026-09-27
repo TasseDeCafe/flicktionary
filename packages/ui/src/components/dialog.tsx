@@ -45,9 +45,9 @@ const dialogContentVariants = {
   center:
     'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-32px)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
   right:
-    'inset-y-0 right-0 flex h-dvh w-full max-w-md flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
+    'ios-standalone:pt-status-blur inset-y-0 right-0 flex h-dvh w-full max-w-md flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
   fullScreen:
-    'inset-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-0 data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
+    'ios-standalone:pt-status-blur inset-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-0 data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
 } as const
 
 const DialogContent = ({

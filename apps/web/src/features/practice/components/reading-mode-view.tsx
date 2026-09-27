@@ -362,7 +362,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         </div>
       </div>
 
-      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-2 pb-3 backdrop-blur'>
+      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
         <div className='mx-auto flex w-full max-w-2xl flex-col gap-3'>
           <div className='flex items-center justify-between gap-2'>
             <Button
