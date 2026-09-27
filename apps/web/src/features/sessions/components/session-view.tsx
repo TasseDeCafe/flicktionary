@@ -15,6 +15,7 @@ import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-scree
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useAutoHideChrome } from '../hooks/use-auto-hide-chrome'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import {
   isOptimisticHighlightId,
   useCheckpointClaims,
@@ -1054,8 +1055,10 @@ export const SessionView = () => {
   // text. They stay put whenever they carry the task at hand — search,
   // bookmark placement, a sweep's Undo — and at the end of the text, where the
   // close-out flow needs the footer.
-  const scrolledChromeHidden = useAutoHideChrome(scrollEl, programmaticScrollUntilRef)
+  const { hidden: scrolledChromeHidden, reveal: revealChrome } = useAutoHideChrome(scrollEl, programmaticScrollUntilRef)
   const chromeHidden = scrolledChromeHidden && !searchOpen && !isPlacingBookmark && !sweepConfirmation && !reachedEnd
+  // Desktop's explicit way back (mobile taps the top strip, see ReadingProgressBar).
+  useHotkeys([{ key: 'escape', onPress: revealChrome }], chromeHidden)
 
   // Deep-link fallback only — with in-app history the hook returns to the
   // actual opener (sessions list, dashboard card, vocabulary detour, ...).
@@ -1184,7 +1187,12 @@ export const SessionView = () => {
         </>
       }
     >
-      <ReadingProgressBar scrollEl={scrollEl} hidden={isSearching} headerHidden={chromeHidden} />
+      <ReadingProgressBar
+        scrollEl={scrollEl}
+        hidden={isSearching}
+        headerHidden={chromeHidden}
+        onReveal={revealChrome}
+      />
 
       <div className='relative flex min-h-0 flex-1 flex-col'>
         <div
