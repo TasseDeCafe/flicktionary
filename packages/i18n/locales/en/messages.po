@@ -4980,6 +4980,10 @@ msgstr "Show all {count} words"
 msgid "Show answer"
 msgstr "Show answer"
 
+#: apps/web/src/features/sessions/components/reading-progress-bar.tsx
+msgid "Show controls"
+msgstr "Show controls"
+
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 msgid "Show more"
 msgstr "Show more"

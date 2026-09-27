@@ -4979,6 +4979,10 @@ msgstr "Afficher les {count} mots"
 msgid "Show answer"
 msgstr "Afficher la réponse"
 
+#: apps/web/src/features/sessions/components/reading-progress-bar.tsx
+msgid "Show controls"
+msgstr "Afficher les commandes"
+
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 msgid "Show more"
 msgstr "Afficher plus"
