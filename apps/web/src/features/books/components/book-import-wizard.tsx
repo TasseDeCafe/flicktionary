@@ -281,7 +281,7 @@ export const BookImportWizard = () => {
                       type='button'
                       disabled={isUploading}
                       onClick={() => toggleChapter(chapter.id)}
-                      className='flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
+                      className='hover:bg-accent active:bg-accent flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors'
                     >
                       <Checkbox
                         checked={selectedIds.has(chapter.id)}

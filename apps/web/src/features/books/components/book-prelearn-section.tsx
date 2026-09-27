@@ -146,7 +146,7 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
         type='button'
         onClick={toggleOpen}
         aria-expanded={open}
-        className='flex w-full items-center gap-2 rounded-xl p-3 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
+        className='hover:bg-accent active:bg-accent flex w-full items-center gap-2 rounded-xl p-3 text-left transition-colors'
       >
         <span className='min-w-0 flex-1'>
           <span className='block text-sm font-medium'>{t`Words worth knowing for this book`}</span>

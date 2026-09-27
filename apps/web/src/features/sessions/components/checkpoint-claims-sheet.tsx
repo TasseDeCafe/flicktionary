@@ -160,7 +160,7 @@ export const CheckpointClaimsSheet = ({
                     aria-pressed={checked}
                     onClick={() => toggle(candidate.userLookupId)}
                     className={cn(
-                      'flex w-full items-start gap-2 py-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100',
+                      'hover:bg-accent active:bg-accent flex w-full items-start gap-2 py-2 text-left transition-colors',
                       !checked && 'opacity-60'
                     )}
                   >

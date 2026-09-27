@@ -282,7 +282,7 @@ export const LessonImportWizard = () => {
                       key={index}
                       type='button'
                       onClick={() => toggleSheet(index)}
-                      className='flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
+                      className='hover:bg-accent active:bg-accent flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors'
                     >
                       <Checkbox
                         checked={selectedSheetIdxs.has(index)}
