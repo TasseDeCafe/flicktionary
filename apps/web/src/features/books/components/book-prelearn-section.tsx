@@ -3,7 +3,13 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { ChevronDown, Loader2 } from 'lucide-react'
-import type { Book, PrelearnHorizon, PrelearnItem } from '@flicktionary/api-client/orpc-contracts/books-contract'
+import {
+  PRELEARN_MAX_ITEMS,
+  PRELEARN_PAGE_SIZE,
+  type Book,
+  type PrelearnHorizon,
+  type PrelearnItem,
+} from '@flicktionary/api-client/orpc-contracts/books-contract'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card } from '@flicktionary/ui/components/card'
@@ -52,13 +58,24 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
   const { t } = useLingui()
   const [open, setOpen] = useState(readOpen)
   const [horizon, setHorizon] = useState<PrelearnHorizon>('next_part')
+  const [limit, setLimit] = useState(PRELEARN_PAGE_SIZE)
   // Rows acted on stay hidden until the refetch that drops them lands.
   const [hiddenLemmas, setHiddenLemmas] = useState<ReadonlySet<string>>(new Set())
   const [learningLemmas, setLearningLemmas] = useState<ReadonlySet<string>>(new Set())
 
   const contentSourceId = book.contentSourceId
   const supported = book.priority.analysis.status !== 'unsupported'
-  const { data, isLoading } = useGetPrelearnCandidates(contentSourceId, horizon, open && supported && !finished)
+  const { data, isLoading, isPlaceholderData } = useGetPrelearnCandidates(
+    contentSourceId,
+    horizon,
+    limit,
+    open && supported && !finished
+  )
+  // A tab switch resets the limit, so a placeholder at the first page is the
+  // other tab's list (skeleton); past it, it's the shorter list of this tab
+  // while "Show more" loads.
+  const showSkeleton = isLoading || (isPlaceholderData && limit === PRELEARN_PAGE_SIZE)
+  const loadingMore = isPlaceholderData && limit > PRELEARN_PAGE_SIZE
   const items = data?.items ?? []
   const { data: glosses, isFetching: glossesFetching } = useGetPrelearnGlosses(contentSourceId, items)
   const { mutate: markKnown } = useMarkPrelearnKnown(contentSourceId)
@@ -144,7 +161,13 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
 
       {open && (
         <div className='flex flex-col gap-3 px-3 pb-3'>
-          <Tabs value={horizon} onValueChange={(value) => setHorizon(value as PrelearnHorizon)}>
+          <Tabs
+            value={horizon}
+            onValueChange={(value) => {
+              setHorizon(value as PrelearnHorizon)
+              setLimit(PRELEARN_PAGE_SIZE)
+            }}
+          >
             <TabsList className='w-full'>
               <TabsTrigger value='next_part' className='py-1.5'>{t`Next chapter`}</TabsTrigger>
               <TabsTrigger value='rest_of_book' className='py-1.5'>{t`Rest of book`}</TabsTrigger>
@@ -155,7 +178,7 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
             <p className='text-muted-foreground text-xs'>{t`Still analyzing some chapters — more words may appear.`}</p>
           )}
 
-          {isLoading ? (
+          {showSkeleton ? (
             <SkeletonList count={4} renderItem={() => <PrelearnRowSkeleton />} />
           ) : visible.length === 0 ? (
             <p className='text-muted-foreground py-2 text-sm'>
@@ -177,7 +200,25 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
             </ul>
           )}
 
-          {!isLoading && savedCount > 0 && (
+          {!showSkeleton && data?.hasMore && limit < PRELEARN_MAX_ITEMS && (
+            <Button
+              variant='outline'
+              className='h-11 w-full sm:h-9'
+              disabled={loadingMore}
+              onClick={() => setLimit(Math.min(limit + PRELEARN_PAGE_SIZE, PRELEARN_MAX_ITEMS))}
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className='animate-spin' />
+                  {t`Loading…`}
+                </>
+              ) : (
+                t`Show more`
+              )}
+            </Button>
+          )}
+
+          {!showSkeleton && savedCount > 0 && (
             <p className='text-muted-foreground text-xs'>
               {plural(savedCount, {
                 one: '# more word from this book is already in your vocabulary.',
@@ -185,7 +226,7 @@ export const BookPrelearnSection = ({ book, finished }: BookPrelearnSectionProps
               })}
             </p>
           )}
-          {!isLoading && !book.priority.pinned && (
+          {!showSkeleton && !book.priority.pinned && (
             <p className='text-muted-foreground text-xs'>{t`Turn on "Prioritize words from this book" above to learn these words first.`}</p>
           )}
         </div>

@@ -184,6 +184,26 @@ describe('books-router prelearn', () => {
       w.late,
       w.common,
     ])
+    expect(rest.body.data.hasMore).toBe(false)
+  })
+
+  test('limit cuts the list and hasMore says whether more words qualify', async () => {
+    const { token, sourceId, w } = await setupBook()
+
+    const firstPage = await request(testApp)
+      .get(`/api/v1/books/${sourceId}/prelearn`)
+      .query({ horizon: 'rest_of_book', limit: 2 })
+      .set(buildAuthorizationHeaders(token))
+    expect(firstPage.status).toBe(200)
+    expect(firstPage.body.data.items.map((item: { lemma: string }) => item.lemma)).toEqual([w.rare, w.yolkFolded])
+    expect(firstPage.body.data.hasMore).toBe(true)
+
+    const exact = await request(testApp)
+      .get(`/api/v1/books/${sourceId}/prelearn`)
+      .query({ horizon: 'rest_of_book', limit: 4 })
+      .set(buildAuthorizationHeaders(token))
+    expect(exact.body.data.items).toHaveLength(4)
+    expect(exact.body.data.hasMore).toBe(false)
   })
 
   test("another user's book is NOT_FOUND", async () => {

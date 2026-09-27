@@ -89,7 +89,9 @@ export type PrelearnItem = z.infer<typeof PrelearnItemSchema>
 export const PrelearnHorizonSchema = z.enum(['next_part', 'rest_of_book'])
 export type PrelearnHorizon = z.infer<typeof PrelearnHorizonSchema>
 
-const PRELEARN_MAX_ITEMS = 30
+// The list grows a page at a time ("Show more"), up to PRELEARN_MAX_ITEMS words.
+export const PRELEARN_PAGE_SIZE = 30
+export const PRELEARN_MAX_ITEMS = 300
 const PrelearnLemmaSchema = z.string().trim().min(1).max(100)
 
 const UploadErrors = {
@@ -224,22 +226,34 @@ export const booksContract = {
     .input(z.object({ contentSourceId: z.string().uuid() }))
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 
-  // The "Learn before you read" list: at most 30 words that occur at least
-  // MIN_BOOK_OCCURRENCES_AHEAD times in the rest of the book (so a card made
-  // from the list joins the pinned-book stream) and at least once within the
-  // horizon, ordered by occurrences within it. `savedCount` counts the words
-  // that qualify but are already saved. Empty for languages without
-  // dictionary data.
+  // The "Learn before you read" list: the top `limit` words that occur at
+  // least MIN_BOOK_OCCURRENCES_AHEAD times in the rest of the book (so a card
+  // made from the list joins the pinned-book stream) and at least once within
+  // the horizon, ordered by occurrences within it × √rank. The client grows
+  // `limit` for "Show more" rather than paging by offset, so a refetch after
+  // Known/Learn refills the whole visible list consistently. `hasMore` = more
+  // words qualify beyond `limit`. `savedCount` counts the words that qualify
+  // but are already saved. Empty for languages without dictionary data.
   getPrelearnCandidates: oc
     .route({ method: 'GET', path: '/books/{contentSourceId}/prelearn', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ contentSourceId: z.string().uuid(), horizon: PrelearnHorizonSchema }))
+    .input(
+      z.object({
+        contentSourceId: z.string().uuid(),
+        horizon: PrelearnHorizonSchema,
+        limit: z.coerce.number().int().min(1).max(PRELEARN_MAX_ITEMS).default(PRELEARN_PAGE_SIZE),
+      })
+    )
     .output(
       z.object({
-        data: z.object({ items: z.array(PrelearnItemSchema), savedCount: z.number().int() }),
+        data: z.object({
+          items: z.array(PrelearnItemSchema),
+          hasMore: z.boolean(),
+          savedCount: z.number().int(),
+        }),
       })
     ),
 

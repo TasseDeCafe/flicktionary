@@ -181,7 +181,12 @@ export const BooksRouter = (
 
     getPrelearnCandidates: implementer.getPrelearnCandidates.handler(async ({ input, context, errors }) => {
       const result = await listPrelearnCandidates(
-        { contentSourceId: input.contentSourceId, userId: context.res.locals.userId, horizon: input.horizon },
+        {
+          contentSourceId: input.contentSourceId,
+          userId: context.res.locals.userId,
+          horizon: input.horizon,
+          limit: input.limit,
+        },
         deps.bookPrelearnDependencies
       )
       if (!result.ok) throw errors.NOT_FOUND(bookNotFound)

@@ -167,13 +167,21 @@ export const useUploadBook = () => {
 }
 
 // "Learn before you read": only fetched while the book page's section is open.
-export const useGetPrelearnCandidates = (contentSourceId: string, horizon: PrelearnHorizon, enabled: boolean) => {
+// "Show more" raises `limit`; the shorter list stays on screen while the
+// longer one loads.
+export const useGetPrelearnCandidates = (
+  contentSourceId: string,
+  horizon: PrelearnHorizon,
+  limit: number,
+  enabled: boolean
+) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.books.getPrelearnCandidates.queryOptions({
-      input: { contentSourceId, horizon },
+      input: { contentSourceId, horizon, limit },
       select: (response) => response.data,
       enabled,
+      placeholderData: keepPreviousData,
       meta: { errorMessage: t`Failed to load the words ahead` },
     })
   )
