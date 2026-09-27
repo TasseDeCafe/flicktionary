@@ -105,6 +105,12 @@ export const BookDetailView = () => {
             </p>
           )}
           {book && <BookPriorityCard book={book} finished={finished} />}
+          {/* Above the parts so it's reachable without scrolling a long table of contents */}
+          {book && (
+            <div className='mb-2'>
+              <BookPrelearnSection book={book} finished={finished} />
+            </div>
+          )}
           {isLoading && <SkeletonList count={6} renderItem={() => <PartRowSkeleton />} />}
           {isError && <p className='text-muted-foreground text-sm'>{t`This book isn't in your library.`}</p>}
           {book?.parts.map((part) => {
@@ -139,11 +145,6 @@ export const BookDetailView = () => {
               </Card>
             )
           })}
-          {book && (
-            <div className='mt-4'>
-              <BookPrelearnSection book={book} finished={finished} />
-            </div>
-          )}
         </div>
       </div>
 
