@@ -42,7 +42,7 @@ export const AppShellLayout = () => {
   if (isModal) return <Outlet />
 
   return (
-    <div className='flex h-dvh overflow-hidden'>
+    <div className='ios-standalone:pt-status-blur flex h-dvh overflow-hidden'>
       <aside className='bg-background hidden w-64 shrink-0 border-r md:block'>
         <SidebarNav />
       </aside>

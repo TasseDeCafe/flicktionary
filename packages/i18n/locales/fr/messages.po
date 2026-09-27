@@ -998,6 +998,7 @@ msgstr "Par bande de fréquence"
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
+#: apps/web/src/features/sessions/components/track-search-header.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Cancel"
 msgstr "Annuler"
@@ -3236,6 +3237,10 @@ msgstr "Marathi"
 msgid "Mark as known"
 msgstr "Marquer comme connu"
 
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Mark the last line you've read"
+msgstr "Marquer la dernière ligne que vous avez lue"
+
 #: apps/web/src/features/sessions/components/known-lemma-chip.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Marked as known"
@@ -4710,6 +4715,10 @@ msgstr "Faire défiler vers l'arrière"
 msgid "Scroll forward"
 msgstr "Faire défiler vers l'avant"
 
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Search"
+msgstr "Rechercher"
+
 #: apps/web/src/components/language-option-list.tsx
 msgid "Search languages…"
 msgstr "Rechercher des langues…"
@@ -4739,7 +4748,7 @@ msgid "Search TV shows…"
 msgstr "Rechercher des séries TV…"
 
 #: apps/web/src/features/review/components/session-vocabulary-view.tsx
-#: apps/web/src/features/sessions/components/track-search-bar.tsx
+#: apps/web/src/features/sessions/components/track-search-header.tsx
 msgid "Search…"
 msgstr "Rechercher…"
 
@@ -4888,6 +4897,7 @@ msgstr "Mis de côté après plusieurs échecs"
 msgid "Set aside after repeated misses — practice serves them as strengthen exercises."
 msgstr "Mis de côté après plusieurs échecs — la pratique les propose comme exercices de renforcement."
 
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Set reading position"
 msgstr "Définir la position de lecture"
@@ -4968,6 +4978,10 @@ msgstr "Afficher les {count} mots"
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Show answer"
 msgstr "Afficher la réponse"
+
+#: apps/web/src/features/sessions/components/reading-progress-bar.tsx
+msgid "Show controls"
+msgstr "Afficher les commandes"
 
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 msgid "Show more"

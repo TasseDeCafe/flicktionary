@@ -4,6 +4,7 @@ import { useVisualViewportPin } from '@/hooks/use-visual-viewport-pin'
 import { ChevronLeft, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { VerticalCollapse } from '@/components/ui/vertical-collapse'
 
 interface ModalScreenHeaderProps {
   // Single-entry screens navigate to their fixed parent route. Screens with
@@ -43,9 +44,24 @@ export const ModalScreenHeader = ({
 
 interface ModalScreenProps extends ModalScreenHeaderProps {
   children: ReactNode
+  // Replaces the header bar wholesale, for modes that take the bar over (the
+  // reader's search field). Omit to render the standard ModalScreenHeader.
+  header?: ReactNode
+  // Slides the header bar away (height to zero, so the content below grows
+  // into the space) for screens that hide their chrome while reading.
+  headerHidden?: boolean
 }
 
-export const ModalScreen = ({ onClose, closeIcon, title, rightSlot, className, children }: ModalScreenProps) => {
+export const ModalScreen = ({
+  onClose,
+  closeIcon,
+  title,
+  rightSlot,
+  className,
+  header,
+  headerHidden = false,
+  children,
+}: ModalScreenProps) => {
   const rootRef = useRef<HTMLDivElement>(null)
   // `h-dvh` tracks the layout viewport, which iOS Safari does not shrink for
   // the on-screen keyboard — bottom-anchored CTAs inside every modal screen
@@ -54,8 +70,13 @@ export const ModalScreen = ({ onClose, closeIcon, title, rightSlot, className, c
   // `relative` gives its `top` offset something to act on.
   useVisualViewportPin(rootRef)
   return (
-    <div ref={rootRef} className={cn('bg-background relative flex h-dvh flex-col', className)}>
-      <ModalScreenHeader onClose={onClose} closeIcon={closeIcon} title={title} rightSlot={rightSlot} />
+    <div
+      ref={rootRef}
+      className={cn('bg-background ios-standalone:pt-status-blur relative flex h-dvh flex-col', className)}
+    >
+      <VerticalCollapse collapsed={headerHidden}>
+        {header ?? <ModalScreenHeader onClose={onClose} closeIcon={closeIcon} title={title} rightSlot={rightSlot} />}
+      </VerticalCollapse>
       <div className='flex flex-1 flex-col overflow-hidden'>{children}</div>
     </div>
   )

@@ -12,6 +12,22 @@
    the portal container (siblings inside each shadow host). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Installed to the iOS Home Screen: iOS draws a blurred band below the status
+   bar that reaches into the page, so top-level screens push their header
+   clear of it with `ios-standalone:pt-status-blur`. `-webkit-touch-callout`
+   is only supported by iOS WebKit. */
+@custom-variant ios-standalone {
+  @media (display-mode: standalone) {
+    @supports (-webkit-touch-callout: none) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  --spacing-status-blur: 1rem;
+}
+
 @theme inline {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
