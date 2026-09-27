@@ -998,6 +998,7 @@ msgstr "By frequency band"
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
+#: apps/web/src/features/sessions/components/track-search-header.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -3237,6 +3238,10 @@ msgstr "Marathi"
 msgid "Mark as known"
 msgstr "Mark as known"
 
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
+msgid "Mark the last line you've read"
+msgstr "Mark the last line you've read"
+
 #: apps/web/src/features/sessions/components/known-lemma-chip.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Marked as known"
@@ -4711,6 +4716,10 @@ msgstr "Scroll back"
 msgid "Scroll forward"
 msgstr "Scroll forward"
 
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "Search"
+msgstr "Search"
+
 #: apps/web/src/components/language-option-list.tsx
 msgid "Search languages…"
 msgstr "Search languages…"
@@ -4740,7 +4749,7 @@ msgid "Search TV shows…"
 msgstr "Search TV shows…"
 
 #: apps/web/src/features/review/components/session-vocabulary-view.tsx
-#: apps/web/src/features/sessions/components/track-search-bar.tsx
+#: apps/web/src/features/sessions/components/track-search-header.tsx
 msgid "Search…"
 msgstr "Search…"
 
@@ -4889,6 +4898,7 @@ msgstr "Set aside after repeated misses"
 msgid "Set aside after repeated misses — practice serves them as strengthen exercises."
 msgstr "Set aside after repeated misses — practice serves them as strengthen exercises."
 
+#: apps/web/src/features/sessions/components/session-actions-overlay.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Set reading position"
 msgstr "Set reading position"
