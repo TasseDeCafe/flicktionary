@@ -4,15 +4,17 @@ import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
 import { ORPCError } from '@orpc/contract'
-import { Bookmark, ChevronDown, ListTree, MoreVertical } from 'lucide-react'
+import { ChevronDown, ListTree, MoreVertical, Search } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { createSearchMatcher, normalizeForSearch } from '@flicktionary/core/utils/search-match'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { VerticalCollapse } from '@/components/ui/vertical-collapse'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
+import { useAutoHideChrome } from '../hooks/use-auto-hide-chrome'
 import {
   isOptimisticHighlightId,
   useCheckpointClaims,
@@ -45,7 +47,8 @@ import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { formatTimestamp } from '../utils/format-timestamp'
 import { WelcomeBackCard } from './welcome-back-card'
-import { TrackSearchBar } from './track-search-bar'
+import { TrackSearchHeader } from './track-search-header'
+import { ReadingProgressBar } from './reading-progress-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
 import { deriveDeclarationPillState } from './declaration-pill-state'
@@ -96,6 +99,9 @@ export const SessionView = () => {
   const trackId = session?.textTrackId ?? null
   const [flashSegmentId, setFlashSegmentId] = useState<string | null>(null)
 
+  // The search field lives in the header, behind an icon: opening it swaps the
+  // title bar for the field, and Cancel clears the query along with it.
+  const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search.trim(), 250)
   const isSearching = debouncedSearch.length > 0
@@ -1044,12 +1050,19 @@ export const SessionView = () => {
     suppressScrollGate()
   }
 
+  // Reading mode: header and footer slide away while scrolling down through the
+  // text. They stay put whenever they carry the task at hand — search,
+  // bookmark placement, a sweep's Undo — and at the end of the text, where the
+  // close-out flow needs the footer.
+  const scrolledChromeHidden = useAutoHideChrome(scrollEl, programmaticScrollUntilRef)
+  const chromeHidden = scrolledChromeHidden && !searchOpen && !isPlacingBookmark && !sweepConfirmation && !reachedEnd
+
   // Deep-link fallback only — with in-app history the hook returns to the
   // actual opener (sessions list, dashboard card, vocabulary detour, ...).
   const closeToSessions = useModalScreenClose({ to: '/sessions' })
 
   if (isSessionLoading) {
-    // Mirror the loaded reader (title + search bar + segment list) with
+    // Mirror the loaded reader (title + progress track + segment list) with
     // skeletons rather than a bare full-view spinner, so the chrome is stable
     // from the first paint.
     const titleSkeleton = (
@@ -1060,11 +1073,7 @@ export const SessionView = () => {
     )
     return (
       <ModalScreen onClose={closeToSessions} title={titleSkeleton}>
-        <div className='bg-background border-b px-4 py-3'>
-          <div className='mx-auto max-w-4xl'>
-            <Skeleton className='h-10 w-full rounded-md' />
-          </div>
-        </div>
+        <div className='bg-muted h-[3px] shrink-0' />
         <div className='flex-1 overflow-y-auto px-4 py-3'>
           <div className='mx-auto max-w-4xl'>
             <SegmentListSkeleton />
@@ -1129,17 +1138,24 @@ export const SessionView = () => {
     <ModalScreen
       onClose={closeToSessions}
       title={titleNode}
+      headerHidden={chromeHidden}
+      header={
+        searchOpen ? (
+          <TrackSearchHeader
+            value={search}
+            onChange={setSearch}
+            onCancel={() => {
+              setSearch('')
+              setSearchOpen(false)
+            }}
+          />
+        ) : undefined
+      }
       rightSlot={
         <>
           {allSegments && allSegments.length > 0 && (
-            <Button
-              variant={isPlacingBookmark ? 'secondary' : 'ghost'}
-              size='icon'
-              aria-label={t`Set reading position`}
-              aria-pressed={isPlacingBookmark}
-              onClick={() => (isPlacingBookmark ? cancelBookmarkPlacement() : enterBookmarkPlacement())}
-            >
-              <Bookmark className='size-5' />
+            <Button variant='ghost' size='icon' aria-label={t`Search`} onClick={() => setSearchOpen(true)}>
+              <Search className='size-5' />
             </Button>
           )}
           {isBookPart && (
@@ -1168,23 +1184,7 @@ export const SessionView = () => {
         </>
       }
     >
-      {/* Coverage meter: solid fill = current expected coverage, animating on
-          sweeps as the payoff. The read-but-unclaimed striped tail needs a
-          projected-coverage number from the backend — shelved, see
-          docs/proposals/mark-known-projected-coverage.md. */}
-      {sessionDifficulty?.status === 'available' && sessionDifficulty.expectedCoveragePercent != null && (
-        <div className='bg-muted h-[3px] shrink-0'>
-          <div
-            className='bg-primary/60 h-full transition-[width] duration-700'
-            style={{ width: `${sessionDifficulty.expectedCoveragePercent}%` }}
-          />
-        </div>
-      )}
-      <div className='bg-background border-b px-4 py-3'>
-        <div className='mx-auto max-w-4xl'>
-          <TrackSearchBar value={search} onChange={setSearch} />
-        </div>
-      </div>
+      <ReadingProgressBar scrollEl={scrollEl} hidden={isSearching} headerHidden={chromeHidden} />
 
       <div className='relative flex min-h-0 flex-1 flex-col'>
         <div
@@ -1274,43 +1274,45 @@ export const SessionView = () => {
         )}
       </div>
 
-      {isPlacingBookmark ? (
-        // Placement mode takes over the footer: instruction + cancel/confirm,
-        // mirroring the vocabulary footer's chrome so the swap doesn't jump.
-        <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
-          <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
-            <span className='text-muted-foreground text-sm'>{t`Tap the last line you've read.`}</span>
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-              <Button size='xl' variant='outline' className='w-full sm:w-auto' onClick={cancelBookmarkPlacement}>
-                {t`Cancel`}
-              </Button>
-              <Button
-                size='xl'
-                className='w-full sm:w-auto'
-                disabled={placementIndex == null || isSettingPosition}
-                onClick={confirmBookmarkPlacement}
-              >
-                {t`Set reading position`}
-              </Button>
+      <VerticalCollapse collapsed={chromeHidden}>
+        {isPlacingBookmark ? (
+          // Placement mode takes over the footer: instruction + cancel/confirm,
+          // mirroring the vocabulary footer's chrome so the swap doesn't jump.
+          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+            <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+              <span className='text-muted-foreground text-sm'>{t`Tap the last line you've read.`}</span>
+              <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                <Button size='xl' variant='outline' className='w-full sm:w-auto' onClick={cancelBookmarkPlacement}>
+                  {t`Cancel`}
+                </Button>
+                <Button
+                  size='xl'
+                  className='w-full sm:w-auto'
+                  disabled={placementIndex == null || isSettingPosition}
+                  onClick={confirmBookmarkPlacement}
+                >
+                  {t`Set reading position`}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <SessionVocabularyFooter
-          sessionId={sessionId}
-          isGeneratingCandidates={isGeneratingCandidates}
-          onOpenSessionVocabulary={() => {
-            void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
-          }}
-          pillState={pillState}
-          onOpenDeclarationSheet={openDeclarationSheet}
-          sweepConfirmation={
-            sweepConfirmation
-              ? { count: sweepConfirmation.count, onUndo: sweepConfirmation.sweepBatchId ? handleUndoSweep : null }
-              : null
-          }
-        />
-      )}
+        ) : (
+          <SessionVocabularyFooter
+            sessionId={sessionId}
+            isGeneratingCandidates={isGeneratingCandidates}
+            onOpenSessionVocabulary={() => {
+              void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
+            }}
+            pillState={pillState}
+            onOpenDeclarationSheet={openDeclarationSheet}
+            sweepConfirmation={
+              sweepConfirmation
+                ? { count: sweepConfirmation.count, onUndo: sweepConfirmation.sweepBatchId ? handleUndoSweep : null }
+                : null
+            }
+          />
+        )}
+      </VerticalCollapse>
 
       <CheckpointSweepSheet
         key={declarationRunKey}
@@ -1376,6 +1378,14 @@ export const SessionView = () => {
         onOpenChange={setActionsOpen}
         sessionTitle={sourceTitle}
         textTrackId={session.textTrackId}
+        onSetReadingPosition={
+          allSegments && allSegments.length > 0
+            ? () => {
+                setActionsOpen(false)
+                enterBookmarkPlacement()
+              }
+            : undefined
+        }
         onRequestRemove={() => {
           setActionsOpen(false)
           setRemoveOpen(true)

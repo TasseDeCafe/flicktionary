@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Globe, GlobeLock, Trash2 } from 'lucide-react'
+import { Bookmark, Globe, GlobeLock, Trash2 } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -19,6 +19,9 @@ type Props = {
   // moderation-clean source ever sees it — recipients of shared content and
   // guests never do.
   textTrackId?: string | null
+  // Enters the reader's "tap the last line you've read" mode. Only the
+  // session view passes it (cards have no reader to place in).
+  onSetReadingPosition?: () => void
   // Opens the remove-confirmation dialog; the caller owns that dialog so the
   // preview/mutation flow stays in one place.
   onRequestRemove: () => void
@@ -26,7 +29,14 @@ type Props = {
 
 // The session ⋮ menu (session cards + the session view header): a sheet on
 // mobile, dialog on desktop.
-export const SessionActionsOverlay = ({ open, onOpenChange, sessionTitle, textTrackId, onRequestRemove }: Props) => {
+export const SessionActionsOverlay = ({
+  open,
+  onOpenChange,
+  sessionTitle,
+  textTrackId,
+  onSetReadingPosition,
+  onRequestRemove,
+}: Props) => {
   const { t } = useLingui()
   const { data: shareState } = useShareState(textTrackId ?? null, open)
   const { mutate: setShared, isPending: isSettingShared } = useSetShared(textTrackId ?? null)
@@ -44,6 +54,14 @@ export const SessionActionsOverlay = ({ open, onOpenChange, sessionTitle, textTr
           <OverlayDescription className='sr-only'>{t`Actions for this session.`}</OverlayDescription>
         </OverlayHeader>
         <div className='flex flex-col gap-1 px-2 pb-2'>
+          {onSetReadingPosition && (
+            <OverlayActionRow
+              icon={Bookmark}
+              label={t`Set reading position`}
+              description={t`Mark the last line you've read`}
+              onClick={onSetReadingPosition}
+            />
+          )}
           {shareState === 'not-shared' && (
             <OverlayActionRow
               icon={Globe}
