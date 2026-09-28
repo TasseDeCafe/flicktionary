@@ -77,9 +77,12 @@ export const createAdhocCard = async (params: {
   headword: string
   context: string | null
   studyIntent: StudyIntent | null
+  // The phrase the learner translated from in "Translate & add"; see
+  // HighlightInput.meaningHint.
+  meaningHint?: string | null
   deps: CreateAdhocCardDependencies
 }): Promise<CreateAdhocCardResult> => {
-  const { userId, targetLanguage, headword, context, studyIntent, deps } = params
+  const { userId, targetLanguage, headword, context, studyIntent, meaningHint, deps } = params
 
   const languagePrefs = await getLanguageMode({
     userId,
@@ -137,6 +140,7 @@ export const createAdhocCard = async (params: {
     highlightId: highlight.id,
     segmentId: segment.id,
     selectionText: headword,
+    ...(meaningHint ? { meaningHint } : {}),
   }
 
   // Dialect-split languages follow the user's IPA dialect preference — the

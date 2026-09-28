@@ -93,6 +93,9 @@ export const cardsContract = {
         // See StudyIntentSchema: full-set facet configuration, applied inline
         // (the adhoc save is synchronous) before the keep transition.
         studyIntent: StudyIntentSchema.optional(),
+        // "Translate & add": the phrase the learner translated from, used only
+        // to steer the sense of a polysemous headword.
+        meaningHint: z.string().trim().max(500).nullable().optional(),
       })
     )
     .output(

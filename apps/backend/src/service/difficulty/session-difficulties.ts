@@ -24,6 +24,7 @@ import {
   type DifficultyLabel,
   type LemmaKnowledge,
 } from './compute-difficulty'
+import { isSyntheticSourceType } from '../content-sources/synthetic-source'
 
 // The batched difficulty read behind studySessions.getDifficulties: sessions
 // are grouped by (track, language) so a TV season costs one profile read, and
@@ -140,7 +141,7 @@ const resolveTrackStatus = async (
 ): Promise<{ kind: 'compute' } | { kind: 'terminal'; dto: SessionDifficultyDto }> => {
   const track = await deps.textTracksRepository.findByIdWithSourceType(group.textTrackId)
   if (!track) return { kind: 'terminal', dto: EMPTY_OF('unsupported') }
-  if (track.content_source_type === 'adhoc' || track.content_source_type === 'lesson') {
+  if (isSyntheticSourceType(track.content_source_type)) {
     return { kind: 'terminal', dto: EMPTY_OF('unsupported') }
   }
 
@@ -180,11 +181,7 @@ export const getSessionDifficulties = async (
   }
 
   for (const session of sessions) {
-    if (
-      session.content_source_type === 'adhoc' ||
-      session.content_source_type === 'lesson' ||
-      !isSupportedLanguage(session.target_language)
-    ) {
+    if (isSyntheticSourceType(session.content_source_type) || !isSupportedLanguage(session.target_language)) {
       result[session.id] = EMPTY_OF('unsupported')
       continue
     }

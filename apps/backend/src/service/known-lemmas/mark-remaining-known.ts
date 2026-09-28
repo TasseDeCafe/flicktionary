@@ -13,6 +13,7 @@ import type { WiktionaryMatchRepositoryInterface } from '../../transport/databas
 import { countFoldedTokens } from '../lemma-profiles/count-tokens'
 import { resolveTrackProfileReadiness } from '../lemma-profiles/profile-readiness'
 import { filterCreditableCandidates } from './filter-creditable-candidates'
+import { isSyntheticSourceType } from '../content-sources/synthetic-source'
 
 // The per-session "mark the rest as known" sweep (coverage proposal): every
 // CREDITABLE candidate lemma that is neither studied nor already marked gets
@@ -107,7 +108,7 @@ const collectCreditableLemmas = async (
 
 export type SweepComputation =
   | { ok: true; targetLanguage: string; markableLemmas: string[] }
-  // Synthetic sessions (adhoc/lesson) and languages without ranks/wiktionary
+  // Synthetic sessions (adhoc/lesson/chat) and languages without ranks/wiktionary
   // support never sweep — same gate as the difficulty stat. 'profile_failed'
   // is the terminal build failure: the client must stop polling, not retry.
   | { ok: false; reason: 'not_found' | 'unsupported' | 'profile_pending' | 'profile_failed' }
@@ -118,7 +119,7 @@ export const computeMarkableLemmas = async (
 ): Promise<SweepComputation> => {
   const session = await deps.studySessionsRepository.findByIdForUserWithSource(params.sessionId, params.userId)
   if (!session) return { ok: false, reason: 'not_found' }
-  if (session.content_source_type === 'adhoc' || session.content_source_type === 'lesson') {
+  if (isSyntheticSourceType(session.content_source_type)) {
     return { ok: false, reason: 'unsupported' }
   }
   const targetLanguage = session.target_language

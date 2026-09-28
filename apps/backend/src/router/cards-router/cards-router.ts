@@ -159,6 +159,7 @@ export const CardsRouter = (
           headword: input.headword,
           context: input.context,
           studyIntent: input.studyIntent ?? null,
+          meaningHint: input.meaningHint ?? null,
           deps: createAdhocCardDependencies,
         })
         return { data: { cardId: result.cardId, sessionId: result.sessionId } }

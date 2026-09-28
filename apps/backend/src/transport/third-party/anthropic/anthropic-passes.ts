@@ -16,7 +16,9 @@ import { languageDetectionPass } from './passes/language-detection-pass'
 import { moderationPass } from './passes/moderation-pass'
 import { nominateCandidatesPass } from './passes/nominate-candidates-pass'
 import { prelearnGlossPass } from './passes/prelearn-gloss-pass'
+import { translateForCapturePass } from './passes/translate-for-capture-pass'
 import { verifyExercisePass } from './passes/verify-exercise-pass'
+import { vocabChatTitlePass } from './passes/vocab-chat-title-pass'
 
 // The injection seam for every LLM call the app makes. Services and routers
 // receive this bundle through their deps objects instead of importing pass
@@ -41,9 +43,12 @@ export type AnthropicPassesInterface = {
   moderationPass: typeof moderationPass
   nominateCandidatesPass: typeof nominateCandidatesPass
   prelearnGlossPass: typeof prelearnGlossPass
+  translateForCapturePass: typeof translateForCapturePass
   verifyExercisePass: typeof verifyExercisePass
-  // Card chat builds a bespoke prompt (seeded turn, history split, edit tool)
-  // in the service layer; only the raw completion call crosses the seam.
+  vocabChatTitlePass: typeof vocabChatTitlePass
+  // Card chat and vocabulary chat build bespoke prompts (history split, tools,
+  // tool loops) in the service layer; only the raw completion call crosses the
+  // seam.
   createChatCompletion: (params: Anthropic.MessageCreateParamsNonStreaming) => Promise<Anthropic.Message>
 }
 
@@ -64,7 +69,9 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   moderationPass,
   nominateCandidatesPass,
   prelearnGlossPass,
+  translateForCapturePass,
   verifyExercisePass,
+  vocabChatTitlePass,
   createChatCompletion: (params) => getAnthropicClient().messages.create(params),
 })
 
@@ -91,7 +98,9 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   moderationPass: notScripted('moderationPass'),
   nominateCandidatesPass: notScripted('nominateCandidatesPass'),
   prelearnGlossPass: notScripted('prelearnGlossPass'),
+  translateForCapturePass: notScripted('translateForCapturePass'),
   verifyExercisePass: notScripted('verifyExercisePass'),
+  vocabChatTitlePass: notScripted('vocabChatTitlePass'),
   createChatCompletion: notScripted('createChatCompletion'),
   ...overrides,
 })
