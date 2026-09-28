@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { WORD_FAMILY_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { Input } from '@flicktionary/ui/components/input'
 import { Label } from '@flicktionary/ui/components/label'
 import { Switch } from '@flicktionary/ui/components/switch'
@@ -10,6 +11,7 @@ import {
   useSetIpaDialect,
   useSetPracticeLimitsForLanguage,
   useSetShowTranslationsForLanguage,
+  useSetWordFamilyHintsForLanguage,
 } from '@/features/sessions/api/sessions-hooks'
 import {
   PRACTICE_MAX_NEW_TERMS_LIMIT,
@@ -24,6 +26,7 @@ type Pref = {
   targetLanguage: string
   cefrLevel: string
   showTranslationsEnabled: boolean
+  wordFamilyHintsEnabled: boolean
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
   practiceMaxReviewTermsProduction: number | null
@@ -205,6 +208,11 @@ export const CefrPerLanguageList = ({ prefs, ipaDialects }: Props) => {
     isPending: isSavingShowTranslations,
     variables: showTranslationsVariables,
   } = useSetShowTranslationsForLanguage()
+  const {
+    mutate: setWordFamilyHints,
+    isPending: isSavingWordFamilyHints,
+    variables: wordFamilyHintsVariables,
+  } = useSetWordFamilyHintsForLanguage()
   const { mutate: setIpaDialect, isPending: isSavingIpaDialect } = useSetIpaDialect()
 
   // Per-language IPA dialect toggles. Each option carries the full mutation
@@ -267,6 +275,8 @@ export const CefrPerLanguageList = ({ prefs, ipaDialects }: Props) => {
           const isRowPending = isPending && variables?.targetLanguage === p.targetLanguage
           const isShowTranslationsPending =
             isSavingShowTranslations && showTranslationsVariables?.targetLanguage === p.targetLanguage
+          const isWordFamilyHintsPending =
+            isSavingWordFamilyHints && wordFamilyHintsVariables?.targetLanguage === p.targetLanguage
           const dialectRow = ipaDialectRowFor(p.targetLanguage)
           return (
             <li key={p.targetLanguage} className='flex flex-col gap-3 rounded-md border p-3'>
@@ -311,6 +321,24 @@ export const CefrPerLanguageList = ({ prefs, ipaDialects }: Props) => {
                   aria-label={t`Generate translations`}
                 />
               </div>
+              {WORD_FAMILY_LANGUAGES.has(p.targetLanguage) && (
+                <div className='flex items-center justify-between gap-3 border-t pt-3'>
+                  <div className='flex flex-col gap-1'>
+                    <span className='text-sm font-medium'>{t`Word-family hints`}</span>
+                    <p className='text-muted-foreground text-xs'>
+                      {t`When you tap a word, show how it's built and which related words you already know. If you know one, the translation waits until you tap Show translation, so you can guess first.`}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={p.wordFamilyHintsEnabled}
+                    disabled={isWordFamilyHintsPending}
+                    onCheckedChange={(checked) =>
+                      setWordFamilyHints({ targetLanguage: p.targetLanguage, enabled: checked })
+                    }
+                    aria-label={t`Word-family hints`}
+                  />
+                </div>
+              )}
               <PracticeLimitsRow
                 targetLanguage={p.targetLanguage}
                 maxNewTerms={p.practiceMaxNewTerms}

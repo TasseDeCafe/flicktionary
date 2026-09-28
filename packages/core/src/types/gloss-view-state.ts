@@ -10,6 +10,18 @@
 // pronunciation of its own and we fell back to its lemma's (null otherwise);
 // surfaces label the IPA with it so an inflected form isn't implied to be
 // pronounced that way.
+// The reader's word-family line (web gloss sheet only): mirrors the
+// glosses.fastGloss `wordFamily` DTO structurally, since core can't import the
+// api-client contracts.
+export type GlossWordFamily = {
+  formOf: {
+    kind: 'participle' | 'adverbial_participle' | 'gerund' | 'passive' | 'verbal_noun'
+    lemma: string
+  } | null
+  parts: Array<{ text: string; isAffix: boolean }> | null
+  anchors: Array<{ lemma: string; source: 'known' | 'saved' }>
+}
+
 export type GlossViewState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -25,4 +37,7 @@ export type GlossViewState =
       // gloss-sheet chip; the extension doesn't consume it). Absent on
       // cached-gloss seeds — the async fetch refresh fills it.
       knownLemmaCandidates?: string[]
+      // How the word is built + relatives the user has (web gloss sheet's
+      // preview mode only; absent everywhere else).
+      wordFamily?: GlossWordFamily | null
     }

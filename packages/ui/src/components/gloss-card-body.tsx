@@ -21,6 +21,12 @@ type GlossCardBodyProps = {
   ipaPrefix?: ReactNode
   // Accessibility fallback announced while there is no visible gloss text.
   srDescription: string
+  // Rendered between the IPA row and the gloss line (the reader's
+  // word-family line).
+  beforeGloss?: ReactNode
+  // Stands in for the gloss line while the caller holds the translation back
+  // (guess-before-reveal); the POS/register badges still show.
+  glossReplacement?: ReactNode
 }
 
 // The shared gloss-card body: IPA row, one-line gloss, POS/register badges and
@@ -38,6 +44,8 @@ export const GlossCardBody = ({
   ipaLemma,
   ipaPrefix,
   srDescription,
+  beforeGloss,
+  glossReplacement,
 }: GlossCardBodyProps) => {
   if (loading) {
     return (
@@ -61,7 +69,13 @@ export const GlossCardBody = ({
           <span>{ipaLabel}</span>
         </p>
       )}
-      {gloss !== null ? (
+      {beforeGloss}
+      {gloss !== null && glossReplacement ? (
+        <>
+          {glossReplacement}
+          <FloatingSheetDescription className='sr-only'>{srDescription}</FloatingSheetDescription>
+        </>
+      ) : gloss !== null ? (
         <FloatingSheetDescription>{gloss}</FloatingSheetDescription>
       ) : (
         <FloatingSheetDescription className='sr-only'>{srDescription}</FloatingSheetDescription>
