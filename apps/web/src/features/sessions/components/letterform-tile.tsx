@@ -38,6 +38,12 @@ const PALETTES: Partial<Record<ContentSourceType, Palette>> = {
     shadow: 'fill-violet-300 dark:fill-violet-400/25',
     outline: 'stroke-violet-700/50 dark:stroke-violet-400/40',
   },
+  chat: {
+    bg: 'bg-pink-100 dark:bg-pink-400/10',
+    main: 'fill-pink-500 dark:fill-pink-400',
+    shadow: 'fill-pink-300 dark:fill-pink-400/25',
+    outline: 'stroke-pink-700/50 dark:stroke-pink-400/40',
+  },
   youtube: {
     bg: 'bg-red-100 dark:bg-red-400/10',
     main: 'fill-red-500 dark:fill-red-400',

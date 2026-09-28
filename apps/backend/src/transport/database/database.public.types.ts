@@ -2026,6 +2026,44 @@ export type Database = {
         }
         Relationships: []
       }
+      vocab_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          new_thread_suggestion: Json | null
+          proposal: Json | null
+          role: Database['public']['Enums']['card_chat_role']
+          study_session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          new_thread_suggestion?: Json | null
+          proposal?: Json | null
+          role: Database['public']['Enums']['card_chat_role']
+          study_session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          new_thread_suggestion?: Json | null
+          proposal?: Json | null
+          role?: Database['public']['Enums']['card_chat_role']
+          study_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'vocab_chat_messages_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       wiktionary_entries: {
         Row: {
           data: Json
@@ -2138,7 +2176,8 @@ export type Database = {
     Enums: {
       card_chat_role: 'user' | 'assistant'
       card_status: 'needs_data' | 'kept' | 'removed'
-      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv' | 'lesson'
+      content_source_type:
+        'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv' | 'lesson' | 'chat'
       exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
@@ -2409,7 +2448,18 @@ export const Constants = {
     Enums: {
       card_chat_role: ['user', 'assistant'],
       card_status: ['needs_data', 'kept', 'removed'],
-      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming', 'tv', 'lesson'],
+      content_source_type: [
+        'movie',
+        'book',
+        'article',
+        'text',
+        'adhoc',
+        'youtube',
+        'streaming',
+        'tv',
+        'lesson',
+        'chat',
+      ],
       exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
       exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],

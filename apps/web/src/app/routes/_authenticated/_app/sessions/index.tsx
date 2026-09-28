@@ -8,7 +8,7 @@ import { SessionsListView } from '@/features/sessions/components/sessions-list-v
 // text stays local state — transient typing doesn't belong in history.
 const sessionsSearchSchema = z.object({
   type: z
-    .enum(['movie', 'tv', 'book', 'text', 'article', 'youtube', 'streaming', 'lesson'])
+    .enum(['movie', 'tv', 'book', 'text', 'article', 'youtube', 'streaming', 'lesson', 'chat'])
     .optional()
     .catch(undefined),
   lang: z.string().optional().catch(undefined),

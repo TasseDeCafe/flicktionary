@@ -20,6 +20,10 @@ export type HighlightInput = {
   highlightId: string
   segmentId: string
   selectionText: string
+  // What the learner was looking for when they captured the term (e.g. the
+  // native-language phrase they translated from) — steers the sense choice
+  // for polysemous headwords. Not a translation to copy.
+  meaningHint?: string
 }
 
 type BasicDataPassArgs = {
@@ -195,7 +199,10 @@ export const basicDataPass = async ({
   // are answered directly in the per-card chat (seed_card_chat) rather than
   // shaping the card's base fields.
   const highlightLines = highlights
-    .map((h) => `- ${h.highlightId} :: segment_id=${h.segmentId} :: "${h.selectionText}"`)
+    .map((h) => {
+      const hint = h.meaningHint ? ` :: learner was looking for: "${h.meaningHint}"` : ''
+      return `- ${h.highlightId} :: segment_id=${h.segmentId} :: "${h.selectionText}"${hint}`
+    })
     .join('\n')
 
   const highlightsBlock = highlights.length
@@ -225,7 +232,8 @@ headword must cover the SAME word(s) the user selected, only normalized — do N
 absorb neighbouring words into a wider collocation (selection 'назначения' →
 'назначение', never 'специальное назначение'). Widen past the selection only when
 it is an incomplete fragment of a single fixed unit (a phrasal-verb particle, a
-required preposition/clitic).${translationModeNote}${highlightsBlock}
+required preposition/clitic). When a highlight carries a "learner was looking for" hint,
+pick the sense that matches it.${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
 ${segmentLines}

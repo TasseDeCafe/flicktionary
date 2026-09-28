@@ -11,7 +11,7 @@ import type { DbTextTrack } from '../../transport/database/text-tracks/text-trac
 //   'none'   — never shareable. Movie/TV/streaming subtitle tracks are
 //              excluded as a copyright posture: privately fetching subtitles
 //              for your own study is one thing, running a browsable catalog of
-//              them is another. Lessons are personal notes; adhoc is plumbing.
+//              them is another. Lessons and chats are personal; adhoc is plumbing.
 export type ShareMode = 'auto' | 'opt-in' | 'none'
 
 export const SHARE_MODE_BY_SOURCE_TYPE: Record<ContentSourceType, ShareMode> = {
@@ -24,6 +24,7 @@ export const SHARE_MODE_BY_SOURCE_TYPE: Record<ContentSourceType, ShareMode> = {
   book: 'none',
   lesson: 'none',
   adhoc: 'none',
+  chat: 'none',
 }
 
 // 'auto' publishes fire on ingest; 'user' requests come from the paste-wizard

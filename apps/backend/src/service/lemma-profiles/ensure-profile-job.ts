@@ -2,6 +2,7 @@ import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
+import { isSyntheticSourceType } from '../content-sources/synthetic-source'
 
 export type EnsureTrackLemmaProfileJobDependencies = {
   textTracksRepository: TextTracksRepositoryInterface
@@ -23,7 +24,7 @@ export const ensureTrackLemmaProfileJob = async (
   try {
     const track = await deps.textTracksRepository.findByIdWithSourceType(params.textTrackId)
     if (!track || track.profile_built_at !== null) return
-    if (track.content_source_type === 'adhoc' || track.content_source_type === 'lesson') return
+    if (isSyntheticSourceType(track.content_source_type)) return
     if (!KAIKKI_LANGUAGES.has(track.language)) return
     await deps.processingJobsRepository.enqueueBuildTrackLemmaProfile({
       textTrackId: params.textTrackId,

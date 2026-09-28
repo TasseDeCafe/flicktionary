@@ -6,13 +6,13 @@ import type { WiktionaryMatchRepositoryInterface } from '../../transport/databas
 import type { LemmaRanksRepositoryInterface } from '../../transport/database/lemma-ranks/lemma-ranks-repository'
 import { countFoldedTokens } from './count-tokens'
 import { countBookPartLemmas, lemmasNeedingRanks } from './book-lemma-counts'
+import { isSyntheticSourceType } from '../content-sources/synthetic-source'
 
 // Builds (or rebuilds) a track's lemma profile: batch-tokenize the segments
 // with occurrence counts, resolve every distinct folded token to its candidate
 // lemma set through the shared checkpoint matcher, and swap the profile rows +
 // track bookkeeping in one transaction (see the repository). Synthetic tracks
-// (adhoc: mutable, "headword — context" lines; lesson: independent imported
-// vocabulary items, non-narrative) and languages without loaded wiktionary
+// (see isSyntheticSourceType) and languages without loaded wiktionary
 // data are skipped — the difficulty stat treats them as unsupported. Book
 // parts additionally get their guarded per-lemma counts
 // (book_part_lemma_counts) in the same swap.
@@ -43,7 +43,7 @@ export const buildTrackLemmaProfile = async (
 ): Promise<BuildTrackLemmaProfileResult> => {
   const track = await deps.textTracksRepository.findByIdWithSourceType(textTrackId)
   if (!track) return { status: 'skipped', reason: 'track_not_found' }
-  if (track.content_source_type === 'adhoc' || track.content_source_type === 'lesson') {
+  if (isSyntheticSourceType(track.content_source_type)) {
     return { status: 'skipped', reason: 'synthetic_source' }
   }
   if (!KAIKKI_LANGUAGES.has(track.language)) return { status: 'skipped', reason: 'unsupported_language' }

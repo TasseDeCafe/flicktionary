@@ -70,6 +70,13 @@ export const MODEL_NOMINATE = process.env.NOMINATE_MODEL ?? MODEL_SONNET
 // so Sonnet is plenty. The env var allows one-line A/B trials.
 export const MODEL_GRADE_SENTENCE = process.env.GRADE_SENTENCE_MODEL ?? MODEL_SONNET
 
+// "Translate & add" candidates run on Opus at low effort: learners act on
+// these notes directly (aspect, government, who-marries-whom), and in a
+// comparison Haiku got such notes wrong and missed common options while Opus
+// did not, at ~4s per lookup vs ~2s. The env var flips the pass in one line
+// (e.g. back to Haiku if the wait proves too long).
+export const MODEL_TRANSLATE = process.env.TRANSLATE_MODEL ?? MODEL_OPUS
+
 let client: Anthropic | null = null
 
 export const getAnthropicClient = (): Anthropic => {

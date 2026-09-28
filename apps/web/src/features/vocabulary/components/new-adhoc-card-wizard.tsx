@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Languages } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
@@ -19,6 +19,7 @@ import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils
 import { shouldUseDetectedLanguage } from '@/features/sessions/utils/detected-language'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
+import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 
 const HEADWORD_MAX = 200
 const CONTEXT_MAX = 2000
@@ -28,6 +29,7 @@ type Step = 'form' | 'cefr'
 export const NewAdhocCardWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
+  const isAnonymous = useAuthStore(getIsAnonymous)
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
@@ -181,6 +183,16 @@ export const NewAdhocCardWizard = () => {
       }}
     >
       <WizardStepHeading title={t`Save a term`} />
+      {/* Signed-in users get "Translate & add" and the vocabulary chat instead
+          of this form; both are LLM lanes gated behind an account. */}
+      {isAnonymous && (
+        <p className='text-muted-foreground -mt-2 mb-4 text-sm'>
+          {t`Want to type in your own language, or ask for words on a topic?`}{' '}
+          <Link to='/save-progress' className='text-foreground font-medium underline underline-offset-2'>
+            {t`Create a free account`}
+          </Link>
+        </p>
+      )}
       <div className='flex flex-col gap-4'>
         <LanguageSelectField
           label={t`Target language`}

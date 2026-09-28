@@ -13,6 +13,7 @@ export type IngestModerationSurface =
   | 'telegram'
   | 'lesson-import'
   | 'book-upload'
+  | 'vocab-chat'
   // Share-time checks for the Explore catalog: YouTube ingest is not gated, so
   // its tracks are moderated when (and only when) they are about to publish.
   | 'share-youtube'

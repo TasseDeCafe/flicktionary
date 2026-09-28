@@ -46,6 +46,8 @@ import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
 import { Route as AuthenticatedAppExploreEntryIdRouteImport } from './routes/_authenticated/_app/explore/$entryId'
 import { Route as AuthenticatedAppCoverageLangRouteImport } from './routes/_authenticated/_app/coverage/$lang'
+import { Route as AuthenticatedAppChatNewRouteImport } from './routes/_authenticated/_app/chat/new'
+import { Route as AuthenticatedAppChatSessionIdRouteImport } from './routes/_authenticated/_app/chat/$sessionId'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppLessonsImportIndexRouteImport } from './routes/_authenticated/_app/lessons/import/index'
 import { Route as AuthenticatedAppBooksImportIndexRouteImport } from './routes/_authenticated/_app/books/import/index'
@@ -270,6 +272,17 @@ const AuthenticatedAppCoverageLangRoute =
     path: '/coverage/$lang',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppChatNewRoute = AuthenticatedAppChatNewRouteImport.update({
+  id: '/chat/new',
+  path: '/chat/new',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppChatSessionIdRoute =
+  AuthenticatedAppChatSessionIdRouteImport.update({
+    id: '/chat/$sessionId',
+    path: '/chat/$sessionId',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsSessionIdIndexRoute =
   AuthenticatedAppSessionsSessionIdIndexRouteImport.update({
     id: '/sessions/$sessionId/',
@@ -389,6 +402,8 @@ export interface FileRoutesByFullPath {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/chat/$sessionId': typeof AuthenticatedAppChatSessionIdRoute
+  '/chat/new': typeof AuthenticatedAppChatNewRoute
   '/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
   '/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
@@ -442,6 +457,8 @@ export interface FileRoutesByTo {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing': typeof AuthenticatedPricingIndexRoute
   '/login/email': typeof LoginEmailIndexRoute
+  '/chat/$sessionId': typeof AuthenticatedAppChatSessionIdRoute
+  '/chat/new': typeof AuthenticatedAppChatNewRoute
   '/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
   '/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
@@ -498,6 +515,8 @@ export interface FileRoutesById {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/_authenticated/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/_authenticated/_app/chat/$sessionId': typeof AuthenticatedAppChatSessionIdRoute
+  '/_authenticated/_app/chat/new': typeof AuthenticatedAppChatNewRoute
   '/_authenticated/_app/coverage/$lang': typeof AuthenticatedAppCoverageLangRoute
   '/_authenticated/_app/explore/$entryId': typeof AuthenticatedAppExploreEntryIdRoute
   '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
@@ -553,6 +572,8 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing/'
     | '/login/email/'
+    | '/chat/$sessionId'
+    | '/chat/new'
     | '/coverage/$lang'
     | '/explore/$entryId'
     | '/more/account'
@@ -606,6 +627,8 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing'
     | '/login/email'
+    | '/chat/$sessionId'
+    | '/chat/new'
     | '/coverage/$lang'
     | '/explore/$entryId'
     | '/more/account'
@@ -661,6 +684,8 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/_authenticated/pricing/'
     | '/login/email/'
+    | '/_authenticated/_app/chat/$sessionId'
+    | '/_authenticated/_app/chat/new'
     | '/_authenticated/_app/coverage/$lang'
     | '/_authenticated/_app/explore/$entryId'
     | '/_authenticated/_app/more/account'
@@ -969,6 +994,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCoverageLangRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/chat/new': {
+      id: '/_authenticated/_app/chat/new'
+      path: '/chat/new'
+      fullPath: '/chat/new'
+      preLoaderRoute: typeof AuthenticatedAppChatNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/chat/$sessionId': {
+      id: '/_authenticated/_app/chat/$sessionId'
+      path: '/chat/$sessionId'
+      fullPath: '/chat/$sessionId'
+      preLoaderRoute: typeof AuthenticatedAppChatSessionIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/$sessionId/': {
       id: '/_authenticated/_app/sessions/$sessionId/'
       path: '/sessions/$sessionId'
@@ -1087,6 +1126,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
   AuthenticatedAppSaveProgressRoute: typeof AuthenticatedAppSaveProgressRoute
+  AuthenticatedAppChatSessionIdRoute: typeof AuthenticatedAppChatSessionIdRoute
+  AuthenticatedAppChatNewRoute: typeof AuthenticatedAppChatNewRoute
   AuthenticatedAppCoverageLangRoute: typeof AuthenticatedAppCoverageLangRoute
   AuthenticatedAppExploreEntryIdRoute: typeof AuthenticatedAppExploreEntryIdRoute
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
@@ -1122,6 +1163,8 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
   AuthenticatedAppSaveProgressRoute: AuthenticatedAppSaveProgressRoute,
+  AuthenticatedAppChatSessionIdRoute: AuthenticatedAppChatSessionIdRoute,
+  AuthenticatedAppChatNewRoute: AuthenticatedAppChatNewRoute,
   AuthenticatedAppCoverageLangRoute: AuthenticatedAppCoverageLangRoute,
   AuthenticatedAppExploreEntryIdRoute: AuthenticatedAppExploreEntryIdRoute,
   AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,

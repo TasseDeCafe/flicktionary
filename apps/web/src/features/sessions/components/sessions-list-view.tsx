@@ -18,7 +18,7 @@ import { SessionsEmptyState } from './sessions-empty-state'
 import { SessionsFilterControl, type SessionsSort } from './sessions-filter-control'
 import { OverflowTabHeader } from '@/features/navigation/components/overflow-tab-header'
 
-type TypeFilter = 'all' | 'movie' | 'tv' | 'book' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson'
+type TypeFilter = 'all' | 'movie' | 'tv' | 'book' | 'text' | 'article' | 'youtube' | 'streaming' | 'lesson' | 'chat'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -136,6 +136,9 @@ export const SessionsListView = () => {
             </FilterChip>
             <FilterChip active={filter === 'lesson'} onClick={() => setFilter('lesson')}>
               {t`Lessons`}
+            </FilterChip>
+            <FilterChip active={filter === 'chat'} onClick={() => setFilter('chat')}>
+              {t`Chats`}
             </FilterChip>
           </div>
         )}

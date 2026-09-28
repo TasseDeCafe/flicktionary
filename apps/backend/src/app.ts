@@ -115,6 +115,8 @@ import { TelegramAuthRouter } from './router/telegram-auth-router/telegram-auth-
 import { TelegramAuthNoncesRepository } from './transport/database/telegram-auth-nonces/telegram-auth-nonces-repository'
 import { LessonImportRouter } from './router/lesson-import-router/lesson-import-router'
 import { BooksRouter } from './router/books-router/books-router'
+import { VocabChatRouter } from './router/vocab-chat-router/vocab-chat-router'
+import { VocabChatRepository } from './transport/database/vocab-chat/vocab-chat-repository'
 import { BooksRepository } from './transport/database/books/books-repository'
 import { BookPrelearnRepository } from './transport/database/book-prelearn/book-prelearn-repository'
 import { ImportBatchesRepository } from './transport/database/import-batches/import-batches-repository'
@@ -674,6 +676,19 @@ export const buildApp = ({
         anthropicPasses,
         createAdhocCardDependencies,
       },
+    })
+  )
+  app.use(
+    API_V1,
+    VocabChatRouter({
+      anthropicPasses,
+      vocabChatRepository: VocabChatRepository(),
+      textSegmentsRepository,
+      highlightsRepository,
+      processingJobsRepository,
+      userLookupsRepository,
+      usersRepository,
+      userTargetLanguagePrefsRepository,
     })
   )
   app.use(
