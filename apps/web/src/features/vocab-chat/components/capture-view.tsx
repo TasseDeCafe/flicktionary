@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ArrowRight, Check, Languages, Loader2, MessageCircle, Pencil, Plus, Search } from 'lucide-react'
+import { Check, Loader2, MessageCircle, Pencil, Plus, Search } from 'lucide-react'
 import type { CaptureCandidate } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Input } from '@flicktionary/ui/components/input'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
@@ -21,7 +20,7 @@ import { useMarkCandidateAdded, useTranslateForCapture } from '../api/vocab-chat
 const QUERY_MAX = 500
 
 // "Translate & add" — the signed-in "Add a word". The learner types in any
-// language; a fast Haiku pass returns 1-3 target-language candidates, and Add
+// language; a quick pass (MODEL_TRANSLATE) returns 1-3 target-language candidates, and Add
 // runs the regular ad-hoc card creation (the accurate pass writes the card).
 // "Ask about this" escalates to the vocabulary chat with the query carried
 // over. The submitted search lives in the URL (`q`, `lang`) and its results in
@@ -110,15 +109,6 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
     })
   }
 
-  // The learner typed a word of another language they study: offer to switch
-  // instead of translating it. Their native language is the normal input.
-  const inputLanguage = translation?.inputLanguage ?? null
-  const suggestSwitch =
-    !!inputLanguage &&
-    inputLanguage !== targetLanguage &&
-    inputLanguage !== prefs?.nativeLanguage &&
-    cefrSetLanguages.includes(inputLanguage)
-  const inputLanguageName = inputLanguage ? getLanguageName(inputLanguage) : ''
   const translationErrorMessage =
     translationError && getBackendErrorCodeFromError(translationError) === 'native_language_not_set'
       ? t`Set your native language first.`
@@ -178,23 +168,6 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
                 </Button>
               </form>
 
-              {suggestSwitch && inputLanguage && (
-                <button
-                  type='button'
-                  onClick={() => switchLanguage(inputLanguage)}
-                  className='flex w-full items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-left text-sm text-amber-800 transition-colors hover:bg-amber-100 active:bg-amber-100'
-                >
-                  <span className='flex min-w-0 items-center gap-2'>
-                    <Languages className='size-4 shrink-0' />
-                    <span className='truncate'>{t`Looks like ${inputLanguageName}`}</span>
-                  </span>
-                  <span className='flex shrink-0 items-center gap-1 rounded-md bg-amber-200/80 px-2.5 py-1 font-medium text-amber-900'>
-                    {t`Switch`}
-                    <ArrowRight className='size-3.5' />
-                  </span>
-                </button>
-              )}
-
               {/* Candidates: each row adds one card. */}
               {isTranslating && <SkeletonList count={2} renderItem={() => <CandidateRowSkeleton />} />}
               {!isTranslating && translationError && (
@@ -217,15 +190,22 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
                   ))}
                 </ul>
               )}
-
-              <Button variant='outline' size='lg' className='w-full' onClick={openChat} disabled={!targetLanguage}>
-                <MessageCircle className='size-4' />
-                {trimmedQuery ? t`Ask about this` : t`Start a vocabulary chat`}
-              </Button>
             </>
           )}
         </div>
       </div>
+      {/* Chat escalation pinned to the bottom (WizardShell's footer recipe) so
+          it stays in thumb reach below any number of candidates. */}
+      {!requiresCefr && (
+        <div className='bg-background/95 shrink-0 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+            <Button variant='outline' size='xl' className='w-full' onClick={openChat} disabled={!targetLanguage}>
+              <MessageCircle className='size-5' />
+              {trimmedQuery ? t`Ask about this` : t`Start a vocabulary chat`}
+            </Button>
+          </div>
+        </div>
+      )}
     </ModalScreen>
   )
 }
