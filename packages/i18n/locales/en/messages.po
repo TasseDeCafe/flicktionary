@@ -3291,10 +3291,6 @@ msgstr "Looking up and saving words"
 msgid "Looks like {detectedLanguageName} — use it"
 msgstr "Looks like {detectedLanguageName} — use it"
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
-msgid "Looks like {inputLanguageName}"
-msgstr "Looks like {inputLanguageName}"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Looks like {suggestedLanguageName}"
@@ -5539,7 +5535,6 @@ msgid "Swahili"
 msgstr "Swahili"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Switch"
 msgstr "Switch"

@@ -3290,10 +3290,6 @@ msgstr "Rechercher et enregistrer des mots"
 msgid "Looks like {detectedLanguageName} — use it"
 msgstr "On dirait du {detectedLanguageName} — l'utiliser"
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
-msgid "Looks like {inputLanguageName}"
-msgstr "On dirait du {inputLanguageName}"
-
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Looks like {suggestedLanguageName}"
@@ -5538,7 +5534,6 @@ msgid "Swahili"
 msgstr "Swahili"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Switch"
 msgstr "Changer"
