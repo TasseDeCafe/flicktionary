@@ -424,6 +424,10 @@ msgstr "A single film."
 msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 msgstr "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "A word or phrase, in any language"
+msgstr "A word or phrase, in any language"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "About"
 msgstr "About"
@@ -480,6 +484,10 @@ msgstr "Activity"
 msgid "Activity, streak, and coverage"
 msgstr "Activity, streak, and coverage"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Add"
+msgstr "Add"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards"
 msgstr "Add {newCount} cards"
@@ -487,6 +495,10 @@ msgstr "Add {newCount} cards"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards · update {updateCount}"
 msgstr "Add {newCount} cards · update {updateCount}"
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Add {selectedCount} as cards"
+msgstr "Add {selectedCount} as cards"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Add a form"
@@ -497,6 +509,7 @@ msgid "Add a form to study"
 msgstr "Add a form to study"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Add a word"
 msgstr "Add a word"
@@ -543,6 +556,8 @@ msgid "Add translation"
 msgstr "Add translation"
 
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Added"
 msgstr "Added"
 
@@ -678,6 +693,7 @@ msgid "Already have an account? <0>Sign in</0>"
 msgstr "Already have an account? <0>Sign in</0>"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Already in your vocabulary"
 msgstr "Already in your vocabulary"
 
@@ -773,13 +789,33 @@ msgstr "Articles"
 msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 msgstr "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Ask about {languageName}…"
+msgstr "Ask about {languageName}…"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Ask about this"
+msgstr "Ask about this"
+
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
 msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
 
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Ask anything, or \"add these\""
+msgstr "Ask anything, or \"add these\""
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Ask anything…"
+msgstr "Ask anything…"
+
 #: apps/web/src/features/review/components/chat-panel.tsx
 msgid "Ask follow-up questions about this term."
 msgstr "Ask follow-up questions about this term."
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Ask how to say something, or for words on a topic (\"gym vocabulary\"). Useful terms show up as a checklist you can add as cards. The chat is saved with its cards in your sessions."
+msgstr "Ask how to say something, or for words on a topic (\"gym vocabulary\"). Useful terms show up as a checklist you can add as cards. The chat is saved with its cards in your sessions."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/review/components/grammar-chips.tsx
@@ -1019,6 +1055,10 @@ msgstr "Card {cardPosition} of {cardTotal}"
 msgid "Card not found."
 msgstr "Card not found."
 
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Cards"
+msgstr "Cards"
+
 #: apps/web/src/features/stats/components/daily-activity-charts.tsx
 msgid "cards & exercises"
 msgstr "cards & exercises"
@@ -1052,6 +1092,7 @@ msgid "Chapters"
 msgstr "Chapters"
 
 #: apps/web/src/features/review/components/chat-panel.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Chat"
 msgstr "Chat"
 
@@ -1066,6 +1107,10 @@ msgstr "Chat — new answer ready"
 #: apps/web/src/features/review/components/chat-header-button.tsx
 msgid "Chat — preparing answer"
 msgstr "Chat — preparing answer"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "Chats"
+msgstr "Chats"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
@@ -1289,9 +1334,15 @@ msgstr "Context (optional)"
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Continue"
 msgstr "Continue"
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Continue in a new {languageName} chat"
+msgstr "Continue in a new {languageName} chat"
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx
 msgid "Continue learning"
@@ -1508,6 +1559,7 @@ msgstr "Covers recognition and production combined."
 
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 #: apps/web/src/features/auth/components/save-progress-view.tsx
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Create a free account"
 msgstr "Create a free account"
 
@@ -1796,6 +1848,10 @@ msgstr "Each column is 100 words; the filled share is how many of them you know.
 msgid "Easy"
 msgstr "Easy"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Edit card"
+msgstr "Edit card"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Edit note"
@@ -2032,6 +2088,10 @@ msgstr "Extract cards"
 msgid "Extraction failed after several attempts. Try uploading the file again — if it keeps failing, paste the notes as text instead."
 msgstr "Extraction failed after several attempts. Try uploading the file again — if it keeps failing, paste the notes as text instead."
 
+#: apps/web/src/features/vocab-chat/api/vocab-chat-hooks.ts
+msgid "Failed to add cards"
+msgstr "Failed to add cards"
+
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Failed to add the cards"
 msgstr "Failed to add the cards"
@@ -2060,6 +2120,7 @@ msgstr "Failed to complete onboarding"
 msgid "Failed to connect Telegram"
 msgstr "Failed to connect Telegram"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Failed to create card"
 msgstr "Failed to create card"
@@ -2115,6 +2176,7 @@ msgid "Failed to load cards"
 msgstr "Failed to load cards"
 
 #: apps/web/src/features/review/api/review-hooks.ts
+#: apps/web/src/features/vocab-chat/api/vocab-chat-hooks.ts
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
@@ -2348,6 +2410,10 @@ msgstr "Failed to send chat message"
 #: apps/web/src/features/contact/api/contact-hooks.ts
 msgid "Failed to send feedback. Please try again."
 msgstr "Failed to send feedback. Please try again."
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Failed to send message"
+msgstr "Failed to send message"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to set CEFR level"
@@ -2950,6 +3016,10 @@ msgstr "In introduction exercises before their first flashcard"
 msgid "In short-term learning — follow-ups come back within days."
 msgstr "In short-term learning — follow-ups come back within days."
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "In your vocabulary"
+msgstr "In your vocabulary"
+
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "In your vocabulary, not started"
 msgstr "In your vocabulary, not started"
@@ -3080,6 +3150,7 @@ msgstr "Label (e.g. past.m)"
 #: apps/web/src/components/language-option-list.tsx
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 #: apps/web/src/features/sessions/components/sessions-filter-control.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Language"
 msgstr "Language"
@@ -3219,6 +3290,10 @@ msgstr "Looking up and saving words"
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 msgid "Looks like {detectedLanguageName} — use it"
 msgstr "Looks like {detectedLanguageName} — use it"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Looks like {inputLanguageName}"
+msgstr "Looks like {inputLanguageName}"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -3431,6 +3506,10 @@ msgstr "New"
 msgid "New cards"
 msgstr "New cards"
 
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "New chat"
+msgstr "New chat"
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "New introductions per day"
 msgstr "New introductions per day"
@@ -3552,6 +3631,10 @@ msgstr "No skills selected"
 #: apps/extension/src/controllers/subtitle-controller.ts
 msgid "No subtitles found for this video"
 msgstr "No subtitles found for this video"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "No suggestions for this one. Try asking in the chat."
+msgstr "No suggestions for this one. Try asking in the chat."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
@@ -3956,6 +4039,8 @@ msgstr "Pick a focused session instead of the everyday mix."
 
 #: apps/web/src/components/language-select-field.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Pick a language"
 msgstr "Pick a language"
@@ -4724,6 +4809,8 @@ msgstr "Saving your ratings…"
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Saving…"
 msgstr "Saving…"
@@ -4856,6 +4943,7 @@ msgid "Selection"
 msgstr "Selection"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Send"
 msgstr "Send"
 
@@ -4948,6 +5036,8 @@ msgid "Set your level for this language on flicktionary.app first."
 msgstr "Set your level for this language on flicktionary.app first."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Set your native language first."
 msgstr "Set your native language first."
@@ -5192,6 +5282,10 @@ msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Start a movie or TV session"
 msgstr "Start a movie or TV session"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Start a vocabulary chat"
+msgstr "Start a vocabulary chat"
 
 #: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/books/components/book-import-wizard.tsx
@@ -5445,6 +5539,7 @@ msgid "Swahili"
 msgstr "Swahili"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Switch"
 msgstr "Switch"
@@ -5478,6 +5573,7 @@ msgstr "Tap the last line you've read."
 msgid "Target example"
 msgstr "Target example"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Target language"
 msgstr "Target language"
@@ -5638,6 +5734,7 @@ msgid "These terms don't have meanings saved yet — open a term to fill in its 
 msgstr "These terms don't have meanings saved yet — open a term to fill in its definition or translation."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -5670,6 +5767,10 @@ msgstr "This calibrates the difficult-words pass and the depth of explanations."
 msgid "This card was rated as forgotten — it will come back for review sooner."
 msgstr "This card was rated as forgotten — it will come back for review sooner."
 
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "This chat is for one language."
+msgstr "This chat is for one language."
+
 #: apps/web/src/features/telegram-pair/components/telegram-pair-view.tsx
 msgid "This connection link has already been used or has expired."
 msgstr "This connection link has already been used or has expired."
@@ -5694,6 +5795,10 @@ msgstr "This hides the session from your list. Your kept vocabulary stays in you
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "This is a note-only card with no flashcard data yet. Click Generate full exploration to fill its translation, definition, and examples — then you can keep it."
 msgstr "This is a note-only card with no flashcard data yet. Click Generate full exploration to fill its translation, definition, and examples — then you can keep it."
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "This message can't be sent."
+msgstr "This message can't be sent."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "This product uses the <0>TMDB</0> API but is not endorsed or certified by TMDB."
@@ -5868,6 +5973,10 @@ msgstr "Transcript Server API Key (optional)"
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Translate"
+msgstr "Translate"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Translation"
@@ -5880,6 +5989,10 @@ msgstr "Translation and actions for the saved highlight."
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Translation and save action for the hovered word."
 msgstr "Translation and save action for the hovered word."
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Translation failed. Try again."
+msgstr "Translation failed. Try again."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Translation in your native language."
@@ -6239,6 +6352,10 @@ msgstr "Waiting to be introduced, in this order"
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Want to keep going anyway?"
 msgstr "Want to keep going anyway?"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
+msgid "Want to type in your own language, or ask for words on a topic?"
+msgstr "Want to type in your own language, or ask for words on a topic?"
 
 #: apps/web/src/features/practice/components/warmup-view.tsx
 msgid "Warm up your terms · {languageName}"
