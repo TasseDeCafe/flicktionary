@@ -605,6 +605,10 @@ msgstr "Advanced — flexible, effective use in complex contexts."
 msgid "Adverb"
 msgstr "Adverb"
 
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "adverbial participle of {lemma}"
+msgstr "adverbial participle of {lemma}"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Afterwards you may be offered a second, optional step: <0>words you may already know</0>. These are words you saved but never practiced that appeared in what you just read. Confirming marks them as known, so they skip the beginner learning steps — each one gets a first check-in about three weeks later to make sure. You can always dismiss this, and there's an undo right after confirming; declining costs nothing, the words just enter practice the normal way later."
 msgstr "Afterwards you may be offered a second, optional step: <0>words you may already know</0>. These are words you saved but never practiced that appeared in what you just read. Confirming marks them as known, so they skip the beginner learning steps — each one gets a first check-in about three weeks later to make sure. You can always dismiss this, and there's an undo right after confirming; declining costs nothing, the words just enter practice the normal way later."
@@ -2430,6 +2434,10 @@ msgstr "Failed to update term"
 msgid "Failed to update theme"
 msgstr "Failed to update theme"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to update word-family hints setting"
+msgstr "Failed to update word-family hints setting"
+
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "Failed to upload subtitles"
 msgstr "Failed to upload subtitles"
@@ -2569,6 +2577,10 @@ msgstr "Frequency"
 msgid "Frequent in the chapters ahead, not yet in your vocabulary."
 msgstr "Frequent in the chapters ahead, not yet in your vocabulary."
 
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "from {derivedFrom}"
+msgstr "from {derivedFrom}"
+
 #: apps/web/src/features/dashboard/components/from-community-section.tsx
 msgid "From the community"
 msgstr "From the community"
@@ -2640,6 +2652,10 @@ msgstr "Genitive"
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "German"
 msgstr "German"
+
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "gerund of {lemma}"
+msgstr "gerund of {lemma}"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 msgid "Get started"
@@ -3853,9 +3869,17 @@ msgstr "Part {position}"
 msgid "Part of speech"
 msgstr "Part of speech"
 
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "participle of {lemma}"
+msgstr "participle of {lemma}"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Particle"
 msgstr "Particle"
+
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "passive of {lemma}"
+msgstr "passive of {lemma}"
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Past generated texts (recognition pool)."
@@ -4675,6 +4699,10 @@ msgstr "Saved to this card's chat — delete the highlight to change it."
 msgid "Saved to your vocabulary"
 msgstr "Saved to your vocabulary"
 
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "Saved: {savedList}"
+msgstr "Saved: {savedList}"
+
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 msgid "Saves a checkpoint at your current position. Saved words that appeared in the subtitles so far and were due for review count as successful reviews — words you looked up along the way are never penalized."
 msgstr "Saves a checkpoint at your current position. Saved words that appeared in the subtitles so far and were due for review count as successful reviews — words you looked up along the way are never penalized."
@@ -4992,6 +5020,10 @@ msgstr "Show more"
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Show translation"
+msgstr "Show translation"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 msgid "Sign in"
@@ -5130,6 +5162,10 @@ msgstr "Sort and filter"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Sort and filter — language: {languageLabel}"
 msgstr "Sort and filter — language: {languageLabel}"
+
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Space"
+msgstr "Space"
 
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Spanish"
@@ -6125,6 +6161,10 @@ msgstr "Using Flicktionary as a guest — translations only."
 msgid "Verb"
 msgstr "Verb"
 
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "verbal noun of {lemma}"
+msgstr "verbal noun of {lemma}"
+
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "Verification email sent"
 msgstr "Verification email sent"
@@ -6378,6 +6418,10 @@ msgstr "What's your email?"
 msgid "When you pause the video, a <0>controls overlay</0> appears: toggle subtitles, switch playback modes, adjust subtitle timing, and change the playback rate. Scroll the rightmost control to switch between subtitle navigation, subtitle offset, and playback rate."
 msgstr "When you pause the video, a <0>controls overlay</0> appears: toggle subtitles, switch playback modes, adjust subtitle timing, and change the playback rate. Scroll the rightmost control to switch between subtitle navigation, subtitle offset, and playback rate."
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "When you tap a word, show how it's built and which related words you already know. If you know one, the translation waits until you tap Show translation, so you can guess first."
+msgstr "When you tap a word, show how it's built and which related words you already know. If you know one, the translation waits until you tap Show translation, so you can guess first."
+
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Where did you hear this? Paste a sentence or leave blank."
@@ -6417,6 +6461,10 @@ msgstr "Wins"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Word or expression"
 msgstr "Word or expression"
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+msgid "Word-family hints"
+msgstr "Word-family hints"
 
 #: apps/web/src/features/stats/components/daily-activity-charts.tsx
 msgid "words"
@@ -6493,6 +6541,10 @@ msgstr "You have already used your free trial."
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 msgstr "You haven't finished onboarding yet. Complete it to start adding movies and texts."
+
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "You know: {knownList}"
+msgstr "You know: {knownList}"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "You used your free trial"
