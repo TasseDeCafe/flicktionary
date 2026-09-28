@@ -20,7 +20,7 @@ import { useMarkCandidateAdded, useTranslateForCapture } from '../api/vocab-chat
 const QUERY_MAX = 500
 
 // "Translate & add" — the signed-in "Add a word". The learner types in any
-// language; a fast Haiku pass returns 1-3 target-language candidates, and Add
+// language; a quick pass (MODEL_TRANSLATE) returns 1-3 target-language candidates, and Add
 // runs the regular ad-hoc card creation (the accurate pass writes the card).
 // "Ask about this" escalates to the vocabulary chat with the query carried
 // over. The submitted search lives in the URL (`q`, `lang`) and its results in
@@ -190,15 +190,22 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
                   ))}
                 </ul>
               )}
-
-              <Button variant='outline' size='lg' className='w-full' onClick={openChat} disabled={!targetLanguage}>
-                <MessageCircle className='size-4' />
-                {trimmedQuery ? t`Ask about this` : t`Start a vocabulary chat`}
-              </Button>
             </>
           )}
         </div>
       </div>
+      {/* Chat escalation pinned to the bottom (WizardShell's footer recipe) so
+          it stays in thumb reach below any number of candidates. */}
+      {!requiresCefr && (
+        <div className='bg-background/95 shrink-0 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+            <Button variant='outline' size='xl' className='w-full' onClick={openChat} disabled={!targetLanguage}>
+              <MessageCircle className='size-5' />
+              {trimmedQuery ? t`Ask about this` : t`Start a vocabulary chat`}
+            </Button>
+          </div>
+        </div>
+      )}
     </ModalScreen>
   )
 }
