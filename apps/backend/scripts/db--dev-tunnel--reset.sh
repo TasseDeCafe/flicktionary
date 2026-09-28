@@ -45,6 +45,7 @@ if [ ! -s "$DUMP_FILE" ]; then
         --table=public.wiktionary_entries \
         --table=public.wiktionary_forms \
         --table=public.wiktionary_form_redirects \
+        --table=public.wiktionary_word_family_edges \
         --table=public.lemma_ranks \
         --table=public.lemma_rank_builds \
         -Fc > "$DUMP_FILE.tmp"

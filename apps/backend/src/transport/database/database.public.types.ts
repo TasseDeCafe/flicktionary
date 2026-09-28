@@ -1926,6 +1926,7 @@ export type Database = {
           target_language: string
           updated_at: string
           user_id: string
+          word_family_hints_enabled: boolean
         }
         Insert: {
           cefr_level: string
@@ -1937,6 +1938,7 @@ export type Database = {
           target_language: string
           updated_at?: string
           user_id: string
+          word_family_hints_enabled?: boolean
         }
         Update: {
           cefr_level?: string
@@ -1948,6 +1950,7 @@ export type Database = {
           target_language?: string
           updated_at?: string
           user_id?: string
+          word_family_hints_enabled?: boolean
         }
         Relationships: []
       }
@@ -2090,6 +2093,33 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      wiktionary_word_family_edges: {
+        Row: {
+          depth: number
+          kind: string
+          lemma: string
+          lemma_pos: string
+          relative: string
+          target_language: string
+        }
+        Insert: {
+          depth: number
+          kind: string
+          lemma: string
+          lemma_pos: string
+          relative: string
+          target_language: string
+        }
+        Update: {
+          depth?: number
+          kind?: string
+          lemma?: string
+          lemma_pos?: string
+          relative?: string
+          target_language?: string
+        }
+        Relationships: []
       }
     }
     Views: {

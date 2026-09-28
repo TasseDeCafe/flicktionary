@@ -72,6 +72,29 @@ const setShowTranslationsEnabled = async (
   return result.count === 1
 }
 
+const getWordFamilyHintsEnabled = async (userId: string, targetLanguage: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT word_family_hints_enabled
+    FROM public.user_target_language_prefs
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `) as { word_family_hints_enabled: boolean }[]
+  return result[0]?.word_family_hints_enabled ?? true
+}
+
+const setWordFamilyHintsEnabled = async (
+  userId: string,
+  targetLanguage: string,
+  enabled: boolean
+): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.user_target_language_prefs
+    SET word_family_hints_enabled = ${enabled},
+        updated_at = NOW()
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `
+  return result.count === 1
+}
+
 const getPracticeLimitsForLanguage = async (userId: string, targetLanguage: string): Promise<PracticeLimits> => {
   const result = (await sql`
     SELECT practice_max_new_terms, practice_max_review_terms, practice_max_review_terms_production
@@ -113,6 +136,8 @@ export interface UserTargetLanguagePrefsRepositoryInterface {
   upsertCefr: (userId: string, targetLanguage: string, cefrLevel: string) => Promise<void>
   getShowTranslationsEnabled: (userId: string, targetLanguage: string) => Promise<boolean>
   setShowTranslationsEnabled: (userId: string, targetLanguage: string, enabled: boolean) => Promise<boolean>
+  getWordFamilyHintsEnabled: (userId: string, targetLanguage: string) => Promise<boolean>
+  setWordFamilyHintsEnabled: (userId: string, targetLanguage: string, enabled: boolean) => Promise<boolean>
   getPracticeLimitsForLanguage: (userId: string, targetLanguage: string) => Promise<PracticeLimits>
   setPracticeLimitsForLanguage: (
     userId: string,
@@ -128,6 +153,8 @@ export const UserTargetLanguagePrefsRepository = (): UserTargetLanguagePrefsRepo
     upsertCefr,
     getShowTranslationsEnabled,
     setShowTranslationsEnabled,
+    getWordFamilyHintsEnabled,
+    setWordFamilyHintsEnabled,
     getPracticeLimitsForLanguage,
     setPracticeLimitsForLanguage,
   }
