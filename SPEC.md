@@ -413,7 +413,7 @@ For a show already in the Sessions list, the `Add episode` button on its show de
 
 1. From the `+` overlay, pick `Add a word`.
 2. Pick the target language (any supported language; defaults to the user's `lastTargetLanguage` MRU, then the first CEFR-set language alphabetically). If CEFR is not set for it, the CEFR prompt comes first.
-3. Signed-in ("Translate & add", `/vocabulary/new-word?lang=&q=`): type a word or phrase in any language and submit. 1–3 target-language candidates come back (headword, note, example); candidates already in the vocabulary show `In your vocabulary` + `Edit card`. An amber `Looks like German · Switch` hint appears when the input is in another language the learner studies.
+3. Signed-in ("Translate & add", `/vocabulary/new-word?lang=&q=`): type a word or phrase in any language and submit. 1–3 target-language candidates come back (headword, note, example); candidates already in the vocabulary show `In your vocabulary` + `Edit card`.
 4. `Add` on a candidate creates the card through the ad-hoc pipeline (the candidate's example as context, the typed phrase as a sense hint); the row flips to `Added` + `Edit card`, so several candidates can be added from one search. `Edit card` opens the focus view with `?scope=language`; back restores the search and its results.
 5. `Ask about this` (or `Start a vocabulary chat` with an empty input) opens a new vocabulary chat with the text prefilled — see Vocabulary chat below.
 6. Guests get the target-language-only form instead (headword + optional context; advisory language hint), plus a create-account prompt; save lands on the focus view of the new card with `?scope=language`, so chevron-back pops history to `/vocabulary`.
