@@ -779,6 +779,19 @@ export const useSetShowTranslationsForLanguage = () => {
   )
 }
 
+export const useSetWordFamilyHintsForLanguage = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.userPrefs.setWordFamilyHintsForLanguage.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        errorMessage: t`Failed to update word-family hints setting`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useSetIpaDialect = () => {
   const { t } = useLingui()
   return useMutation(

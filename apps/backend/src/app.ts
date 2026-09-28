@@ -78,6 +78,7 @@ import { PracticeRatingEventsRepository } from './transport/database/practice-ra
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { WiktionaryMatchRepository } from './transport/database/wiktionary-entries/wiktionary-match-repository'
+import { WordFamilyRepository } from './transport/database/word-family/word-family-repository'
 import { KnownLemmasRepository } from './transport/database/known-lemmas/known-lemmas-repository'
 import { TextTrackLemmaProfilesRepository } from './transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { LemmaRanksRepository } from './transport/database/lemma-ranks/lemma-ranks-repository'
@@ -628,7 +629,8 @@ export const buildApp = ({
         lemmaLookupsRepository,
         userLookupsRepository,
         withTransaction,
-      }
+      },
+      { wordFamilyRepository: WordFamilyRepository(), wiktionaryMatchRepository }
     )
   )
   app.use(

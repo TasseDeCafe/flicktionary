@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { Check, ChevronLeft, Lightbulb, PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, Eye, Lightbulb, PencilLine, Save, Trash2 } from 'lucide-react'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
@@ -44,6 +44,7 @@ import {
 } from '../api/sessions-hooks'
 import { SavedStudyTargets } from './saved-study-targets'
 import { KnownLemmaChip } from './known-lemma-chip'
+import { WordFamilyLine } from './word-family-line'
 import type { SelectionResult } from '../utils/selection-adapter'
 
 export type ExistingHighlightInput = {
@@ -172,6 +173,24 @@ export const SessionGlossSheet = ({
   // keep-time default applies); touched → the FULL SET of checked skills.
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
   const preservedPreviewGlossRef = useRef<{ selectionKey: string; state: GlossViewState } | null>(null)
+  // Guess-before-reveal: the selection whose held-back translation the reader
+  // revealed. Ephemeral — keyed to the selection, reset on every (re)open.
+  const [revealedSelectionKey, setRevealedSelectionKey] = useState<string | null>(null)
+  // A second tap on the same word while the sheet is open reveals too. Each
+  // tap hands over a NEW selection object, so an identity-equal swap while the
+  // sheet stays open is exactly that re-tap (the "adjust state on prop change"
+  // pattern — no effect needed).
+  const [previousSelectionProps, setPreviousSelectionProps] = useState({ open, selection })
+  if (previousSelectionProps.open !== open || previousSelectionProps.selection !== selection) {
+    const prev = previousSelectionProps.selection
+    if (!previousSelectionProps.open && open) {
+      setRevealedSelectionKey(null)
+    } else if (open && prev && selection && prev !== selection) {
+      const key = selectionIdentity(selection)
+      if (selectionIdentity(prev) === key) setRevealedSelectionKey(key)
+    }
+    setPreviousSelectionProps({ open, selection })
+  }
 
   // The saved highlight's live row, used to drive the always-visible study
   // targets: `studyIntent` (pre-enrich) and `chunkId` (post-enrich). We poll
@@ -208,6 +227,11 @@ export const SessionGlossSheet = ({
   // lookup; nothing is persisted until the user clicks Save / Save note. Saved
   // mode (an existing highlight or a just-saved selection) keeps Remove/note.
   const isPreview = !!selection && !activeExistingHighlight && !highlightId
+
+  // Keyed on the selection's identity, not the object: every tap hands over a
+  // new object, and a re-tap on the same word (which reveals a held-back
+  // translation) must not reset the sheet back to loading.
+  const selectionKey = selection ? selectionIdentity(selection) : null
 
   useLayoutEffect(() => {
     if (!open) return
@@ -246,7 +270,7 @@ export const SessionGlossSheet = ({
           : null
       setGlossState(preservedPreviewGloss ?? { status: 'loading' })
     }
-  }, [open, activeExistingHighlight, selection, pendingGhostId, locallyRemovedHighlightId])
+  }, [open, activeExistingHighlight, selectionKey, pendingGhostId, locallyRemovedHighlightId])
 
   // Seed from the existing-highlight branch.
   useEffect(() => {
@@ -351,6 +375,7 @@ export const SessionGlossSheet = ({
             selectionText: selection.selectionText,
             contextLine: selection.contextLine,
             targetLanguage,
+            includeWordFamily: true,
           })
           if (cancelled) return
           setGlossState({
@@ -361,6 +386,7 @@ export const SessionGlossSheet = ({
             ipaDisplay: res.data.ipaDisplay,
             ipaLemma: res.data.ipaLemma,
             knownLemmaCandidates: res.data.knownLemmaCandidates,
+            wordFamily: res.data.wordFamily,
           })
         }
       } catch {
@@ -654,12 +680,41 @@ export const SessionGlossSheet = ({
   const ipaLabel = isReady ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
+  // Word-family line: rides on the preview's stateless gloss (the server only
+  // fills it for word-family languages with the setting on). When a relative
+  // the reader already has is in it, the translation waits behind a reveal so
+  // they get a moment to infer the meaning first. Preview mode only — a saved
+  // word was already looked up.
+  const wordFamily = isReady ? ((glossState as Extract<GlossViewState, { status: 'ready' }>).wordFamily ?? null) : null
+  const isTranslationHeld =
+    isPreview && !!wordFamily && wordFamily.anchors.length > 0 && revealedSelectionKey !== selectionKey
+  const revealTranslation = useCallback(() => {
+    if (selectionKey) setRevealedSelectionKey(selectionKey)
+  }, [selectionKey])
+
+  // Space reveals on desktop. Capture phase + preventDefault so it never also
+  // scrolls the reader or presses whichever sheet button holds focus; typing a
+  // note keeps its spaces.
+  useEffect(() => {
+    if (!open || !isTranslationHeld) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== ' ' || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target instanceof HTMLElement ? e.target : null
+      if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return
+      e.preventDefault()
+      e.stopPropagation()
+      revealTranslation()
+    }
+    document.addEventListener('keydown', onKeyDown, { capture: true })
+    return () => document.removeEventListener('keydown', onKeyDown, { capture: true })
+  }, [open, isTranslationHeld, revealTranslation])
+
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
   const ariaDescription = useMemo(() => {
-    if (isReady) return (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss
+    if (isReady && !isTranslationHeld) return (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss
     return t`Quick gloss for the selected text.`
-  }, [isReady, glossState, t])
+  }, [isReady, isTranslationHeld, glossState, t])
 
   return (
     <FloatingSheet
@@ -728,6 +783,26 @@ export const SessionGlossSheet = ({
                     ) : undefined
                   }
                   srDescription={ariaDescription}
+                  beforeGloss={wordFamily ? <WordFamilyLine wordFamily={wordFamily} /> : undefined}
+                  glossReplacement={
+                    isTranslationHeld ? (
+                      // stopPropagation: the mobile header is a drag surface.
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='mt-1 self-start'
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={revealTranslation}
+                      >
+                        <Eye className='mr-1 h-4 w-4' />
+                        {t`Show translation`}
+                        <kbd className='text-muted-foreground ml-2 hidden rounded border px-1 font-sans text-[10px] md:inline'>
+                          {t`Space`}
+                        </kbd>
+                      </Button>
+                    ) : undefined
+                  }
                 />
                 {isReady && (
                   <KnownLemmaChip

@@ -3,3 +3,7 @@
 // duplicated here so the scripts stay standalone tsx programs that don't
 // import the app's workspace packages.
 export const LOAD_LANGUAGES = ['ru', 'en', 'de', 'es', 'pt', 'fr'] as const
+
+// The languages whose word-family edges the loader builds. Mirrors
+// WORD_FAMILY_LANGUAGES in packages/core/src/constants/language-grammar.ts.
+export const WORD_FAMILY_LANGUAGES = ['ru'] as const

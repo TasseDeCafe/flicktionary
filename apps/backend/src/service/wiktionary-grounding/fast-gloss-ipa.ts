@@ -32,7 +32,9 @@ const FAST_GLOSS_POS_TO_KAIKKI: Record<string, string> = {
   'modal verb': 'verb',
 }
 
-const normalizeFastGlossPos = (pos: string | null): string | null => {
+// Maps the fast gloss's free-text POS to kaikki's pos values (null when it
+// has no kaikki equivalent) so homographs can be told apart.
+export const normalizeFastGlossPos = (pos: string | null): string | null => {
   if (!pos) return null
   const normalized = pos
     .trim()

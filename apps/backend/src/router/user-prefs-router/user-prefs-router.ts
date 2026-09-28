@@ -30,6 +30,7 @@ type UserPrefsResponse = {
     targetLanguage: string
     cefrLevel: string
     showTranslationsEnabled: boolean
+    wordFamilyHintsEnabled: boolean
     practiceMaxNewTerms: number
     practiceMaxReviewTerms: number
     practiceMaxReviewTermsProduction: number | null
@@ -87,6 +88,7 @@ const buildPrefs = async (
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
       showTranslationsEnabled: p.show_translations_enabled,
+      wordFamilyHintsEnabled: p.word_family_hints_enabled,
       practiceMaxNewTerms: p.practice_max_new_terms,
       practiceMaxReviewTerms: p.practice_max_review_terms,
       practiceMaxReviewTermsProduction: p.practice_max_review_terms_production,
@@ -173,6 +175,20 @@ export const UserPrefsRouter = (
         if (!ok) {
           throw errors.INTERNAL_SERVER_ERROR({
             data: { errors: [{ message: 'Failed to update show-translations setting' }] },
+          })
+        }
+        const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+        return { data: prefs }
+      }
+    ),
+
+    setWordFamilyHintsForLanguage: implementer.setWordFamilyHintsForLanguage.handler(
+      async ({ input, context, errors }) => {
+        const userId = context.res.locals.userId
+        const ok = await prefsRepository.setWordFamilyHintsEnabled(userId, input.targetLanguage, input.enabled)
+        if (!ok) {
+          throw errors.INTERNAL_SERVER_ERROR({
+            data: { errors: [{ message: 'Failed to update word-family hints setting' }] },
           })
         }
         const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

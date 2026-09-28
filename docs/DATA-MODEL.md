@@ -571,6 +571,9 @@ user_target_language_pref
   target_language           text
   cefr_level                text
   show_translations_enabled boolean default true
+  word_family_hints_enabled boolean default true  -- reader word-family line +
+                                    -- guess-before-reveal; only offered for
+                                    -- WORD_FAMILY_LANGUAGES
 ```
 
 Notes:
@@ -606,7 +609,32 @@ wiktionary_form_redirects          -- precomputed stub resolution (form-of /
   folded_form         text         -- only when the chain ends on a real lemma.
   lemma               text         -- Rebuilt by build-wiktionary-redirects.ts,
                                    -- invoked at the end of every load-kaikki run.
+
+wiktionary_word_family_edges       -- precomputed word-family graph for the
+  target_language     text         -- reader's word-family line; built only for
+  lemma               text         -- WORD_FAMILY_LANGUAGES. lemma/relative are
+  lemma_pos           text         -- checkpoint_fold-folded. pk (target_language,
+  relative            text         -- lemma, lemma_pos, relative, kind); indexed
+  kind                text         -- (target_language, relative) for shared roots.
+  depth               smallint     -- 'ancestor' (1-3) | 'related' (always 1)
 ```
+
+`wiktionary_word_family_edges` is rebuilt by `scripts/build-word-family.ts`
+(end of every load-kaikki run; standalone `pnpm build:word-family [lang...]`
+rebuilds per language in one transaction). Parsing lives in
+`src/service/word-family/parse-word-family.ts`: **ancestors** come from
+form-of senses tagged participle / gerund / passive / verbal noun (plain
+inflection links are never followed — homograph traps) and from structural
+etymology templates written for the target language (`af`/`affix`, `surf`
+incl. `+bf`/`+deverbal` directives, `com`/`compound`, `pre`/`prefix`,
+`suf`/`suffix`, `con`/`confix`, `deverbal`, `back-form`/`bf`, and the
+structural segments of the unified `{{ety}}`); `clipping`/`blend` and
+history templates are ignored, as are components prefixed with another
+language code. Walked transitively to depth 3, each ancestor at its shortest
+depth. **Related** edges come from the `related`/`derived` lists, kept only
+when both words share a ≥3-letter stem after stripping a prefix observed in
+that language's templates. Both endpoints must be content words: real
+noun/verb/adj/adv lemmas of ≥3 letters (affixes never appear as relatives).
 
 Checkpoint-review matching folds BOTH sides of every comparison through
 `public.checkpoint_fold(input, lang)` (NFC → strip U+0301 → trim → lower, then

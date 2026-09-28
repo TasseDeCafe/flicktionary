@@ -89,6 +89,33 @@ describe('user-prefs-router', async () => {
     expect(response.status).toBe(401)
   })
 
+  test('setWordFamilyHintsForLanguage defaults on and round-trips per language', async () => {
+    const { token } = await createOnboardedUser()
+
+    const before = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    type PrefsBody = {
+      data: { targetLanguagePrefs: Array<{ targetLanguage: string; wordFamilyHintsEnabled: boolean }> }
+    }
+    const prefFor = (body: PrefsBody, lang: string) =>
+      body.data.targetLanguagePrefs.find((p) => p.targetLanguage === lang)
+    expect(prefFor(before.body, 'es')?.wordFamilyHintsEnabled).toBe(true)
+
+    const updated = await request(testApp)
+      .put('/api/v1/user-prefs/word-family-hints-for-language')
+      .send({ targetLanguage: 'es', enabled: false })
+      .set(buildAuthorizationHeaders(token))
+    expect(updated.status).toBe(200)
+    expect(prefFor(updated.body, 'es')?.wordFamilyHintsEnabled).toBe(false)
+    expect(prefFor(updated.body, 'de')?.wordFamilyHintsEnabled).toBe(true)
+
+    // No prefs row for the language → nothing to update.
+    const missing = await request(testApp)
+      .put('/api/v1/user-prefs/word-family-hints-for-language')
+      .send({ targetLanguage: 'fr', enabled: false })
+      .set(buildAuthorizationHeaders(token))
+    expect(missing.status).toBe(500)
+  })
+
   test('fresh user has null ui prefs', async () => {
     const token = await createUserAndGetToken()
 

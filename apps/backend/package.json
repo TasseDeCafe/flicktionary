@@ -18,6 +18,7 @@
     "verify:kaikki-load": "npx tsx scripts/verify-kaikki-load.ts",
     "export:wordfreq": "uv run scripts/export-wordfreq.py",
     "build:lemma-ranks": "npx tsx scripts/build-lemma-ranks.ts",
+    "build:word-family": "npx tsx scripts/build-word-family.ts",
     "load:reference-data": "pnpm run export:wordfreq && pnpm run load:kaikki && pnpm run build:lemma-ranks",
     "db:advance-day": "npx tsx scripts/advance-practice-day.ts",
     "db:backfill-backdrops": "npx tsx scripts/backfill-tmdb-backdrops.ts",

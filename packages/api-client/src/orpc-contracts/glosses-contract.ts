@@ -3,6 +3,27 @@ import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import { GrammarIpaBagSchema } from './common/flicktionary-schemas'
 
+// The reader's word-family line (docs/proposals/word-family-hints.md): how the
+// selection is built and which of its relatives the user already has.
+export const WordFamilySchema = z.object({
+  // Set when the selection is a participle / gerund / passive / verbal noun
+  // of `lemma` (a dictionary spelling).
+  formOf: z
+    .object({
+      kind: z.enum(['participle', 'adverbial_participle', 'gerund', 'passive', 'verbal_noun']),
+      lemma: z.string(),
+    })
+    .nullable(),
+  // The etymology breakdown in order (за- + мёрзнуть); a single non-affix
+  // part means "derived from". Null when kaikki has none.
+  parts: z.array(z.object({ text: z.string(), isAffix: z.boolean() })).nullable(),
+  // Up to 3 relatives from the user's vocabulary, best first (parent, shared
+  // root, related; known before saved; frequent first). Non-empty → the
+  // reader holds the translation back behind a reveal.
+  anchors: z.array(z.object({ lemma: z.string(), source: z.enum(['known', 'saved']) })),
+})
+export type WordFamily = z.infer<typeof WordFamilySchema>
+
 export const glossesContract = {
   // Stateless gloss for an arbitrary selection in its sentence context. Re-uses
   // the same Haiku prompt as highlights.fastGloss, but is not tied to a
@@ -26,6 +47,9 @@ export const glossesContract = {
         // gloss must never depend on the user's *primary* target language —
         // the target IS the language of the text being glossed.
         targetLanguage: z.string().trim().min(1).max(40).optional(),
+        // Only the web reader's gloss sheet asks for the word-family line;
+        // hovers and other lookups skip its queries.
+        includeWordFamily: z.boolean().optional(),
       })
     )
     .output(
@@ -50,6 +74,10 @@ export const glossesContract = {
           // (folded strings). Empty → no "Marked as known" chip. Un-marking
           // sends these back verbatim to studySessions.unmarkKnownLemma.
           knownLemmaCandidates: z.array(z.string()),
+          // Null unless requested (includeWordFamily), enabled for the
+          // language (word_family_hints_enabled + a word-family language),
+          // and there is an informative structure or an anchor to show.
+          wordFamily: WordFamilySchema.nullable(),
         }),
       })
     ),

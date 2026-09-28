@@ -14,6 +14,11 @@ import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
 import { recordLookup, type RecordLookupDependencies } from '../../service/lemma-lookups/record-lookup'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
+import {
+  buildWordFamily,
+  loadWordFamilyEntries,
+  type WordFamilyDependencies,
+} from '../../service/word-family/word-family'
 import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
@@ -28,7 +33,8 @@ export const GlossesRouter = (
   anthropicPasses: AnthropicPassesInterface,
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface,
   knownLemmasRepository: KnownLemmasRepositoryInterface,
-  recordLookupDependencies: RecordLookupDependencies
+  recordLookupDependencies: RecordLookupDependencies,
+  wordFamilyDependencies: WordFamilyDependencies
 ): Router => {
   const implementer = implement(glossesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -52,7 +58,12 @@ export const GlossesRouter = (
       if (!languagePrefs.nativeLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
       }
-      const [gloss, knownLemmaCandidates] = await Promise.all([
+      const wantsWordFamily =
+        !!input.includeWordFamily &&
+        (await userTargetLanguagePrefsRepository.getWordFamilyHintsEnabled(userId, targetLanguage))
+      // The entry lookup doesn't need the gloss, so it runs alongside the LLM
+      // call; the gloss's POS then picks between homographs.
+      const [gloss, knownLemmaCandidates, wordFamilyLookup] = await Promise.all([
         anthropicPasses.fastGlossPass({
           targetLanguage,
           nativeLanguage: languagePrefs.nativeLanguage,
@@ -64,13 +75,19 @@ export const GlossesRouter = (
           { userId, targetLanguage, selectionText: input.selectionText },
           { wiktionaryMatchRepository, knownLemmasRepository }
         ),
+        wantsWordFamily
+          ? loadWordFamilyEntries({ targetLanguage, selectionText: input.selectionText }, wordFamilyDependencies)
+          : null,
       ])
-      const ipaResult = await lookupFastGlossIpa({
-        targetLanguage,
-        selectionText: input.selectionText,
-        pos: gloss.pos,
-        wiktionaryEntriesRepository,
-      })
+      const [ipaResult, wordFamily] = await Promise.all([
+        lookupFastGlossIpa({
+          targetLanguage,
+          selectionText: input.selectionText,
+          pos: gloss.pos,
+          wiktionaryEntriesRepository,
+        }),
+        buildWordFamily({ userId, targetLanguage, lookup: wordFamilyLookup, pos: gloss.pos }, wordFamilyDependencies),
+      ])
       const ipa = ipaResult?.ipa ?? null
       // Pre-pick the dialect-correct display string server-side so every
       // client renders the same IPA. Dialect prefs only matter for the
@@ -85,6 +102,7 @@ export const GlossesRouter = (
           ipaDisplay: pickIpa(ipa, targetLanguage, dialects) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
           knownLemmaCandidates,
+          wordFamily,
         },
       }
     }),

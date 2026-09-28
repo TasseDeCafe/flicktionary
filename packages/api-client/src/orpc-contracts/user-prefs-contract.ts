@@ -6,6 +6,9 @@ const TargetLanguagePrefSchema = z.object({
   targetLanguage: z.string(),
   cefrLevel: z.string(),
   showTranslationsEnabled: z.boolean(),
+  // Reader word-family line + guess-before-reveal hold. Only offered for
+  // WORD_FAMILY_LANGUAGES; stored (default true) for every language.
+  wordFamilyHintsEnabled: z.boolean(),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
   // Production review cap. null = uncapped (the historical default for
@@ -107,6 +110,12 @@ export const userPrefsContract = {
 
   setShowTranslationsForLanguage: oc
     .route({ method: 'PUT', path: '/user-prefs/show-translations-for-language', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ targetLanguage: z.string().min(1), enabled: z.boolean() }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setWordFamilyHintsForLanguage: oc
+    .route({ method: 'PUT', path: '/user-prefs/word-family-hints-for-language', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ targetLanguage: z.string().min(1), enabled: z.boolean() }))
     .output(z.object({ data: UserPrefsSchema })),

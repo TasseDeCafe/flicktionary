@@ -118,6 +118,12 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
 // (head_templates structure varies by language).
 export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en', 'de', 'es', 'pt', 'fr'])
 
+// Kaikki languages whose word-family graph is built and whose reader gloss
+// sheet shows the word-family line + guess-before-reveal hold (and the
+// per-language setting for it). A subset of KAIKKI_LANGUAGES; the loader's
+// WORD_FAMILY_LANGUAGES (apps/backend/scripts/kaikki-languages.ts) mirrors it.
+export const WORD_FAMILY_LANGUAGES: ReadonlySet<string> = new Set(['ru'])
+
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG
   return LANGUAGE_GRAMMAR[code as SupportedLanguageCode] ?? DEFAULT_GRAMMAR_CONFIG

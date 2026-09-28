@@ -8,9 +8,10 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 import { rebuildWiktionaryRedirects } from './build-wiktionary-redirects'
+import { rebuildWordFamilyEdges } from './build-word-family'
 import { snapshotReferenceTables } from './snapshot-reference-tables'
 import { DEFAULT_LOCAL_DEV_CONNECTION, maskConnectionString, resolveConnectionString } from './db-connection'
-import { LOAD_LANGUAGES } from './kaikki-languages'
+import { LOAD_LANGUAGES, WORD_FAMILY_LANGUAGES } from './kaikki-languages'
 import { verifyKaikkiLoad } from './verify-kaikki-load'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -248,13 +249,18 @@ const loadCsvs = async (
     console.log('Rebuilding wiktionary_form_redirects...')
     await rebuildWiktionaryRedirects(sql, LOAD_LANGUAGES, 'truncate')
 
+    // Same lifecycle for the word-family graph, which reads the reloaded
+    // entries (standalone rebuilds: build-word-family.ts).
+    console.log('Rebuilding wiktionary_word_family_edges...')
+    await rebuildWordFamilyEdges(sql, WORD_FAMILY_LANGUAGES, 'truncate')
+
     // TRUNCATE wipes the tables' statistics and autovacuum can take a long
     // time to re-ANALYZE after the bulk COPY. Without fresh stats the planner
     // has none for the checkpoint_fold expression indexes and flips the
     // checkpoint matcher's = ANY(tokens) lookups to seq scans that fold every
     // row (~40s per preview in prod), so re-collect them in the same run.
     console.log('Analyzing wiktionary tables...')
-    await sql`ANALYZE public.wiktionary_entries, public.wiktionary_forms, public.wiktionary_form_redirects`
+    await sql`ANALYZE public.wiktionary_entries, public.wiktionary_forms, public.wiktionary_form_redirects, public.wiktionary_word_family_edges`
 
     // The COPY connection has died mid-stream without an error before (leaving
     // wiktionary_forms empty behind a green exit) — so don't trust the COPYs:

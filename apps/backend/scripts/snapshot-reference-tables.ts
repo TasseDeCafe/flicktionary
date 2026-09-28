@@ -12,6 +12,7 @@ export const REFERENCE_TABLES = [
   'public.wiktionary_entries',
   'public.wiktionary_forms',
   'public.wiktionary_form_redirects',
+  'public.wiktionary_word_family_edges',
   'public.lemma_ranks',
   'public.lemma_rank_builds',
 ] as const
