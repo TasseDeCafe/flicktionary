@@ -13,7 +13,7 @@ Generic source shape so non-movie content can plug in later without migration.
 ```
 content_source
   id                  uuid pk
-  type                'movie' | 'tv' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc' | 'lesson'
+  type                'movie' | 'tv' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc' | 'lesson' | 'chat'
                                    -- 'tv' rows are one content_source per
                                    -- episode (metadata: tmdbShowId, showTitle,
                                    -- seasonNumber, episodeNumber, episodeTitle,
@@ -28,6 +28,12 @@ content_source
                                    -- lesson-notes import batch (title = the
                                    -- upload's title) — unlike 'adhoc' they are
                                    -- NOT deduped per (user, language).
+                                   -- 'chat' rows are one per vocabulary-chat
+                                   -- thread (title = generated topic, first
+                                   -- message until then); one track whose
+                                   -- segments are the added terms' example
+                                   -- sentences. adhoc/lesson/chat are the
+                                   -- synthetic types (isSyntheticSourceType).
                                    -- 'book' rows are one per uploaded book
                                    -- (metadata: author, fileName, contentHash,
                                    -- partCount, importStatus 'uploading'|'ready',
@@ -223,6 +229,20 @@ card_chat_message
   card_id             uuid
   role                'user' | 'assistant'
   content             text
+  created_at          timestamptz
+
+vocab_chat_message                   -- vocabulary-chat turns, one thread per 'chat' session
+  id                  uuid pk      -- assistant ids are minted before insert so the
+                                   -- model can cite the turn as proposal_id
+  study_session_id    uuid -> study_session.id (ON DELETE CASCADE)
+  role                'user' | 'assistant'
+  content             text
+  proposal            jsonb        -- assistant only: {items: [{headword, note, example,
+                                   -- inVocabulary, highlightId}]} from propose_cards;
+                                   -- highlightId is set once the item was added
+                                   -- (segment + highlight + enrich_highlight job)
+  new_thread_suggestion jsonb      -- assistant only: {language, message} when the
+                                   -- learner asked about another target language
   created_at          timestamptz
 
 card_chat_read_state                 -- per-card chat read marker (server-side, cross-device)
