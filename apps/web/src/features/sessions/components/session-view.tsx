@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { Navigate, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { toast } from 'sonner'
@@ -1091,6 +1091,12 @@ export const SessionView = () => {
         <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Session not found.`}</div>
       </ModalScreen>
     )
+  }
+
+  // A vocabulary chat's track is a list of example sentences, not a text to
+  // read: every entry point to a chat session lands on the chat itself.
+  if (session.contentSourceType === 'chat') {
+    return <Navigate to='/chat/$sessionId' params={{ sessionId: session.id }} replace />
   }
 
   // Where the divider renders: the pending preview while placing (visible even

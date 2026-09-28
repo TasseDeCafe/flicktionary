@@ -46,7 +46,11 @@ const useSessionCardParts = ({ session, onRemove, difficulty, difficultyLoading 
   return {
     title,
     dateLabel: relativeDate(session.createdAt),
-    linkProps: { to: '/sessions/$sessionId', params: { sessionId: session.id } } as const,
+    // A chat thread opens the chat, not the reader.
+    linkProps:
+      session.contentSourceType === 'chat'
+        ? ({ to: '/chat/$sessionId', params: { sessionId: session.id } } as const)
+        : ({ to: '/sessions/$sessionId', params: { sessionId: session.id } } as const),
     media: <MediaThumb imageUrl={sessionMediaImageUrl(session)} title={title} type={session.contentSourceType} />,
     meta: (
       <>
