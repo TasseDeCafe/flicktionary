@@ -632,7 +632,7 @@ export const buildApp = ({
         userLookupsRepository,
         withTransaction,
       },
-      { wordFamilyRepository: WordFamilyRepository(), wiktionaryMatchRepository }
+      { wordFamilyRepository: WordFamilyRepository(), wiktionaryMatchRepository, anthropicPasses }
     )
   )
   app.use(

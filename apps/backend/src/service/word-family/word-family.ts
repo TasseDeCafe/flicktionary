@@ -1,6 +1,8 @@
 import { WORD_FAMILY_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { foldCheckpointToken } from '@flicktionary/core/utils/checkpoint-fold'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import type {
+  StoredWordFamilyInsight,
   WordFamilyCandidate,
   WordFamilyEntry,
   WordFamilyRepositoryInterface,
@@ -14,21 +16,35 @@ import { isInformativeStructure, parseWordFamily, type ParsedWordFamily, type St
 
 // The reader gloss sheet's word-family line (docs/proposals/word-family-hints.md):
 // how the tapped word is built, plus up to MAX_ANCHORS relatives the user
-// already has. Deterministic — kaikki data and the user's vocabulary only.
+// already has. The kaikki data and the user's vocabulary give a deterministic
+// line; a per-lemma LLM insight (cached for every user, generated on demand
+// by ensureWordFamilyInsight) then explains the parts, adds parents kaikki
+// lacks and drops ancestors a learner can't see.
 
 export const MAX_ANCHORS = 3
 
+// Insights are only generated for content words: function words have no
+// breakdown worth an LLM call.
+const INSIGHT_POS = new Set(['noun', 'verb', 'adj', 'adv'])
+
 export type WordFamilyAnchor = { lemma: string; source: 'known' | 'saved' }
+
+export type WordFamilyPart = StructurePart & { meaning: string | null }
 
 export type WordFamily = {
   formOf: ParsedWordFamily['formOf']
-  parts: StructurePart[] | null
+  parts: WordFamilyPart[] | null
   anchors: WordFamilyAnchor[]
+  cognates: string[]
+  // True when the lemma's insight isn't cached yet for the reader's
+  // explanation language; the client then asks glosses.wordFamilyInsight.
+  insightPending: boolean
 }
 
 export type WordFamilyDependencies = {
   wordFamilyRepository: WordFamilyRepositoryInterface
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface
+  anthropicPasses: Pick<AnthropicPassesInterface, 'wordFamilyInsightPass'>
 }
 
 type ParsedEntry = WordFamilyEntry & { parsed: ParsedWordFamily }
@@ -146,13 +162,36 @@ const onlyRestates = (parts: readonly StructurePart[], formOfFolded: string, tar
 const firstParts = (entries: readonly ParsedEntry[]): StructurePart[] | null =>
   entries.find((entry) => entry.parsed.parts !== null)?.parsed.parts ?? null
 
-// Finishes the family line once the gloss's POS is known. Null when there is
-// nothing worth showing: no informative structure and no anchor.
-export const buildWordFamily = async (
-  params: { userId: string; targetLanguage: string; lookup: WordFamilyLookup | null; pos: string | null },
-  deps: WordFamilyDependencies
-): Promise<WordFamily | null> => {
-  const { userId, targetLanguage, lookup } = params
+// Which structure the line shows. A generated insight's breakdown replaces
+// kaikki's (an empty one means the word is opaque: no breakdown at all);
+// without one the kaikki parts show, unexplained.
+export const resolveDisplayedParts = (
+  kaikkiParts: readonly StructurePart[] | null,
+  insight: StoredWordFamilyInsight | null
+): WordFamilyPart[] | null => {
+  if (insight?.explanation) {
+    const meanings = insight.explanation.partMeanings
+    if (insight.parts.length === 0) return null
+    return insight.parts.map((part, index) => ({ ...part, meaning: meanings[index] ?? null }))
+  }
+  return kaikkiParts ? kaikkiParts.map((part) => ({ ...part, meaning: null })) : null
+}
+
+type ResolvedWord = {
+  lemma: string
+  lemmaPos: string[]
+  // The insight key's POS: the first picked entry's.
+  insightPos: string
+  headword: string
+  formOf: ParsedWordFamily['formOf']
+  kaikkiParts: StructurePart[] | null
+}
+
+const resolveWord = async (
+  params: { targetLanguage: string; lookup: WordFamilyLookup | null; pos: string | null },
+  deps: Pick<WordFamilyDependencies, 'wordFamilyRepository'>
+): Promise<ResolvedWord | null> => {
+  const { targetLanguage, lookup } = params
   if (!lookup || lookup.entries.length === 0) return null
   const picked = pickFamilyEntries(
     lookup.entries,
@@ -175,21 +214,131 @@ export const buildWordFamily = async (
     )
     if (lemmaParts) parts = lemmaParts
   }
+  return {
+    lemma: picked.folded,
+    lemmaPos: [...new Set(picked.entries.map((entry) => entry.pos))],
+    insightPos: picked.entries[0].pos,
+    headword: picked.entries[0].headword,
+    formOf,
+    kaikkiParts: parts,
+  }
+}
+
+const FORM_OF_DESCRIPTIONS: Record<NonNullable<ParsedWordFamily['formOf']>['kind'], string> = {
+  participle: 'participle',
+  adverbial_participle: 'adverbial participle',
+  gerund: 'gerund',
+  passive: 'passive',
+  verbal_noun: 'verbal noun',
+}
+
+// Generates and stores the word's insight for `explanationLanguage` when it
+// isn't cached yet. A breakdown generated for another explanation language
+// is kept; the pass then only explains its parts. Parents kaikki lacks (the
+// suggested ones and the breakdown's base words) are kept only when they are
+// real kaikki lemmas, which guards against invented words.
+const generateInsight = async (
+  params: { targetLanguage: string; explanationLanguage: string; word: ResolvedWord },
+  existing: StoredWordFamilyInsight | null,
+  deps: WordFamilyDependencies
+): Promise<void> => {
+  const { targetLanguage, explanationLanguage, word } = params
+  const ancestors = existing
+    ? []
+    : await deps.wordFamilyRepository.listAncestors({ targetLanguage, lemma: word.lemma, lemmaPos: word.lemmaPos })
+  const ancestorDisplay = await deps.wiktionaryMatchRepository.resolveDisplayHeadwords({
+    targetLanguage,
+    foldedLemmas: ancestors,
+  })
+  const result = await deps.anthropicPasses.wordFamilyInsightPass({
+    targetLanguage,
+    explanationLanguage,
+    headword: word.headword,
+    pos: word.insightPos,
+    formOf: word.formOf ? `${FORM_OF_DESCRIPTIONS[word.formOf.kind]} of ${word.formOf.lemma}` : null,
+    kaikkiParts: word.kaikkiParts,
+    ancestors: ancestors.map((a) => ancestorDisplay.get(a) ?? a),
+    fixedParts: existing?.parts ?? null,
+  })
+
+  const fold = (text: string) => foldCheckpointToken(text, targetLanguage)
+  const known = new Set(ancestors)
+  // The breakdown's base words are parents too (ожог = о- + жечь when kaikki
+  // has no etymology for ожог).
+  const bases = result.parts.filter((part) => !part.isAffix).map((part) => part.text)
+  const suggested = [...new Set([...result.missingParents, ...bases].map(fold))].filter(
+    (p) => p !== word.lemma && !known.has(p)
+  )
+  const real = await deps.wiktionaryMatchRepository.resolveDisplayHeadwords({
+    targetLanguage,
+    foldedLemmas: suggested,
+  })
+  await deps.wordFamilyRepository.saveInsight({
+    targetLanguage,
+    lemma: word.lemma,
+    lemmaPos: word.insightPos,
+    explanationLanguage,
+    parts: result.parts,
+    missingParents: suggested.filter((p) => real.has(p)),
+    // A base word the breakdown shows is visible by definition.
+    hiddenAncestors: [...new Set(result.hiddenAncestors.map(fold))].filter(
+      (a) => known.has(a) && !bases.some((base) => fold(base) === a)
+    ),
+    partMeanings: result.partMeanings,
+    cognates: result.cognates,
+    model: result.model,
+  })
+}
+
+// Finishes the family line once the gloss's POS is known. With
+// `generateInsight`, a missing insight is generated first (the slow path the
+// client triggers after the first render). Null when there is nothing worth
+// showing and nothing left to generate.
+export const buildWordFamily = async (
+  params: {
+    userId: string
+    targetLanguage: string
+    explanationLanguage: string
+    lookup: WordFamilyLookup | null
+    pos: string | null
+    generateInsight?: boolean
+  },
+  deps: WordFamilyDependencies
+): Promise<WordFamily | null> => {
+  const { userId, targetLanguage, explanationLanguage } = params
+  const word = await resolveWord(params, deps)
+  if (!word) return null
+
+  const insightKey = { targetLanguage, lemma: word.lemma, lemmaPos: word.insightPos, explanationLanguage }
+  const wantsInsight = INSIGHT_POS.has(word.insightPos)
+  let insight = wantsInsight ? await deps.wordFamilyRepository.getInsight(insightKey) : null
+  if (wantsInsight && params.generateInsight && !insight?.explanation) {
+    await generateInsight({ targetLanguage, explanationLanguage, word }, insight, deps)
+    insight = await deps.wordFamilyRepository.getInsight(insightKey)
+  }
+  const insightPending = wantsInsight && !insight?.explanation
 
   const candidates = await deps.wordFamilyRepository.listFamilyCandidates({
     targetLanguage,
-    lemma: picked.folded,
-    lemmaPos: [...new Set(picked.entries.map((entry) => entry.pos))],
+    lemma: word.lemma,
+    lemmaPos: word.lemmaPos,
+    hiddenAncestors: insight?.hiddenAncestors ?? [],
+    extraParents: insight?.missingParents ?? [],
   })
   const vocabulary = await deps.wordFamilyRepository.listUserVocabulary({
     userId,
     targetLanguage,
     lemmas: candidates.map((c) => c.lemma),
   })
-  const ranked = rankAnchors(candidates, vocabulary, new Set([picked.folded]))
+  const ranked = rankAnchors(candidates, vocabulary, new Set([word.lemma]))
 
-  // A bare "X + -ся" breakdown only shows next to an anchor.
-  if (ranked.length === 0 && !isInformativeStructure({ formOf, parts }, targetLanguage)) return null
+  const parts = resolveDisplayedParts(word.kaikkiParts, insight)
+  const explained = parts?.some((part) => part.meaning) ?? false
+  const cognates = insight?.explanation?.cognates ?? []
+  // A bare "X + -ся" breakdown only shows next to an anchor or explained.
+  const structureShown =
+    ranked.length > 0 || explained || isInformativeStructure({ formOf: word.formOf, parts }, targetLanguage)
+  if (!structureShown && cognates.length === 0 && !insightPending) return null
 
   // Folded keys lose what a reader needs (ё, capitals) — show dictionary spellings.
   const display = await deps.wiktionaryMatchRepository.resolveDisplayHeadwords({
@@ -197,8 +346,10 @@ export const buildWordFamily = async (
     foldedLemmas: ranked.map((a) => a.lemma),
   })
   return {
-    formOf,
-    parts,
+    formOf: structureShown ? word.formOf : null,
+    parts: structureShown ? parts : null,
     anchors: ranked.map((a) => ({ lemma: display.get(a.lemma) ?? a.lemma, source: a.source })),
+    cognates,
+    insightPending,
   }
 }

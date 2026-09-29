@@ -20,10 +20,12 @@ import { sql } from '../../transport/database/postgres-client'
 describe('glosses-router', () => {
   const fastGlossPass = vi.fn().mockResolvedValue({ gloss: 'the table', pos: 'noun', register: null })
   const languageDetectionPass = vi.fn().mockResolvedValue('de')
+  const wordFamilyInsightPass = vi.fn()
   const testApp = buildTestApp({
     anthropicPasses: MockAnthropicPasses({
       fastGlossPass: fastGlossPass as never,
       languageDetectionPass: languageDetectionPass as never,
+      wordFamilyInsightPass: wordFamilyInsightPass as never,
     }),
   })
 
@@ -115,10 +117,12 @@ describe('glosses-router', () => {
     expect(response.body.data.wordFamily).toEqual({
       formOf: null,
       parts: [
-        { text: 'у-', isAffix: true },
-        { text: root, isAffix: false },
+        { text: 'у-', isAffix: true, meaning: null },
+        { text: root, isAffix: false, meaning: null },
       ],
       anchors: [{ lemma: root, source: 'known' }],
+      cognates: [],
+      insightPending: true,
     })
 
     // Not requested (extension hovers, practice lookups) → never computed.
@@ -126,6 +130,94 @@ describe('glosses-router', () => {
 
     await UserTargetLanguagePrefsRepository().setWordFamilyHintsEnabled(id, 'ru', false)
     expect((await gloss(true)).body.data.wordFamily).toBeNull()
+  })
+
+  test('word-family insight: generated once, applied to the line, then served from the cache', async () => {
+    const cyrillic = 'абвгдежзиклмнопрстуфхцчшщ'
+    const u = Array.from({ length: 10 }, () => cyrillic[Math.floor(Math.random() * cyrillic.length)]).join('')
+    const word = `ожог${u}`
+    // A kaikki ancestor a learner can't see, and the parent kaikki misses.
+    const opaque = `огонь${u}`
+    const parent = `жечь${u}`
+    const lemma = (pos: string) => sql.json({ head_templates: [{ name: `ru-${pos}` }], senses: [{ glosses: ['x'] }] })
+    await sql`
+      INSERT INTO public.wiktionary_entries (target_language, headword, pos, data)
+      VALUES ('ru', ${word}, 'noun', ${lemma('noun')}),
+             ('ru', ${opaque}, 'noun', ${lemma('noun')}),
+             ('ru', ${parent}, 'verb', ${lemma('verb')})
+    `
+    await sql`
+      INSERT INTO public.wiktionary_word_family_edges (target_language, lemma, lemma_pos, relative, kind, depth)
+      VALUES ('ru', ${word}, 'noun', ${opaque}, 'ancestor', 1)
+    `
+    const { id, token } = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+    await UsersRepository().setNativeLanguage(id, 'en')
+    await UserTargetLanguagePrefsRepository().upsertCefr(id, 'ru', 'B1')
+    await KnownLemmasRepository().bulkMarkKnown({
+      userId: id,
+      targetLanguage: 'ru',
+      lemmas: [opaque, parent],
+      source: 'bulk_text',
+      sourceId: null,
+      sweepBatchId: null,
+    })
+    wordFamilyInsightPass.mockResolvedValueOnce({
+      parts: [
+        { text: 'о-', isAffix: true },
+        { text: parent, isAffix: false },
+      ],
+      partMeanings: ['on a surface', 'burn'],
+      missingParents: [`выдумка${u}`],
+      hiddenAncestors: [opaque],
+      cognates: [],
+      model: 'test-model',
+    })
+
+    const unauthenticated = await request(testApp)
+      .post('/api/v1/glosses/word-family-insight')
+      .set({ Authorization: 'Bearer wrong-token' })
+      .send({ selectionText: word, targetLanguage: 'ru', pos: 'noun' })
+    expect(unauthenticated.status).toBe(401)
+
+    const insight = () =>
+      request(testApp)
+        .post('/api/v1/glosses/word-family-insight')
+        .set({ Authorization: `Bearer ${token}` })
+        .send({ selectionText: word, targetLanguage: 'ru', pos: 'noun' })
+    const expected = {
+      formOf: null,
+      parts: [
+        { text: 'о-', isAffix: true, meaning: 'on a surface' },
+        { text: parent, isAffix: false, meaning: 'burn' },
+      ],
+      // огонь is hidden; жечь joins through the breakdown; the invented
+      // выдумка (not a kaikki lemma here) never does.
+      anchors: [{ lemma: parent, source: 'known' }],
+      cognates: [],
+      insightPending: false,
+    }
+    const first = await insight()
+    expect(first.status).toBe(200)
+    expect(first.body.data.wordFamily).toEqual(expected)
+    expect(wordFamilyInsightPass).toHaveBeenCalledWith(
+      expect.objectContaining({ headword: word, pos: 'noun', explanationLanguage: 'en', ancestors: [opaque] })
+    )
+
+    // Cached for every user: no second LLM call, and fastGloss applies it.
+    wordFamilyInsightPass.mockClear()
+    expect((await insight()).body.data.wordFamily).toEqual(expected)
+    fastGlossPass.mockResolvedValueOnce({ gloss: 'a burn', pos: 'noun', register: null })
+    const gloss = await request(testApp)
+      .post('/api/v1/glosses/fast-gloss')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ selectionText: word, contextLine: `Это ${word}.`, targetLanguage: 'ru', includeWordFamily: true })
+    expect(gloss.body.data.wordFamily).toEqual(expected)
+    expect(wordFamilyInsightPass).not.toHaveBeenCalled()
+
+    // The setting gates the endpoint too.
+    await UserTargetLanguagePrefsRepository().setWordFamilyHintsEnabled(id, 'ru', false)
+    expect((await insight()).body.data.wordFamily).toBeNull()
   })
 
   test('golden path for a guest: an anonymous user provisioned via putUser can gloss', async () => {

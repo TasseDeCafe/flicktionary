@@ -100,6 +100,76 @@ describe('word-family-repository integration tests', () => {
     ])
   })
 
+  test('listFamilyCandidates drops hidden ancestors and adds extra parents before looking up shared roots', async () => {
+    const u = uniqueSuffix()
+    const word = `понимать${u}`
+    const hidden = `иметь${u}`
+    const extra = `нимать${u}`
+    await insertEdge(word, hidden, 'ancestor', 1)
+    // Would share the hidden root.
+    await insertEdge(`снимать${u}`, hidden, 'ancestor', 1)
+    // Shares the extra parent.
+    await insertEdge(`занимать${u}`, extra, 'ancestor', 1)
+
+    const candidates = await repository.listFamilyCandidates({
+      targetLanguage: 'ru',
+      lemma: word,
+      lemmaPos: ['verb'],
+      hiddenAncestors: [hidden],
+      extraParents: [extra],
+    })
+    const sorted = [...candidates].sort((a, b) => `${a.tier}${a.lemma}`.localeCompare(`${b.tier}${b.lemma}`))
+    expect(sorted).toEqual([
+      { lemma: extra, tier: 'parent', depth: 1 },
+      { lemma: `занимать${u}`, tier: 'shared_root', depth: 2 },
+    ])
+    expect(await repository.listAncestors({ targetLanguage: 'ru', lemma: word, lemmaPos: ['verb'] })).toEqual([hidden])
+  })
+
+  test('saveInsight stores both halves first-writer-wins; getInsight joins the explanation language', async () => {
+    const u = uniqueSuffix()
+    const key = { targetLanguage: 'ru', lemma: `ожог${u}`, lemmaPos: 'noun' }
+    const parts = [
+      { text: 'о-', isAffix: true },
+      { text: 'жечь', isAffix: false },
+    ]
+    expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toBeNull()
+
+    await repository.saveInsight({
+      ...key,
+      explanationLanguage: 'en',
+      parts,
+      missingParents: ['жечь'],
+      hiddenAncestors: [],
+      partMeanings: ['on a surface', 'burn'],
+      cognates: [],
+      model: 'm',
+    })
+    // A second writer (another explanation language) keeps the first breakdown.
+    await repository.saveInsight({
+      ...key,
+      explanationLanguage: 'fr',
+      parts: [],
+      missingParents: [],
+      hiddenAncestors: ['x'],
+      partMeanings: ['sur', 'brûler'],
+      cognates: ['x'],
+      model: 'm',
+    })
+
+    expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toEqual({
+      parts,
+      missingParents: ['жечь'],
+      hiddenAncestors: [],
+      explanation: { partMeanings: ['on a surface', 'burn'], cognates: [] },
+    })
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'fr' }))?.explanation).toEqual({
+      partMeanings: ['sur', 'brûler'],
+      cognates: ['x'],
+    })
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'de' }))?.explanation).toBeNull()
+  })
+
   test('listUserVocabulary reports known marks, live saved terms and ranks', async () => {
     const u = uniqueSuffix()
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()

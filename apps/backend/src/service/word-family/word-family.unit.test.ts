@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { WordFamilyEntry } from '../../transport/database/word-family/word-family-repository'
-import { MAX_ANCHORS, pickFamilyEntries, rankAnchors } from './word-family'
+import { MAX_ANCHORS, pickFamilyEntries, rankAnchors, resolveDisplayedParts } from './word-family'
 
 const lemmaEntry = (folded: string, pos: string, parts?: string[]): WordFamilyEntry => ({
   headword: folded,
@@ -145,5 +145,39 @@ describe('rankAnchors', () => {
       new Set()
     )
     expect(ranked[0].source).toBe('saved')
+  })
+})
+
+describe('resolveDisplayedParts', () => {
+  const kaikki = [
+    { text: 'по-', isAffix: true },
+    { text: '-нимать', isAffix: true },
+  ]
+  const insight = (parts: typeof kaikki, withExplanation = true) => ({
+    parts,
+    missingParents: [],
+    hiddenAncestors: [],
+    explanation: withExplanation ? { partMeanings: ['a', 'b'], cognates: [] } : null,
+  })
+
+  test('kaikki parts show unexplained without an insight', () => {
+    expect(resolveDisplayedParts(kaikki, null)).toEqual(kaikki.map((p) => ({ ...p, meaning: null })))
+    expect(resolveDisplayedParts(null, null)).toBeNull()
+  })
+
+  test("an insight's breakdown replaces kaikki's, meanings aligned by index", () => {
+    const parts = [
+      { text: 'о-', isAffix: true },
+      { text: 'жечь', isAffix: false },
+    ]
+    expect(resolveDisplayedParts(kaikki, insight(parts))).toEqual([
+      { text: 'о-', isAffix: true, meaning: 'a' },
+      { text: 'жечь', isAffix: false, meaning: 'b' },
+    ])
+  })
+
+  test('an empty insight breakdown means opaque; an insight without explanation is ignored', () => {
+    expect(resolveDisplayedParts(kaikki, insight([]))).toBeNull()
+    expect(resolveDisplayedParts(kaikki, insight([], false))).toEqual(kaikki.map((p) => ({ ...p, meaning: null })))
   })
 })
