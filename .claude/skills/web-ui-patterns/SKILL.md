@@ -45,17 +45,19 @@ Use `WizardShell` from `apps/web/src/components/ui/wizard-shell.tsx` for any mod
 
 ## Sticky bottom CTA outside wizards
 
-When a non-wizard view needs a bottom CTA (e.g. triage list, "all caught up" empty state), match the WizardShell recipe so it lines up visually:
+When a non-wizard view needs a bottom CTA (e.g. detail views, "all caught up" empty state), use `StickyFooter` (`apps/web/src/components/ui/sticky-footer.tsx`) — the same bar WizardShell renders, so it lines up visually:
 
 ```tsx
-<div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+<StickyFooter>
   <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
     <Button size='xl' className='w-full' ...>...</Button>
   </div>
-</div>
+</StickyFooter>
 ```
 
-Canonical examples: `triage-list-view.tsx` and the `done` branch of `practice-session-view.tsx`. Avoid `Button` default size and avoid `md:w-auto` floats — full-width xl on mobile and desktop both.
+Canonical examples: `show-detail-view.tsx`, `book-detail-view.tsx`. Avoid `Button` default size and avoid `md:w-auto` floats — full-width xl on mobile and desktop both.
+
+**Any bar touching the bottom screen edge uses `pb-safe`, never a fixed `pb-3`/`py-3`.** `pb-safe` (defined in `packages/ui/src/styles/tokens.css`) is `max(0.75rem, env(safe-area-inset-bottom))`. With `viewport-fit=cover` and Home Screen installs (standalone, no browser toolbar), the page runs under the iOS home indicator, so a fixed padding leaves the CTA grazing the rounded screen corners. `StickyFooter` already applies it; non-sticky footers at the bottom of a `flex-col h-dvh` screen (the practice `ExerciseLayout` footer) need it spelled out.
 
 ## OptionCard (Workouts-style radio / nav card)
 

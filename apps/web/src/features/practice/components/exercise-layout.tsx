@@ -36,7 +36,7 @@ export const ExerciseLayout = ({
         {children}
       </div>
     </div>
-    <div className='bg-background border-t px-4 py-3'>
+    <div className='bg-background pb-safe border-t px-4 pt-3'>
       <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
         {feedback && <div className='max-h-[35vh] overflow-y-auto'>{feedback}</div>}
         {statusBar}

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 
 type WizardAction = {
@@ -73,7 +74,7 @@ export const WizardShell = ({
         </div>
 
         {(primary || secondary) && (
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className={cn('mx-auto flex w-full flex-col gap-2', columnClass)}>
               {primary && (
                 <Button
@@ -106,7 +107,7 @@ export const WizardShell = ({
                 </Button>
               )}
             </div>
-          </div>
+          </StickyFooter>
         )}
       </div>
     </ModalScreen>

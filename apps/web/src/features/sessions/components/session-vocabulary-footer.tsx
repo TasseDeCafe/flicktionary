@@ -6,6 +6,7 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { useProcessStudySession } from '../api/sessions-hooks'
 import type { DeclarationPillState } from './declaration-pill-state'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 type Props = {
   sessionId: string
@@ -144,7 +145,7 @@ export const SessionVocabularyFooter = ({
   // left slot shows exactly one thing at a time (confirmation > generating >
   // pill) to keep the row stable.
   return (
-    <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+    <StickyFooter className='px-3'>
       <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
         <span className='text-muted-foreground flex min-w-0 items-center text-sm'>
           {sweepConfirmation ? (
@@ -176,6 +177,6 @@ export const SessionVocabularyFooter = ({
           {label}
         </Button>
       </div>
-    </div>
+    </StickyFooter>
   )
 }

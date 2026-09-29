@@ -107,7 +107,7 @@ export const MixInterstitial = ({
 
       {/* "Up next" lives with the actions, not as a floating card mid-screen —
           a bordered card there reads as pressable when only the buttons act. */}
-      <div className='bg-background border-t px-4 pt-3 pb-3'>
+      <div className='bg-background pb-safe border-t px-4 pt-3'>
         <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>
           <div className='pb-1'>
             <div className='text-muted-foreground text-xs font-semibold tracking-widest uppercase'>{t`Up next`}</div>

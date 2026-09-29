@@ -7,6 +7,7 @@ import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
 import { Button } from '@flicktionary/ui/components/button'
 import { useMutation } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 // the user lands here after clicking on the magic link in the email.
 // The email templates are defined:
@@ -104,7 +105,7 @@ export const LoginEmailVerifyView = () => {
           )}
         </div>
       </div>
-      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <StickyFooter>
         <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           {isError ? (
             <Button size='xl' className='w-full' onClick={handleReturnToAuth}>
@@ -116,7 +117,7 @@ export const LoginEmailVerifyView = () => {
             </Button>
           )}
         </div>
-      </div>
+      </StickyFooter>
     </div>
   )
 }

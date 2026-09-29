@@ -16,6 +16,7 @@ import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { useConfirmLessonBatch, useGetLessonBatch } from '../api/lesson-import-hooks'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 type FacetSkill = ImportBatchRow['proposedSkills'][number]
 
@@ -187,7 +188,7 @@ export const LessonImportConfirmView = () => {
               <CefrStep targetLanguage={data.batch.targetLanguage} value={cefrChoice} onChange={setCefrChoice} />
             </div>
           </div>
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
               <Button
                 size='xl'
@@ -198,7 +199,7 @@ export const LessonImportConfirmView = () => {
                 {isSettingCefr || isConfirming ? t`Adding…` : t`Continue`}
               </Button>
             </div>
-          </div>
+          </StickyFooter>
         </div>
       </ModalScreen>
     )
@@ -283,7 +284,7 @@ export const LessonImportConfirmView = () => {
           </div>
         </div>
 
-        <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <StickyFooter>
           <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
             <Button
               size='xl'
@@ -298,7 +299,7 @@ export const LessonImportConfirmView = () => {
                   : t`Add ${newCount} cards`}
             </Button>
           </div>
-        </div>
+        </StickyFooter>
       </div>
     </ModalScreen>
   )

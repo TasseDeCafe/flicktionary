@@ -14,6 +14,7 @@ import { countWords } from '../utils/count-words'
 import { ExploreAdminPanel } from './explore-admin-panel'
 import { ExploreThumb } from './explore-card'
 import { useAddSharedEntry } from './use-add-shared-entry'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 const routeApi = getRouteApi('/_authenticated/_app/explore/$entryId')
 
@@ -107,13 +108,13 @@ export const ExploreEntryDetailView = () => {
             {/* Non-live entries are admin-only views of dead content — adding
                 would 404, so there is nothing to CTA. */}
             {entry.status === 'live' && (
-              <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+              <StickyFooter>
                 <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
                   <Button size='xl' className='w-full' disabled={isAdding} onClick={() => addEntry(entry)}>
                     {isAdding ? t`Adding...` : t`Start reading`}
                   </Button>
                 </div>
-              </div>
+              </StickyFooter>
             )}
           </>
         )}

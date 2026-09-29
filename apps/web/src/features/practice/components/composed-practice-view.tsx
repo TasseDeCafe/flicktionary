@@ -938,7 +938,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
             </p>
           )}
         </div>
-        <div className='bg-background border-t px-4 pt-2 pb-3'>
+        <div className='bg-background pb-safe border-t px-4 pt-2'>
           <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>
             {hardCount > 0 ? (
               <>
@@ -1203,7 +1203,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
           <FlashcardFace card={card} targetLanguage={targetLanguage} showBack={showBack} />
         </div>
       </div>
-      <div className='bg-background border-t px-4 py-3'>
+      <div className='bg-background pb-safe border-t px-4 pt-3'>
         <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
           {statusRow}
           {isPeeking ? (

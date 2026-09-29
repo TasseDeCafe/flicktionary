@@ -197,7 +197,7 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
       {/* Chat escalation pinned to the bottom (WizardShell's footer recipe) so
           it stays in thumb reach below any number of candidates. */}
       {!requiresCefr && (
-        <div className='bg-background/95 shrink-0 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <div className='bg-background/95 pb-safe shrink-0 border-t px-4 pt-3 backdrop-blur'>
           <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
             <Button variant='outline' size='xl' className='w-full' onClick={openChat} disabled={!targetLanguage}>
               <MessageCircle className='size-5' />
