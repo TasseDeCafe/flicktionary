@@ -22,6 +22,7 @@ import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flickt
 import { createSearchMatcher, type SearchMatcher } from '@flicktionary/core/utils/search-match'
 import { SessionVocabularyRow, EnrichingRow, SessionVocabularyRowSkeleton } from './session-vocabulary-row'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 // Fields are matched independently so a query can't spuriously span the
 // surface-form/headword boundary.
@@ -201,7 +202,7 @@ export const SessionVocabularyView = () => {
         </div>
       </div>
 
-      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <StickyFooter>
         <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           <Button
             size='xl'
@@ -220,7 +221,7 @@ export const SessionVocabularyView = () => {
             {t`Quiz your terms`}
           </Button>
         </div>
-      </div>
+      </StickyFooter>
     </ModalScreen>
   )
 }

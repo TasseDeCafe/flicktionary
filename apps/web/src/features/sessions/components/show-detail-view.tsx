@@ -11,6 +11,7 @@ import { deriveTvShows, latestEpisode } from '../utils/derive-tv-shows'
 import { MediaThumb } from './media-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { SessionDifficultyStat } from './session-difficulty-stat'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 const routeApi = getRouteApi('/_authenticated/_app/sessions/show/$tmdbShowId')
 
@@ -105,14 +106,14 @@ export const ShowDetailView = () => {
         </div>
       </div>
 
-      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <StickyFooter>
         <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           <Button size='xl' className='w-full' onClick={addEpisode}>
             <Plus />
             {t`Add episode`}
           </Button>
         </div>
-      </div>
+      </StickyFooter>
 
       <SessionRemoveDialog
         open={removeTarget !== null}

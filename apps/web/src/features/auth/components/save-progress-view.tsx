@@ -17,6 +17,7 @@ import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 import { Route as saveProgressRoute } from '@/app/routes/_authenticated/_app/save-progress'
 import { shouldShowSignInWithGoogle } from '../utils/auth-utils'
 import { classifyEmailConversionError, parseOAuthLinkError } from '../utils/conversion-errors'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 const emailSchema = z.email()
 
@@ -210,13 +211,13 @@ export const SaveProgressView = () => {
               </div>
             </div>
           </div>
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
               <Button type='submit' size='xl' className='w-full' disabled={isPending}>
                 {isPending ? t`Sending...` : t`Continue with Email`}
               </Button>
             </div>
-          </div>
+          </StickyFooter>
         </form>
       )}
 
@@ -237,7 +238,7 @@ export const SaveProgressView = () => {
               </button>
             </div>
           </div>
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
               <Button
                 size='xl'
@@ -249,7 +250,7 @@ export const SaveProgressView = () => {
                 {cooldownSeconds > 0 ? t`Resend email (${cooldownSeconds}s)` : t`Resend email`}
               </Button>
             </div>
-          </div>
+          </StickyFooter>
         </div>
       )}
 
@@ -261,13 +262,13 @@ export const SaveProgressView = () => {
               <p className='text-muted-foreground'>{t`Your account now works on any device — sign in with the same method next time.`}</p>
             </div>
           </div>
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
               <Button size='xl' className='w-full' onClick={handleClose}>
                 {t`Continue`}
               </Button>
             </div>
-          </div>
+          </StickyFooter>
         </div>
       )}
 
@@ -286,13 +287,13 @@ export const SaveProgressView = () => {
               </button>
             </div>
           </div>
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter>
             <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
               <Button size='xl' className='w-full' onClick={handleLogInInstead}>
                 {t`Log in`}
               </Button>
             </div>
-          </div>
+          </StickyFooter>
         </div>
       )}
     </ModalScreen>

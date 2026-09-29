@@ -28,6 +28,14 @@
   --spacing-status-blur: 1rem;
 }
 
+/* Bottom padding for anything touching the bottom screen edge. With
+   `viewport-fit=cover` the page runs under the home indicator (and a Home
+   Screen install has no browser toolbar to hold it clear), so a fixed `pb-3`
+   leaves CTAs grazing the rounded screen corners. */
+@utility pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
 @theme inline {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));

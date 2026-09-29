@@ -11,6 +11,7 @@ import { useTrackingStore } from '@/stores/tracking-store'
 import { useShallow } from 'zustand/react/shallow'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { WizardStepHeading } from '@/components/ui/wizard-shell'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 const emailSchema = z.email()
 
@@ -97,13 +98,13 @@ export const LoginEmailView = () => {
             </div>
           </div>
         </div>
-        <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <StickyFooter>
           <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
             <Button type='submit' size='xl' className='w-full' disabled={isPending}>
               {isPending ? t`Sending...` : t`Continue`}
             </Button>
           </div>
-        </div>
+        </StickyFooter>
       </form>
     </ModalScreen>
   )

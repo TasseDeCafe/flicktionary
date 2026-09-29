@@ -674,7 +674,7 @@ export const FloatingSheetFooter = ({ className, children }: FloatingSheetFooter
       data-floating-sheet-sticky-footer=''
       className={cn(
         isMobile
-          ? 'bg-background relative z-10 flex shrink-0 flex-col gap-2 border-t px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'
+          ? 'bg-background pb-safe relative z-10 flex shrink-0 flex-col gap-2 border-t px-6 pt-3'
           : 'bg-popover sticky bottom-0 z-10 mt-auto flex flex-col gap-2 px-2 pt-3 pb-3',
         showFooterShadow && 'shadow-[0_-8px_16px_-12px_rgba(0,0,0,0.18)]',
         className
@@ -831,7 +831,7 @@ export const FloatingSheetContent = ({
           ref={mobileScrollAreaRef}
           className={cn(
             'flex min-h-0 flex-col overscroll-none px-4',
-            hasMobileFooter ? 'pb-0' : 'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+            hasMobileFooter ? 'pb-0' : 'pb-safe',
             mobileScrollEnabled ? 'flex-1 overflow-y-auto' : 'overflow-hidden'
           )}
           style={expandable && !expanded ? { maxHeight: MOBILE_SHEET_PEEK_HEIGHT } : undefined}

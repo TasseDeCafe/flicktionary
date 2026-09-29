@@ -416,7 +416,7 @@ const Composer = ({
     }
   }
   return (
-    <div className='bg-background shrink-0 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
+    <div className='bg-background pb-safe shrink-0 border-t px-4 pt-3'>
       <div className='mx-auto flex w-full max-w-2xl items-end gap-2'>
         <Textarea
           value={value}

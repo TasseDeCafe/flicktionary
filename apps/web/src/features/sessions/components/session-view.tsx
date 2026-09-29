@@ -67,6 +67,7 @@ import { hasDifficultyStatContent } from './difficulty-stat-content'
 import { SessionDifficultyStat } from './session-difficulty-stat'
 import { SessionRemoveDialog } from './session-remove-dialog'
 import { BookPartNav } from '@/features/books/components/book-part-nav'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 // The welcome-back card holds back until this many unswept read words exist —
 // no greeting the reader over a handful of words. (The footer pill has no
@@ -1292,7 +1293,7 @@ export const SessionView = () => {
         {isPlacingBookmark ? (
           // Placement mode takes over the footer: instruction + cancel/confirm,
           // mirroring the vocabulary footer's chrome so the swap doesn't jump.
-          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <StickyFooter className='px-3'>
             <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
               <span className='text-muted-foreground text-sm'>{t`Tap the last line you've read.`}</span>
               <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
@@ -1309,7 +1310,7 @@ export const SessionView = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </StickyFooter>
         ) : (
           <SessionVocabularyFooter
             sessionId={sessionId}

@@ -30,6 +30,7 @@ import { RateSheet, type RateSheetChunkContent } from './rate-sheet'
 import { ReviewQueueStats } from './review-queue-stats'
 import type { QueueCounts } from './review-counts'
 import type { RateValue } from '@flicktionary/ui/components/rate-buttons'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 type ReadingModeViewProps = {
   targetLanguage: string
@@ -316,7 +317,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
             {t`You've reviewed every due term for this language. Come back later when more are ready.`}
           </p>
         </div>
-        <div className='bg-background border-t px-4 pt-2 pb-3'>
+        <div className='bg-background pb-safe border-t px-4 pt-2'>
           <div className='mx-auto w-full max-w-2xl'>
             <Button type='button' size='xl' className='w-full' onClick={close}>
               {t`Back to ${languageName}`}
@@ -362,7 +363,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         </div>
       </div>
 
-      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <StickyFooter className='pt-2'>
         <div className='mx-auto flex w-full max-w-2xl flex-col gap-3'>
           <div className='flex items-center justify-between gap-2'>
             <Button
@@ -414,7 +415,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
             </Button>
           )}
         </div>
-      </div>
+      </StickyFooter>
 
       <RateSheet
         open={sheetOpen}

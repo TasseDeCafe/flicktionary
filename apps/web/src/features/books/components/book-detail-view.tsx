@@ -20,6 +20,7 @@ import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-scree
 import { useGetBook, useOpenBookPart, useRemoveBook } from '../api/books-hooks'
 import { BookPriorityCard } from './book-priority-card'
 import { BookPrelearnSection } from './book-prelearn-section'
+import { StickyFooter } from '@/components/ui/sticky-footer'
 
 const routeApi = getRouteApi('/_authenticated/_app/sessions/book/$contentSourceId')
 
@@ -149,14 +150,14 @@ export const BookDetailView = () => {
       </div>
 
       {currentPart && (
-        <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <StickyFooter>
           <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
             <Button size='xl' className='w-full' disabled={isOpening} onClick={() => goToPart(currentPart)}>
               <BookOpen />
               {hasStarted ? t`Continue reading` : t`Start reading`}
             </Button>
           </div>
-        </div>
+        </StickyFooter>
       )}
 
       <ResponsiveOverlay open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
