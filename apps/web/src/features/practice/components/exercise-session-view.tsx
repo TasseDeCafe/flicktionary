@@ -281,7 +281,7 @@ const LoadedExerciseSessionView = ({
               <p className='text-muted-foreground text-sm'>{t`${correctCount} of ${total} correct.`}</p>
               {dailyLimitNote}
             </div>
-            <div className='bg-background border-t px-4 pt-2 pb-3'>
+            <div className='bg-background pb-safe border-t px-4 pt-2'>
               <div className='mx-auto w-full max-w-xl'>
                 <Button type='button' size='xl' className='w-full' onClick={handleClose}>
                   {backLabel}
