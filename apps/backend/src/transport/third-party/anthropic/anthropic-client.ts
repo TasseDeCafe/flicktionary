@@ -24,7 +24,7 @@ export const MODEL_OPUS = process.env.OPUS_MODEL ?? 'claude-opus-5-5'
 export const MODEL_SONNET = 'claude-sonnet-5'
 export const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
 
-// Accepted on Sonnet 5 and Opus 4.8 alike, not on Opus 5.5 — only sent via
+// Accepted on Sonnet 5 and Opus 4.8 alike, not on Opus 5.5 or Sonnet 5.5 — only sent via
 // reasoningParams.
 const THINKING_DISABLED = { type: 'disabled' } as const
 
@@ -32,7 +32,9 @@ export const TOOL_CHOICE_AUTO = { type: 'auto' } as const
 
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 
-const ALWAYS_THINKING_MODELS = new Set(['claude-opus-5-5', 'claude-fable-5', 'claude-fable-5-1'])
+// Sonnet 5.5 only turns thinking off through `between_tools`; low effort is the
+// cheaper equivalent for these single-call passes.
+const ALWAYS_THINKING_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5', 'claude-fable-5-1'])
 
 // The passes were tuned thinking-off. Models that allow it keep running that
 // way; always-thinking models get an explicit effort instead (the API default
@@ -76,6 +78,12 @@ export const MODEL_GRADE_SENTENCE = process.env.GRADE_SENTENCE_MODEL ?? MODEL_SO
 // did not, at ~4s per lookup vs ~2s. The env var flips the pass in one line
 // (e.g. back to Haiku if the wait proves too long).
 export const MODEL_TRANSLATE = process.env.TRANSLATE_MODEL ?? MODEL_OPUS
+
+// Word-family insights run on Opus at low effort: learners read the affix
+// explanations as fact, and a result is generated once per lemma and cached
+// for every user, so price barely matters and the wait is hidden behind the
+// deterministic line that renders first. The env var allows one-line A/B trials.
+export const MODEL_WORD_FAMILY = process.env.WORD_FAMILY_MODEL ?? MODEL_OPUS
 
 let client: Anthropic | null = null
 

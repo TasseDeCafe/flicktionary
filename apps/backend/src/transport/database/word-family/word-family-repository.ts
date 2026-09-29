@@ -1,4 +1,5 @@
-import { sql } from '../postgres-client'
+import type postgres from 'postgres'
+import { beginTx, sql } from '../postgres-client'
 import type { WordFamilyEntryData } from '../../../service/word-family/parse-word-family'
 
 // Gloss-time reads for the reader's word-family line
@@ -114,22 +115,37 @@ const listLemmaEntries = async (params: { targetLanguage: string; folded: string
 // The word's family members by tier: its ancestors (parent), words sharing
 // an ancestor with it or deriving from it (shared_root — the lemma itself is
 // a depth-0 root), and stem-filtered related words in either direction.
-// A member can surface in several tiers; callers keep the best one.
+// A member can surface in several tiers; callers keep the best one. The
+// word-family insight adjusts the ancestors: `hiddenAncestors` (links a
+// learner can't see) are dropped from every tier, before shared roots are
+// looked up too, and
+// `extraParents` (links kaikki lacks) join as depth-1 ancestors.
 const listFamilyCandidates = async (params: {
   targetLanguage: string
   lemma: string
   lemmaPos: readonly string[]
+  hiddenAncestors?: readonly string[]
+  extraParents?: readonly string[]
 }): Promise<WordFamilyCandidate[]> => {
   const { targetLanguage, lemma } = params
   const lemmaPos = sql.array([...params.lemmaPos])
+  const hidden = sql.array([...(params.hiddenAncestors ?? [])])
+  const extra = sql.array([...(params.extraParents ?? [])])
   const rows = (await sql`
     WITH own AS (
       SELECT relative, MIN(depth) AS depth
-      FROM public.wiktionary_word_family_edges
-      WHERE target_language = ${targetLanguage}
-        AND lemma = ${lemma}
-        AND lemma_pos = ANY(${lemmaPos}::text[])
-        AND kind = 'ancestor'
+      FROM (
+        SELECT relative, depth
+        FROM public.wiktionary_word_family_edges
+        WHERE target_language = ${targetLanguage}
+          AND lemma = ${lemma}
+          AND lemma_pos = ANY(${lemmaPos}::text[])
+          AND kind = 'ancestor'
+        UNION ALL
+        SELECT unnest(${extra}::text[]), 1
+      ) a
+      WHERE relative <> ${lemma}
+        AND relative <> ALL(${hidden}::text[])
       GROUP BY relative
     ),
     roots AS (
@@ -137,6 +153,7 @@ const listFamilyCandidates = async (params: {
       UNION ALL
       SELECT ${lemma}::text, 0
     )
+    SELECT * FROM (
     SELECT relative AS lemma, 'parent' AS tier, depth::int AS depth FROM own
     UNION ALL
     SELECT e.lemma, 'shared_root', MIN(r.depth + e.depth)::int
@@ -160,6 +177,10 @@ const listFamilyCandidates = async (params: {
     WHERE target_language = ${targetLanguage}
       AND relative = ${lemma}
       AND kind = 'related'
+    ) candidates
+    -- A hidden ancestor can also come back as a related word or through
+    -- another root; it never counts as family.
+    WHERE lemma <> ALL(${hidden}::text[])
   `) as Array<{ lemma: string; tier: WordFamilyTier; depth: number }>
   return rows
 }
@@ -208,11 +229,128 @@ const listUserVocabulary = async (params: {
   return rows
 }
 
+// The lemma's kaikki ancestors (folded, nearest first) — what the insight
+// pass judges for visibility.
+const listAncestors = async (params: {
+  targetLanguage: string
+  lemma: string
+  lemmaPos: readonly string[]
+}): Promise<string[]> => {
+  const rows = (await sql`
+    SELECT relative, MIN(depth) AS depth
+    FROM public.wiktionary_word_family_edges
+    WHERE target_language = ${params.targetLanguage}
+      AND lemma = ${params.lemma}
+      AND lemma_pos = ANY(${sql.array([...params.lemmaPos])}::text[])
+      AND kind = 'ancestor'
+    GROUP BY relative
+    ORDER BY MIN(depth), relative
+  `) as Array<{ relative: string }>
+  return rows.map((row) => row.relative)
+}
+
+export type WordFamilyInsightPart = { text: string; isAffix: boolean }
+
+export type StoredWordFamilyInsight = {
+  parts: WordFamilyInsightPart[]
+  missingParents: string[]
+  hiddenAncestors: string[]
+  // Null until generated for the requested explanation language.
+  explanation: { partMeanings: Array<string | null>; cognates: string[] } | null
+}
+
+type InsightKey = { targetLanguage: string; lemma: string; lemmaPos: string }
+
+// The cached insight of one lemma (word_family_insights), with its
+// explanation in `explanationLanguage` when that exists too.
+const getInsight = async (
+  params: InsightKey & { explanationLanguage: string }
+): Promise<StoredWordFamilyInsight | null> => {
+  const rows = (await sql`
+    SELECT i.parts, i.missing_parents, i.hidden_ancestors, x.part_meanings, x.cognates
+    FROM public.word_family_insights i
+    LEFT JOIN public.word_family_insight_explanations x
+      ON x.target_language = i.target_language
+     AND x.lemma = i.lemma
+     AND x.lemma_pos = i.lemma_pos
+     AND x.explanation_language = ${params.explanationLanguage}
+    WHERE i.target_language = ${params.targetLanguage}
+      AND i.lemma = ${params.lemma}
+      AND i.lemma_pos = ${params.lemmaPos}
+  `) as Array<{
+    parts: WordFamilyInsightPart[]
+    missing_parents: string[]
+    hidden_ancestors: string[]
+    part_meanings: Array<string | null> | null
+    cognates: string[] | null
+  }>
+  const row = rows[0]
+  if (!row) return null
+  return {
+    parts: row.parts,
+    missingParents: row.missing_parents,
+    hiddenAncestors: row.hidden_ancestors,
+    explanation: row.part_meanings ? { partMeanings: row.part_meanings, cognates: row.cognates ?? [] } : null,
+  }
+}
+
+// First writer wins for both halves. Explanations pair with the breakdown by
+// index, so one is only stored when its breakdown is the stored one: two
+// readers tapping a new word at once both generate, and the loser learns
+// (false) that its meanings don't fit the winner's parts. A conflicting
+// insert waits for the concurrent one to commit, so the check sees the winner.
+const saveInsight = async (
+  params: InsightKey & {
+    explanationLanguage: string
+    parts: WordFamilyInsightPart[]
+    missingParents: string[]
+    hiddenAncestors: string[]
+    partMeanings: Array<string | null>
+    cognates: string[]
+    model: string
+  }
+): Promise<boolean> => {
+  return beginTx(async (tx) => {
+    const parts = tx.json(params.parts as unknown as postgres.JSONValue)
+    await tx`
+      INSERT INTO public.word_family_insights
+        (target_language, lemma, lemma_pos, parts, missing_parents, hidden_ancestors, model)
+      VALUES (
+        ${params.targetLanguage}, ${params.lemma}, ${params.lemmaPos}, ${parts},
+        ${tx.array(params.missingParents)}::text[], ${tx.array(params.hiddenAncestors)}::text[], ${params.model}
+      )
+      ON CONFLICT DO NOTHING
+    `
+    const matching = await tx`
+      SELECT 1
+      FROM public.word_family_insights
+      WHERE target_language = ${params.targetLanguage}
+        AND lemma = ${params.lemma}
+        AND lemma_pos = ${params.lemmaPos}
+        AND parts = ${parts}::jsonb
+    `
+    if (matching.length === 0) return false
+    await tx`
+      INSERT INTO public.word_family_insight_explanations
+        (target_language, lemma, lemma_pos, explanation_language, part_meanings, cognates, model)
+      VALUES (
+        ${params.targetLanguage}, ${params.lemma}, ${params.lemmaPos}, ${params.explanationLanguage},
+        ${tx.json(params.partMeanings)}, ${tx.json(params.cognates)}, ${params.model}
+      )
+      ON CONFLICT DO NOTHING
+    `
+    return true
+  })
+}
+
 export interface WordFamilyRepositoryInterface {
   listEntriesForToken: typeof listEntriesForToken
   listLemmaEntries: typeof listLemmaEntries
   listFamilyCandidates: typeof listFamilyCandidates
   listUserVocabulary: typeof listUserVocabulary
+  listAncestors: typeof listAncestors
+  getInsight: typeof getInsight
+  saveInsight: typeof saveInsight
 }
 
 export const WordFamilyRepository = (): WordFamilyRepositoryInterface => {
@@ -221,5 +359,8 @@ export const WordFamilyRepository = (): WordFamilyRepositoryInterface => {
     listLemmaEntries,
     listFamilyCandidates,
     listUserVocabulary,
+    listAncestors,
+    getInsight,
+    saveInsight,
   }
 }

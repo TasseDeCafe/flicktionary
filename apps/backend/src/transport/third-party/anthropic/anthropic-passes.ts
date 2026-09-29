@@ -19,6 +19,7 @@ import { prelearnGlossPass } from './passes/prelearn-gloss-pass'
 import { translateForCapturePass } from './passes/translate-for-capture-pass'
 import { verifyExercisePass } from './passes/verify-exercise-pass'
 import { vocabChatTitlePass } from './passes/vocab-chat-title-pass'
+import { wordFamilyInsightPass } from './passes/word-family-insight-pass'
 
 // The injection seam for every LLM call the app makes. Services and routers
 // receive this bundle through their deps objects instead of importing pass
@@ -46,6 +47,7 @@ export type AnthropicPassesInterface = {
   translateForCapturePass: typeof translateForCapturePass
   verifyExercisePass: typeof verifyExercisePass
   vocabChatTitlePass: typeof vocabChatTitlePass
+  wordFamilyInsightPass: typeof wordFamilyInsightPass
   // Card chat and vocabulary chat build bespoke prompts (history split, tools,
   // tool loops) in the service layer; only the raw completion call crosses the
   // seam.
@@ -72,6 +74,7 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   translateForCapturePass,
   verifyExercisePass,
   vocabChatTitlePass,
+  wordFamilyInsightPass,
   createChatCompletion: (params) => getAnthropicClient().messages.create(params),
 })
 
@@ -101,6 +104,7 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   translateForCapturePass: notScripted('translateForCapturePass'),
   verifyExercisePass: notScripted('verifyExercisePass'),
   vocabChatTitlePass: notScripted('vocabChatTitlePass'),
+  wordFamilyInsightPass: notScripted('wordFamilyInsightPass'),
   createChatCompletion: notScripted('createChatCompletion'),
   ...overrides,
 })

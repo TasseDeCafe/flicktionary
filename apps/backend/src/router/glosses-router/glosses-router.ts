@@ -21,6 +21,13 @@ import {
 } from '../../service/word-family/word-family'
 import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
+// Word-family explanations follow the gloss: in the native language, or in
+// the target language for translations-off learners.
+const explanationLanguageFor = (
+  targetLanguage: string,
+  prefs: { nativeLanguage: string | null; hideTranslationFields: boolean }
+): string => (prefs.hideTranslationFields || !prefs.nativeLanguage ? targetLanguage : prefs.nativeLanguage)
+
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
 // practice-surface lookup sheet). Takes the context line directly and is bound
 // to no highlight or practice_text — fastGloss persists nothing. Explicit
@@ -86,7 +93,16 @@ export const GlossesRouter = (
           pos: gloss.pos,
           wiktionaryEntriesRepository,
         }),
-        buildWordFamily({ userId, targetLanguage, lookup: wordFamilyLookup, pos: gloss.pos }, wordFamilyDependencies),
+        buildWordFamily(
+          {
+            userId,
+            targetLanguage,
+            explanationLanguage: explanationLanguageFor(targetLanguage, languagePrefs),
+            lookup: wordFamilyLookup,
+            pos: gloss.pos,
+          },
+          wordFamilyDependencies
+        ),
       ])
       const ipa = ipaResult?.ipa ?? null
       // Pre-pick the dialect-correct display string server-side so every
@@ -105,6 +121,35 @@ export const GlossesRouter = (
           wordFamily,
         },
       }
+    }),
+
+    wordFamilyInsight: implementer.wordFamilyInsight.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const { targetLanguage } = input
+      const enabled = await userTargetLanguagePrefsRepository.getWordFamilyHintsEnabled(userId, targetLanguage)
+      if (!enabled) return { data: { wordFamily: null } }
+      const languagePrefs = await getLanguageMode({
+        userId,
+        targetLanguage,
+        usersRepository,
+        targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
+      })
+      const lookup = await loadWordFamilyEntries(
+        { targetLanguage, selectionText: input.selectionText },
+        wordFamilyDependencies
+      )
+      const wordFamily = await buildWordFamily(
+        {
+          userId,
+          targetLanguage,
+          explanationLanguage: explanationLanguageFor(targetLanguage, languagePrefs),
+          lookup,
+          pos: input.pos,
+          generateInsight: true,
+        },
+        wordFamilyDependencies
+      )
+      return { data: { wordFamily } }
     }),
 
     recordLookup: implementer.recordLookup.handler(async ({ input, context }) => {

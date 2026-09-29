@@ -100,6 +100,75 @@ describe('word-family-repository integration tests', () => {
     ])
   })
 
+  test('listFamilyCandidates drops hidden ancestors and adds extra parents before looking up shared roots', async () => {
+    const u = uniqueSuffix()
+    const word = `понимать${u}`
+    const hidden = `иметь${u}`
+    const extra = `нимать${u}`
+    await insertEdge(word, hidden, 'ancestor', 1)
+    // Would share the hidden root.
+    await insertEdge(`снимать${u}`, hidden, 'ancestor', 1)
+    // Shares the extra parent.
+    await insertEdge(`занимать${u}`, extra, 'ancestor', 1)
+    // The hidden ancestor is also a related word; it must not come back.
+    await insertEdge(word, hidden, 'related', 1)
+
+    const candidates = await repository.listFamilyCandidates({
+      targetLanguage: 'ru',
+      lemma: word,
+      lemmaPos: ['verb'],
+      hiddenAncestors: [hidden],
+      extraParents: [extra],
+    })
+    const sorted = [...candidates].sort((a, b) => `${a.tier}${a.lemma}`.localeCompare(`${b.tier}${b.lemma}`))
+    expect(sorted).toEqual([
+      { lemma: extra, tier: 'parent', depth: 1 },
+      { lemma: `занимать${u}`, tier: 'shared_root', depth: 2 },
+    ])
+    expect(await repository.listAncestors({ targetLanguage: 'ru', lemma: word, lemmaPos: ['verb'] })).toEqual([hidden])
+  })
+
+  test('saveInsight is first-writer-wins and only stores explanations of the stored breakdown', async () => {
+    const u = uniqueSuffix()
+    const key = { targetLanguage: 'ru', lemma: `ожог${u}`, lemmaPos: 'noun' }
+    const parts = [
+      { text: 'о-', isAffix: true },
+      { text: 'жечь', isAffix: false },
+    ]
+    expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toBeNull()
+
+    const save = (explanationLanguage: string, savedParts: typeof parts, partMeanings: string[]) =>
+      repository.saveInsight({
+        ...key,
+        explanationLanguage,
+        parts: savedParts,
+        missingParents: ['жечь'],
+        hiddenAncestors: [],
+        partMeanings,
+        cognates: [],
+        model: 'm',
+      })
+    expect(await save('en', parts, ['on a surface', 'burn'])).toBe(true)
+    // A concurrent writer with another breakdown loses both halves: its
+    // meanings would pair with the wrong parts.
+    expect(await save('fr', [{ text: 'ожог', isAffix: false }], ['brûlure'])).toBe(false)
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'fr' }))?.explanation).toBeNull()
+    // Explaining the stored breakdown succeeds.
+    expect(await save('fr', parts, ['sur', 'brûler'])).toBe(true)
+
+    expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toEqual({
+      parts,
+      missingParents: ['жечь'],
+      hiddenAncestors: [],
+      explanation: { partMeanings: ['on a surface', 'burn'], cognates: [] },
+    })
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'fr' }))?.explanation).toEqual({
+      partMeanings: ['sur', 'brûler'],
+      cognates: [],
+    })
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'de' }))?.explanation).toBeNull()
+  })
+
   test('listUserVocabulary reports known marks, live saved terms and ranks', async () => {
     const u = uniqueSuffix()
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()

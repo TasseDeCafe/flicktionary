@@ -14,13 +14,22 @@ export const WordFamilySchema = z.object({
       lemma: z.string(),
     })
     .nullable(),
-  // The etymology breakdown in order (за- + мёрзнуть); a single non-affix
-  // part means "derived from". Null when kaikki has none.
-  parts: z.array(z.object({ text: z.string(), isAffix: z.boolean() })).nullable(),
+  // The breakdown in order (за- + мёрзнуть); a single non-affix part means
+  // "derived from". The generated insight's breakdown when there is one
+  // (with what each part contributes in this word), kaikki's otherwise
+  // (meanings null). Null when there is none.
+  parts: z.array(z.object({ text: z.string(), isAffix: z.boolean(), meaning: z.string().nullable() })).nullable(),
   // Up to 3 relatives from the user's vocabulary, best first (parent, shared
-  // root, related; known before saved; frequent first). Non-empty → the
-  // reader holds the translation back behind a reveal.
+  // root, related; known before saved; frequent first). Non-empty on the
+  // fastGloss response → the reader holds the translation back behind a
+  // reveal. The insight can drop links a learner can't see and add parents
+  // kaikki lacks.
   anchors: z.array(z.object({ lemma: z.string(), source: z.enum(['known', 'saved']) })),
+  // Obviously related words in the reader's native language (дюжина ≈ dozen).
+  cognates: z.array(z.string()),
+  // The lemma's insight isn't generated yet for the reader's language: the
+  // client calls glosses.wordFamilyInsight to fill the line in.
+  insightPending: z.boolean(),
 })
 export type WordFamily = z.infer<typeof WordFamilySchema>
 
@@ -77,6 +86,31 @@ export const glossesContract = {
           // Null unless requested (includeWordFamily), enabled for the
           // language (word_family_hints_enabled + a word-family language),
           // and there is an informative structure or an anchor to show.
+          wordFamily: WordFamilySchema.nullable(),
+        }),
+      })
+    ),
+
+  // The word-family line with its LLM insight (generated and cached on first
+  // request, for every user). Same input as the fastGloss call it follows —
+  // `pos` is that gloss's POS — so the server resolves the same word. The
+  // reader swaps its line for this one; the translation hold stays as the
+  // fastGloss response decided it. Null when the word has no line.
+  wordFamilyInsight: oc
+    .route({ method: 'POST', path: '/glosses/word-family-insight', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        selectionText: z.string().trim().min(1).max(200),
+        targetLanguage: z.string().trim().min(1).max(40),
+        pos: z.string().nullable(),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
           wordFamily: WordFamilySchema.nullable(),
         }),
       })

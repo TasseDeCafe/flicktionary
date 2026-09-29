@@ -637,6 +637,26 @@ wiktionary_word_family_edges       -- precomputed word-family graph for the
   relative            text         -- lemma, lemma_pos, relative, kind); indexed
   kind                text         -- (target_language, relative) for shared roots.
   depth               smallint     -- 'ancestor' (1-3) | 'related' (always 1)
+
+word_family_insights               -- LLM layer of the word-family line, one row
+  target_language     text         -- per lemma, shared by every user; generated
+  lemma               text         -- lazily on first request. pk (target_language,
+  lemma_pos           text         -- lemma, lemma_pos); lemma folded.
+  parts               jsonb        -- learner breakdown [{text, isAffix}]; [] = opaque
+  missing_parents     text[]       -- folded parents kaikki lacks (real kaikki lemmas only)
+  hidden_ancestors    text[]       -- folded kaikki ancestors a learner can't see
+  model               text
+  created_at          timestamptz
+
+word_family_insight_explanations   -- per explanation language (native language,
+  target_language     text         -- or the target language for translations-off
+  lemma               text         -- learners). pk adds explanation_language;
+  lemma_pos           text         -- fk (target_language, lemma, lemma_pos) ->
+  explanation_language text        -- word_family_insights, on delete cascade.
+  part_meanings       jsonb        -- aligned with word_family_insights.parts
+  cognates            jsonb        -- string[]; empty in the target language
+  model               text
+  created_at          timestamptz
 ```
 
 `wiktionary_word_family_edges` is rebuilt by `scripts/build-word-family.ts`
@@ -655,6 +675,14 @@ depth. **Related** edges come from the `related`/`derived` lists, kept only
 when both words share a ≥3-letter stem after stripping a prefix observed in
 that language's templates. Both endpoints must be content words: real
 noun/verb/adj/adv lemmas of ≥3 letters (affixes never appear as relatives).
+
+The insight tables are written on first request by `buildWordFamily` in
+`src/service/word-family/word-family.ts` (`wordFamilyInsightPass`,
+`MODEL_WORD_FAMILY`). Both halves are first-writer-wins (`ON CONFLICT DO
+NOTHING`); a later explanation language reuses the stored breakdown and only
+explains its parts. An explanation is stored only when its breakdown equals the
+stored one — a request that lost a concurrent race re-explains the winner's. Missing parents include the breakdown's base words; a base
+word the breakdown shows is never stored as hidden.
 
 Checkpoint-review matching folds BOTH sides of every comparison through
 `public.checkpoint_fold(input, lang)` (NFC → strip U+0301 → trim → lower, then

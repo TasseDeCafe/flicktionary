@@ -2159,6 +2159,80 @@ export type Database = {
         }
         Relationships: []
       }
+      word_family_insight_explanations: {
+        Row: {
+          cognates: Json
+          created_at: string
+          explanation_language: string
+          lemma: string
+          lemma_pos: string
+          model: string
+          part_meanings: Json
+          target_language: string
+        }
+        Insert: {
+          cognates: Json
+          created_at?: string
+          explanation_language: string
+          lemma: string
+          lemma_pos: string
+          model: string
+          part_meanings: Json
+          target_language: string
+        }
+        Update: {
+          cognates?: Json
+          created_at?: string
+          explanation_language?: string
+          lemma?: string
+          lemma_pos?: string
+          model?: string
+          part_meanings?: Json
+          target_language?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'word_family_insight_explanations_insight_fkey'
+            columns: ['target_language', 'lemma', 'lemma_pos']
+            isOneToOne: false
+            referencedRelation: 'word_family_insights'
+            referencedColumns: ['target_language', 'lemma', 'lemma_pos']
+          },
+        ]
+      }
+      word_family_insights: {
+        Row: {
+          created_at: string
+          hidden_ancestors: string[]
+          lemma: string
+          lemma_pos: string
+          missing_parents: string[]
+          model: string
+          parts: Json
+          target_language: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_ancestors?: string[]
+          lemma: string
+          lemma_pos: string
+          missing_parents?: string[]
+          model: string
+          parts: Json
+          target_language: string
+        }
+        Update: {
+          created_at?: string
+          hidden_ancestors?: string[]
+          lemma?: string
+          lemma_pos?: string
+          missing_parents?: string[]
+          model?: string
+          parts?: Json
+          target_language?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

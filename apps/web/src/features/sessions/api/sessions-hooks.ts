@@ -732,7 +732,8 @@ export const useSetNativeLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setNativeLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to set native language`,
         showErrorModal: true,
       },
@@ -771,7 +772,8 @@ export const useSetShowTranslationsForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setShowTranslationsForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to update show-translations setting`,
         showErrorModal: true,
       },
@@ -784,7 +786,8 @@ export const useSetWordFamilyHintsForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setWordFamilyHintsForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to update word-family hints setting`,
         showErrorModal: true,
       },
@@ -904,6 +907,25 @@ export const useStatelessGloss = () => {
     })
   )
 }
+
+// The word-family line with its LLM insight, for a preview gloss whose
+// fastGloss response said the insight isn't generated yet (the server makes
+// and caches it on first request, ~3-6s). `params` null = don't fetch. Silent
+// on failure: the deterministic line is already on screen. Never refetched —
+// the result for a word doesn't change within a session.
+export const useWordFamilyInsight = (
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null
+) =>
+  useQuery(
+    orpcQuery.glosses.wordFamilyInsight.queryOptions({
+      input: params ?? { selectionText: '', targetLanguage: '', pos: null },
+      select: (response) => response.data.wordFamily,
+      enabled: params !== null,
+      staleTime: Infinity,
+      retry: false,
+      meta: { showErrorModal: false, showErrorToast: false },
+    })
+  )
 
 // Fire-and-forget demand signal for an explicit lookup (a tap that opens a
 // gloss sheet): repeated lookups lift a word's new-card priority. The server

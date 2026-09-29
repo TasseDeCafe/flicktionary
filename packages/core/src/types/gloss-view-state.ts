@@ -18,8 +18,10 @@ export type GlossWordFamily = {
     kind: 'participle' | 'adverbial_participle' | 'gerund' | 'passive' | 'verbal_noun'
     lemma: string
   } | null
-  parts: Array<{ text: string; isAffix: boolean }> | null
+  parts: Array<{ text: string; isAffix: boolean; meaning: string | null }> | null
   anchors: Array<{ lemma: string; source: 'known' | 'saved' }>
+  cognates: string[]
+  insightPending: boolean
 }
 
 export type GlossViewState =
