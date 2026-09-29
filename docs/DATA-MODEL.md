@@ -680,7 +680,8 @@ The insight tables are written on first request by `buildWordFamily` in
 `src/service/word-family/word-family.ts` (`wordFamilyInsightPass`,
 `MODEL_WORD_FAMILY`). Both halves are first-writer-wins (`ON CONFLICT DO
 NOTHING`); a later explanation language reuses the stored breakdown and only
-explains its parts. Missing parents include the breakdown's base words; a base
+explains its parts. An explanation is stored only when its breakdown equals the
+stored one — a request that lost a concurrent race re-explains the winner's. Missing parents include the breakdown's base words; a base
 word the breakdown shows is never stored as hidden.
 
 Checkpoint-review matching folds BOTH sides of every comparison through
