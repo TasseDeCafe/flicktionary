@@ -195,11 +195,18 @@ const rectFromAnchor = (anchor: FloatingSheetAnchor): DOMRect | null => {
 // with a CSS *transition* (not a keyframe animation) so the inline transform we
 // set while dragging composes with it instead of being overridden.
 const SHEET_DURATION_MS = 240
-const SHEET_TRANSITION = `transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), max-height ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
+const SHEET_TRANSFORM_TRANSITION = `transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
+const SHEET_TRANSITION = `${SHEET_TRANSFORM_TRANSITION}, max-height ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
 // Release-snap easing. The drag drives `height` (and `transform` for the
 // dismiss translate) directly, so the snap animates those two.
 const SHEET_SNAP_TRANSITION = `height ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
-const MOBILE_SHEET_COLLAPSED_MAX_HEIGHT = 'min(34rem, 35dvh)'
+const MOBILE_SHEET_PINNED_HEIGHT = '--floating-sheet-pinned-height'
+// Collapsed, the sheet stays short so the reader text above it stays visible;
+// the peek region below the header absorbs the squeeze. The cap never drops
+// below the pinned parts (grabber + header + footer, measured into
+// MOBILE_SHEET_PINNED_HEIGHT) — a tall header would otherwise push the footer
+// off the bottom of the screen — and never exceeds the default sheet cap.
+const MOBILE_SHEET_COLLAPSED_MAX_HEIGHT = `min(85dvh, max(min(34rem, 35dvh), var(${MOBILE_SHEET_PINNED_HEIGHT}, 0px)))`
 const MOBILE_SHEET_EXPANDED_MAX_HEIGHT = '96dvh'
 const MOBILE_SHEET_DEFAULT_MAX_HEIGHT = '85dvh'
 // Collapsed, an expandable sheet shows its header in full plus this short slice
@@ -735,6 +742,40 @@ export const FloatingSheetContent = ({
     const el = mobileScrollAreaRef.current
     if (el) el.scrollTop = 0
   }, [isMobile, expanded])
+
+  // Keeps MOBILE_SHEET_PINNED_HEIGHT in sync with everything but the scroller,
+  // so content that grows after opening (a gloss or hint arriving late) raises
+  // the collapsed cap instead of overflowing it.
+  React.useLayoutEffect(() => {
+    if (!isMobile || !rendered || !expandable || typeof ResizeObserver === 'undefined') return
+    const el = contentRef.current
+    const scroller = mobileScrollAreaRef.current
+    if (!el || !scroller) return
+    const pinned = Array.from(el.children).filter((child) => child !== scroller)
+    let current = ''
+    const measure = () => {
+      const borders = el.offsetHeight - el.clientHeight
+      const height = pinned.reduce((sum, child) => sum + (child as HTMLElement).offsetHeight, borders)
+      const next = `${Math.ceil(height)}px`
+      if (next === current) return
+      current = next
+      // The cap must follow the content in the same frame: animating it (the
+      // resting transition includes max-height, for expand/collapse) lets the
+      // footer dip below the old cap for the animation's length. Only
+      // max-height is suspended, so a running slide-in keeps going.
+      const resting = el.style.transition === SHEET_TRANSITION
+      if (resting) el.style.transition = SHEET_TRANSFORM_TRANSITION
+      el.style.setProperty(MOBILE_SHEET_PINNED_HEIGHT, next)
+      if (resting) {
+        void el.offsetHeight // commit the new cap before the transition returns
+        el.style.transition = SHEET_TRANSITION
+      }
+    }
+    const observer = new ResizeObserver(measure)
+    for (const child of pinned) observer.observe(child)
+    measure()
+    return () => observer.disconnect()
+  }, [isMobile, rendered, expandable, contentRef])
 
   if (isMobile) {
     if (!rendered) return null
