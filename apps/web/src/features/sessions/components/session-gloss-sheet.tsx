@@ -38,6 +38,7 @@ import {
   useGetUserPrefs,
   useSaveWord,
   useStatelessGloss,
+  useWordFamilyInsight,
   useRecordLookup,
   useSwitchGhost,
   useUpdateHighlightNoteAndTags,
@@ -686,6 +687,21 @@ export const SessionGlossSheet = ({
   // they get a moment to infer the meaning first. Preview mode only — a saved
   // word was already looked up.
   const wordFamily = isReady ? ((glossState as Extract<GlossViewState, { status: 'ready' }>).wordFamily ?? null) : null
+  // The first tap of a word anyone has looked up generates its LLM insight
+  // (what each part means here, parents kaikki lacks) after the line above
+  // renders; the richer line then replaces it. The hold below stays decided
+  // by the fastGloss response, so the reveal button never appears late.
+  const { data: insightWordFamily } = useWordFamilyInsight(
+    isPreview && wordFamily?.insightPending && selection
+      ? {
+          selectionText: selection.selectionText,
+          targetLanguage,
+          pos: (glossState as Extract<GlossViewState, { status: 'ready' }>).pos,
+        }
+      : null
+  )
+  const displayedWordFamily =
+    wordFamily?.insightPending && insightWordFamily !== undefined ? insightWordFamily : wordFamily
   const isTranslationHeld =
     isPreview && !!wordFamily && wordFamily.anchors.length > 0 && revealedSelectionKey !== selectionKey
   const revealTranslation = useCallback(() => {
@@ -783,7 +799,7 @@ export const SessionGlossSheet = ({
                     ) : undefined
                   }
                   srDescription={ariaDescription}
-                  beforeGloss={wordFamily ? <WordFamilyLine wordFamily={wordFamily} /> : undefined}
+                  beforeGloss={displayedWordFamily ? <WordFamilyLine wordFamily={displayedWordFamily} /> : undefined}
                   glossReplacement={
                     isTranslationHeld ? (
                       // stopPropagation: the mobile header is a drag surface.
