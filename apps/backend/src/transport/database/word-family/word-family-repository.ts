@@ -117,7 +117,8 @@ const listLemmaEntries = async (params: { targetLanguage: string; folded: string
 // a depth-0 root), and stem-filtered related words in either direction.
 // A member can surface in several tiers; callers keep the best one. The
 // word-family insight adjusts the ancestors: `hiddenAncestors` (links a
-// learner can't see) are dropped before shared roots are looked up, and
+// learner can't see) are dropped from every tier, before shared roots are
+// looked up too, and
 // `extraParents` (links kaikki lacks) join as depth-1 ancestors.
 const listFamilyCandidates = async (params: {
   targetLanguage: string
@@ -152,6 +153,7 @@ const listFamilyCandidates = async (params: {
       UNION ALL
       SELECT ${lemma}::text, 0
     )
+    SELECT * FROM (
     SELECT relative AS lemma, 'parent' AS tier, depth::int AS depth FROM own
     UNION ALL
     SELECT e.lemma, 'shared_root', MIN(r.depth + e.depth)::int
@@ -175,6 +177,10 @@ const listFamilyCandidates = async (params: {
     WHERE target_language = ${targetLanguage}
       AND relative = ${lemma}
       AND kind = 'related'
+    ) candidates
+    -- A hidden ancestor can also come back as a related word or through
+    -- another root; it never counts as family.
+    WHERE lemma <> ALL(${hidden}::text[])
   `) as Array<{ lemma: string; tier: WordFamilyTier; depth: number }>
   return rows
 }
@@ -288,9 +294,11 @@ const getInsight = async (
   }
 }
 
-// First writer wins for both halves: two readers tapping a new word at once
-// both generate, and the loser's result is dropped rather than overwriting
-// the breakdown its explanations were aligned with.
+// First writer wins for both halves. Explanations pair with the breakdown by
+// index, so one is only stored when its breakdown is the stored one: two
+// readers tapping a new word at once both generate, and the loser learns
+// (false) that its meanings don't fit the winner's parts. A conflicting
+// insert waits for the concurrent one to commit, so the check sees the winner.
 const saveInsight = async (
   params: InsightKey & {
     explanationLanguage: string
@@ -301,17 +309,27 @@ const saveInsight = async (
     cognates: string[]
     model: string
   }
-): Promise<void> => {
-  await beginTx(async (tx) => {
+): Promise<boolean> => {
+  return beginTx(async (tx) => {
+    const parts = tx.json(params.parts as unknown as postgres.JSONValue)
     await tx`
       INSERT INTO public.word_family_insights
         (target_language, lemma, lemma_pos, parts, missing_parents, hidden_ancestors, model)
       VALUES (
-        ${params.targetLanguage}, ${params.lemma}, ${params.lemmaPos}, ${tx.json(params.parts as unknown as postgres.JSONValue)},
+        ${params.targetLanguage}, ${params.lemma}, ${params.lemmaPos}, ${parts},
         ${tx.array(params.missingParents)}::text[], ${tx.array(params.hiddenAncestors)}::text[], ${params.model}
       )
       ON CONFLICT DO NOTHING
     `
+    const matching = await tx`
+      SELECT 1
+      FROM public.word_family_insights
+      WHERE target_language = ${params.targetLanguage}
+        AND lemma = ${params.lemma}
+        AND lemma_pos = ${params.lemmaPos}
+        AND parts = ${parts}::jsonb
+    `
+    if (matching.length === 0) return false
     await tx`
       INSERT INTO public.word_family_insight_explanations
         (target_language, lemma, lemma_pos, explanation_language, part_meanings, cognates, model)
@@ -321,6 +339,7 @@ const saveInsight = async (
       )
       ON CONFLICT DO NOTHING
     `
+    return true
   })
 }
 

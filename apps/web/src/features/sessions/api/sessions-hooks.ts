@@ -732,7 +732,8 @@ export const useSetNativeLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setNativeLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to set native language`,
         showErrorModal: true,
       },
@@ -771,7 +772,8 @@ export const useSetShowTranslationsForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setShowTranslationsForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to update show-translations setting`,
         showErrorModal: true,
       },
@@ -784,7 +786,8 @@ export const useSetWordFamilyHintsForLanguage = () => {
   return useMutation(
     orpcQuery.userPrefs.setWordFamilyHintsForLanguage.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
+        // Word-family insights depend on this pref (explanation language / gate).
+        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
         errorMessage: t`Failed to update word-family hints setting`,
         showErrorModal: true,
       },

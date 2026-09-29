@@ -110,6 +110,8 @@ describe('word-family-repository integration tests', () => {
     await insertEdge(`снимать${u}`, hidden, 'ancestor', 1)
     // Shares the extra parent.
     await insertEdge(`занимать${u}`, extra, 'ancestor', 1)
+    // The hidden ancestor is also a related word; it must not come back.
+    await insertEdge(word, hidden, 'related', 1)
 
     const candidates = await repository.listFamilyCandidates({
       targetLanguage: 'ru',
@@ -126,7 +128,7 @@ describe('word-family-repository integration tests', () => {
     expect(await repository.listAncestors({ targetLanguage: 'ru', lemma: word, lemmaPos: ['verb'] })).toEqual([hidden])
   })
 
-  test('saveInsight stores both halves first-writer-wins; getInsight joins the explanation language', async () => {
+  test('saveInsight is first-writer-wins and only stores explanations of the stored breakdown', async () => {
     const u = uniqueSuffix()
     const key = { targetLanguage: 'ru', lemma: `ожог${u}`, lemmaPos: 'noun' }
     const parts = [
@@ -135,27 +137,24 @@ describe('word-family-repository integration tests', () => {
     ]
     expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toBeNull()
 
-    await repository.saveInsight({
-      ...key,
-      explanationLanguage: 'en',
-      parts,
-      missingParents: ['жечь'],
-      hiddenAncestors: [],
-      partMeanings: ['on a surface', 'burn'],
-      cognates: [],
-      model: 'm',
-    })
-    // A second writer (another explanation language) keeps the first breakdown.
-    await repository.saveInsight({
-      ...key,
-      explanationLanguage: 'fr',
-      parts: [],
-      missingParents: [],
-      hiddenAncestors: ['x'],
-      partMeanings: ['sur', 'brûler'],
-      cognates: ['x'],
-      model: 'm',
-    })
+    const save = (explanationLanguage: string, savedParts: typeof parts, partMeanings: string[]) =>
+      repository.saveInsight({
+        ...key,
+        explanationLanguage,
+        parts: savedParts,
+        missingParents: ['жечь'],
+        hiddenAncestors: [],
+        partMeanings,
+        cognates: [],
+        model: 'm',
+      })
+    expect(await save('en', parts, ['on a surface', 'burn'])).toBe(true)
+    // A concurrent writer with another breakdown loses both halves: its
+    // meanings would pair with the wrong parts.
+    expect(await save('fr', [{ text: 'ожог', isAffix: false }], ['brûlure'])).toBe(false)
+    expect((await repository.getInsight({ ...key, explanationLanguage: 'fr' }))?.explanation).toBeNull()
+    // Explaining the stored breakdown succeeds.
+    expect(await save('fr', parts, ['sur', 'brûler'])).toBe(true)
 
     expect(await repository.getInsight({ ...key, explanationLanguage: 'en' })).toEqual({
       parts,
@@ -165,7 +164,7 @@ describe('word-family-repository integration tests', () => {
     })
     expect((await repository.getInsight({ ...key, explanationLanguage: 'fr' }))?.explanation).toEqual({
       partMeanings: ['sur', 'brûler'],
-      cognates: ['x'],
+      cognates: [],
     })
     expect((await repository.getInsight({ ...key, explanationLanguage: 'de' }))?.explanation).toBeNull()
   })

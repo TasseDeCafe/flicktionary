@@ -273,7 +273,7 @@ const generateInsight = async (
     targetLanguage,
     foldedLemmas: suggested,
   })
-  await deps.wordFamilyRepository.saveInsight({
+  const stored = await deps.wordFamilyRepository.saveInsight({
     targetLanguage,
     lemma: word.lemma,
     lemmaPos: word.insightPos,
@@ -288,6 +288,17 @@ const generateInsight = async (
     cognates: result.cognates,
     model: result.model,
   })
+  // A concurrent request for another explanation language stored a different
+  // breakdown first: explain that one instead.
+  if (!stored && !existing) {
+    const winner = await deps.wordFamilyRepository.getInsight({
+      targetLanguage,
+      lemma: word.lemma,
+      lemmaPos: word.insightPos,
+      explanationLanguage,
+    })
+    if (winner && !winner.explanation) await generateInsight(params, winner, deps)
+  }
 }
 
 // Finishes the family line once the gloss's POS is known. With
