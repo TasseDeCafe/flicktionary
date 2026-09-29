@@ -2643,8 +2643,8 @@ msgid "Frequent in the chapters ahead, not yet in your vocabulary."
 msgstr "Fréquent dans les chapitres à venir, pas encore dans votre vocabulaire."
 
 #: apps/web/src/features/sessions/components/word-family-line.tsx
-msgid "from {derivedFrom}"
-msgstr "de {derivedFrom}"
+msgid "from {derivedFromText}"
+msgstr "de {derivedFromText}"
 
 #: apps/web/src/features/dashboard/components/from-community-section.tsx
 msgid "From the community"
@@ -3294,6 +3294,10 @@ msgstr "On dirait du {detectedLanguageName} — l'utiliser"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Looks like {suggestedLanguageName}"
 msgstr "On dirait {suggestedLanguageName}"
+
+#: apps/web/src/features/sessions/components/word-family-line.tsx
+msgid "Looks like: {cognateList}"
+msgstr "Ressemble à : {cognateList}"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Lookup"
