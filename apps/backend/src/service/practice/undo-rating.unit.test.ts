@@ -29,7 +29,6 @@ const makeEvent = (overrides: Partial<DbPracticeRatingEvent> = {}): DbPracticeRa
     was_explicit: true,
     was_introduction: false,
     caused_parking: false,
-    practice_text_id: null,
     headword: 'gato',
     sense: 'cat',
     prev_srs_state: 'review',

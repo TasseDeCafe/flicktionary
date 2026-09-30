@@ -30,7 +30,7 @@ const explanationLanguageFor = (
 
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
 // practice-surface lookup sheet). Takes the context line directly and is bound
-// to no highlight or practice_text — fastGloss persists nothing. Explicit
+// to no highlight — fastGloss persists nothing. Explicit
 // lookups are recorded separately (recordLookup) so a hover never counts as
 // demand.
 export const GlossesRouter = (

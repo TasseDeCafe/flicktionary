@@ -854,7 +854,6 @@ export type Database = {
           id: string
           import_batch_id: string | null
           pool: string
-          practice_text_id: string | null
           prev_leech_parked_at: string | null
           prev_leech_rehab_correct_days: number | null
           prev_leech_rehab_last_correct_on: string | null
@@ -887,7 +886,6 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           pool: string
-          practice_text_id?: string | null
           prev_leech_parked_at?: string | null
           prev_leech_rehab_correct_days?: number | null
           prev_leech_rehab_last_correct_on?: string | null
@@ -920,7 +918,6 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           pool?: string
-          practice_text_id?: string | null
           prev_leech_parked_at?: string | null
           prev_leech_rehab_correct_days?: number | null
           prev_leech_rehab_last_correct_on?: string | null
@@ -974,68 +971,7 @@ export type Database = {
             referencedRelation: 'study_sessions'
             referencedColumns: ['id']
           },
-          {
-            foreignKeyName: 'practice_rating_events_text_fkey'
-            columns: ['practice_text_id']
-            isOneToOne: false
-            referencedRelation: 'practice_texts'
-            referencedColumns: ['id']
-          },
         ]
-      }
-      practice_texts: {
-        Row: {
-          annotations: Json
-          body: string | null
-          created_at: string
-          generation_token: string | null
-          generation_warning: string | null
-          id: string
-          ord: number
-          pool: string
-          read_at: string | null
-          ready_at: string | null
-          scope: string | null
-          skipped_chunks: Json
-          status: Database['public']['Enums']['practice_text_status']
-          target_language: string
-          user_id: string
-        }
-        Insert: {
-          annotations?: Json
-          body?: string | null
-          created_at?: string
-          generation_token?: string | null
-          generation_warning?: string | null
-          id?: string
-          ord: number
-          pool?: string
-          read_at?: string | null
-          ready_at?: string | null
-          scope?: string | null
-          skipped_chunks?: Json
-          status?: Database['public']['Enums']['practice_text_status']
-          target_language: string
-          user_id: string
-        }
-        Update: {
-          annotations?: Json
-          body?: string | null
-          created_at?: string
-          generation_token?: string | null
-          generation_warning?: string | null
-          id?: string
-          ord?: number
-          pool?: string
-          read_at?: string | null
-          ready_at?: string | null
-          scope?: string | null
-          skipped_chunks?: Json
-          status?: Database['public']['Enums']['practice_text_status']
-          target_language?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       processing_jobs: {
         Row: {
@@ -2254,7 +2190,6 @@ export type Database = {
         'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv' | 'lesson' | 'chat'
       exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
-      practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind:
         | 'enrich_highlight'
         | 'discover_session'
@@ -2536,7 +2471,6 @@ export const Constants = {
       ],
       exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
       exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
-      practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       processing_job_kind: [
         'enrich_highlight',
         'discover_session',
