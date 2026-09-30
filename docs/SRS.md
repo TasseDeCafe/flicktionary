@@ -9,7 +9,8 @@ Code map:
 
 - Scheduler: `apps/backend/src/service/practice/fsrs.ts` (`ts-fsrs` wrapper)
 - Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`); undo: `undo-rating.ts`
-- Queue: `list-review-terms.ts` + `listReviewTerms` in `user-lookups-repository.ts`
+- Flashcard selection: `list-due-review-terms.ts` + `listDueReviewTerms` / `listOptInNewFacets` in
+  `user-lookups-repository.ts`
 - Composed queue: `plan-practice-queue.ts`, `compose-practice-queue.ts`,
   `claim-practice-introduction.ts`
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
@@ -261,22 +262,23 @@ served regardless of spent/zero budgets so it can never be stranded. Only the ha
 caps it. *Consequence: setting review-limit 0 does not silence a language that has pending
 learning-state cards — they keep appearing under "Follow-ups" until cleared.*
 
-## 4. The queue (listReviewTerms)
+## 4. Flashcard selection (listDueReviewTerms, listOptInNewFacets)
 
-Scopes: `mixed` (due first, then new), `review_due` (due only), `learn_new` (new only).
-The query serves the pool's **skill set** (passive = `{meaning_recognition, pronunciation}`,
-active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) and ready
-(`data_status='ready'`) facets. It is four sub-selects, each separately capped, then spaced:
+Two repository selectors feed the composed queue's flashcards. Both serve the pool's **skill
+set** (passive = `{meaning_recognition, pronunciation}`, active = `{meaning_production}`),
+filtered to enabled (`disabled_at IS NULL`), ready (`data_status='ready'`), non-parked facets:
 
-| bucket | predicate | cap | order |
+| selector | predicate | cap | order |
 |---|---|---|---|
-| review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC |
-| learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
-| new (capped) | `srs_state IS NULL`, **primary citation** facet, not decayed | remaining **new budget** | tier ASC, zipf DESC |
-| new (opt-in) | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, **`learn_new` only** | tier ASC, zipf DESC |
+| `listDueReviewTerms` review-state | `srs_state IN ('new','review')`, due | remaining **review budget** (`resolveReviewCaps`) | due ASC |
+| `listDueReviewTerms` learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
+| `listOptInNewFacets` | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, `includeOptInNew` only | tier ASC, zipf DESC |
+
+Citation-new terms never come through either selector: they enter via warm-up gates
+(`listEligibleNewCitationFacets` → the composed queue's planned introductions, §4b).
 
 **New-term priority tiers** (`new-term-priority.ts` — the single home of the constants and
-SQL fragments). Both new buckets order by a computed tier, then `zipf_estimate DESC NULLS
+SQL fragments). Warm-up discovery, `Up next`, and the opt-in selector order by a computed tier, then `zipf_estimate DESC NULLS
 LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
 the stable tiebreak, closed by `headword ASC, sense ASC, id ASC` so the ordering is strictly
 unique. With a pinned book, the recognition order interleaves the book stream on top of
@@ -372,9 +374,6 @@ backfill.
   equals the tier order.
 - **Consumers.**
   - `listEligibleNewCitationFacets` (recognition; production keeps the tier order).
-  - `listReviewTerms`' recognition capped new bucket. The
-    position rides through the `spaced` window and the final `ORDER BY`; other buckets
-    carry NULL positions.
   - `Up next`: cursor `(pos, lane, seq, id)`, and boosted rows carry
     `pinnedBookPriority` for the row's "Book" badge. Positions are recomputed per
     request, so an introduction between page loads can shift them.
@@ -388,35 +387,34 @@ backfill.
     since the source row survives for dedup.
 
 **Decay (virtual shelf)**: never-introduced terms with `last_encountered_at` older than 90
-days are excluded from both new buckets, from warm-up discovery
+days are excluded from the opt-in selector, from warm-up discovery
 (`listEligibleNewCitationFacets`), **and from the matching landing counts** (`new_count`,
 `production_new_count`, the opt-in counts) — the badges must not advertise terms the queue
 refuses to serve. Decayed terms stay visible in the Vocabulary list (`unseen` status) and any
 re-save revives them (`recordEncounter` refreshes `last_encountered_at`). Deliberately
-OUTSIDE the decay predicate: due/learning buckets, `listParkedTerms`, and the
+OUTSIDE the decay predicate: due/learning selection, `listParkedTerms`, and the
 leech-rehab/warm-up surfaces — parked terms have their own lifecycle (`leech_parked_at ASC`
 ordering, rehab graduation) and must not silently decay. All predicates are `NOW()`-relative,
 so `pnpm db:advance-day` time travel works.
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
 `(meaning_recognition,'')`, active → `(meaning_production,'')`; both draw on the one
-combined budget). A recognition primary-citation card is additionally excluded — from the
-new bucket, warm-up discovery, `new_count`, AND the introduction write gates — when the
+combined budget). A recognition primary-citation card is additionally excluded — from
+warm-up discovery, `new_count`, AND the introduction write gates — when the
 term's enabled production citation facet is **live** (scheduled or parked): such terms get
 their recognition schedule from the production→recognition bridge instead (§7). **Opt-in
 new** facets
-(pronunciation/forms) bypass the daily-new cap but are served **only in `learn_new`**,
-never `mixed` — otherwise the primary Practice button would flood a session with every
-enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
-outside passive `learn_new`).
+(pronunciation/forms) bypass the daily-new cap but are served **only** by the composed
+queue's `includeOptInNew` pass (the Learn-new preset) — otherwise the primary Practice
+button would flood a session with every enabled-but-unseen facet.
 
-**Sibling spacing**: a term's facets ("siblings") must not be adjacent. Each selected facet is
-ranked within its term by priority (due-review > intraday-learning > unseen) via `ROW_NUMBER()
+**Sibling spacing** (`listDueReviewTerms`): a term's facets ("siblings") must not be adjacent. Each selected facet is
+ranked within its term by priority (due-review > intraday-learning) via `ROW_NUMBER()
 OVER (PARTITION BY user_lookup_id …)`; the outer queue orders by that rank first, so every
 term's rank-1 facet precedes any rank-2. Best-effort: a term dominating the due set has no
 separators left for its high-rank siblings, which go adjacent at the tail (accepted, not a
 guarantee). For a term with only its citation facet the rank is always 1, so the order collapses
-to plain due-time-then-new ordering.
+to plain due-time ordering.
 
 Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`).
 
@@ -456,8 +454,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 - **Planned introductions + display-time claim.** With `autoWarmup` on (the default
   Practice), composition includes eligible never-reviewed citation terms as onboarding
   gates — discovery is by (user, language) via `listEligibleNewCitationFacets`
-  (tier-ordered like the flashcard
-  new bucket, decayed terms excluded — see §4; recognition candidates also exclude terms
+  (tier-ordered, decayed terms excluded — see §4; recognition candidates also exclude terms
   whose production citation facet is live — the bridge covers those, see §7).
   **Production is allocated first**, then
   recognition, under the COMBINED daily budget. The per-compose budget is
@@ -472,9 +469,8 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   re-entry).
 - **Serve pass**, production-first (`prod flashcards → prod gates → recog flashcards →
   recog gates → opt-in-new` — pure concatenation of deterministic sub-lists, a stable
-  one-shot snapshot). Due flashcards come from `listReviewTerms` pinned so **citation-new
-  contributes 0 flashcard rows** (`review_due` scope for the due pass; `maxNewTerms = 0`
-  on the opt-in pass). Gates come from `getStrengthenExercises` over a pre-sliced id set:
+  one-shot snapshot). Due flashcards come from `listDueReviewTerms` and opt-in flashcards
+  from `listOptInNewFacets`, so **citation-new contributes 0 flashcard rows**. Gates come from `getStrengthenExercises` over a pre-sliced id set:
   `listParkedTerms(excludeCreditedToday: true)` — a term whose rehab day-credit was
   already earned today is **excluded** (answering it would consume a banked exercise
   while advancing nothing) — oldest-parked first, capped at `MAX_GATES_PER_COMPOSE`
@@ -487,7 +483,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 - **Opt-in-new pass** (`includeOptInNew`, the Learn-new preset): never-reviewed
   pronunciation/form facets served as flashcards — they never park (the exercise bank
   has no facet identity), so this is their ONLY introduction path, reserved for the
-  explicit Learn-new entry like the old learn_new-scope rule.
+  explicit Learn-new entry.
 - **Learn extra** (`learnExtraCount`, 1–20): an explicit batch past the daily-new cap —
   those planned items carry `bypassDailyCap`, applied by the same display-time claim
   (skips only the count predicate; `introduced_at` still stamps, so extras count toward
@@ -814,7 +810,7 @@ sets from the same column. Everything below "park" is shared.
   a lower desired retention (§2), which roughly doubles its expected lapse rate. New-lapse
   **delta**, not an absolute check, so graduated high-lapse terms aren't re-parked by
   good/easy ratings. Per pool.
-- **Parked** = out of every flashcard queue (`listReviewTerms` filters on the parked
+- **Parked** = out of every flashcard queue (both selectors filter on the parked
   column). The
   due-summary aggregates exclude parked rows too, so the landing never claims terms the
   queue refuses to serve. Ratings from stale queues are accepted as no-ops. The flashcard
@@ -888,9 +884,8 @@ warm-up.
 
 - **Intro-side exclusion.** While a term's ENABLED production citation facet is **live**
   (`srs_state IS NOT NULL OR leech_parked_at IS NOT NULL` — scheduled or parked), its
-  recognition citation facet is excluded from `listEligibleNewCitationFacets`, the
-  recognition flashcard new bucket, and the due summary's `new_count`
-  (`noLiveProductionSiblingSql`). Enforced at BOTH atomic write gates, not just queue
+  recognition citation facet is excluded from `listEligibleNewCitationFacets` (via the
+  introduction order in `book-priority.ts`) and the due summary's `new_count`. Enforced at BOTH atomic write gates, not just queue
   selection: the warm-up park guard returns `not_eligible` and
   `initializeCitationFacetIfUnderDailyCap` refuses (reads as a cap refusal — the client
   drops the card), so a queue item or plan computed before production went live can't
