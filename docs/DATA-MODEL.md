@@ -429,7 +429,8 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
   target_form         text          -- '' = citation; (skill, target_form) is the
                                     -- rated facet's identity
   rating              'again' | 'hard' | 'good' | 'easy'
-  was_explicit        bool          -- false = implicit-good applied on Next-text advance
+  was_explicit        bool          -- false = implicit rating (checkpoint credit or
+                                    -- lesson-import lapse)
   was_introduction    bool          -- this rating introduced the facet (it consumed
                                     -- the daily-new budget, not the review budget)
   caused_parking      bool          -- this rating crossed the leech threshold and

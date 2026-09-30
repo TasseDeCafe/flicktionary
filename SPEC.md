@@ -18,7 +18,7 @@ The app's value is **not** flashcard generation per se — it's the structured e
 
 - Not a video player. The app does not host or sync to movie playback. (A companion **browser extension** — a fork of asbplayer — does in-video subtitle capture on YouTube and feeds highlights back to the same backend; see "Browser extension (companion)" below. The web app itself remains a triage/lookup surface, not a player.)
 - Not a real-time companion. No auto-scroll, no audio fingerprinting, no clock sync.
-- Not primarily a flashcard generator. Cards still export to CSV for Anki users; **in-app review happens through the Practice tab** with shared FSRS scheduling. The default passive-review surface is still short LLM-generated texts that weave in due chunks, but the Practice tab also offers a no-LLM Anki-style flashcard reviewer for quick front/back self-grading over the same passive SRS pool.
+- Not primarily a flashcard generator. Cards still export to CSV for Anki users; **in-app review happens through the Practice tab** with shared FSRS scheduling: a composed queue of Anki-style flashcards and LLM-generated exercises over the same SRS pool.
 - Not a general-purpose chatbot. Per-card chat is scoped to refining understanding of one chunk; the vocabulary chat is scoped to one target language and ends in cards (see `docs/READER-SPEC.md` → Vocabulary chat).
 - Not a general e-reader. Books (DRM-free EPUB/FB2/MOBI) are read chapter by chapter through the same study-session reader as every other source; there is no paginated layout, typography control, or DRM support.
 
@@ -108,11 +108,8 @@ record), and each studied skill × form of a term is an independently-scheduled 
   buckets as the in-session chips, server-computed from the compose's own plan) plus the
   daily introduction budget, and a **stage funnel** (proportion bar + tappable rows) maps
   the deck's pipeline, deep-linking each stage into the Vocabulary tab's filters.
-  **Custom practice** holds the focused presets, a build-your-own filter
-  panel, and the `Read` mode.
-- **Reading mode** — short LLM-generated texts (~80–120 words) weaving in due terms as
-  tappable annotations; anything not explicitly rated auto-rates `good` on advance.
-  Sessionless; lives under Custom practice.
+  **Custom practice** holds the focused presets and a build-your-own filter
+  panel.
 - **Warm-up + leech rehab** — one parked-term mechanic with two entry triggers: brand-new
   terms onboard exercise-first (planned by the composed queue and atomically parked only
   when their gate is reached, under the daily-new
@@ -128,7 +125,7 @@ a 24h interval floor on correct recognition answers, and per-language daily new/
 budgets counted off the append-only `practice_rating_events` log.
 
 **`docs/SRS.md` is the authoritative spec for all of this** — data model (terms/facets),
-scheduler, daily budgets, queue composition, rating/undo flow, reading mode, parking +
+scheduler, daily budgets, queue composition, rating/undo flow, parking +
 exercise bank + graduation, and the practice UI surfaces (landing, composed queue, status
 row, keyboard shortcuts, card faces, dedicated exercise sessions). Read it before touching
 practice behavior; update it — not this summary — when behavior changes.

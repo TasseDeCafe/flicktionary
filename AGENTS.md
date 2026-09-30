@@ -13,7 +13,7 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 - `SPEC.md` — the product overview: what the app is/isn't, terminology, per-area summaries + pointers, navigation/settings, LLM methodology prompt, user flows. Not auto-loaded. Deep behavior lives in the per-area specs below — update those, not the summaries, when behavior changes.
 - `docs/READER-SPEC.md` — sources (movie/TV/text/ad-hoc ingestion), the in-session reader (gloss sheet, highlights, ghost suggestions), the background enrichment pipeline, tap-to-translate. **Read before touching source wizards, the reader, or the pipeline.**
 - `docs/REVIEW-SPEC.md` — the two-layer review UI: session-vocabulary list + focus view (card editing, provenance, study targets, per-card chat, session recap). **Read before touching either layer.**
-- `docs/SRS.md` — the **single home for the practice / spaced-repetition system** (web): scheduler, queues, study facets, leeches/warm-up, daily budgets, reading mode, exercise bank, and the practice UI surfaces. **Read before touching practice behavior.**
+- `docs/SRS.md` — the **single home for the practice / spaced-repetition system** (web): scheduler, queues, study facets, leeches/warm-up, daily budgets, exercise bank, and the practice UI surfaces. **Read before touching practice behavior.**
 - `docs/DATA-MODEL.md` — the annotated core schema + card content tiers (basic data, grammar bag, exploration extras, export front/back). **Read before schema or card-shape work.**
 - `apps/extension/EXTENSION-SPEC.md` — the browser extension: behavior, architecture, fork lineage, removed-subsystem & donor-model policy. **Read before any extension work.**
 - `AGENTS.md` (this file) — conventions, stack, commands, and hard-won traps.
