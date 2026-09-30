@@ -9,15 +9,17 @@ import { getIsAnonymous, useAuthStore } from '@/stores/auth-store'
 // LLM lanes require an account.
 const AddWordRoute = () => {
   const isAnonymous = useAuthStore(getIsAnonymous)
-  const { q, lang } = Route.useSearch()
-  return isAnonymous ? <NewAdhocCardWizard /> : <CaptureView q={q} lang={lang} />
+  const { q, lang, ctx } = Route.useSearch()
+  return isAnonymous ? <NewAdhocCardWizard /> : <CaptureView q={q} lang={lang} ctx={ctx} />
 }
 
-// "Translate & add" search state: the submitted query and the target
-// language, so returning from an added card restores the results.
+// "Translate & add" search state: the submitted query, the target language,
+// and the optional context, so returning from an added card restores the
+// results.
 const addWordSearchSchema = z.object({
   q: z.string().max(500).optional().catch(undefined),
   lang: z.string().optional().catch(undefined),
+  ctx: z.string().max(2000).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/vocabulary/new-word')({

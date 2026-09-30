@@ -484,7 +484,8 @@ msgstr "Activité"
 msgid "Activity, streak, and coverage"
 msgstr "Activité, série et couverture"
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Add"
 msgstr "Ajouter"
 
@@ -495,10 +496,6 @@ msgstr "Ajouter {newCount} cartes"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Add {newCount} cards · update {updateCount}"
 msgstr "Ajouter {newCount} cartes · mettre à jour {updateCount}"
-
-#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
-msgid "Add {selectedCount} as cards"
-msgstr "Ajouter {selectedCount} en tant que cartes"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Add a form"
@@ -513,6 +510,10 @@ msgstr "Ajouter une forme à étudier"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Add a word"
 msgstr "Ajouter un mot"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Add context"
+msgstr "Ajouter un contexte"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Add Custom CSS"
@@ -552,7 +553,7 @@ msgid "Add translation"
 msgstr "Ajouter une traduction"
 
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
 #: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Added"
 msgstr "Ajouté"
@@ -688,7 +689,6 @@ msgid "Already have an account? <0>Sign in</0>"
 msgstr "Vous avez déjà un compte ? <0>Se connecter</0>"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
-#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "Already in your vocabulary"
 msgstr "Déjà dans votre vocabulaire"
 
@@ -809,8 +809,8 @@ msgid "Ask follow-up questions about this term."
 msgstr "Posez des questions complémentaires sur ce terme."
 
 #: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
-msgid "Ask how to say something, or for words on a topic (\"gym vocabulary\"). Useful terms show up as a checklist you can add as cards. The chat is saved with its cards in your sessions."
-msgstr "Demandez comment dire quelque chose, ou des mots sur un sujet (« vocabulaire de sport »). Les termes utiles apparaissent sous forme de liste à cocher que vous pouvez ajouter en tant que cartes. La discussion est enregistrée avec ses cartes dans vos sessions."
+msgid "Ask how to say something, or for words on a topic (\"gym vocabulary\"). Useful terms show up below the answer, ready to add as cards. The chat is saved with its cards in your sessions."
+msgstr "Demandez comment dire quelque chose, ou des mots sur un sujet (« vocabulaire de la salle de sport »). Les termes utiles apparaissent sous la réponse, prêts à être ajoutés comme cartes. La conversation est enregistrée avec ses cartes dans vos sessions."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/review/components/grammar-chips.tsx
@@ -1307,6 +1307,10 @@ msgstr "Contexte"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Context (optional)"
 msgstr "Contexte (facultatif)"
+
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+msgid "Context: {seedContext}"
+msgstr "Contexte : {seedContext}"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
@@ -1821,7 +1825,7 @@ msgstr "Chaque colonne représente 100 mots ; la partie remplie indique combien 
 msgid "Easy"
 msgstr "Facile"
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
 msgid "Edit card"
 msgstr "Modifier la carte"
 
@@ -2088,7 +2092,7 @@ msgstr "Échec de la finalisation de l'intégration"
 msgid "Failed to connect Telegram"
 msgstr "Échec de la connexion à Telegram"
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Failed to create card"
 msgstr "Échec de la création de la carte"
@@ -2957,7 +2961,8 @@ msgstr "Dans les exercices d'introduction avant leur première carte mémoire"
 msgid "In short-term learning — follow-ups come back within days."
 msgstr "En apprentissage à court terme — les révisions reviennent sous quelques jours."
 
-#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "In your vocabulary"
 msgstr "Dans votre vocabulaire"
 
@@ -4423,6 +4428,10 @@ msgstr "Supprimer « {sessionTitle} » ?"
 #: apps/web/src/features/books/components/book-detail-view.tsx
 msgid "Remove book"
 msgstr "Supprimer le livre"
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Remove context"
+msgstr "Supprimer le contexte"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Remove file"
@@ -6397,6 +6406,10 @@ msgstr "Lorsque vous touchez un mot, afficher comment il est construit et quels 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Where you met it: a sentence, even partial"
+msgstr "Où vous l'avez rencontré : une phrase, même partielle"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Which pronunciation to show for English vocabulary cards."
