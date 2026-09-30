@@ -481,7 +481,7 @@ export const StudySessionSchema = z.object({
 export type StudySession = z.infer<typeof StudySessionSchema>
 
 // =============================================================================
-// Practice tab — SRS through generated texts
+// Practice tab — SRS flashcards and exercises
 // =============================================================================
 
 export const PracticeRatingSchema = z.enum(['again', 'hard', 'good', 'easy'])
