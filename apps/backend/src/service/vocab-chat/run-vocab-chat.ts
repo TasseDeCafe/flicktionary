@@ -211,7 +211,7 @@ type TurnState = {
   newThreadSuggestion: VocabChatNewThreadSuggestion | null
 }
 
-const findExistingHeadwords = async (
+export const findExistingHeadwords = async (
   headwords: string[],
   thread: VocabChatThread,
   userId: string,
@@ -348,10 +348,17 @@ export const assertVocabChatMessageAllowed = async (
 }
 
 export const runVocabChat = async (
-  input: { thread: VocabChatThread; userId: string; content: string },
+  input: {
+    thread: VocabChatThread
+    userId: string
+    content: string
+    // The thread's opening request, set on its first turn so the exchange
+    // names the thread.
+    titleFrom?: string
+  },
   deps: RunVocabChatDependencies
 ): Promise<RunVocabChatResult> => {
-  const { thread, userId, content } = input
+  const { thread, userId, content, titleFrom } = input
   const session = thread.session
 
   const languageMode = await getLanguageMode({
@@ -454,10 +461,10 @@ export const runVocabChat = async (
   // The first exchange names the thread; a failure keeps the provisional
   // title (the first message).
   let title: string | null = null
-  if (prior.length === 0) {
+  if (titleFrom) {
     try {
       title = await deps.anthropicPasses.vocabChatTitlePass({
-        firstUserMessage: content,
+        firstUserMessage: titleFrom,
         firstAssistantReply: reply,
         titleLanguage: replyLanguage,
       })
