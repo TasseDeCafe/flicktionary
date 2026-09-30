@@ -17,7 +17,7 @@ export type InsertRatingEventInput = {
   skill: FacetSkill
   targetForm: string
   rating: 'again' | 'hard' | 'good' | 'easy'
-  // false = implicit 'good' applied on a reading-text advance.
+  // false = an implicit rating (checkpoint credit, lesson-import lapse).
   wasExplicit: boolean
   // The term was state-NULL in this pool at rating time.
   wasIntroduction: boolean
@@ -30,8 +30,6 @@ export type InsertRatingEventInput = {
   prevLeechParkedAt?: string | null
   prevLeechRehabCorrectDays?: number | null
   prevLeechRehabLastCorrectOn?: string | null
-  // Reading-mode context; null for flashcard ratings.
-  practiceTextId: string | null
   // Lesson-import provenance; set only on the implicit 'again' lapses a
   // confirmed import applies. Marked events are excluded from the daily
   // review budget (a big import must not eat the day's allowance).
@@ -80,7 +78,6 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       prev_leech_parked_at,
       prev_leech_rehab_correct_days,
       prev_leech_rehab_last_correct_on,
-      practice_text_id,
       import_batch_id,
       study_session_id,
       checkpoint_id,
@@ -110,7 +107,6 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.prevLeechParkedAt ?? null},
       ${params.prevLeechRehabCorrectDays ?? null},
       ${params.prevLeechRehabLastCorrectOn ?? null},
-      ${params.practiceTextId},
       ${params.importBatchId ?? null},
       ${params.studySessionId ?? null},
       ${params.checkpointId ?? null},

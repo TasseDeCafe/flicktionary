@@ -149,7 +149,7 @@ describe('pinned-book introduction order', () => {
     } while (cursor)
     expect(paged).toEqual(upNext.map((row) => row.id))
 
-    // Reading mode's recognition new bucket serves the same order.
+    // The review queue's recognition new bucket serves the same order.
     const served = await userLookupsRepository.listReviewTerms({
       userId,
       targetLanguage: 'ru',

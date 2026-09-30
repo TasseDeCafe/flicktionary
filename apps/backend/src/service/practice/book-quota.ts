@@ -19,7 +19,7 @@ export type BookQuota = {
 // The quota is a share of the combined daily new budget; usage counts
 // introductions stamped for a book stream today (any book — replacing the pin
 // mid-day doesn't refill it). Every introduction-order consumer takes
-// `remaining` from here, so the queue, reading mode and Up next agree.
+// `remaining` from here, so the queue and Up next agree.
 export const resolveBookQuota = async (
   userId: string,
   targetLanguage: string,

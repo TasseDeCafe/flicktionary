@@ -89,7 +89,6 @@ describe('coverage router', () => {
       wasIntroduction: false,
       wasExplicit: true,
       causedParking: false,
-      practiceTextId: null,
       studySessionId: null,
       checkpointId: null,
       headword: verifiedWord,

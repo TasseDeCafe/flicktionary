@@ -10,14 +10,14 @@ export type RateValue = 'again' | 'hard' | 'good' | 'easy'
 export const RATE_VALUES: RateValue[] = ['again', 'hard', 'good', 'easy']
 
 interface RateButtonsProps {
-  // Pre-selected rating. Default 'good' so the natural primary tap-target
-  // matches the SRS heuristic ("read a chunk, didn't tap = recognized").
+  // Pre-selected rating. Default 'good' — the most common answer is the
+  // highlighted primary tap-target.
   value?: RateValue
   onSelect: (value: RateValue) => void
   disabled?: boolean
   // Renders a 1-4 <Kbd> badge on each button. Only for hosts that actually
   // bind those keys (the composed queue on desktop) — keep it off on touch
-  // surfaces like the reading-mode RateSheet.
+  // surfaces.
   showKbdHints?: boolean
   className?: string
 }

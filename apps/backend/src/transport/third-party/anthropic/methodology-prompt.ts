@@ -118,7 +118,7 @@ type BuildPracticeMethodologySystemArgs = {
 }
 
 // Variant for the Practice tab. Same cacheable prefix structure but without the
-// per-session source-context block (Practice texts aren't tied to a movie/source).
+// per-session source-context block (practice isn't tied to a movie/source).
 // The cache breakpoint sits on the LAST stable block — the user profile, or the
 // last of the caller's extraStableBlocks when provided.
 export const buildPracticeMethodologySystem = ({

@@ -55,7 +55,7 @@ export type DbUserLookupWithFacet = DbUserLookup & {
 }
 
 // Flatten a (lookup, facet) pair into the combined row the rating/leech
-// services consume. Used at the flashcard and reading rating boundaries where
+// services consume. Used at the rating boundaries where
 // the term and its facet are fetched separately.
 export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLookupWithFacet => ({
   ...lookup,
@@ -653,8 +653,9 @@ export type CoverageVocabRow = {
 // successful review on a MEANING skill that is explicit-or-checkpoint
 // evidence — and never the known-assertion lane (assertions are
 // was_explicit=TRUE WITH a checkpoint_id, credits are was_explicit=FALSE —
-// docs/SRS.md §6c), so a claim can never verify itself. Reading-mode implicit
-// goods (neither explicit nor checkpoint) don't verify either. Kept separate
+// docs/SRS.md §6c), so a claim can never verify itself. Other implicit
+// ratings (lesson-import lapses — neither explicit nor checkpoint) don't
+// verify either. Kept separate
 // from listDifficultyVocab: coverage needs no FSRS columns and the EXISTS
 // probe should only be paid by coverage reads.
 const listCoverageVocab = async (params: { userId: string; targetLanguage: string }): Promise<CoverageVocabRow[]> => {
@@ -1012,7 +1013,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 }
 
 // The live review pool for a (language, pool), sliced by scope. Single source
-// for both render modes and the reading generator's candidate set.
+// for the composed queue's flashcards.
 //
 //   - `pool` selects the facet skill SET, not a single skill: the recognition
 //     queue serves {meaning_recognition, pronunciation}, the production queue
@@ -1022,8 +1023,8 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 //     spans every kept term via its recognition facet).
 //     Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
 //     production facets out) and ready (data_status='ready' — keeps pending_data
-//     facets out); leech-parked facets leave BOTH render modes (the reading
-//     generator feeds from this query and must never re-rate a parked facet).
+//     facets out); leech-parked facets are left out (the exercise ladder
+//     serves them until they leave it).
 //   - `scope` gates the buckets: 'review_due' = due only, 'learn_new' =
 //     never-reviewed only, 'mixed' = due + capped citation-new.
 //
@@ -1058,7 +1059,6 @@ const listReviewTerms = async (params: {
   maxLearningTerms: number
   maxNewTerms: number
   maxOptInNewTerms: number
-  excludeUserLookupIds?: string[]
   // Today's remaining pinned-book quota (resolveBookQuota); 0 = no book stream.
   bookRemaining?: number
 }): Promise<DbUserLookupWithFacet[]> => {
@@ -1083,8 +1083,6 @@ const listReviewTerms = async (params: {
     (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
       AS is_production_enabled
   `
-  const excludedIds = params.excludeUserLookupIds ?? []
-  const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
   // Shared eligibility: kept, live term; enabled, ready, non-parked facet in the
   // pool's skill set. Always-true conditions first so the optional AND clauses
   // append cleanly. Production-pool membership needs no extra clause: the facetJoin
@@ -1098,7 +1096,6 @@ const listReviewTerms = async (params: {
     AND f.disabled_at IS NULL
     AND f.data_status = 'ready'
     AND f.leech_parked_at IS NULL
-    ${excludeClause}
   `
   const facetJoin = sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skills})`
   const primaryCitation = sql`(f.skill = ${primarySkill} AND f.target_form = ${CITATION_FORM})`
@@ -2330,76 +2327,6 @@ const listChunksForLanguage = async (params: {
   return { rows: sliced, nextCursor }
 }
 
-// Used to enrich practice annotations with the live gloss/definition before
-// shipping a practice text to the client. Soft-deleted rows are still
-// returned so the rate sheet can render the "deleted, tap to restore" state;
-// `deletedAt` lets the renderer distinguish. We fetch all rows for the (user,
-// language) and let the caller index by (headword, sense); typical user
-// vocabularies stay in the low hundreds, so the simple query beats composing
-// an array-tuple WHERE clause.
-const listChunkContentForKeys = async (params: {
-  userId: string
-  targetLanguage: string
-  keys: Array<{ headword: string; sense: string }>
-}): Promise<
-  Array<{
-    id: string
-    headword: string
-    sense: string
-    translation: string | null
-    definition: string | null
-    grammar: Record<string, unknown> | null
-    firstCardId: string | null
-    firstCardSessionId: string | null
-    deletedAt: Date | null
-    isProductionEnabled: boolean
-  }>
-> => {
-  if (params.keys.length === 0) return []
-  const result = (await sql`
-    SELECT
-      ul.id,
-      ul.headword,
-      ul.sense,
-      ul.translation,
-      ul.definition,
-      ul.grammar,
-      ul.first_card_id,
-      ul.deleted_at,
-      (pf.disabled_at IS NULL AND pf.id IS NOT NULL) AS is_production_enabled,
-      c.study_session_id AS first_card_session_id
-    FROM public.user_lookups ul
-    LEFT JOIN public.study_facets pf
-      ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
-    LEFT JOIN public.cards c ON c.id = ul.first_card_id
-    WHERE ul.user_id = ${params.userId}
-      AND ul.target_language = ${params.targetLanguage}
-  `) as Array<{
-    id: string
-    headword: string
-    sense: string
-    translation: string | null
-    definition: string | null
-    grammar: Record<string, unknown> | null
-    first_card_id: string | null
-    first_card_session_id: string | null
-    deleted_at: Date | null
-    is_production_enabled: boolean
-  }>
-  return result.map((row) => ({
-    id: row.id,
-    headword: row.headword,
-    sense: row.sense,
-    translation: row.translation,
-    definition: row.definition,
-    grammar: row.grammar,
-    firstCardId: row.first_card_id,
-    firstCardSessionId: row.first_card_session_id,
-    deletedAt: row.deleted_at,
-    isProductionEnabled: row.is_production_enabled,
-  }))
-}
-
 const softDeleteChunk = async (id: string, userId: string): Promise<void> => {
   await sql`
     UPDATE public.user_lookups
@@ -2504,7 +2431,6 @@ export interface UserLookupsRepositoryInterface {
     maxLearningTerms: number
     maxNewTerms: number
     maxOptInNewTerms: number
-    excludeUserLookupIds?: string[]
     bookRemaining?: number
   }) => Promise<DbUserLookupWithFacet[]>
   findByKey: (params: {
@@ -2572,24 +2498,6 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
   restoreChunk: (id: string, userId: string) => Promise<void>
-  listChunkContentForKeys: (params: {
-    userId: string
-    targetLanguage: string
-    keys: Array<{ headword: string; sense: string }>
-  }) => Promise<
-    Array<{
-      id: string
-      headword: string
-      sense: string
-      translation: string | null
-      definition: string | null
-      grammar: Record<string, unknown> | null
-      firstCardId: string | null
-      firstCardSessionId: string | null
-      deletedAt: Date | null
-      isProductionEnabled: boolean
-    }>
-  >
   listLanguagesForUser: (userId: string) => Promise<string[]>
 }
 
@@ -2632,7 +2540,6 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listChunksForLanguage,
     softDeleteChunk,
     restoreChunk,
-    listChunkContentForKeys,
     listLanguagesForUser,
   }
 }

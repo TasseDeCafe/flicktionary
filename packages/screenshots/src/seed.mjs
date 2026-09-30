@@ -199,7 +199,6 @@ const run = async () => {
     log('resetting demo account content…')
     await sql`DELETE FROM study_sessions WHERE user_id = ${userId}`
     await sql`DELETE FROM user_lookups WHERE user_id = ${userId}`
-    await sql`DELETE FROM practice_texts WHERE user_id = ${userId}`
   }
   const api = apiClient(await mintAccessToken(admin, DEMO.email))
   await api.completeOnboarding(DEMO.nativeLanguage)

@@ -494,61 +494,6 @@ export type PracticeRating = z.infer<typeof PracticeRatingSchema>
 export const ReviewScopeSchema = z.enum(['review_due', 'learn_new', 'mixed'])
 export type ReviewScope = z.infer<typeof ReviewScopeSchema>
 
-export const PracticeTextStatusSchema = z.enum(['pending', 'generating', 'ready', 'reading', 'done', 'failed'])
-export type PracticeTextStatus = z.infer<typeof PracticeTextStatusSchema>
-
-export const PracticeAnnotationSchema = z.object({
-  headword: z.string(),
-  sense: z.string(),
-  surfaceForm: z.string(),
-  charStart: z.number().int(),
-  charEnd: z.number().int(),
-  // Live content joined from user_lookups at fetch time so the rate sheet can
-  // show the translation + definition without an extra round trip. Null when
-  // the canonical row was deleted between generation and read.
-  translation: z.string().nullable(),
-  definition: z.string().nullable(),
-  // Same join as translation/definition — surfaces the typed morphology bag
-  // (pos, gender, aspect, government, ipa, display_form, …) so the rate sheet
-  // can render the same chips + stress-marked headword + IPA the focus view
-  // shows. Per-language allowlist gates which fields are rendered.
-  grammar: GrammarSchema.nullable(),
-  // Identifiers joined from user_lookups so the rate sheet can wire Edit
-  // (navigate to the focus view of `cardId` within `cardSessionId`) and
-  // Delete (soft-delete `userLookupId`). Null when the canonical row no
-  // longer exists or the chunk has never been kept in any session.
-  userLookupId: z.string().uuid().nullable(),
-  cardId: z.string().uuid().nullable(),
-  cardSessionId: z.string().uuid().nullable(),
-  // Mirror of `user_lookups.deleted_at` so the practice text can render the
-  // strikethrough/Restore state for chunks the user just deleted from the
-  // sheet, even after a refetch.
-  deletedAt: z.string().nullable(),
-  // Whether the term is in production study (citation meaning_production facet
-  // enabled), so the rate sheet can show the right "Switch to
-  // production/recognition-only" action. Null when no canonical row.
-  isProductionEnabled: z.boolean().nullable(),
-})
-export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
-
-export const PracticeTextSchema = z.object({
-  id: z.string().uuid(),
-  // Which practice queue the text was generated for. The rating layer routes
-  // FSRS writes to the pool's facet skill based on this. Replaces the old
-  // practiceSessionId now that reading is sessionless: texts are kept per
-  // (user, target_language, pool) and double as history.
-  pool: PracticePoolSchema,
-  ord: z.number().int(),
-  status: PracticeTextStatusSchema,
-  body: z.string().nullable(),
-  annotations: z.array(PracticeAnnotationSchema),
-  generationWarning: z.string().nullable(),
-  createdAt: z.string(),
-  readyAt: z.string().nullable(),
-  readAt: z.string().nullable(),
-})
-export type PracticeText = z.infer<typeof PracticeTextSchema>
-
 export const PracticeDueSummaryEntrySchema = z.object({
   targetLanguage: z.string(),
   totalKept: z.number().int(),
@@ -600,17 +545,6 @@ export const PracticeDueSummaryEntrySchema = z.object({
   // exercise-first onboarding still warming up ("continue").
   productionParkedCount: z.number().int(),
   productionWarmupCount: z.number().int(),
-  // In-progress reading-mode texts (status='reading'), at most one per pool.
-  // Feeds the landing's "continue reading" affordance. The scope is needed to
-  // resume: re-entering reading under a different scope discards the open
-  // text (failMismatchedScopeSlots). NULL scope = legacy row, any scope works.
-  currentReadings: z.array(
-    z.object({
-      pool: PracticePoolSchema,
-      scope: ReviewScopeSchema.nullable(),
-      termCount: z.number().int(),
-    })
-  ),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 
@@ -707,10 +641,8 @@ export const ExerciseAnswerSchema = z.union([
 ])
 export type ExerciseAnswer = z.infer<typeof ExerciseAnswerSchema>
 
-// One term in the sessionless review queue (formerly Flashcard). All fields are
-// read straight off user_lookups — no generated text involved. The same row
-// feeds both render modes: the flashcard front/back and the reading generator's
-// candidate set. `display_form` (when present) lives inside `grammar` and is
+// One term in the sessionless review queue. All fields are read straight off
+// user_lookups. `display_form` (when present) lives inside `grammar` and is
 // read client-side. `srsState` is null for never-reviewed (new) terms.
 export const ReviewTermSchema = z.object({
   userLookupId: z.string().uuid(),
@@ -792,12 +724,3 @@ export const PracticeQueueItemSchema = z.discriminatedUnion('type', [
   }),
 ])
 export type PracticeQueueItem = z.infer<typeof PracticeQueueItemSchema>
-
-// One explicit rating the client collected while reading a text, keyed by the
-// term's user_lookup id. Annotations absent from the list are advanced as
-// implicit 'good'. Sent in a single batch by advanceReadingText.
-export const ReadingRatingSchema = z.object({
-  userLookupId: z.string().uuid(),
-  rating: PracticeRatingSchema,
-})
-export type ReadingRating = z.infer<typeof ReadingRatingSchema>

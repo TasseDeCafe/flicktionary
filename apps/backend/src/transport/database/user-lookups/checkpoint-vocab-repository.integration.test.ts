@@ -86,7 +86,6 @@ describe('checkpoint vocab repository methods', () => {
       rating: 'good' as const,
       wasIntroduction: false,
       causedParking: false,
-      practiceTextId: null,
       studySessionId: session.id,
       checkpointId: checkpoint.id,
       headword: 'слово',

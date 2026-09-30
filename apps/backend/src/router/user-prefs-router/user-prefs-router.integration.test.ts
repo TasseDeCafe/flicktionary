@@ -292,7 +292,6 @@ describe('user-prefs-router', async () => {
       wasExplicit: false,
       wasIntroduction: false,
       causedParking: false,
-      practiceTextId: null,
       importBatchId: batch!.id,
       headword: 'gato',
       sense: 'animal',

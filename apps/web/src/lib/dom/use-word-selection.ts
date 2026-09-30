@@ -47,7 +47,7 @@ type UseWordSelectionParams = {
   // handlers (highlight / annotation taps) fire normally.
   isBlockedTarget: (el: Element) => boolean
   onSelect: (selection: WordSelection) => void
-  // Session view (long scrollable list) only; practice texts are short.
+  // Session view (long scrollable list) only; exercise sentences are short.
   enableEdgeAutoScroll: boolean
   // When false the gesture listeners aren't attached (e.g. a read-only block).
   // Defaults to true.

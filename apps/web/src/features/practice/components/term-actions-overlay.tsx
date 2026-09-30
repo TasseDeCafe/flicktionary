@@ -22,7 +22,7 @@ interface TermActionsOverlayProps {
 // Header-kebab actions for the term behind the displayed queue item.
 // "Edit term" deep-links to the focus view via the chunk's representative-card
 // pointer, fetched lazily on open (the queue payloads stay lean). Same menu
-// pattern as the vocabulary rows and the reading-mode rate sheet.
+// pattern as the vocabulary rows.
 //
 // Navigating away unmounts the serving queue, but the session survives the
 // detour: the view stashes its snapshot on unmount, and the focus view's close

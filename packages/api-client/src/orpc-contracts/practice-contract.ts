@@ -11,9 +11,6 @@ import {
   PracticeQueueFilterSchema,
   PracticeQueueItemSchema,
   PracticeRatingSchema,
-  PracticeTextSchema,
-  ReadingRatingSchema,
-  ReviewScopeSchema,
   StrengthenExerciseEntrySchema,
   StrengthenExercisePayloadSchema,
 } from './common/flicktionary-schemas'
@@ -102,110 +99,6 @@ export const practiceContract = {
       })
     )
     .output(z.object({ data: z.object({ undone: z.boolean() }) })),
-
-  // Bootstrap or resume reading mode for a (language, pool): returns the
-  // in-progress 'reading' text if one exists, otherwise promotes a pre-generated
-  // slot or generates a fresh one from the scope-filtered candidate set. done=true
-  // when there is nothing left to review. Generation never introduces new terms —
-  // that happens at rate/advance time only.
-  generateNextReadingText: oc
-    .route({ method: 'POST', path: '/practice/reading-texts/generate', successStatus: 200 })
-    .errors({
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('recognition'),
-        scope: ReviewScopeSchema.default('mixed'),
-      })
-    )
-    .output(
-      z.object({
-        data: z.union([
-          z.object({ done: z.literal(false), practiceText: PracticeTextSchema }),
-          z.object({ done: z.literal(true) }),
-        ]),
-      })
-    ),
-
-  // Background pre-generation. Reserves the next slot if one is needed and kicks
-  // off LLM work in a detached promise. `excludeUserLookupIds` carries the
-  // currently-reading text's term ids so the pre-gen doesn't re-embed words that
-  // are about to be rated by the pending advance. Returns the slot's current
-  // status so the client can observe pre-gen progress if it cares.
-  prepareNextReadingText: oc
-    .route({ method: 'POST', path: '/practice/reading-texts/prepare', successStatus: 202 })
-    .errors({
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('recognition'),
-        scope: ReviewScopeSchema.default('mixed'),
-        excludeUserLookupIds: z.array(z.string().uuid()).default([]),
-      })
-    )
-    .output(
-      z.object({
-        data: z.union([
-          z.object({ status: z.literal('queued'), practiceTextId: z.string().uuid() }),
-          z.object({ status: z.literal('already_ready'), practiceTextId: z.string().uuid() }),
-          z.object({ status: z.literal('already_generating'), practiceTextId: z.string().uuid() }),
-          z.object({ status: z.literal('no_work') }),
-        ]),
-      })
-    ),
-
-  // The single reading-mode mutation. The client owns per-text rating state and
-  // sends it all at once: `ratings` carries the explicit taps (by user_lookup
-  // id), every other annotation is advanced as implicit 'good'. Idempotent via
-  // the one-shot reading->done claim — a second call (double-click / retry)
-  // applies no FSRS and returns the already-reserved next text. Returns done=true
-  // when nothing else is left to review.
-  advanceReadingText: oc
-    .route({ method: 'POST', path: '/practice/reading-texts/{textId}/advance', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        textId: z.string().uuid(),
-        pool: PracticePoolSchema.default('recognition'),
-        scope: ReviewScopeSchema.default('mixed'),
-        ratings: z.array(ReadingRatingSchema).default([]),
-      })
-    )
-    .output(
-      z.object({
-        data: z.union([
-          z.object({ done: z.literal(false), nextText: PracticeTextSchema, introduced: z.number().int() }),
-          z.object({ done: z.literal(true), introduced: z.number().int() }),
-        ]),
-      })
-    ),
-
-  // Reading history: past generated texts for a (language, pool), newest first.
-  // The texts double as history now that they're kept per (user, language, pool)
-  // instead of being garbage-collected with the session.
-  readingHistory: oc
-    .route({ method: 'GET', path: '/practice/reading-texts/history', successStatus: 200 })
-    .errors({
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('recognition'),
-      })
-    )
-    .output(z.object({ data: z.object({ texts: z.array(PracticeTextSchema) }) })),
 
   // Build a Strengthen session: one gate exercise per parked (leech) term plus
   // one bonus exercise per this-session again/hard term. Server-side it

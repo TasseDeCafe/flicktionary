@@ -58,7 +58,6 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       wasExplicit: true,
       wasIntroduction: false,
       causedParking: false,
-      practiceTextId: null,
       headword: 'h',
       sense: 'x',
       // review-state pre-snapshot => charges the review budget.

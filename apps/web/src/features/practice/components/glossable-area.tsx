@@ -1,8 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
 import { resolveGlossSelection, type GlossOwner } from '../utils/resolve-gloss-selection'
-import { LookupSheet } from './lookup-sheet'
-import type { PlainSelection } from './annotated-text'
+import { LookupSheet, type PlainSelection } from './lookup-sheet'
 
 // Select-to-gloss wrapper for exercise content. Owns the word-selection
 // gesture over its children (SelectableSentence instances keyed into `owners`)

@@ -309,8 +309,8 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
   // A recognition facet whose enabled production sibling is live (scheduled or
   // parked) gets its schedule from the production bridge, never an
   // introduction. Enforced in the write gate — not just queue selection — so a
-  // flashcard or reading text served BEFORE production went live can't stamp
-  // introduced_at on submit/finalize. The refusal reads as a cap refusal to
+  // flashcard served BEFORE production went live can't stamp introduced_at on
+  // submit. The refusal reads as a cap refusal to
   // the caller: the client drops the card, and the bridge covers the facet on
   // the next production good/easy.
   const bridgeGuard =

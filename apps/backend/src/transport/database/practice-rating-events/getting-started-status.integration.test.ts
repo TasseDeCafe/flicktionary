@@ -38,7 +38,6 @@ describe('practice-rating-events getting-started predicate', () => {
         wasExplicit: importBatchId === null,
         wasIntroduction: false,
         causedParking: false,
-        practiceTextId: null,
         importBatchId,
         headword: lookup.headword,
         sense: lookup.sense,
