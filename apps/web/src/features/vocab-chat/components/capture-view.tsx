@@ -1,39 +1,40 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { toast } from 'sonner'
-import { Check, Loader2, MessageCircle, Pencil, Plus, Search } from 'lucide-react'
-import type { CaptureCandidate } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
+import { useNavigate } from '@tanstack/react-router'
+import { Loader2, MessageCircle, Plus, Search, X } from 'lucide-react'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Input } from '@flicktionary/ui/components/input'
-import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
+import { Textarea } from '@flicktionary/ui/components/textarea'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
-import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
-import { useMarkCandidateAdded, useTranslateForCapture } from '../api/vocab-chat-hooks'
+import { useTranslateForCapture, type CaptureSearch } from '../api/vocab-chat-hooks'
+import { CaptureCandidateRow } from './capture-candidate-row'
+import { TermRowSkeleton } from './term-row'
 
 const QUERY_MAX = 500
+const CONTEXT_MAX = 2000
 
 // "Translate & add" — the signed-in "Add a word". The learner types in any
-// language; a quick pass (MODEL_TRANSLATE) returns 1-3 target-language candidates, and Add
+// language, optionally with the context they met the term in; a quick pass
+// (MODEL_TRANSLATE) returns 1-3 target-language candidates, and each row's Add
 // runs the regular ad-hoc card creation (the accurate pass writes the card).
-// "Ask about this" escalates to the vocabulary chat with the query carried
-// over. The submitted search lives in the URL (`q`, `lang`) and its results in
-// the query cache, so a detour into an added card and back restores them.
-export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
+// "Ask about this" escalates to the vocabulary chat, carrying the search and
+// its candidates over as the chat's opening exchange. The submitted search
+// lives in the URL (`q`, `lang`, `ctx`) and its results in the query cache, so
+// a detour into an added card or the chat and back restores them.
+export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?: string }) => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const close = useModalScreenClose({ to: '/vocabulary' })
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
-  const { mutate: createAdhoc } = useCreateAdhocCard()
-  const markCandidateAdded = useMarkCandidateAdded()
 
   const cefrSetLanguages = useMemo(
     () => (prefs?.targetLanguagePrefs ?? []).map((p) => p.targetLanguage).sort(),
@@ -43,69 +44,61 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
   const requiresCefr = !!prefs && !!targetLanguage && !cefrSetLanguages.includes(targetLanguage)
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
-  const submittedQuery = q ?? null
+  const submittedSearch: CaptureSearch | null =
+    q && targetLanguage ? { text: q, targetLanguage, context: ctx ?? null } : null
   const {
     data: translation,
     isFetching: isTranslating,
     error: translationError,
-  } = useTranslateForCapture(requiresCefr ? null : submittedQuery, targetLanguage)
+  } = useTranslateForCapture(requiresCefr ? null : submittedSearch)
   const [query, setQuery] = useState(q ?? '')
-  const [addingHeadword, setAddingHeadword] = useState<string | null>(null)
-  // Headwords added from this screen, labeled "Added" rather than "In your
-  // vocabulary" (both point at the card).
-  const [justAdded, setJustAdded] = useState<Set<string>>(() => new Set())
+  const [context, setContext] = useState(ctx ?? '')
+  const [isContextOpen, setIsContextOpen] = useState(!!ctx)
 
   const trimmedQuery = query.trim()
+  const trimmedContext = context.trim()
   const candidates = translation?.candidates ?? []
 
   // Searches replace the history entry: stepping through lookups isn't a
   // stack, so back/close leaves the screen instead of replaying each search.
-  const setSearch = (next: { q?: string; lang?: string }) =>
+  const setSearch = (next: { q?: string; lang?: string; ctx?: string }) =>
     void navigate({ to: '/vocabulary/new-word', search: next, replace: true })
 
   const handleTranslate = () => {
     if (!targetLanguage || !trimmedQuery) return
-    setSearch({ lang: targetLanguage, q: trimmedQuery })
+    setSearch({ lang: targetLanguage, q: trimmedQuery, ...(trimmedContext ? { ctx: trimmedContext } : {}) })
   }
 
   const switchLanguage = (code: string) => {
     setQuery('')
+    setContext('')
+    setIsContextOpen(false)
     setSearch({ lang: code })
   }
 
-  const handleAdd = (candidate: CaptureCandidate) => {
-    if (!targetLanguage || !submittedQuery || addingHeadword !== null) return
-    setAddingHeadword(candidate.headword)
-    createAdhoc(
-      {
-        targetLanguage,
-        headword: candidate.headword,
-        context: candidate.example || null,
-        // Only a real translation lookup carries a meaning to steer by; a
-        // target-language input is its own meaning.
-        meaningHint: translation?.inputLanguage !== targetLanguage ? submittedQuery : null,
-      },
-      {
-        onSuccess: (response) => {
-          markCandidateAdded({
-            text: submittedQuery,
-            targetLanguage,
-            headword: candidate.headword,
-            card: { cardId: response.data.cardId, sessionId: response.data.sessionId },
-          })
-          setJustAdded((prev) => new Set(prev).add(candidate.headword))
-        },
-        onError: () => toast.error(t`Failed to create card`),
-        onSettled: () => setAddingHeadword(null),
-      }
-    )
+  const closeContext = () => {
+    setContext('')
+    setIsContextOpen(false)
   }
 
+  // With results on screen, the chat opens on them (the search and its
+  // candidates as the opening exchange); an edited, unsubmitted query rides
+  // along as the draft. Otherwise the typed query becomes the draft.
   const openChat = () => {
     if (!targetLanguage) return
+    const hasResults = !!submittedSearch && candidates.length > 0
+    const draft = hasResults
+      ? trimmedQuery !== q
+        ? trimmedQuery
+        : ''
+      : [trimmedQuery, trimmedContext].filter(Boolean).join('\n\n')
     void navigate({
       to: '/chat/new',
-      search: { language: targetLanguage, ...(trimmedQuery ? { message: trimmedQuery } : {}) },
+      search: {
+        language: targetLanguage,
+        ...(hasResults ? { seedQ: submittedSearch.text, ...(ctx ? { seedCtx: ctx } : {}) } : {}),
+        ...(draft ? { message: draft } : {}),
+      },
     })
   }
 
@@ -140,52 +133,88 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
             </div>
           ) : (
             <>
-              {/* Query input: Enter or the search button translates. */}
+              {/* Query input: Enter or the search button translates. The
+                  optional context (where the learner met the term) steers the
+                  sense and inspires the examples. */}
               <form
-                className='flex items-center gap-2'
+                className='flex flex-col gap-2'
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleTranslate()
                 }}
               >
-                <Input
-                  value={query}
-                  maxLength={QUERY_MAX}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t`A word or phrase, in any language`}
-                  className='h-11 text-base'
-                  enterKeyHint='search'
-                  autoFocus
-                />
-                <Button
-                  type='submit'
-                  size='icon'
-                  className='size-11 shrink-0'
-                  disabled={!trimmedQuery || !targetLanguage}
-                  aria-label={t`Translate`}
-                >
-                  {isTranslating ? <Loader2 className='size-4 animate-spin' /> : <Search className='size-4' />}
-                </Button>
+                <div className='flex items-center gap-2'>
+                  <Input
+                    value={query}
+                    maxLength={QUERY_MAX}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t`A word or phrase, in any language`}
+                    className='h-11 text-base'
+                    enterKeyHint='search'
+                    autoFocus
+                  />
+                  <Button
+                    type='submit'
+                    size='icon'
+                    className='size-11 shrink-0'
+                    disabled={!trimmedQuery || !targetLanguage}
+                    aria-label={t`Translate`}
+                  >
+                    {isTranslating ? <Loader2 className='size-4 animate-spin' /> : <Search className='size-4' />}
+                  </Button>
+                </div>
+                {isContextOpen ? (
+                  <div className='flex items-start gap-2'>
+                    <Textarea
+                      value={context}
+                      maxLength={CONTEXT_MAX}
+                      onChange={(e) => setContext(e.target.value)}
+                      placeholder={t`Where you met it: a sentence, even partial`}
+                      className='max-h-40 min-h-16 text-base'
+                      rows={2}
+                      autoFocus={!ctx}
+                    />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='size-11 shrink-0'
+                      onClick={closeContext}
+                      aria-label={t`Remove context`}
+                    >
+                      <X className='size-4' />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='text-muted-foreground self-start'
+                    onClick={() => setIsContextOpen(true)}
+                  >
+                    <Plus className='size-4' />
+                    {t`Add context`}
+                  </Button>
+                )}
               </form>
 
-              {/* Candidates: each row adds one card. */}
-              {isTranslating && <SkeletonList count={2} renderItem={() => <CandidateRowSkeleton />} />}
+              {/* Candidates: each row adds its own card, independently. */}
+              {isTranslating && <SkeletonList count={2} renderItem={() => <TermRowSkeleton />} />}
               {!isTranslating && translationError && (
                 <p className='text-destructive text-sm'>{translationErrorMessage}</p>
               )}
               {!isTranslating && translation && candidates.length === 0 && (
                 <p className='text-muted-foreground text-sm'>{t`No suggestions for this one. Try asking in the chat.`}</p>
               )}
-              {!isTranslating && candidates.length > 0 && (
+              {!isTranslating && submittedSearch && candidates.length > 0 && (
                 <ul className='flex flex-col divide-y rounded-xl border'>
                   {candidates.map((candidate) => (
-                    <CandidateRow
-                      key={`${submittedQuery}-${candidate.headword}`}
+                    <CaptureCandidateRow
+                      key={`${submittedSearch.text}-${submittedSearch.context}-${candidate.headword}`}
                       candidate={candidate}
-                      isAdding={addingHeadword === candidate.headword}
-                      disabled={addingHeadword !== null}
-                      justAdded={justAdded.has(candidate.headword)}
-                      onAdd={() => handleAdd(candidate)}
+                      search={submittedSearch}
+                      inputLanguage={translation?.inputLanguage ?? null}
                     />
                   ))}
                 </ul>
@@ -209,65 +238,3 @@ export const CaptureView = ({ q, lang }: { q?: string; lang?: string }) => {
     </ModalScreen>
   )
 }
-
-const CandidateRow = ({
-  candidate,
-  isAdding,
-  disabled,
-  justAdded,
-  onAdd,
-}: {
-  candidate: CaptureCandidate
-  isAdding: boolean
-  disabled: boolean
-  justAdded: boolean
-  onAdd: () => void
-}) => {
-  const { t } = useLingui()
-  const card = candidate.existingCard
-  return (
-    <li className='flex items-start gap-3 px-4 py-3'>
-      <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
-        <span className='font-semibold'>{candidate.headword}</span>
-        {candidate.note && <span className='text-muted-foreground text-sm'>{candidate.note}</span>}
-        {candidate.example && <span className='text-sm italic'>{candidate.example}</span>}
-      </div>
-      {/* Once the card exists the row's action becomes an explicit Edit, with
-          the status on its own line so it isn't mistaken for the button. */}
-      {card ? (
-        <div className='flex shrink-0 flex-col items-end gap-1.5'>
-          <span className='flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400'>
-            <Check className='size-3.5' />
-            {justAdded ? t`Added` : t`In your vocabulary`}
-          </span>
-          <Button variant='outline' size='sm' asChild>
-            <Link
-              to='/sessions/$sessionId/review/$cardId'
-              params={{ sessionId: card.sessionId, cardId: card.cardId }}
-              search={{ scope: 'language' as const }}
-            >
-              <Pencil className='size-3.5' />
-              {t`Edit card`}
-            </Link>
-          </Button>
-        </div>
-      ) : (
-        <Button variant='secondary' size='sm' className='shrink-0' onClick={onAdd} disabled={disabled}>
-          {isAdding ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}
-          {t`Add`}
-        </Button>
-      )}
-    </li>
-  )
-}
-
-const CandidateRowSkeleton = () => (
-  <div className='flex items-start gap-3 rounded-xl border px-4 py-3'>
-    <div className='flex flex-1 flex-col gap-2'>
-      <Skeleton className='h-5 w-32' />
-      <Skeleton className='h-4 w-48' />
-      <Skeleton className='h-4 w-56' />
-    </div>
-    <Skeleton className='h-8 w-16' />
-  </div>
-)

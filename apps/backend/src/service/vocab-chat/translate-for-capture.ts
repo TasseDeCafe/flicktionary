@@ -16,6 +16,7 @@ export const translateForCapture = async (
   params: {
     userId: string
     text: string
+    context?: string | null
     targetLanguage: string
     nativeLanguage: string
     hideTranslationFields: boolean
@@ -24,6 +25,7 @@ export const translateForCapture = async (
 ): Promise<{ inputLanguage: string | null; candidates: CaptureCandidateWithCard[] }> => {
   const result = await deps.anthropicPasses.translateForCapturePass({
     text: params.text,
+    context: params.context,
     targetLanguage: params.targetLanguage,
     nativeLanguage: params.nativeLanguage,
     hideTranslationFields: params.hideTranslationFields,

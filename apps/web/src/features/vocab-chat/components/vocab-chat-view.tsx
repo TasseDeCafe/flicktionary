@@ -3,14 +3,14 @@ import { useLingui } from '@lingui/react/macro'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowRight, Check, Layers, Loader2, Send } from 'lucide-react'
+import { ArrowRight, Layers, Loader2, Plus, Send } from 'lucide-react'
 import type { VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { MarkdownMessage } from '@flicktionary/ui/components/markdown-message'
-import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { orpcQuery } from '@/lib/transport/orpc-client'
@@ -23,8 +23,12 @@ import {
   useAddProposedItems,
   useSendVocabChatMessage,
   useStartVocabChat,
+  useTranslateForCapture,
   useVocabChatThread,
+  type CaptureSearch,
 } from '../api/vocab-chat-hooks'
+import { CaptureCandidateRow } from './capture-candidate-row'
+import { TermRow, TermRowSkeleton, TermRowStatus } from './term-row'
 
 const MESSAGE_MAX = 4000
 
@@ -82,6 +86,7 @@ export const VocabChatThreadView = ({ sessionId }: { sessionId: string }) => {
         isLoading={isLoading}
         pendingContent={pendingContent}
         isPending={isPending}
+        lead={null}
         emptyHint={null}
       />
       <Composer
@@ -96,8 +101,21 @@ export const VocabChatThreadView = ({ sessionId }: { sessionId: string }) => {
 }
 
 // A new thread: pick the language, send the first message. The thread (and
-// its session) is created with that first message.
-export const NewVocabChatView = ({ language, message }: { language?: string; message?: string }) => {
+// its session) is created with that first message. Opened from "Ask about
+// this", it starts on the "Translate & add" search instead: the search and its
+// candidates (still addable) show as the opening exchange, the language is the
+// search's, and the first send saves them as the thread's first turn.
+export const NewVocabChatView = ({
+  language,
+  message,
+  seedQuery,
+  seedContext,
+}: {
+  language?: string
+  message?: string
+  seedQuery?: string
+  seedContext?: string
+}) => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -112,27 +130,45 @@ export const NewVocabChatView = ({ language, message }: { language?: string; mes
     [prefs]
   )
   const [pickedLanguage, setPickedLanguage] = useState<string | null>(null)
-  const targetLanguage = pickedLanguage ?? language ?? prefs?.lastTargetLanguage ?? cefrSetLanguages[0] ?? null
+  const isSeeded = !!seedQuery && !!language
+  const targetLanguage =
+    (isSeeded ? language : (pickedLanguage ?? language)) ?? prefs?.lastTargetLanguage ?? cefrSetLanguages[0] ?? null
   const requiresCefr = !!prefs && !!targetLanguage && !cefrSetLanguages.includes(targetLanguage)
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
   const [draft, setDraft] = useState(message ?? '')
   const [pendingContent, setPendingContent] = useState<string | null>(null)
 
+  // Usually a cache hit (the search was just on screen); a deep link asks
+  // again.
+  const seedSearch: CaptureSearch | null =
+    isSeeded && targetLanguage ? { text: seedQuery, targetLanguage, context: seedContext ?? null } : null
+  const { data: seedTranslation, isLoading: isSeedLoading } = useTranslateForCapture(requiresCefr ? null : seedSearch)
+  const seedCandidates = seedTranslation?.candidates ?? []
+  const seedContextLine = seedContext ? t`Context: ${seedContext}` : null
+  const seedUserMessage = [seedQuery, seedContextLine].filter(Boolean).join('\n\n')
+
   const handleSend = () => {
     const content = draft.trim()
-    if (!content || !targetLanguage || isPending) return
+    if (!content || !targetLanguage || isPending || isSeedLoading) return
     setPendingContent(content)
     setDraft('')
+    const seed =
+      seedCandidates.length > 0
+        ? {
+            userMessage: seedUserMessage,
+            items: seedCandidates.map(({ headword, note, example }) => ({ headword, note, example })),
+          }
+        : undefined
     startChat(
-      { targetLanguage, content },
+      { targetLanguage, content, seed },
       {
         onSuccess: (response) => {
-          const { sessionId, title, userMessage, assistantMessage } = response.data
+          const { sessionId, title, messages } = response.data
           // Seed the thread cache so the thread view renders without a
           // loading flash; the replace keeps "back" from reopening this
           // blank composer.
           queryClient.setQueryData(orpcQuery.vocabChat.getThread.queryKey({ input: { sessionId } }), {
-            data: { sessionId, title, targetLanguage, messages: [userMessage, assistantMessage] },
+            data: { sessionId, title, targetLanguage, messages },
           })
           void navigate({ to: '/chat/$sessionId', params: { sessionId }, replace: true })
         },
@@ -171,6 +207,26 @@ export const NewVocabChatView = ({ language, message }: { language?: string; mes
             isLoading={false}
             pendingContent={pendingContent}
             isPending={isPending}
+            lead={
+              seedSearch && (
+                <>
+                  <UserBubble content={seedUserMessage} />
+                  {isSeedLoading && <SkeletonList count={2} renderItem={() => <TermRowSkeleton />} />}
+                  {seedCandidates.length > 0 && (
+                    <ul className='bg-card flex flex-col divide-y rounded-xl border'>
+                      {seedCandidates.map((candidate) => (
+                        <CaptureCandidateRow
+                          key={candidate.headword}
+                          candidate={candidate}
+                          search={seedSearch}
+                          inputLanguage={seedTranslation?.inputLanguage ?? null}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )
+            }
             emptyHint={
               <div className='flex flex-col gap-4'>
                 <LanguageSelectField
@@ -181,7 +237,7 @@ export const NewVocabChatView = ({ language, message }: { language?: string; mes
                   onChange={setPickedLanguage}
                 />
                 <p className='text-muted-foreground text-sm'>
-                  {t`Ask how to say something, or for words on a topic ("gym vocabulary"). Useful terms show up as a checklist you can add as cards. The chat is saved with its cards in your sessions.`}
+                  {t`Ask how to say something, or for words on a topic ("gym vocabulary"). Useful terms show up below the answer, ready to add as cards. The chat is saved with its cards in your sessions.`}
                 </p>
               </div>
             }
@@ -190,7 +246,7 @@ export const NewVocabChatView = ({ language, message }: { language?: string; mes
             value={draft}
             onChange={setDraft}
             onSend={handleSend}
-            disabled={isPending || !targetLanguage}
+            disabled={isPending || !targetLanguage || isSeedLoading}
             placeholder={languageName ? t`Ask about ${languageName}…` : t`Ask anything…`}
           />
         </>
@@ -205,6 +261,7 @@ const ChatBody = ({
   isLoading,
   pendingContent,
   isPending,
+  lead,
   emptyHint,
 }: {
   sessionId: string | null
@@ -212,6 +269,8 @@ const ChatBody = ({
   isLoading: boolean
   pendingContent: string | null
   isPending: boolean
+  // Shown above the messages (a new thread's seeded search).
+  lead: React.ReactNode
   emptyHint: React.ReactNode
 }) => {
   const { t } = useLingui()
@@ -248,7 +307,8 @@ const ChatBody = ({
             <Skeleton className='h-24 w-5/6' />
           </>
         )}
-        {!isLoading && (messages?.length ?? 0) === 0 && !pendingContent && emptyHint}
+        {lead}
+        {!isLoading && !lead && (messages?.length ?? 0) === 0 && !pendingContent && emptyHint}
         {messages?.map((m) =>
           m.role === 'user' ? (
             <UserBubble key={m.id} content={m.content} />
@@ -260,7 +320,7 @@ const ChatBody = ({
             >
               {m.content && <MarkdownMessage content={m.content} className='text-sm' />}
               {m.proposal && sessionId && (
-                <ProposalChecklist sessionId={sessionId} messageId={m.id} items={m.proposal.items} />
+                <ProposalList sessionId={sessionId} messageId={m.id} items={m.proposal.items} />
               )}
               {m.newThreadSuggestion && <NewThreadNotice suggestion={m.newThreadSuggestion} />}
             </div>
@@ -291,9 +351,10 @@ const UserBubble = ({ content, pending = false }: { content: string; pending?: b
 
 type ProposalItem = NonNullable<VocabChatMessage['proposal']>['items'][number]
 
-// The model's propose_cards output: tick what to keep, add in one tap. Terms
-// already in the learner's vocabulary start unticked.
-const ProposalChecklist = ({
+// The model's propose_cards output. Each term is added on its own, like a
+// "Translate & add" result; adding several at once goes through the chat
+// ("add these").
+const ProposalList = ({
   sessionId,
   messageId,
   items,
@@ -301,77 +362,58 @@ const ProposalChecklist = ({
   sessionId: string
   messageId: string
   items: ProposalItem[]
+}) => (
+  <ul className='bg-card flex flex-col divide-y rounded-xl border'>
+    {items.map((item, index) => (
+      <ProposalRow
+        key={`${index}-${item.headword}`}
+        sessionId={sessionId}
+        messageId={messageId}
+        index={index}
+        item={item}
+      />
+    ))}
+  </ul>
+)
+
+// Each row owns its mutation so several adds run in parallel.
+const ProposalRow = ({
+  sessionId,
+  messageId,
+  index,
+  item,
+}: {
+  sessionId: string
+  messageId: string
+  index: number
+  item: ProposalItem
 }) => {
   const { t } = useLingui()
   const { mutate: addItems, isPending } = useAddProposedItems(sessionId)
-  const [unchecked, setUnchecked] = useState<Set<number>>(
-    () => new Set(items.flatMap((item, i) => (item.inVocabulary ? [i] : [])))
-  )
-  const selectable = items.flatMap((item, i) => (!item.added && !unchecked.has(i) ? [i] : []))
-  const selectedCount = selectable.length
-  const allAdded = items.every((item) => item.added)
-
-  const toggle = (index: number) =>
-    setUnchecked((prev) => {
-      const next = new Set(prev)
-      if (next.has(index)) next.delete(index)
-      else next.add(index)
-      return next
-    })
-
   return (
-    <div className='bg-card flex flex-col overflow-hidden rounded-xl border'>
-      <ul className='flex flex-col divide-y'>
-        {items.map((item, index) => {
-          const checked = item.added || !unchecked.has(index)
-          return (
-            <li key={`${index}-${item.headword}`}>
-              <button
-                type='button'
-                disabled={item.added || isPending}
-                onClick={() => toggle(index)}
-                className='hover:bg-accent active:bg-accent flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors disabled:hover:bg-transparent'
-              >
-                <span
-                  className={cn(
-                    'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border',
-                    item.added && 'border-emerald-600 bg-emerald-600 text-white',
-                    !item.added && checked && 'border-foreground bg-foreground text-background'
-                  )}
-                  aria-hidden
-                >
-                  {checked && <Check className='size-3.5' />}
-                </span>
-                <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
-                  <span className='flex flex-wrap items-baseline gap-x-2'>
-                    <span className='font-semibold'>{item.headword}</span>
-                    {item.added && <span className='text-xs text-emerald-700 dark:text-emerald-400'>{t`Added`}</span>}
-                    {!item.added && item.inVocabulary && (
-                      <span className='text-muted-foreground text-xs'>{t`Already in your vocabulary`}</span>
-                    )}
-                  </span>
-                  {item.note && <span className='text-muted-foreground text-sm'>{item.note}</span>}
-                  {item.example && <span className='text-sm italic'>{item.example}</span>}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-      {!allAdded && (
-        <div className='border-t p-2'>
-          <Button
-            size='sm'
-            className='w-full'
-            disabled={selectedCount === 0 || isPending}
-            onClick={() => addItems({ sessionId, messageId, itemIndexes: selectable })}
-          >
-            {isPending && <Loader2 className='size-4 animate-spin' />}
-            {t`Add ${selectedCount} as cards`}
-          </Button>
-        </div>
-      )}
-    </div>
+    <TermRow
+      headword={item.headword}
+      note={item.note}
+      example={item.example}
+      action={
+        item.added ? (
+          <TermRowStatus tone='added'>{t`Added`}</TermRowStatus>
+        ) : (
+          <>
+            {item.inVocabulary && <TermRowStatus tone='muted'>{t`In your vocabulary`}</TermRowStatus>}
+            <Button
+              variant='secondary'
+              size='sm'
+              disabled={isPending}
+              onClick={() => addItems({ sessionId, messageId, itemIndexes: [index] })}
+            >
+              {isPending ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}
+              {t`Add`}
+            </Button>
+          </>
+        )
+      }
+    />
   )
 }
 

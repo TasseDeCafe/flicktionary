@@ -21,6 +21,7 @@ import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const TOOL_NAME = 'submit_candidates'
 const MAX_INPUT_CHARS = 500
+const MAX_CONTEXT_CHARS = 2000
 const MAX_OPTIONS = 3
 
 export type CaptureCandidate = {
@@ -77,6 +78,8 @@ const buildTool = (): Anthropic.Tool => ({
 
 export const translateForCapturePass = async (args: {
   text: string
+  // Where the learner met the term, pasted as-is.
+  context?: string | null
   targetLanguage: string
   nativeLanguage: string
   // Translations-off learners get notes in the target language (immersion).
@@ -94,7 +97,15 @@ Rules:
 - If the input is a ${target} sentence: return candidates for its one or two most useful chunks, using the sentence as their example.
 - Prefer the chunk a native speaker would actually say over a literal word-for-word rendering. For a whole clause or idiom ("I'm exhausted", "je suis crevé"), give the natural everyday equivalent a native speaker would say, as a phrase, rather than a dictionary word for the literal meaning.
 - Write every note in ${noteLanguage}, one short line.
+- The learner may add the context they met the term in. It is pasted as-is: it can be a fragment, contain mistakes, or be much longer than one sentence. When it is given:
+  - Pick the candidates, and their order, for the sense the context needs.
+  - Base each example on the context so the card reminds the learner of where they met the term. If the context is in ${target} and uses the term, keep its wording and situation, but cut it down to one short sentence around the term, complete a fragment, and fix any mistakes. Otherwise, write a short ${target} sentence expressing the context's situation with the term.
+  - The example must still be a short, natural, correct ${target} sentence using the candidate.
 - Call ${TOOL_NAME} once.`
+
+  const text = args.text.trim().slice(0, MAX_INPUT_CHARS)
+  const context = args.context?.trim().slice(0, MAX_CONTEXT_CHARS)
+  const userContent = context ? `${text}\n\n<context>\n${context}\n</context>` : text
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_TRANSLATE,
@@ -107,7 +118,7 @@ Rules:
     // Opus 5.5 rejects a forced tool_choice; the prompt names the tool, which
     // is how the other Opus passes get their tool call.
     tool_choice: MODEL_TRANSLATE === MODEL_HAIKU ? { type: 'tool', name: TOOL_NAME } : TOOL_CHOICE_AUTO,
-    messages: [{ role: 'user', content: args.text.trim().slice(0, MAX_INPUT_CHARS) }],
+    messages: [{ role: 'user', content: userContent }],
   })
   logAnthropicCacheUsage('translate-for-capture', response)
 

@@ -38,14 +38,36 @@ const replyTurn = { content: [{ type: 'text', text: 'Both mean "to fall asleep";
 describe('vocab-chat-router', () => {
   const createChatCompletion = vi.fn()
   const moderationPass = vi.fn().mockResolvedValue({ verdict: 'allow' })
+  const translateForCapturePass = vi.fn().mockResolvedValue({
+    inputLanguage: 'en',
+    candidates: [{ headword: 'засыпать', note: 'to fall asleep', example: 'Я быстро засыпаю.' }],
+  })
+  const vocabChatTitlePass = vi.fn().mockResolvedValue('Falling asleep')
+  // The ad-hoc card behind "added from the search before escalating"; the
+  // highlight/segment ids are re-pointed to the synthetic highlight.
+  const basicDataPass = vi.fn().mockResolvedValue([
+    {
+      source: 'highlight',
+      headword: 'нюхать',
+      sense: 'to sniff',
+      surfaceForm: 'нюхать',
+      segmentId: 'rebound-to-the-real-segment',
+      translation: 'to sniff',
+      surfaceTranslation: null,
+      definition: 'втягивать носом воздух',
+      targetExample: 'Собака нюхает траву.',
+      nativeExample: 'The dog sniffs the grass.',
+      grammar: { pos: 'verb' },
+      belowCefr: false,
+      zipf: 4.1,
+    },
+  ])
   const passes = MockAnthropicPasses({
+    basicDataPass: basicDataPass as never,
     createChatCompletion: createChatCompletion as never,
     moderationPass: moderationPass as never,
-    translateForCapturePass: vi.fn().mockResolvedValue({
-      inputLanguage: 'en',
-      candidates: [{ headword: 'засыпать', note: 'to fall asleep', example: 'Я быстро засыпаю.' }],
-    }) as never,
-    vocabChatTitlePass: vi.fn().mockResolvedValue('Falling asleep') as never,
+    translateForCapturePass: translateForCapturePass as never,
+    vocabChatTitlePass: vocabChatTitlePass as never,
   })
   const testApp = buildTestApp({ anthropicPasses: passes })
 
@@ -102,7 +124,9 @@ describe('vocab-chat-router', () => {
       .set(headers)
       .send({ targetLanguage: 'ru', content: 'How do I say "to fall asleep"?' })
     expect(started.status).toBe(201)
-    const { sessionId, title, assistantMessage } = started.body.data
+    const { sessionId, title, messages } = started.body.data
+    expect(messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant'])
+    const assistantMessage = messages[1]
     expect(title).toBe('Falling asleep')
     expect(assistantMessage.content).toBe(replyTurn.content[0].text)
     // Stress marks are stripped from proposed headwords (stored headwords
@@ -143,7 +167,8 @@ describe('vocab-chat-router', () => {
       .post('/api/v1/vocab-chat/threads')
       .set(headers)
       .send({ targetLanguage: 'ru', content: 'to fall asleep?' })
-    const { sessionId, assistantMessage } = started.body.data
+    const { sessionId } = started.body.data
+    const assistantMessage = started.body.data.messages[1]
 
     createChatCompletion
       .mockResolvedValueOnce({
@@ -173,6 +198,98 @@ describe('vocab-chat-router', () => {
     const thread = await request(testApp).get(`/api/v1/vocab-chat/threads/${sessionId}`).set(headers)
     const proposal = thread.body.data.messages[1].proposal
     expect(proposal.items.map((i: { added: boolean }) => i.added)).toEqual([true, true])
+  })
+
+  test('translate forwards the learner context to the pass', async () => {
+    const { token } = await onboardedUser()
+    const response = await request(testApp)
+      .post('/api/v1/vocab-chat/translate')
+      .set(buildAuthorizationHeaders(token))
+      .send({ text: 'to smell', targetLanguage: 'ru', context: "he doesn't smell good" })
+
+    expect(response.status).toBe(200)
+    expect(translateForCapturePass).toHaveBeenLastCalledWith(
+      expect.objectContaining({ text: 'to smell', context: "he doesn't smell good" })
+    )
+  })
+
+  test('a seeded start opens the thread with the search, whose items the model can add', async () => {
+    const { id, token } = await onboardedUser()
+    const headers = buildAuthorizationHeaders(token)
+    // One candidate is added from the search before escalating: it lands in
+    // the ad-hoc session and shows as already in the vocabulary.
+    const adhoc = await request(testApp)
+      .post('/api/v1/cards/adhoc')
+      .set(headers)
+      .send({ targetLanguage: 'ru', headword: 'нюхать', context: null })
+    expect(adhoc.status).toBe(200)
+
+    // The tool loop appends to the messages array after the call, so the
+    // history the model saw is captured here.
+    let seenHistory: Array<{ role: string; content: unknown }> = []
+    createChatCompletion.mockImplementationOnce(
+      async (params: { messages: Array<{ role: string; content: unknown }> }) => {
+        seenHistory = [...params.messages]
+        const seedTurn = params.messages[1]!.content as string
+        const proposalId = /proposal_id=([0-9a-f-]+)/.exec(seedTurn)![1]
+        return {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'tu_add',
+              name: 'add_proposed_cards',
+              input: { proposal_id: proposalId, item_indexes: [0] },
+            },
+          ],
+        }
+      }
+    )
+    createChatCompletion.mockResolvedValueOnce({ content: [{ type: 'text', text: 'Added пахнуть.' }] })
+    const started = await request(testApp)
+      .post('/api/v1/vocab-chat/threads')
+      .set(headers)
+      .send({
+        targetLanguage: 'ru',
+        content: 'which one for a smelly dog? add it',
+        seed: {
+          userMessage: 'to smell',
+          items: [
+            { headword: 'пахнуть', note: 'to give off a smell', example: 'Здесь пахнет кофе.' },
+            { headword: 'нюхать', note: 'to sniff', example: 'Собака нюхает траву.' },
+          ],
+        },
+      })
+    expect(started.status).toBe(201)
+    // The model saw the search as the opening exchange.
+    expect(seenHistory.map((m) => m.role)).toEqual(['user', 'assistant', 'user'])
+    expect(seenHistory[0]!.content).toBe('to smell')
+    expect(vocabChatTitlePass).toHaveBeenLastCalledWith(
+      expect.objectContaining({ firstUserMessage: 'to smell\n\nwhich one for a smelly dog? add it' })
+    )
+
+    // The response carries the whole thread, as the thread read does.
+    const { sessionId, messages } = started.body.data
+    const thread = await request(testApp).get(`/api/v1/vocab-chat/threads/${sessionId}`).set(headers)
+    expect(thread.body.data.messages).toEqual(messages)
+    expect(messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant', 'user', 'assistant'])
+    expect(messages[0].content).toBe('to smell')
+    expect(messages[1].proposal.items).toEqual([
+      {
+        headword: 'пахнуть',
+        note: 'to give off a smell',
+        example: 'Здесь пахнет кофе.',
+        inVocabulary: false,
+        added: true,
+      },
+      { headword: 'нюхать', note: 'to sniff', example: 'Собака нюхает траву.', inVocabulary: true, added: false },
+    ])
+    const jobs = await sql`
+      SELECT h.selection_text
+      FROM public.processing_jobs j
+      JOIN public.highlights h ON h.id = j.highlight_id
+      WHERE j.study_session_id = ${sessionId} AND j.user_id = ${id}
+    `
+    expect(jobs).toEqual([{ selection_text: 'пахнуть' }])
   })
 
   test('a moderation block rejects the first message without creating a thread', async () => {

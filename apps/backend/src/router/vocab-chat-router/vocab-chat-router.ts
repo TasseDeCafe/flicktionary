@@ -112,6 +112,7 @@ export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
         {
           userId,
           text: input.text,
+          context: input.context,
           targetLanguage: input.targetLanguage,
           nativeLanguage: languageMode.nativeLanguage,
           hideTranslationFields: languageMode.hideTranslationFields,
@@ -127,15 +128,14 @@ export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
       assertWithinLimit(chatTurnsByUser, MAX_CHAT_TURNS_PER_HOUR, userId, errors)
       try {
         const result = await startVocabChat(
-          { userId, targetLanguage: input.targetLanguage, content: input.content },
+          { userId, targetLanguage: input.targetLanguage, content: input.content, seed: input.seed },
           deps
         )
         return {
           data: {
             sessionId: result.thread.session.id,
             title: result.thread.title,
-            userMessage: toMessageDto(result.userMessage),
-            assistantMessage: toMessageDto(result.assistantMessage),
+            messages: result.messages.map(toMessageDto),
           },
         }
       } catch (e) {

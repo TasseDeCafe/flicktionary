@@ -410,17 +410,17 @@ For a show already in the Sessions list, the `Add episode` button on its show de
 
 1. From the `+` overlay, pick `Add a word`.
 2. Pick the target language (any supported language; defaults to the user's `lastTargetLanguage` MRU, then the first CEFR-set language alphabetically). If CEFR is not set for it, the CEFR prompt comes first.
-3. Signed-in ("Translate & add", `/vocabulary/new-word?lang=&q=`): type a word or phrase in any language and submit. 1–3 target-language candidates come back (headword, note, example); candidates already in the vocabulary show `In your vocabulary` + `Edit card`.
-4. `Add` on a candidate creates the card through the ad-hoc pipeline (the candidate's example as context, the typed phrase as a sense hint); the row flips to `Added` + `Edit card`, so several candidates can be added from one search. `Edit card` opens the focus view with `?scope=language`; back restores the search and its results.
-5. `Ask about this` (or `Start a vocabulary chat` with an empty input) opens a new vocabulary chat with the text prefilled — see Vocabulary chat below.
+3. Signed-in ("Translate & add", `/vocabulary/new-word?lang=&q=&ctx=`): type a word or phrase in any language and submit, optionally with `Add context` (where you met the term — a sentence, even partial or with mistakes). 1–3 target-language candidates come back (headword, note, example); with context, they fit its sense and their examples are based on it. Candidates already in the vocabulary show `In your vocabulary` + `Edit card`.
+4. `Add` on a candidate creates the card through the ad-hoc pipeline (the candidate's example as context, the typed phrase as a sense hint); the row flips to `Added` + `Edit card`. Rows add independently, so several candidates can be added at once. `Edit card` opens the focus view with `?scope=language`; back restores the search and its results.
+5. `Ask about this` opens a new vocabulary chat on the search: the query (and context) and its candidates show as the opening exchange, still addable. With no results, it (or `Start a vocabulary chat` with an empty input) opens a new chat with the text prefilled — see Vocabulary chat below.
 6. Guests get the target-language-only form instead (headword + optional context; advisory language hint), plus a create-account prompt; save lands on the focus view of the new card with `?scope=language`, so chevron-back pops history to `/vocabulary`.
 7. Server lazily creates (or reuses) the synthetic `(user, target_language)` adhoc session, appends a segment + highlight, runs a one-shot highlight-only basic-data pass, runs Wiktionary grounding when applicable, returns `{ cardId, sessionId }`.
 
 **Vocabulary chat (signed-in only)**
 
-1. From "Translate & add", `Ask about this` / `Start a vocabulary chat` opens `/chat/new` (language + optional prefilled message).
-2. The first message creates the thread — a `chat` content source + session — and the reply; the thread is titled after the first exchange.
-3. Terms worth studying come as a checklist under the reply (already-known terms unticked); `Add N as cards` adds the ticked ones, and typing "add them" works too. Added terms become cards in the thread's session via background enrichment; the header's `Cards` button opens the thread's session vocabulary list.
+1. From "Translate & add", `Ask about this` / `Start a vocabulary chat` opens `/chat/new` (language + optional prefilled message, or the search to start from).
+2. The first message creates the thread — a `chat` content source + session — and the reply; the thread is titled after the first exchange. A thread started from a search saves that search and its candidates as its opening exchange, so the model answers with them in view and can add them.
+3. Terms worth studying come as a list under the reply (already-known terms flagged), each with its own `Add`; typing "add them" adds several at once. Added terms become cards in the thread's session via background enrichment; the header's `Cards` button opens the thread's session vocabulary list.
 4. Asking about another target language shows `Continue in a new <language> chat`, which opens a new thread with the message prefilled.
 5. Threads reopen from the Sessions list (`Chats` filter).
 

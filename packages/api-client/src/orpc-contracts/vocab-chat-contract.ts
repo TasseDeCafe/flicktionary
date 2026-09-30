@@ -49,6 +49,23 @@ const errorsWithPrefs = {
 
 const MessageContentSchema = z.string().trim().min(1).max(4000)
 
+// A "Translate & add" search carried into a new thread ("Ask about this"): it
+// becomes the thread's opening exchange, the search as the learner's message
+// and its candidates as the assistant's proposal.
+const ThreadSeedSchema = z.object({
+  userMessage: z.string().trim().min(1).max(3000),
+  items: z
+    .array(
+      z.object({
+        headword: z.string().trim().min(1).max(200),
+        note: z.string().max(500),
+        example: z.string().max(1000),
+      })
+    )
+    .min(1)
+    .max(3),
+})
+
 export const vocabChatContract = {
   // Fast lane: 1-3 target-language candidates for whatever the learner typed.
   // Adding a candidate goes through cards.createAdhoc.
@@ -59,6 +76,9 @@ export const vocabChatContract = {
       z.object({
         text: z.string().trim().min(1).max(500),
         targetLanguage: z.string().min(2).max(10),
+        // Where the learner met the term (often partial, unedited, or long):
+        // steers the sense and inspires each candidate's example.
+        context: z.string().trim().min(1).max(2000).optional(),
       })
     )
     .output(
@@ -76,14 +96,21 @@ export const vocabChatContract = {
   start: oc
     .route({ method: 'POST', path: '/vocab-chat/threads', successStatus: 201 })
     .errors(errorsWithPrefs)
-    .input(z.object({ targetLanguage: z.string().min(2).max(10), content: MessageContentSchema }))
+    .input(
+      z.object({
+        targetLanguage: z.string().min(2).max(10),
+        content: MessageContentSchema,
+        seed: ThreadSeedSchema.optional(),
+      })
+    )
     .output(
       z.object({
         data: z.object({
           sessionId: z.string().uuid(),
           title: z.string(),
-          userMessage: VocabChatMessageSchema,
-          assistantMessage: VocabChatMessageSchema,
+          // The whole new thread: the seeded exchange, if any, then the first
+          // turn.
+          messages: z.array(VocabChatMessageSchema),
         }),
       })
     ),

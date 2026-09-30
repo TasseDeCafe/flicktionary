@@ -6,18 +6,25 @@ import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/
 
 type CaptureCard = { cardId: string; sessionId: string }
 
-const translateQueryKey = (text: string, targetLanguage: string) =>
-  orpcQuery.vocabChat.translate.queryKey({ input: { text, targetLanguage } })
+// A "Translate & add" search: the query, its target language, and the
+// optional context the learner met the term in.
+export type CaptureSearch = { text: string; targetLanguage: string; context: string | null }
+
+const translateInput = ({ text, targetLanguage, context }: CaptureSearch) => ({
+  text,
+  targetLanguage,
+  ...(context ? { context } : {}),
+})
 
 // Fast lane of "Translate & add", keyed by the search in the URL: results are
 // an LLM answer to a fixed question, so they never go stale on their own, and
-// coming back from editing a card (browser back) restores them from the cache
-// instead of re-asking. Errors render inline in the view.
-export const useTranslateForCapture = (text: string | null, targetLanguage: string | null) =>
+// coming back from editing a card (browser back) or from the chat restores
+// them from the cache instead of re-asking. Errors render inline in the view.
+export const useTranslateForCapture = (search: CaptureSearch | null) =>
   useQuery(
     orpcQuery.vocabChat.translate.queryOptions({
-      input: { text: text ?? '', targetLanguage: targetLanguage ?? '' },
-      enabled: !!text && !!targetLanguage,
+      input: translateInput(search ?? { text: '', targetLanguage: '', context: null }),
+      enabled: !!search?.text && !!search.targetLanguage,
       select: (response) => response.data,
       staleTime: Infinity,
       gcTime: 30 * 60 * 1000,
@@ -30,11 +37,11 @@ export const useTranslateForCapture = (text: string | null, targetLanguage: stri
 // restored results after a detour into the card) offer Edit instead of Add.
 export const useMarkCandidateAdded = () => {
   const queryClient = useQueryClient()
-  return (params: { text: string; targetLanguage: string; headword: string; card: CaptureCard }) =>
+  return (params: { search: CaptureSearch; headword: string; card: CaptureCard }) =>
     queryClient.setQueryData<{
       data: { inputLanguage: string | null; candidates: Array<{ headword: string; existingCard: CaptureCard | null }> }
     }>(
-      translateQueryKey(params.text, params.targetLanguage),
+      orpcQuery.vocabChat.translate.queryKey({ input: translateInput(params.search) }),
       (old) =>
         old && {
           ...old,
@@ -59,11 +66,15 @@ export const useVocabChatThread = (sessionId: string) => {
   )
 }
 
-// Starting a thread creates a session, so the Sessions list refreshes.
+// Starting a thread creates a session, so the Sessions list refreshes; its
+// first turn may already add cards (the model's add_proposed_cards).
 export const useStartVocabChat = () =>
   useMutation(
     orpcQuery.vocabChat.start.mutationOptions({
-      meta: { invalidates: [orpcQuery.studySessions.list.key()], showErrorToast: false },
+      meta: {
+        invalidates: [orpcQuery.studySessions.list.key(), orpcQuery.chunks.listChunks.key()],
+        showErrorToast: false,
+      },
     })
   )
 
@@ -85,8 +96,10 @@ export const useSendVocabChatMessage = (sessionId: string) =>
     })
   )
 
-// The checklist's Add. The response carries the updated message, written into
-// the thread cache so the rows flip to "Added" without waiting for a refetch.
+// A proposal row's Add. The response carries the updated message, written
+// into the thread cache so the row flips to "Added" without waiting for a
+// refetch. Rows add independently: `added` flags are merged rather than
+// replaced, so a response that overtakes a later one can't un-add a row.
 export const useAddProposedItems = (sessionId: string) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -109,10 +122,26 @@ export const useAddProposedItems = (sessionId: string) => {
           (old) =>
             old && {
               ...old,
-              data: { ...old.data, messages: old.data.messages.map((m) => (m.id === updated.id ? updated : m)) },
+              data: {
+                ...old.data,
+                messages: old.data.messages.map((m) => (m.id === updated.id ? mergeAddedFlags(m, updated) : m)),
+              },
             }
         )
       },
     })
   )
 }
+
+const mergeAddedFlags = (cached: VocabChatMessage, updated: VocabChatMessage): VocabChatMessage =>
+  updated.proposal && cached.proposal
+    ? {
+        ...updated,
+        proposal: {
+          items: updated.proposal.items.map((item, i) => ({
+            ...item,
+            added: item.added || (cached.proposal?.items[i]?.added ?? false),
+          })),
+        },
+      }
+    : updated
