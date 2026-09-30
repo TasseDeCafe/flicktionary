@@ -830,7 +830,8 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
     extension has none); there is no Save here.
     **Note-only stub state ("note saved, word not saved")** — web parity. While
     the highlight's `noteOnly` flag is set (the DTO derives it server-side as
-    "the highlight's card is parked in `needs_data`"), the popover is
+    "the highlight's card is parked in `needs_data` with no enrich job
+    running"), the popover is
     deliberately DISTINCT from saved mode: the study-target picker stays
     **editable** (the shared `StudyOptionsSection`, its own local draft), the
     committed note shows locked inline, and the footer is primary **Save** + a
