@@ -6,12 +6,8 @@ import {
   type PracticeSessionLimits,
   type UserTargetLanguagePrefsRepositoryInterface,
 } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
-import type {
-  PracticePool,
-  UserLookupsRepositoryInterface,
-} from '../../transport/database/user-lookups/user-lookups-repository'
+import type { PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
-import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSessionLimits => {
   const maxNewTerms = Math.min(Math.max(Math.trunc(limits.maxNewTerms), 0), HARD_MAX_PRACTICE_NEW_TERMS)
@@ -25,73 +21,37 @@ export const clampPracticeSessionLimits = (limits: PracticeSessionLimits): Pract
 
 export type ReviewCapsDependencies = {
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
-  userLookupsRepository: UserLookupsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
 }
 
-// Effective per-fetch caps for a (user, language, pool, scope). The
-// recognition pool runs two daily budgets:
+// Effective due-flashcard caps for a (user, language, pool).
 //
 //   - review budget: the clamped daily review limit minus review-state cards
 //     already rated today (counted off the practice_rating_events log) — a
-//     refresh mid-session no longer refills the queue. Learning-state intraday
-//     follow-ups are exempt: maxLearningTerms is a hard ceiling, never a
-//     budget, so a failed card's relearning step can't be stranded by a spent
-//     budget.
-//   - new budget: the clamped daily limit minus today's introductions —
-//     COMBINED across both pools' citation facets (a both-pools term consumes
-//     two slots). The explicit past-the-cap path is the composed queue's Learn
-//     extra, which lives on the PARKING side (`bypassCap` on the warm-up park
-//     guard) — this resolver never loosens the new budget.
+//     refresh mid-session doesn't refill the queue.
+//   - learning follow-ups are exempt: maxLearningTerms is a hard ceiling,
+//     never a budget, so a failed card's relearning step can't be stranded by
+//     a spent budget.
 //
-// The production pool shares the combined new budget (its maxNewTerms runs
-// the same remaining math). Its REVIEW cap is per-pool and optional: NULL
-// (the default until the Phase-3 UI sets it) means uncapped — the hard
-// ceiling; a set value runs the same remaining-budget math against the
-// production-pool rating log.
+// The production pool's review cap is per-pool and optional: NULL (the
+// default) means uncapped — the hard ceiling; a set value runs the same
+// remaining-budget math against the production-pool rating log. The daily NEW
+// budget is not resolved here: introductions go through the composed queue's
+// warm-up gates (plan-practice-queue.ts) and the atomic introduction guard.
 export const resolveReviewCaps = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
-  scope: ReviewScope
   deps: ReviewCapsDependencies
-}): Promise<{
-  maxReviewTerms: number
-  maxLearningTerms: number
-  maxNewTerms: number
-  // Hard-ceiling cap for opt-in (non-citation) new facets — pronunciation and
-  // specific forms. Non-zero ONLY in learn_new scope, for BOTH pools (the
-  // production pool serves production FORM facets, opt-in since the per-form
-  // editor shipped); the primary Practice button (mixed) never serves them
-  // (Trap 22) — enabling a facet is a deliberate "go learn it via learn-new"
-  // act.
-  maxOptInNewTerms: number
-}> => {
+}): Promise<{ maxReviewTerms: number; maxLearningTerms: number }> => {
   const rawLimits = await params.deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(
     params.userId,
     params.targetLanguage
   )
 
-  // Opt-in new facets bypass every daily budget (each was individually
-  // enabled), so this is a hard ceiling, gated on the explicit learn-new entry.
-  const maxOptInNewTerms = params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0
-
-  const limits = clampPracticeSessionLimits(rawLimits)
-  // Combined new budget: newIntroducedTodayCount counts BOTH pools' citation
-  // introductions (matching the atomic guard's subquery).
-  const summary = (await params.deps.userLookupsRepository.listDueSummary(params.userId)).find(
-    (s) => s.targetLanguage === params.targetLanguage
-  )
-  const maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
-
   if (params.pool === 'production') {
     if (rawLimits.maxReviewTermsProduction == null) {
-      return {
-        maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-        maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-        maxNewTerms,
-        maxOptInNewTerms,
-      }
+      return { maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS, maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS }
     }
     const cap = Math.min(Math.max(Math.trunc(rawLimits.maxReviewTermsProduction), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
     const consumedProductionReviews = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
@@ -102,22 +62,17 @@ export const resolveReviewCaps = async (params: {
     return {
       maxReviewTerms: Math.max(0, cap - consumedProductionReviews),
       maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-      maxNewTerms,
-      maxOptInNewTerms,
     }
   }
 
+  const limits = clampPracticeSessionLimits(rawLimits)
   const consumedReviewsToday = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
     userId: params.userId,
     targetLanguage: params.targetLanguage,
     pool: 'recognition',
   })
-  const remainingReviews = Math.max(0, limits.maxReviewTerms - consumedReviewsToday)
-
   return {
-    maxReviewTerms: remainingReviews,
+    maxReviewTerms: Math.max(0, limits.maxReviewTerms - consumedReviewsToday),
     maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
-    maxNewTerms,
-    maxOptInNewTerms,
   }
 }

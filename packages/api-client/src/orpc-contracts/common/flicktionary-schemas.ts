@@ -487,13 +487,6 @@ export type StudySession = z.infer<typeof StudySessionSchema>
 export const PracticeRatingSchema = z.enum(['again', 'hard', 'good', 'easy'])
 export type PracticeRating = z.infer<typeof PracticeRatingSchema>
 
-// Which slice of the live SRS pool a review pulls. review_due = cards due now;
-// learn_new = never-reviewed cards up to the daily cap; mixed = both, due-first.
-// Generalizes the old session "mode" without the learn_extra/production-drill
-// variants (production is now expressed via `pool`, extra-learning is gone).
-export const ReviewScopeSchema = z.enum(['review_due', 'learn_new', 'mixed'])
-export type ReviewScope = z.infer<typeof ReviewScopeSchema>
-
 export const PracticeDueSummaryEntrySchema = z.object({
   targetLanguage: z.string(),
   totalKept: z.number().int(),
@@ -514,8 +507,9 @@ export const PracticeDueSummaryEntrySchema = z.object({
   reviewCount: z.number().int(),
   unseenCount: z.number().int(),
   // Unseen opt-in facets (pronunciation / specific forms), enabled+ready, per
-  // pool. Served only in learn-new sessions — newCount/productionNewCount
-  // stay citation-only because the mixed Practice queue never serves opt-ins.
+  // pool. Served only when the composed queue's includeOptInNew is set —
+  // newCount/productionNewCount stay citation-only because the everyday
+  // Practice queue never serves opt-ins.
   optInNewCount: z.number().int(),
   productionOptInNewCount: z.number().int(),
   // Review-state cards rated today (the spent daily review budget, counted

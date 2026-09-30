@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import { beginTx, sql } from '../postgres-client'
-import { newTermNotDecayedSql, newTermOrderSql, newTermTierSql } from '../../../service/practice/new-term-priority'
+import { newTermNotDecayedSql, newTermOrderSql } from '../../../service/practice/new-term-priority'
 import { introductionOrderCtesSql } from '../../../service/practice/book-priority'
 import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
@@ -23,8 +23,8 @@ export type SrsState = Database['public']['Enums']['srs_state']
 // the legacy srs_*/leech_* column names so the rating/leech services read a
 // single column family (the facet's skill already encodes the pool — there is
 // no per-pool column mirror). `skill`/`target_form` carry the facet identity for
-// the writers. Produced by the facet-joined readers (listReviewTerms,
-// listParkedTerms) and by mergeFacet at the rating boundary.
+// the writers. Produced by the facet-joined readers (listDueReviewTerms,
+// listOptInNewFacets, listParkedTerms) and by mergeFacet at the rating boundary.
 export type DbUserLookupWithFacet = DbUserLookup & {
   skill: FacetSkill
   target_form: string
@@ -46,7 +46,7 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   // True iff an ENABLED citation meaning_production facet exists for this term
   // — the derived "in production study" / production-pool membership flag
   // (replaces the dropped user_lookups.learning_mode column). For the
-  // production-pool readers (listReviewTerms/listParkedTerms with
+  // production-pool readers (listDueReviewTerms/listParkedTerms with
   // pool='production') the merged facet IS that production facet, so this
   // mirrors `disabled_at IS NULL` on it; the production queries already filter
   // to enabled production facets, so it is always true there. Service-layer
@@ -840,7 +840,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   //
   // Every queue-feeding count requires an ENABLED (id IS NOT NULL via the
   // state predicates, disabled_at IS NULL) and READY (data_status = 'ready')
-  // facet — the queue (listReviewTerms) filters both, so a recognition skill
+  // facet — the flashcard queue filters both, so a recognition skill
   // the user switched off, or a production facet whose card data is still
   // generating, must not inflate the landing numbers (it would promise cards
   // the queue then refuses to serve). The parked counts skip the data_status
@@ -848,12 +848,12 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // new_count needs the explicit rf.id check because its `srs_state IS NULL`
   // test is also true on a join miss. It also excludes leech_parked_at: an
   // exercise-first warm-up term is parked AND never-reviewed (srs_state NULL),
-  // and the queue (listReviewTerms) won't serve a parked term, so counting it
-  // here would promise a new card the queue refuses. Terms with a live
+  // and warm-up discovery (listEligibleNewCitationFacets) skips parked terms,
+  // so counting it here would promise a new card the queue refuses. Terms with a live
   // production sibling (pf scheduled or parked) are excluded for the same
-  // no-overpromise reason: the recognition bridge covers them, so the queue
-  // never serves them as new (the pf-alias predicate is the inline form of
-  // noLiveProductionSiblingSql). newIntroducedTodayCount intentionally
+  // no-overpromise reason: the recognition bridge covers them, so warm-up
+  // never introduces them (same predicate as the introduction order's bridge
+  // exclusion in book-priority.ts). newIntroducedTodayCount intentionally
   // stays unfiltered: it feeds the remaining-daily-new budget, and an
   // introduction performed today consumed that budget even if the facet was
   // disabled later.
@@ -960,7 +960,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // Unseen opt-in facets per language — a separate aggregate because facets
   // are 1:many with the term here (forms + pronunciation), and joining them
   // into the grouped query above would fan out every other count. The
-  // predicate mirrors listReviewTerms' opt-in new bucket exactly: enabled,
+  // predicate mirrors listOptInNewFacets exactly: enabled,
   // ready, non-parked, unseen, and NOT the pool's daily-new-capped citation
   // facet. Citation pronunciation counts (it is opt-in); citation
   // meaning_recognition/meaning_production are the primaries, excluded.
@@ -1012,192 +1012,118 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   }))
 }
 
-// The live review pool for a (language, pool), sliced by scope. Single source
-// for the composed queue's flashcards.
-//
+// Shared by the two flashcard selectors below.
 //   - `pool` selects the facet skill SET, not a single skill: the recognition
 //     queue serves {meaning_recognition, pronunciation}, the production queue
 //     serves {meaning_production}. Production-pool membership needs no extra
-//     row filter: the enabled-facet filter below IS the membership test (an
-//     enabled meaning_production facet == "in production study"; recognition
-//     spans every kept term via its recognition facet).
-//     Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
-//     production facets out) and ready (data_status='ready' — keeps pending_data
-//     facets out); leech-parked facets are left out (the exercise ladder
-//     serves them until they leave it).
-//   - `scope` gates the buckets: 'review_due' = due only, 'learn_new' =
-//     never-reviewed only, 'mixed' = due + capped citation-new.
-//
-// Due cards split into two independently-capped buckets (review-state
-// {'new','review'} consume the daily review budget = maxReviewTerms; learning
-// follow-ups {'learning','relearning'} are exempt under maxLearningTerms, a hard
-// ceiling, so a spent budget can't strand a failed card's relearning step).
-//
-// New cards split too: the pool's citation card is the only
-// daily-new-capped facet — capped by maxNewTerms, served in 'mixed' + 'learn_new'.
-// Opt-in new facets (pronunciation/forms, Phase 4) bypass the daily-new cap
-// (maxOptInNewTerms = a hard ceiling) and are served ONLY in 'learn_new', never
-// 'mixed' — otherwise the primary Practice button would flood a session with
-// every enabled-but-unseen facet (Trap 22). Enabling a facet is a deliberate
-// "go learn it via learn-new" act.
+//     row filter: the enabled-facet filter IS the membership test (an enabled
+//     meaning_production facet == "in production study"; recognition spans
+//     every kept term via its recognition facet).
+//   - Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
+//     production facets out) and ready (data_status='ready' — keeps
+//     pending_data facets out); leech-parked facets are left out (the exercise
+//     ladder serves them until they leave it).
+const flashcardFacetCols = sql`
+  f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
+  f.srs_last_review, f.srs_reps, f.srs_lapses, f.srs_learning_steps, f.leech_parked_at,
+  f.leech_rehab_correct_days, f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
+  (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
+    AS is_production_enabled
+`
+const flashcardFacetJoinSql = (pool: PracticePool) =>
+  sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skillsForPool(pool)})`
+const flashcardEligibleSql = (params: { userId: string; targetLanguage: string }) => sql`
+  ul.user_id = ${params.userId}
+  AND ul.target_language = ${params.targetLanguage}
+  AND ul.count > 0
+  AND ul.deleted_at IS NULL
+  AND f.disabled_at IS NULL
+  AND f.data_status = 'ready'
+  AND f.leech_parked_at IS NULL
+`
+
+// The composed queue's due flashcards for a (language, pool). Two
+// independently-capped buckets: review-state {'new','review'} consume the daily
+// review budget (maxReviewTerms); learning follow-ups {'learning','relearning'}
+// are exempt under maxLearningTerms, a hard ceiling, so a spent budget can't
+// strand a failed card's relearning step.
 //
 // SIBLING SPACING (Trap 5/16): a term's facets ("siblings") must not be
 // adjacent. Each selected facet is ranked within its term by priority
-// (due-review > intraday-learning > unseen); the outer queue orders by that rank
-// first, so every term's rank-1 facet precedes any rank-2 — best-effort (a term
-// dominating the due set has no separators left for its high-rank siblings, which
-// go adjacent at the tail; accepted, not a guarantee). In Phase 2 each term has
-// exactly one citation facet, so sibling_rank is always 1 and the order collapses
-// to today's due-time-then-new ordering (behavior-preserving); Phase-4 facets
-// exercise the spacing.
-const listReviewTerms = async (params: {
+// (due-review > intraday-learning); the outer queue orders by that rank first,
+// so every term's rank-1 facet precedes any rank-2 — best-effort (a term
+// dominating the due set has no separators left for its high-rank siblings,
+// which go adjacent at the tail; accepted, not a guarantee). A term with only
+// its citation facet always ranks 1, so the order collapses to due time.
+const listDueReviewTerms = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
-  scope: 'review_due' | 'learn_new' | 'mixed'
   maxReviewTerms: number
   maxLearningTerms: number
-  maxNewTerms: number
-  maxOptInNewTerms: number
-  // Today's remaining pinned-book quota (resolveBookQuota); 0 = no book stream.
-  bookRemaining?: number
 }): Promise<DbUserLookupWithFacet[]> => {
-  const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
-  const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
-  const reviewLimit = wantDue ? params.maxReviewTerms : 0
-  const learningLimit = wantDue ? params.maxLearningTerms : 0
-  const newLimit = wantNew ? params.maxNewTerms : 0
-  // maxOptInNewTerms is already pool+scope-gated by resolveReviewCaps (0 unless
-  // recognition learn_new), so apply it directly.
-  const optInNewLimit = params.maxOptInNewTerms
-  if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0 && optInNewLimit <= 0) return []
-
-  // The skill set this queue serves, and its daily-new-capped primary citation
-  // facet. 'pronunciation' has no rows until Phase 4, so listing it is inert now.
-  const skills = skillsForPool(params.pool)
-  const primarySkill = skillForPool(params.pool)
-  const facetCols = sql`
-    f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
-    f.srs_last_review, f.srs_reps, f.srs_lapses, f.srs_learning_steps, f.leech_parked_at,
-    f.leech_rehab_correct_days, f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
-    (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
-      AS is_production_enabled
-  `
-  // Shared eligibility: kept, live term; enabled, ready, non-parked facet in the
-  // pool's skill set. Always-true conditions first so the optional AND clauses
-  // append cleanly. Production-pool membership needs no extra clause: the facetJoin
-  // is to the meaning_production facet and `f.disabled_at IS NULL` already keeps
-  // demoted (disabled) production facets out — that IS the membership filter.
-  const eligible = sql`
-    ul.user_id = ${params.userId}
-    AND ul.target_language = ${params.targetLanguage}
-    AND ul.count > 0
-    AND ul.deleted_at IS NULL
-    AND f.disabled_at IS NULL
-    AND f.data_status = 'ready'
-    AND f.leech_parked_at IS NULL
-  `
-  const facetJoin = sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skills})`
-  const primaryCitation = sql`(f.skill = ${primarySkill} AND f.target_form = ${CITATION_FORM})`
-  // Recognition-pool new cards additionally require no live production
-  // sibling: those terms get their recognition schedule from the
-  // production→recognition bridge instead of an introduction, so serving one
-  // here would spend a daily-new slot on a facet the bridge covers for free.
-  const newBucketBridgeGuard = params.pool === 'recognition' ? noLiveProductionSiblingSql() : sql`TRUE`
-
-  // The recognition pool's capped new bucket serves in introduction order
-  // (introductionOrderCtesSql — the pinned-book interleave, equal to the tier
-  // order with no pin). Every other bucket, and the production pool, carries
-  // NULL positions and keeps the tier order below them.
-  const withRecognitionOrder = params.pool === 'recognition' && newLimit > 0
-  const introCtes = withRecognitionOrder
-    ? sql`${introductionOrderCtesSql({
-        userId: params.userId,
-        targetLanguage: params.targetLanguage,
-        bookRemaining: params.bookRemaining ?? 0,
-      })},`
-    : sql``
-  const noIntroCols = sql`NULL::numeric AS intro_pos, NULL::int AS intro_lane, NULL::bigint AS intro_seq`
-
-  // Four capped buckets unioned, then spaced. Priority: 1 due-review,
-  // 2 due-learning, 3 new. A bucket with a 0 LIMIT contributes nothing.
-  //
-  // The new buckets select and serve by tier (see new-term-priority.ts), and
-  // never-introduced terms outside the decay window fall off entirely. The
-  // tier is selected as a column (due buckets emit a constant) because the
-  // spaced CTE window and the final ORDER BY re-order after the bucket LIMITs
-  // — tiering only the bucket ORDER BY would tier *selection* while still
-  // *serving* FIFO. The introduction position rides along the same way.
+  if (params.maxReviewTerms <= 0 && params.maxLearningTerms <= 0) return []
+  const facetJoin = flashcardFacetJoinSql(params.pool)
+  const eligible = flashcardEligibleSql(params)
   const rows = (await sql`
-    WITH ${introCtes} selected AS (
+    WITH selected AS (
       (
-        SELECT ul.*, ${facetCols}, 1 AS facet_priority, 0 AS new_tier, ${noIntroCols}
+        SELECT ul.*, ${flashcardFacetCols}, 1 AS facet_priority
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
           AND f.srs_due IS NOT NULL AND f.srs_due <= NOW()
           AND f.srs_state IN ('new', 'review')
         ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
-        LIMIT ${reviewLimit}
+        LIMIT ${params.maxReviewTerms}
       )
       UNION ALL
       (
-        SELECT ul.*, ${facetCols}, 2 AS facet_priority, 0 AS new_tier, ${noIntroCols}
+        SELECT ul.*, ${flashcardFacetCols}, 2 AS facet_priority
         FROM public.user_lookups ul
         ${facetJoin}
         WHERE ${eligible}
           AND f.srs_due IS NOT NULL AND f.srs_due <= NOW()
           AND f.srs_state IN ('learning', 'relearning')
         ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
-        LIMIT ${learningLimit}
-      )
-      UNION ALL
-      (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier,
-          ${withRecognitionOrder ? sql`io.intro_pos, io.intro_lane::int AS intro_lane, io.intro_seq` : noIntroCols}
-        FROM public.user_lookups ul
-        ${facetJoin}
-        ${withRecognitionOrder ? sql`LEFT JOIN intro_order io ON io.id = ul.id` : sql``}
-        WHERE ${eligible}
-          AND f.srs_state IS NULL
-          AND ${primaryCitation}
-          AND ${newBucketBridgeGuard}
-          AND ${newTermNotDecayedSql()}
-        ORDER BY ${
-          withRecognitionOrder
-            ? sql`io.intro_pos ASC NULLS LAST, io.intro_lane ASC NULLS LAST, io.intro_seq ASC NULLS LAST,`
-            : sql``
-        } ${newTermOrderSql()}, f.target_form ASC
-        LIMIT ${newLimit}
-      )
-      UNION ALL
-      (
-        SELECT ul.*, ${facetCols}, 3 AS facet_priority, ${newTermTierSql()} AS new_tier, ${noIntroCols}
-        FROM public.user_lookups ul
-        ${facetJoin}
-        WHERE ${eligible}
-          AND f.srs_state IS NULL
-          AND NOT ${primaryCitation}
-          AND ${newTermNotDecayedSql()}
-        ORDER BY ${newTermOrderSql()}, f.target_form ASC
-        LIMIT ${optInNewLimit}
+        LIMIT ${params.maxLearningTerms}
       )
     ),
     spaced AS (
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY id
-        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST,
-          intro_pos ASC NULLS LAST, intro_lane ASC NULLS LAST, intro_seq ASC NULLS LAST,
-          new_tier ASC, zipf_estimate DESC NULLS LAST,
-          created_at ASC, headword ASC, sense ASC, target_form ASC
+        ORDER BY facet_priority ASC, srs_due ASC, headword ASC, sense ASC, target_form ASC
       ) AS sibling_rank
       FROM selected
     )
     SELECT * FROM spaced
-    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST,
-      intro_pos ASC NULLS LAST, intro_lane ASC NULLS LAST, intro_seq ASC NULLS LAST,
-      new_tier ASC, zipf_estimate DESC NULLS LAST,
-      created_at ASC, headword ASC, sense ASC, target_form ASC
+    ORDER BY sibling_rank ASC, srs_due ASC, headword ASC, sense ASC, target_form ASC
+  `) as DbUserLookupWithFacet[]
+  return rows
+}
+
+// Never-reviewed opt-in facets (pronunciation / specific forms — everything
+// but the pool's primary citation card, which enters through warm-up gates)
+// for the composed queue's includeOptInNew pass. They bypass the daily-new cap
+// (each was individually enabled), so `limit` is a hard ceiling; served in the
+// new-term tier order (new-term-priority.ts), decayed terms excluded.
+const listOptInNewFacets = async (params: {
+  userId: string
+  targetLanguage: string
+  pool: PracticePool
+  limit: number
+}): Promise<DbUserLookupWithFacet[]> => {
+  if (params.limit <= 0) return []
+  const rows = (await sql`
+    SELECT ul.*, ${flashcardFacetCols}
+    FROM public.user_lookups ul
+    ${flashcardFacetJoinSql(params.pool)}
+    WHERE ${flashcardEligibleSql(params)}
+      AND f.srs_state IS NULL
+      AND NOT (f.skill = ${skillForPool(params.pool)} AND f.target_form = ${CITATION_FORM})
+      AND ${newTermNotDecayedSql()}
+    ORDER BY ${newTermOrderSql()}, f.target_form ASC
+    LIMIT ${params.limit}
   `) as DbUserLookupWithFacet[]
   return rows
 }
@@ -1470,32 +1396,12 @@ const listParkedTerms = async (params: {
   `) as DbUserLookupWithFacet[]
 }
 
-// TRUE when the term's recognition citation facet still needs its OWN
-// introduction — i.e. no enabled production citation sibling is live
-// (scheduled or parked in warm-up). Producing a word is stronger evidence
-// than recognizing it, so a term with production work in flight gets its
-// recognition schedule from the production→recognition bridge
-// (recognition-bridge.ts) instead of a second exercise-first onboarding —
-// which would read to the user as an already-graduated word regressing to
-// warm-up. Correlated on the outer query's `ul` alias.
-const noLiveProductionSiblingSql = () => sql`
-  NOT EXISTS (
-    SELECT 1
-    FROM public.study_facets pfx
-    WHERE pfx.user_lookup_id = ul.id
-      AND pfx.skill = 'meaning_production'
-      AND pfx.target_form = ${CITATION_FORM}
-      AND pfx.disabled_at IS NULL
-      AND (pfx.srs_state IS NOT NULL OR pfx.leech_parked_at IS NOT NULL)
-  )
-`
-
 // Terms whose citation facet for the pool's skill could ENTER warm-up
 // scaffolding right now: kept, live term; facet exists, enabled, never
 // reviewed, not parked. The by-(user, language) counterpart of warmup.ts's
 // session-scoped eligibleToEnter — feeds composed-queue onboarding plans.
 // Tier-ordered (see new-term-priority.ts), so the daily-new cap
-// admits terms in the same order the flashcard new bucket serves them; decayed
+// admits terms in the same order Up next lists them; decayed
 // never-encountered-lately terms are off the shelf here too. Recognition
 // candidates additionally exclude terms with a live production sibling (the
 // bridge covers those); NOTE this makes recognition eligibility strictly
@@ -2422,16 +2328,18 @@ export interface UserLookupsRepositoryInterface {
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
   hasKeptLookup: (userId: string) => Promise<boolean>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
-  listReviewTerms: (params: {
+  listDueReviewTerms: (params: {
     userId: string
     targetLanguage: string
     pool: PracticePool
-    scope: 'review_due' | 'learn_new' | 'mixed'
     maxReviewTerms: number
     maxLearningTerms: number
-    maxNewTerms: number
-    maxOptInNewTerms: number
-    bookRemaining?: number
+  }) => Promise<DbUserLookupWithFacet[]>
+  listOptInNewFacets: (params: {
+    userId: string
+    targetLanguage: string
+    pool: PracticePool
+    limit: number
   }) => Promise<DbUserLookupWithFacet[]>
   findByKey: (params: {
     userId: string
@@ -2522,7 +2430,8 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     applyUnkeepTransition,
     hasKeptLookup,
     listDueSummary,
-    listReviewTerms,
+    listDueReviewTerms,
+    listOptInNewFacets,
     findByKey,
     findByIdForUser,
     findByIdForUserIncludingDeleted,
