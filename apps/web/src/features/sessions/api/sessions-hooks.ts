@@ -908,7 +908,7 @@ export const useStatelessGloss = () => {
   )
 }
 
-// The word-family line with its LLM insight, for a preview gloss whose
+// The word-family line with its LLM insight, for a gloss (preview or saved) whose
 // fastGloss response said the insight isn't generated yet (the server makes
 // and caches it on first request, ~3-6s). `params` null = don't fetch. Silent
 // on failure: the deterministic line is already on screen. Never refetched —
@@ -958,8 +958,19 @@ export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
 // morphing into the normal saved state is the feedback.
 export const useSaveWord = (sessionId: string) => {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.highlights.saveWord.mutationOptions({
+      // Swap in the upgraded row (noteOnly off, the new intent) right away: the
+      // invalidation refetch is fire-and-forget, and until it lands the cached
+      // stub row would flip the sheet back to its note-only state.
+      onSuccess: (res) => {
+        queryClient.setQueryData<{ data: Highlight[] }>(
+          orpcQuery.highlights.listBySession.queryKey({ input: { sessionId } }),
+          (cached) =>
+            cached ? { ...cached, data: cached.data.map((h) => (h.id === res.data.id ? res.data : h)) } : cached
+        )
+      },
       meta: {
         invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
         errorMessage: t`Failed to save the word`,

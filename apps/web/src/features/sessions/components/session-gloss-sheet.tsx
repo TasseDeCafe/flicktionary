@@ -120,6 +120,25 @@ const findCachedHighlight = (
 const selectionIdentity = (selection: SelectionResult): string =>
   `${selection.startSegmentId}:${selection.endSegmentId}:${selection.startOffset}:${selection.endOffset}:${selection.selectionText}`
 
+type ReadyGloss = Extract<GlossViewState, { status: 'ready' }>
+
+// A fastGloss response (highlight-bound or stateless) as the sheet's ready state.
+const readyGlossFrom = (data: Omit<ReadyGloss, 'status'>): ReadyGloss => ({
+  status: 'ready',
+  gloss: data.gloss,
+  pos: data.pos,
+  register: data.register,
+  ipaDisplay: data.ipaDisplay,
+  ipaLemma: data.ipaLemma,
+  knownLemmaCandidates: data.knownLemmaCandidates,
+  wordFamily: data.wordFamily,
+})
+
+// A saved row's persisted gloss, shown instantly while the fetch refreshes it
+// (the refresh adds the IPA and known-lemma candidates).
+const cachedReadyGloss = (fastGloss: string | null): ReadyGloss | null =>
+  fastGloss ? { status: 'ready', ...parseFastGloss(fastGloss), ipaDisplay: null, ipaLemma: null } : null
+
 export const SessionGlossSheet = ({
   open,
   sessionId,
@@ -164,10 +183,6 @@ export const SessionGlossSheet = ({
   const [localNoteSaved, setLocalNoteSaved] = useState(false)
   // Set once a ghost has been adopted in this open session, to hide the action.
   const [adopted, setAdopted] = useState(false)
-  // The stub highlight most recently upgraded via Save (word). The server keeps
-  // reporting it noteOnly until the enrich job fills + keeps the card (seconds),
-  // so this pins the sheet to the normal saved state through that window.
-  const [upgradedHighlightId, setUpgradedHighlightId] = useState<string | null>(null)
   // True while an explicit Save (preview → saved) is creating the highlight.
   const [isSaving, setIsSaving] = useState(false)
   // The "Study options" draft. Untouched → no studyIntent on Save (the backend
@@ -195,9 +210,9 @@ export const SessionGlossSheet = ({
 
   // The saved highlight's live row, used to drive the always-visible study
   // targets: `studyIntent` (pre-enrich) and `chunkId` (post-enrich). We poll
-  // while the open sheet's highlight is still pre-enrich (chunkId == null) so the
-  // study targets flip from intent-editing to live-facet editing without a manual
-  // refresh once the enrich job materializes the term.
+  // while the open sheet's highlight is still pre-enrich (chunkId == null, which
+  // the server keeps reporting until the enrich job finishes) so the study
+  // targets flip to the live facets without a manual refresh.
   const { data: sessionHighlights } = useQuery(
     orpcQuery.highlights.listBySession.queryOptions({
       input: { sessionId },
@@ -213,8 +228,8 @@ export const SessionGlossSheet = ({
   const activeExistingHighlight = existingHighlight?.id === locallyRemovedHighlightId ? null : existingHighlight
   // "Note saved, word NOT saved": the highlight is a note-only stub (its card is
   // parked in needs_data). The sheet keeps the study options editable and offers
-  // Save to upgrade; upgradedHighlightId bridges the enrich window after that.
-  const isNoteOnlyStub = !!currentHighlight?.noteOnly && currentHighlight.id !== upgradedHighlightId
+  // Save to upgrade.
+  const isNoteOnlyStub = !!currentHighlight?.noteOnly
 
   useEffect(() => {
     /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- clears the save→remove cycle tracking on CLOSE; the sheet stays mounted and closes through several paths (outside tap, Escape, swipe-down), so keying on `open` covers them all */
@@ -229,11 +244,27 @@ export const SessionGlossSheet = ({
   // mode (an existing highlight or a just-saved selection) keeps Remove/note.
   const isPreview = !!selection && !activeExistingHighlight && !highlightId
 
-  // Keyed on the selection's identity, not the object: every tap hands over a
-  // new object, and a re-tap on the same word (which reveals a held-back
-  // translation) must not reset the sheet back to loading.
+  // Identity keys for the seed effect below: every tap hands over a new
+  // selection object and every listBySession refetch rebuilds the existing
+  // highlight's, and neither may reset the sheet — a re-tap on the same word
+  // reveals a held-back translation, and a refetch mid-edit must not kick the
+  // user out of the note view.
   const selectionKey = selection ? selectionIdentity(selection) : null
+  const activeExistingHighlightId = activeExistingHighlight?.id ?? null
 
+  // Seeds the sheet whenever it (re)opens or its subject changes, then fetches
+  // the gloss. Preview-first: looking is free and ephemeral.
+  //  - A saved highlight (the clicked one, or a cached row matching the
+  //    selection so a re-tap doesn't create a duplicate) → saved mode: its
+  //    cached gloss/note/tags at once, then the highlight-bound fastGloss
+  //    (which also adds Wiktionary IPA to old rows).
+  //  - Otherwise → preview mode: a FREE stateless gloss and NO highlight.
+  //    Persisting is the explicit Save action below.
+  // An effect rather than a key-remount or an event handler: the sheet stays
+  // mounted across opens, tapping another word WHILE it is open swaps its
+  // content in place (no close/reopen flash), and the save/remove morph must
+  // survive without a remount. A layout effect so the swap lands before paint
+  // (no frame of the previous word's content).
   useLayoutEffect(() => {
     if (!open) return
     setNoteViewOpen(false)
@@ -247,165 +278,70 @@ export const SessionGlossSheet = ({
     // exact-form toggle is re-armed — its referent (the surface) just changed.
     setStudyDraft((prev) => (pendingGhostId ? { ...prev, exactForm: false } : defaultStudyIntentDraft))
 
-    if (activeExistingHighlight) {
-      setHighlightId(activeExistingHighlight.id)
-      setTitleText(activeExistingHighlight.selectionText)
-      setNote(activeExistingHighlight.note ?? '')
-      setTags(activeExistingHighlight.presetTags)
-      setGlossState(
-        activeExistingHighlight.fastGloss
-          ? { status: 'ready', ...parseFastGloss(activeExistingHighlight.fastGloss), ipaDisplay: null, ipaLemma: null }
-          : { status: 'loading' }
-      )
-      return
+    let saved: ExistingHighlightInput | null = activeExistingHighlight
+    if (!saved && selection) {
+      const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
+        { data: CachedHighlight[] } | undefined
+      const match = findCachedHighlight(cached?.data, selection)
+      saved = match?.id === locallyRemovedHighlightId ? null : match
     }
 
-    if (selection) {
+    let cancelled = false
+    if (saved) {
+      const cachedGloss = cachedReadyGloss(saved.fastGloss)
+      setHighlightId(saved.id)
+      setTitleText(saved.selectionText)
+      setNote(saved.note ?? '')
+      setTags(saved.presetTags)
+      setGlossState(cachedGloss ?? { status: 'loading' })
+      fetchGloss({ sessionId, highlightId: saved.id }).then(
+        (res) => {
+          if (!cancelled) setGlossState(readyGlossFrom(res.data))
+        },
+        () => {
+          if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
+        }
+      )
+    } else if (selection) {
       setHighlightId(null)
       setTitleText(selection.selectionText)
       setNote('')
       setTags([])
-      const preservedPreviewGloss =
-        locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionIdentity(selection)
+      // Removed in place (the save→remove morph): the gloss already on screen
+      // is for this very selection, so it stays and nothing is re-fetched.
+      const preservedGloss =
+        locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionKey
           ? preservedPreviewGlossRef.current.state
           : null
-      setGlossState(preservedPreviewGloss ?? { status: 'loading' })
-    }
-  }, [open, activeExistingHighlight, selectionKey, pendingGhostId, locallyRemovedHighlightId])
-
-  // Seed from the existing-highlight branch.
-  useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- the sheet is a stateful editor that stays mounted across opens; each open (or in-place morph from the right-click save→remove toggle) re-seeds its working state from the clicked highlight and then refreshes the gloss async. The save/remove morph deliberately does NOT remount (SPEC: "the open sheet SURVIVES the toggle"), so a key-remount rewrite is off the table. */
-    if (!open || !activeExistingHighlight) return
-    setHighlightId(activeExistingHighlight.id)
-    setTitleText(activeExistingHighlight.selectionText)
-    setNote(activeExistingHighlight.note ?? '')
-    setTags(activeExistingHighlight.presetTags)
-    setNoteViewOpen(false)
-    setSheetExpanded(false)
-    const cachedGloss = activeExistingHighlight.fastGloss ? parseFastGloss(activeExistingHighlight.fastGloss) : null
-    if (cachedGloss) {
-      setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null, ipaLemma: null })
-    } else {
-      setGlossState({ status: 'loading' })
-    }
-    /* eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
-    // Fetch even when a cached gloss exists so old highlight rows can be
-    // enriched with Wiktionary IPA without changing the fast_gloss column.
-    let cancelled = false
-    void (async () => {
-      try {
-        const res = await fetchGloss({ sessionId, highlightId: activeExistingHighlight.id })
-        if (cancelled) return
-        setGlossState({
-          status: 'ready',
-          gloss: res.data.gloss,
-          pos: res.data.pos,
-          register: res.data.register,
-          ipaDisplay: res.data.ipaDisplay,
-          ipaLemma: res.data.ipaLemma,
-          knownLemmaCandidates: res.data.knownLemmaCandidates,
-        })
-      } catch {
-        if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [open, activeExistingHighlight, sessionId, fetchGloss])
-
-  // Seed from a fresh selection. Preview-first: looking is free and ephemeral.
-  //  - If the selection matches an already-saved highlight → open in "saved"
-  //    mode (its gloss/note/tags, Remove/Edit available).
-  //  - Otherwise → open in "preview" mode: fetch a FREE stateless gloss and
-  //    create NO highlight. Persisting is the explicit Save action below.
-  useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- same stateful-sheet re-seed as the existing-highlight branch above, for a fresh selection: settle preview-vs-saved mode synchronously from the cache, then fetch the free gloss async. The selection changes by tapping another word WHILE the sheet stays open (SPEC: swap content in place, no close/reopen flash), so this cannot move into an open-sheet event handler. */
-    if (!open || !selection || activeExistingHighlight) return
-    let cancelled = false
-    setTitleText(selection.selectionText)
-    setNote('')
-    setTags([])
-    setNoteViewOpen(false)
-    setSheetExpanded(false)
-    const preservedPreviewGloss =
-      locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionIdentity(selection)
-        ? preservedPreviewGlossRef.current.state
-        : null
-    setGlossState(preservedPreviewGloss ?? { status: 'loading' })
-
-    // The dedup lookup reads synchronously from the cache, so we can settle the
-    // preview-vs-saved mode (and thus `highlightId`) before any await.
-    const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
-      { data: CachedHighlight[] } | undefined
-    const cachedMatch = findCachedHighlight(cached?.data, selection)
-    const match = cachedMatch?.id === locallyRemovedHighlightId ? null : cachedMatch
-    setHighlightId(match ? match.id : null)
-    /* eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
-
-    void (async () => {
-      try {
-        if (match) {
-          // Saved mode: show cached metadata immediately, then refresh the gloss
-          // (this also enriches old rows with Wiktionary IPA).
-          setNote(match.note ?? '')
-          setTags(match.presetTags ?? [])
-          const cachedGloss = match.fastGloss ? parseFastGloss(match.fastGloss) : null
-          if (cachedGloss) setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null, ipaLemma: null })
-          try {
-            const res = await fetchGloss({ sessionId, highlightId: match.id })
-            if (cancelled) return
-            setGlossState({
-              status: 'ready',
-              gloss: res.data.gloss,
-              pos: res.data.pos,
-              register: res.data.register,
-              ipaDisplay: res.data.ipaDisplay,
-              ipaLemma: res.data.ipaLemma,
-              knownLemmaCandidates: res.data.knownLemmaCandidates,
-            })
-          } catch {
-            if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
+      if (preservedGloss) {
+        setGlossState(preservedGloss)
+      } else {
+        setGlossState({ status: 'loading' })
+        // Opening the sheet on a word is an explicit lookup: a demand signal.
+        recordLookup({ selectionText: selection.selectionText, targetLanguage })
+        fetchStatelessGloss({
+          selectionText: selection.selectionText,
+          contextLine: selection.contextLine,
+          targetLanguage,
+          includeWordFamily: true,
+        }).then(
+          (res) => {
+            if (!cancelled) setGlossState(readyGlossFrom(res.data))
+          },
+          () => {
+            if (!cancelled) setGlossState({ status: 'error', message: null })
           }
-        } else {
-          // Preview mode: free, stateless gloss — no highlight, no enrich job.
-          // Opening the sheet on a word is an explicit lookup: a demand signal.
-          recordLookup({ selectionText: selection.selectionText, targetLanguage })
-          const res = await fetchStatelessGloss({
-            selectionText: selection.selectionText,
-            contextLine: selection.contextLine,
-            targetLanguage,
-            includeWordFamily: true,
-          })
-          if (cancelled) return
-          setGlossState({
-            status: 'ready',
-            gloss: res.data.gloss,
-            pos: res.data.pos,
-            register: res.data.register,
-            ipaDisplay: res.data.ipaDisplay,
-            ipaLemma: res.data.ipaLemma,
-            knownLemmaCandidates: res.data.knownLemmaCandidates,
-            wordFamily: res.data.wordFamily,
-          })
-        }
-      } catch {
-        if (!cancelled) setGlossState({ status: 'error', message: null })
+        )
       }
-    })()
+    }
     return () => {
       cancelled = true
     }
   }, [
     open,
-    selection?.selectionText,
-    selection?.startSegmentId,
-    selection?.endSegmentId,
-    selection?.startOffset,
-    selection?.endOffset,
-    selection?.contextLine,
-    activeExistingHighlight,
+    activeExistingHighlightId,
+    selectionKey,
+    pendingGhostId,
     locallyRemovedHighlightId,
     sessionId,
     targetLanguage,
@@ -494,15 +430,7 @@ export const SessionGlossSheet = ({
       setTags(res.data.presetTags ?? [])
       setGlossState({ status: 'loading' })
       const gloss = await fetchGloss({ sessionId, highlightId: newId })
-      setGlossState({
-        status: 'ready',
-        gloss: gloss.data.gloss,
-        pos: gloss.data.pos,
-        register: gloss.data.register,
-        ipaDisplay: gloss.data.ipaDisplay,
-        ipaLemma: gloss.data.ipaLemma,
-        knownLemmaCandidates: gloss.data.knownLemmaCandidates,
-      })
+      setGlossState(readyGlossFrom(gloss.data))
     } catch {
       setGlossState({ status: 'error', message: null })
     }
@@ -617,7 +545,6 @@ export const SessionGlossSheet = ({
     if (!highlightId || isSavingWord) return
     try {
       await saveWord({ sessionId, highlightId, studyIntent: draftToStudyIntent(studyDraft) ?? null })
-      setUpgradedHighlightId(highlightId)
     } catch {
       // meta.errorMessage surfaces a toast. A CONFLICT means the word is
       // already saved — the listBySession refetch settles the sheet either way.
@@ -628,7 +555,7 @@ export const SessionGlossSheet = ({
     setTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]))
   }
 
-  const isReady = glossState.status === 'ready'
+  const readyGloss = glossState.status === 'ready' ? glossState : null
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
 
   // A note/preset committed to this highlight locks the editor read-only: it
@@ -672,36 +599,33 @@ export const SessionGlossSheet = ({
   const ipaDialects = ipaDialectsFromPrefs(userPrefs)
   // Server-picked, dialect-correct display string — no client-side bag picking.
   // The prefs read above still feeds the IpaDialectFlag next to it.
-  const displayedIpa = isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaDisplay : null
+  const displayedIpa = readyGloss?.ipaDisplay ?? null
   // Only label the IPA with its lemma when there's an actual IPA to label (never
   // next to the "No Wiktionary IPA" fallback).
-  const displayedIpaLemma =
-    isReady && displayedIpa ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaLemma : null
+  const displayedIpaLemma = displayedIpa ? (readyGloss?.ipaLemma ?? null) : null
   const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
-  const ipaLabel = isReady ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
+  const ipaLabel = readyGloss ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
-  // Word-family line: rides on the preview's stateless gloss (the server only
-  // fills it for word-family languages with the setting on). When a relative
-  // the reader already has is in it, the translation waits behind a reveal so
-  // they get a moment to infer the meaning first. Preview mode only — a saved
-  // word was already looked up.
-  const wordFamily = isReady ? ((glossState as Extract<GlossViewState, { status: 'ready' }>).wordFamily ?? null) : null
+  // Word-family line: rides on both fastGloss responses (the server only fills
+  // it for word-family languages with the setting on), so it stays put across
+  // Save and reopen.
+  const wordFamily = readyGloss?.wordFamily ?? null
   // The first tap of a word anyone has looked up generates its LLM insight
   // (what each part means here, parents kaikki lacks) after the line above
-  // renders; the richer line then replaces it. The hold below stays decided
-  // by the fastGloss response, so the reveal button never appears late.
+  // renders; the richer line then replaces it. Keyed on the word + POS, so the
+  // result fetched in preview is reused after Save.
   const { data: insightWordFamily } = useWordFamilyInsight(
-    isPreview && wordFamily?.insightPending && selection
-      ? {
-          selectionText: selection.selectionText,
-          targetLanguage,
-          pos: (glossState as Extract<GlossViewState, { status: 'ready' }>).pos,
-        }
+    wordFamily?.insightPending && readyGloss && titleText
+      ? { selectionText: titleText, targetLanguage, pos: readyGloss.pos }
       : null
   )
   const displayedWordFamily =
     wordFamily?.insightPending && insightWordFamily !== undefined ? insightWordFamily : wordFamily
+  // When a relative the reader already has is in the line, the translation
+  // waits behind a reveal so they get a moment to infer the meaning first.
+  // Preview only — a saved word was already looked up. Decided by the fastGloss
+  // response, not the insight, so the reveal button never appears late.
   const isTranslationHeld =
     isPreview && !!wordFamily && wordFamily.anchors.length > 0 && revealedSelectionKey !== selectionKey
   const revealTranslation = useCallback(() => {
@@ -728,9 +652,9 @@ export const SessionGlossSheet = ({
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
   const ariaDescription = useMemo(() => {
-    if (isReady && !isTranslationHeld) return (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss
+    if (readyGloss && !isTranslationHeld) return readyGloss.gloss
     return t`Quick gloss for the selected text.`
-  }, [isReady, isTranslationHeld, glossState, t])
+  }, [readyGloss, isTranslationHeld, t])
 
   return (
     <FloatingSheet
@@ -788,9 +712,9 @@ export const SessionGlossSheet = ({
                 <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
                 <GlossCardBody
                   loading={glossState.status === 'loading'}
-                  gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
-                  pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
-                  register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
+                  gloss={readyGloss?.gloss ?? null}
+                  pos={readyGloss?.pos ?? null}
+                  register={readyGloss?.register ?? null}
                   ipaLabel={ipaLabel}
                   ipaLemma={displayedIpaLemma}
                   ipaPrefix={
@@ -820,10 +744,10 @@ export const SessionGlossSheet = ({
                     ) : undefined
                   }
                 />
-                {isReady && (
+                {readyGloss && (
                   <KnownLemmaChip
                     targetLanguage={targetLanguage}
-                    lemmas={(glossState as Extract<GlossViewState, { status: 'ready' }>).knownLemmaCandidates ?? []}
+                    lemmas={readyGloss.knownLemmaCandidates ?? []}
                     onRemoved={() =>
                       setGlossState((prev) => (prev.status === 'ready' ? { ...prev, knownLemmaCandidates: [] } : prev))
                     }
@@ -905,11 +829,7 @@ export const SessionGlossSheet = ({
                   />
                 ) : (
                   <SavedStudyTargets
-                    // While the upgrade's enrich job is still running the card
-                    // has no facets yet — keep the stored-intent display path
-                    // (null chunkId) so the just-chosen skills show, exactly
-                    // like a fresh full save pre-enrich.
-                    chunkId={currentHighlight?.noteOnly ? null : (currentHighlight?.chunkId ?? null)}
+                    chunkId={currentHighlight?.chunkId ?? null}
                     storedIntent={currentHighlight?.studyIntent ?? null}
                     surfaceForm={titleText}
                   />

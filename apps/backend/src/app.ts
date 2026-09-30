@@ -462,6 +462,13 @@ export const buildApp = ({
   )
   app.use(API_V1, TextSegmentsRouter(textSegmentsRepository, studySessionsRepository))
   const wiktionaryMatchRepository = WiktionaryMatchRepository()
+  // Shared by the preview gloss (glosses.fastGloss) and the saved highlight's
+  // gloss (highlights.fastGloss) so both show the same word-family line.
+  const wordFamilyDependencies = {
+    wordFamilyRepository: WordFamilyRepository(),
+    wiktionaryMatchRepository,
+    anthropicPasses,
+  }
   const knownLemmasRepository = KnownLemmasRepository()
   const lemmaRanksRepository = LemmaRanksRepository()
   const checkpointDependencies = {
@@ -565,7 +572,8 @@ export const buildApp = ({
       noteOnlyHighlightDependencies,
       anthropicPasses,
       wiktionaryMatchRepository,
-      knownLemmasRepository
+      knownLemmasRepository,
+      wordFamilyDependencies
     )
   )
   app.use(
@@ -630,7 +638,7 @@ export const buildApp = ({
         userLookupsRepository,
         withTransaction,
       },
-      { wordFamilyRepository: WordFamilyRepository(), wiktionaryMatchRepository, anthropicPasses }
+      wordFamilyDependencies
     )
   )
   app.use(

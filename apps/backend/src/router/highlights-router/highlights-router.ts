@@ -10,7 +10,10 @@ import {
   DbHighlightWithChunk,
   HighlightsRepositoryInterface,
 } from '../../transport/database/highlights/highlights-repository'
-import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import type {
+  DbStudySession,
+  StudySessionsRepositoryInterface,
+} from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
@@ -21,7 +24,8 @@ import {
   CreateNoteOnlyHighlightDependencies,
 } from '../../service/highlights/create-note-only-highlight'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
-import { FastGloss, parseFastGlossText } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import type { FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
@@ -29,20 +33,21 @@ import type { WiktionaryMatchRepositoryInterface } from '../../transport/databas
 import type { KnownLemmasRepositoryInterface } from '../../transport/database/known-lemmas/known-lemmas-repository'
 import { getKnownLemmaCandidates } from '../../service/known-lemmas/known-lemma-candidates'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
+import { loadGlossedWordFamily, type WordFamilyDependencies } from '../../service/word-family/word-family'
 import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // fast_gloss is a single text column; we round-trip the {gloss, pos, register}
 // triple as the same `<gloss>\n[POS]\n[register]` shape Haiku emits.
 const serializeFastGloss = (g: FastGloss): string => `${g.gloss}\n${g.pos ?? ''}\n${g.register ?? ''}`
 
-const parseFastGloss = (s: string): FastGloss => {
-  return parseFastGlossText(s)
-}
-
 const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk, opts?: { noteOnly?: boolean }) => {
   // study_intent is stored as loose JSONB; validate it back to the contract shape
   // (or null) so a legacy/garbled value never breaks output validation.
   const parsedIntent = StudyIntentSchema.safeParse(row.study_intent)
+  // While the enrich job is still running the term isn't settled yet (its card
+  // sits in needs_data and the study intent may not have become facets), so
+  // report it as pre-enrich: no chunkId, not note-only.
+  const enriching = 'enriching' in row && row.enriching
   return {
     id: row.id,
     studySessionId: row.study_session_id,
@@ -55,16 +60,17 @@ const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk, opts?: { noteOn
     presetTags: row.preset_tags,
     fastGloss: row.fast_gloss,
     studyIntent: parsedIntent.success ? parsedIntent.data : null,
-    chunkId: 'chunk_id' in row ? row.chunk_id : null,
+    chunkId: 'chunk_id' in row && !enriching ? row.chunk_id : null,
     // "The word is not saved as a study card": the highlight HAS a card, but
-    // it is parked in needs_data — the note-only lane creates exactly that stub,
-    // while a full-lane card auto-keeps within its enrich run (a failed
-    // enrichment can also strand needs_data, where offering the saveWord
-    // upgrade is equally right). Chunk-less rows (create/update responses)
+    // it is parked in needs_data with no enrichment running — the note-only
+    // lane creates exactly that stub (a failed enrichment can also strand
+    // needs_data, where offering the saveWord upgrade is equally right). A
+    // full-lane card is needs_data too until its enrich run auto-keeps it,
+    // hence the `enriching` guard. Chunk-less rows (create/update responses)
     // can't derive this, so the note-only create and saveWord handlers pass
     // the answer explicitly; the remaining chunk-less paths only ever touch
     // non-stub highlights and default to false.
-    noteOnly: opts?.noteOnly ?? ('card_status' in row && row.card_status === 'needs_data'),
+    noteOnly: opts?.noteOnly ?? (!enriching && 'card_status' in row && row.card_status === 'needs_data'),
     createdAt: new Date(row.created_at).toISOString(),
   }
 }
@@ -81,13 +87,51 @@ export const HighlightsRouter = (
   noteOnlyDependencies: CreateNoteOnlyHighlightDependencies,
   anthropicPasses: AnthropicPassesInterface,
   wiktionaryMatchRepository: WiktionaryMatchRepositoryInterface,
-  knownLemmasRepository: KnownLemmasRepositoryInterface
+  knownLemmasRepository: KnownLemmasRepositoryInterface,
+  wordFamilyDependencies: WordFamilyDependencies
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   // Debounce before enriching a freshly-committed highlight, so a mis-selection
   // the user corrects (delete within the window) never reaches the LLM.
   const ENRICH_DEBOUNCE_MS = 5000
+
+  // First gloss for a highlight saved without one: run the fast-gloss pass over
+  // the highlight's span and persist the result.
+  const generateAndPersistGloss = async (session: DbStudySession, highlight: DbHighlight): Promise<FastGloss> => {
+    const startSegment = await textSegmentsRepository.findById(highlight.start_segment_id)
+    if (!startSegment) throw new Error('Highlight start segment missing')
+    // Cross-segment highlight: the context line must cover the whole span,
+    // not just the segment the selection started in.
+    let contextLine = startSegment.text
+    if (highlight.end_segment_id !== highlight.start_segment_id) {
+      const endSegment = await textSegmentsRepository.findById(highlight.end_segment_id)
+      if (endSegment) {
+        const spanSegments = await textSegmentsRepository.listByIndexRange(
+          session.text_track_id,
+          Math.min(startSegment.index, endSegment.index),
+          Math.max(startSegment.index, endSegment.index)
+        )
+        contextLine = spanSegments.map((s) => s.text).join(' ')
+      }
+    }
+    const languagePrefs = await getLanguageMode({
+      userId: session.user_id,
+      targetLanguage: session.target_language,
+      snapshotNativeLanguage: session.native_language,
+      usersRepository,
+      targetLanguagePrefsRepository,
+    })
+    const gloss = await anthropicPasses.fastGlossPass({
+      targetLanguage: session.target_language,
+      nativeLanguage: languagePrefs.nativeLanguage ?? session.target_language,
+      hideTranslationFields: languagePrefs.hideTranslationFields,
+      contextLine,
+      selectionText: highlight.selection_text,
+    })
+    await highlightsRepository.updateFastGloss(highlight.id, serializeFastGloss(gloss))
+    return gloss
+  }
 
   const router = implementer.router({
     listBySession: implementer.listBySession.handler(async ({ input, context, errors }) => {
@@ -362,67 +406,33 @@ export const HighlightsRouter = (
         { userId, targetLanguage: session.target_language, selectionText: highlight.selection_text },
         { wiktionaryMatchRepository, knownLemmasRepository }
       )
-      if (highlight.fast_gloss) {
-        const cachedGloss = parseFastGloss(highlight.fast_gloss)
-        const ipaResult = await lookupFastGlossIpa({
+      // The gloss persisted with the highlight (the preview's, carried over by
+      // Save) stays authoritative so the sheet shows the same word it showed
+      // before saving; only a legacy row without one runs the gloss pass.
+      const gloss = highlight.fast_gloss
+        ? parseFastGloss(highlight.fast_gloss)
+        : await generateAndPersistGloss(session, highlight)
+      const [ipaResult, wordFamily] = await Promise.all([
+        lookupFastGlossIpa({
           targetLanguage: session.target_language,
           selectionText: highlight.selection_text,
-          pos: cachedGloss.pos,
+          pos: gloss.pos,
           wiktionaryEntriesRepository,
-        })
-        const ipa = ipaResult?.ipa ?? null
-        return {
-          data: {
-            ...cachedGloss,
-            ipa,
-            ipaDisplay: pickIpa(ipa, session.target_language, dialects) ?? null,
-            ipaLemma: ipaResult?.lemma ?? null,
-            knownLemmaCandidates,
+        }),
+        loadGlossedWordFamily(
+          {
+            userId,
+            targetLanguage: session.target_language,
+            selectionText: highlight.selection_text,
+            pos: gloss.pos,
           },
-        }
-      }
-      const startSegment = await textSegmentsRepository.findById(highlight.start_segment_id)
-      if (!startSegment) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Highlight start segment missing' }] },
-        })
-      }
-      // Cross-segment highlight: the context line must cover the whole span,
-      // not just the segment the selection started in.
-      let contextLine = startSegment.text
-      if (highlight.end_segment_id !== highlight.start_segment_id) {
-        const endSegment = await textSegmentsRepository.findById(highlight.end_segment_id)
-        if (endSegment) {
-          const spanSegments = await textSegmentsRepository.listByIndexRange(
-            session.text_track_id,
-            Math.min(startSegment.index, endSegment.index),
-            Math.max(startSegment.index, endSegment.index)
-          )
-          contextLine = spanSegments.map((s) => s.text).join(' ')
-        }
-      }
-      const languagePrefs = await getLanguageMode({
-        userId,
-        targetLanguage: session.target_language,
-        snapshotNativeLanguage: session.native_language,
-        usersRepository,
-        targetLanguagePrefsRepository,
-      })
-      const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
-      const gloss = await anthropicPasses.fastGlossPass({
-        targetLanguage: session.target_language,
-        nativeLanguage: languageModeNativeLanguage,
-        hideTranslationFields: languagePrefs.hideTranslationFields,
-        contextLine,
-        selectionText: highlight.selection_text,
-      })
-      await highlightsRepository.updateFastGloss(highlight.id, serializeFastGloss(gloss))
-      const ipaResult = await lookupFastGlossIpa({
-        targetLanguage: session.target_language,
-        selectionText: highlight.selection_text,
-        pos: gloss.pos,
-        wiktionaryEntriesRepository,
-      })
+          {
+            ...wordFamilyDependencies,
+            usersRepository,
+            userTargetLanguagePrefsRepository: targetLanguagePrefsRepository,
+          }
+        ),
+      ])
       const ipa = ipaResult?.ipa ?? null
       return {
         data: {
@@ -431,6 +441,7 @@ export const HighlightsRouter = (
           ipaDisplay: pickIpa(ipa, session.target_language, dialects) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
           knownLemmaCandidates,
+          wordFamily,
         },
       }
     }),

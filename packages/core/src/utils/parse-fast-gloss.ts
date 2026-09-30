@@ -1,8 +1,9 @@
-// Decodes the serialized `highlights.fast_gloss` column (gloss\n[POS]\n[register])
-// into the {gloss, pos, register} triple the gloss popovers render — shared by
-// the web gloss sheet and the extension's subtitle-overlay popovers so a saved
-// highlight shows its cached gloss instantly while the fastGloss refresh is in
-// flight.
+// Decodes the fast-gloss text shape (gloss\n[POS]\n[register]) into the
+// {gloss, pos, register} triple. One parser for every reader of that shape: the
+// backend's fast-gloss pass (Haiku's raw output) and highlight router (the
+// serialized `highlights.fast_gloss` column), plus the web gloss sheet and the
+// extension's subtitle-overlay popovers, which render a saved highlight's
+// cached gloss instantly while the fastGloss refresh is in flight.
 
 export const FAST_GLOSS_POS_ALIASES = new Set([
   'n',
