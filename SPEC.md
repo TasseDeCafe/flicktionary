@@ -315,7 +315,7 @@ Generic source shape so non-movie content plugs in without migration:
 `card` (with chat + read-state tables); the background-job tables (`processing_jobs`,
 `nominated_windows`, `ghost_candidates`); the canonical vocabulary record `user_lookup`
 (SRS state lives in `study_facets` — `docs/SRS.md` §1); and the practice tables
-(`practice_text`, `practice_rating_events`, `practice_exercise`).
+(`practice_rating_events`, `practice_exercise`).
 
 **`docs/DATA-MODEL.md` holds the full annotated schema** plus the card content tiers
 (basic data, `grammar` bag, `exploration_extras`, and the computed export front/back).

@@ -371,52 +371,10 @@ user_lookup                          -- cross-source dedup + canonical user voca
   primary key (id)
   unique (user_id, target_language, headword, sense)
 
-practice_text                        -- one LLM-generated reading passage. Reading is
-                                     -- SESSIONLESS: texts are keyed directly by
-                                     -- (user_id, target_language, pool, ord) — there is
-                                     -- no practice_sessions table. A partial unique
-                                     -- index allows at most one status='reading' text
-                                     -- per (user, language, pool); "resume reading"
-                                     -- resolves to that row.
-  id                  uuid pk
-  user_id             uuid -> auth.users (ON DELETE CASCADE)
-  target_language     text
-  pool                'recognition' | 'production' default 'recognition'
-                                    -- which facet family the finalizer's ratings
-                                    -- advance (production reading = the old
-                                    -- active drill).
-  scope               'review_due' | 'learn_new' | 'mixed' | null
-                                    -- the live candidate filter this text was
-                                    -- built under; a resumed/pre-gen slot whose
-                                    -- scope differs from the one being entered
-                                    -- is discarded rather than surfaced.
-  ord                 int           -- slot order within (user, language, pool)
-  status              'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
-  body                text?
-  annotations         jsonb         -- [{ headword, sense, surface_form, char_start,
-                                    --    char_end, user_lookup_id }]
-                                    -- char_start/end computed server-side from surface_form (LLMs
-                                    -- are unreliable at counting characters; the tool only emits
-                                    -- surface_form and the server locates each occurrence).
-                                    -- user_lookup_id is stamped at generation time so the
-                                    -- finalizer and serve-time content resolution survive a
-                                    -- mid-text rename of the (headword, sense) key; readers
-                                    -- fall back to the key for texts stored before ids existed.
-  skipped_chunks      jsonb         -- chunks the LLM declined to embed
-                                    -- ({ headword, sense, reason }); feeds the
-                                    -- stubborn-chunk rescue/exclusion logic
-  generation_token    uuid?         -- fencing token minted at claim; markReady /
-                                    -- markFailed verify it so raced or stale
-                                    -- writers silently no-op
-  generation_warning  text?         -- e.g. dropped annotations summary
-  created_at          timestamptz
-  ready_at            timestamptz?
-  read_at             timestamptz?
-
 practice_rating_events               -- append-only audit log of EVERY rating event:
-                                     -- flashcard ratings, explicit reading ratings,
-                                     -- and the implicit-good applied on Next-text
-                                     -- advance. Written in the same transaction as
+                                     -- flashcard ratings, checkpoint credits and
+                                     -- known-assertions, and lesson-import lapses.
+                                     -- Written in the same transaction as
                                      -- the FSRS write; it is the undo handle and the
                                      -- daily review-budget source (budget queries
                                      -- filter live events, so an undo auto-refunds).
@@ -441,8 +399,6 @@ practice_rating_events               -- append-only audit log of EVERY rating ev
   prev_leech_parked_at timestamptz? -- park-state snapshot for caused_unparking
   prev_leech_rehab_correct_days int? -- events (onboarding-parked facets can carry
   prev_leech_rehab_last_correct_on date? -- partial rehab progress from warm-up gates)
-  practice_text_id    uuid? -> practice_text.id (ON DELETE SET NULL)
-                                    -- reading-mode context; null for flashcard ratings
   import_batch_id     uuid? -> import_batches.id (ON DELETE SET NULL)
                                     -- lesson-import provenance: set only on the
                                     -- implicit 'again' lapses a confirmed import
@@ -548,8 +504,8 @@ import_batch_rows                    -- one extracted candidate per row, verbati
 
 practice_exercise                    -- durable pre-generated exercise bank for the
                                      -- Strengthen surface (leech rehab gates +
-                                     -- post-session bonus). Fencing lifecycle
-                                     -- mirrors practice_text.
+                                     -- post-session bonus), with a fenced
+                                     -- generation lifecycle.
   id                  uuid pk
   user_id             uuid -> auth.users (ON DELETE CASCADE)
   user_lookup_id      uuid -> user_lookup (ON DELETE CASCADE)
