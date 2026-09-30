@@ -1018,7 +1018,6 @@ msgstr "Par bande de fréquence"
 #: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
@@ -1676,7 +1675,6 @@ msgstr "Définition"
 msgid "Definition (optional)"
 msgstr "Définition (facultatif)"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
@@ -1687,7 +1685,6 @@ msgstr "Supprimer"
 msgid "Delete \"{deleteHeadword}\"?"
 msgstr "Supprimer « {deleteHeadword} » ?"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Delete \"{headword}\"?"
 msgstr "Supprimer « {headword} » ?"
@@ -1701,7 +1698,6 @@ msgstr "Supprimer mon compte"
 msgid "Delete term"
 msgstr "Supprimer le terme"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Deleting…"
@@ -2806,10 +2802,6 @@ msgstr "Masquer de votre liste — le vocabulaire conservé reste"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
 msgstr "Masque les pistes de sous-titres sélectionnées en les floutant. Le flou est supprimé au survol de la souris."
-
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Masque ce terme de la Pratique et du Vocabulaire. Vous pouvez le restaurer depuis la notification juste après, ou en le conservant à nouveau dans une session."
 
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx

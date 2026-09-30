@@ -1018,7 +1018,6 @@ msgstr "By frequency band"
 #: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
@@ -1677,7 +1676,6 @@ msgstr "Definition"
 msgid "Definition (optional)"
 msgstr "Definition (optional)"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
@@ -1688,7 +1686,6 @@ msgstr "Delete"
 msgid "Delete \"{deleteHeadword}\"?"
 msgstr "Delete \"{deleteHeadword}\"?"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Delete \"{headword}\"?"
 msgstr "Delete \"{headword}\"?"
@@ -1702,7 +1699,6 @@ msgstr "Delete my account"
 msgid "Delete term"
 msgstr "Delete term"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Deleting…"
@@ -2807,10 +2803,6 @@ msgstr "Hide it from your list — kept vocabulary stays"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
 msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
-
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
 
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
