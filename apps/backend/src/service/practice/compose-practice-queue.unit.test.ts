@@ -43,9 +43,9 @@ const createDeps = (params: {
   backlogByPool?: Partial<Record<PracticePool, string[]>>
   // Eligible never-reviewed citation terms per pool (auto-warm-up discovery).
   eligibleNewByPool?: Partial<Record<PracticePool, string[]>>
-  // Due flashcard rows per pool (repo listReviewTerms, review_due scope).
+  // Due flashcard rows per pool (repo listDueReviewTerms).
   dueByPool?: Partial<Record<PracticePool, DbUserLookupWithFacet[]>>
-  // Opt-in-new flashcard rows per pool (repo listReviewTerms, learn_new scope).
+  // Opt-in-new flashcard rows per pool (repo listOptInNewFacets).
   optInByPool?: Partial<Record<PracticePool, DbUserLookupWithFacet[]>>
   parkOutcomes?: Record<string, 'scaffolded' | 'cap_reached' | 'not_eligible'>
   maxNewTerms?: number
@@ -60,11 +60,12 @@ const createDeps = (params: {
   const listEligibleNewCitationFacets = vi
     .fn()
     .mockImplementation(async (p: { pool: PracticePool }) => params.eligibleNewByPool?.[p.pool] ?? [])
-  const listReviewTerms = vi
+  const listDueReviewTerms = vi
     .fn()
-    .mockImplementation(async (p: { pool: PracticePool; scope: string }) =>
-      p.scope === 'learn_new' ? (params.optInByPool?.[p.pool] ?? []) : (params.dueByPool?.[p.pool] ?? [])
-    )
+    .mockImplementation(async (p: { pool: PracticePool }) => params.dueByPool?.[p.pool] ?? [])
+  const listOptInNewFacets = vi
+    .fn()
+    .mockImplementation(async (p: { pool: PracticePool }) => params.optInByPool?.[p.pool] ?? [])
   const listDueSummary = vi.fn().mockResolvedValue([{ targetLanguage: lang, newIntroducedTodayCount: 0 }])
   const allRows = new Map(
     (['production', 'recognition'] as const).flatMap((pool) =>
@@ -95,7 +96,8 @@ const createDeps = (params: {
     userLookupsRepository: {
       listParkedTerms,
       listEligibleNewCitationFacets,
-      listReviewTerms,
+      listDueReviewTerms,
+      listOptInNewFacets,
       listDueSummary,
       findByIdForUser,
     },
@@ -114,7 +116,8 @@ const createDeps = (params: {
     deps,
     listParkedTerms,
     listEligibleNewCitationFacets,
-    listReviewTerms,
+    listDueReviewTerms,
+    listOptInNewFacets,
     initializeAndParkCitationFacetIfUnderDailyCap,
   }
 }
@@ -149,12 +152,13 @@ describe('composePracticeQueue', () => {
     ])
   })
 
-  it('pins due flashcards to review_due scope (citation-new never enters as a flashcard)', async () => {
-    const { deps, listReviewTerms } = createDeps({ dueByPool: { recognition: [termRow(id(1))] } })
+  it('serves no opt-in-new flashcards unless asked (citation-new never enters as a flashcard)', async () => {
+    const { deps, listDueReviewTerms, listOptInNewFacets } = createDeps({
+      dueByPool: { recognition: [termRow(id(1))] },
+    })
     await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
-    for (const call of listReviewTerms.mock.calls) {
-      expect(call[0].scope).toBe('review_due')
-    }
+    expect(listDueReviewTerms).toHaveBeenCalled()
+    expect(listOptInNewFacets).not.toHaveBeenCalled()
   })
 
   it('plans eligible-new terms production-first under the per-session budget without parking them', async () => {
@@ -237,7 +241,7 @@ describe('composePracticeQueue', () => {
   })
 
   it('due_only skips parking and opt-in-new but serves gates of BOTH parked origins', async () => {
-    const { deps, listParkedTerms, listReviewTerms, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
+    const { deps, listParkedTerms, listOptInNewFacets, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
       backlogByPool: { recognition: [id(1)] },
       eligibleNewByPool: { recognition: [id(2)] },
       dueByPool: { recognition: [termRow(id(3))] },
@@ -254,12 +258,12 @@ describe('composePracticeQueue', () => {
     const backlogCall = listParkedTerms.mock.calls.find((c) => c[0].restrictToUserLookupIds == null)
     expect(backlogCall?.[0].parkedOrigin).toBeUndefined()
     // Opt-in-new is an introduction — excluded from due_only even when asked.
-    expect(listReviewTerms.mock.calls.every((c) => c[0].scope === 'review_due')).toBe(true)
+    expect(listOptInNewFacets).not.toHaveBeenCalled()
     expect(result.items.map(itemKey)).toEqual([`flash:${id(3)}`, `ex:recognition:${id(1)}`])
   })
 
   it('new_only restricts gates to onboarding-parked terms and skips due flashcards', async () => {
-    const { deps, listParkedTerms, listReviewTerms } = createDeps({
+    const { deps, listParkedTerms, listDueReviewTerms } = createDeps({
       backlogByPool: { recognition: [id(1)] },
       dueByPool: { recognition: [termRow(id(2))] },
     })
@@ -273,7 +277,7 @@ describe('composePracticeQueue', () => {
       expect(call[0].parkedOrigin).toBe('onboarding')
     }
     // No due flashcards fetched at all.
-    expect(listReviewTerms.mock.calls.filter((c) => c[0].scope === 'review_due')).toEqual([])
+    expect(listDueReviewTerms).not.toHaveBeenCalled()
     expect(result.items.map(itemKey)).toEqual([`ex:recognition:${id(1)}`])
   })
 
@@ -295,7 +299,7 @@ describe('composePracticeQueue', () => {
   })
 
   it('exercises_only serves no flashcards (due or opt-in)', async () => {
-    const { deps, listReviewTerms } = createDeps({
+    const { deps, listDueReviewTerms, listOptInNewFacets } = createDeps({
       backlogByPool: { recognition: [id(1)] },
       dueByPool: { recognition: [termRow(id(2))] },
       optInByPool: { recognition: [termRow(id(3))] },
@@ -306,23 +310,22 @@ describe('composePracticeQueue', () => {
       filter: filter({ render: 'exercises_only', includeOptInNew: true }),
       deps,
     })
-    expect(listReviewTerms).not.toHaveBeenCalled()
+    expect(listDueReviewTerms).not.toHaveBeenCalled()
+    expect(listOptInNewFacets).not.toHaveBeenCalled()
     expect(result.items.map(itemKey)).toEqual([`ex:recognition:${id(1)}`])
   })
 
-  it('opt-in-new pass pins the citation-new bucket to 0 and uses the hard ceiling for opt-in facets', async () => {
-    const { deps, listReviewTerms } = createDeps({ optInByPool: { recognition: [termRow(id(1))] } })
+  it('opt-in-new pass uses the hard ceiling for opt-in facets', async () => {
+    const { deps, listOptInNewFacets } = createDeps({ optInByPool: { recognition: [termRow(id(1))] } })
     await composePracticeQueue({
       userId,
       targetLanguage: lang,
       filter: filter({ includeOptInNew: true, render: 'flashcards_only' }),
       deps,
     })
-    const optInCalls = listReviewTerms.mock.calls.filter((c) => c[0].scope === 'learn_new')
-    expect(optInCalls).toHaveLength(2) // one per pool
-    for (const call of optInCalls) {
-      expect(call[0].maxNewTerms).toBe(0)
-      expect(call[0].maxOptInNewTerms).toBe(HARD_MAX_PRACTICE_NEW_TERMS)
+    expect(listOptInNewFacets).toHaveBeenCalledTimes(2) // one per pool
+    for (const call of listOptInNewFacets.mock.calls) {
+      expect(call[0].limit).toBe(HARD_MAX_PRACTICE_NEW_TERMS)
     }
   })
 

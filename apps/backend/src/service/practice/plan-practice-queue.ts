@@ -1,8 +1,8 @@
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
-import { resolveBookQuota } from './book-quota'
+import { resolveBookQuota, type BookQuotaDependencies } from './book-quota'
 import type { ComposeQueueFilter } from './compose-practice-queue'
 import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
-import { listReviewTerms, type ListReviewTermsDependencies } from './list-review-terms'
+import { listDueReviewTerms, type ListDueReviewTermsDependencies } from './list-due-review-terms'
 import { clampPracticeSessionLimits } from './review-caps'
 
 // Production first: production volume is inherently low, so front-loading it
@@ -10,7 +10,7 @@ import { clampPracticeSessionLimits } from './review-caps'
 // separate UI surface) is the production-protection mechanism.
 export const POOL_ORDER: PracticePool[] = ['production', 'recognition']
 
-export type PlanPracticeQueueDependencies = ListReviewTermsDependencies
+export type PlanPracticeQueueDependencies = ListDueReviewTermsDependencies & BookQuotaDependencies
 
 export type PoolQueuePlan = {
   pool: PracticePool
@@ -176,9 +176,7 @@ export const planPracticeQueue = async (params: {
     const servedRows = backlogRows.slice(0, backlogSlotsLeft)
     backlogSlotsLeft -= servedRows.length
     const dueRows =
-      wantFlashcards && filter.scope !== 'new_only'
-        ? await listReviewTerms(userId, targetLanguage, pool, 'review_due', deps)
-        : []
+      wantFlashcards && filter.scope !== 'new_only' ? await listDueReviewTerms(userId, targetLanguage, pool, deps) : []
     perPool.push({
       pool,
       dueRows,

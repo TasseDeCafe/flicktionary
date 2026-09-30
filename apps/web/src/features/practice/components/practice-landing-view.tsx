@@ -21,7 +21,6 @@ const HowPracticeWorksCard = ({ onDismiss }: { onDismiss: () => void }) => {
     t`Terms you save become cards scheduled with spaced repetition — each review comes up right before you'd forget it.`,
     t`A session mixes the reviews due today with a few new terms. Daily limits keep it short; you can change them in Settings.`,
     t`Brand-new and struggling terms warm up with quick exercises before they become flashcards.`,
-    t`You can also practice by reading: short generated texts weave in your vocabulary, and you rate terms by tapping them.`,
   ]
   return (
     <section className='bg-card rounded-xl border p-4'>
@@ -128,7 +127,7 @@ export const PracticeLandingView = () => {
           ) : (
             explainerResolved && (
               <p className='text-muted-foreground text-sm'>
-                {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
+                {t`Review your saved vocabulary with spaced-repetition flashcards and quick exercises.`}
               </p>
             )
           )}

@@ -5,8 +5,7 @@ import type { FsrsResult } from './fsrs'
 // Shared leech/rehab tuning. One source of truth for both pools.
 
 // A facet whose FSRS lapses reach its pool's threshold gets parked out of every
-// practice queue (flashcards AND reading-text candidate selection) until it
-// graduates rehab. Recognition schedules at request_retention 0.8 (see
+// practice queue until it graduates rehab. Recognition schedules at request_retention 0.8 (see
 // fsrs.ts), which roughly doubles the expected lapse rate vs production's 0.9
 // — so recognition gets a proportionally higher parking bar, keeping
 // leech-rehab volume comparable across pools.

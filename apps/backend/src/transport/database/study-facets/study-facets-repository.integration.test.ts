@@ -340,8 +340,8 @@ describe('study-facets-repository integration tests', () => {
       maxNewTerms: 10,
     })
 
-    // A stale queue item (flashcard/reading text served before production went
-    // live) reaches this gate on submit — the write must refuse, not stamp.
+    // A stale queue item (a flashcard served before production went live)
+    // reaches this gate on submit — the write must refuse, not stamp.
     const introduced = await repo.initializeCitationFacetIfUnderDailyCap({
       userLookupId: term.id,
       userId,

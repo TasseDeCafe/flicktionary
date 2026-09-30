@@ -50,7 +50,7 @@ const createDeps = (params: {
   const listEligibleNewCitationFacets = vi
     .fn()
     .mockImplementation(async (p: { pool: PracticePool }) => params.eligibleNewByPool?.[p.pool] ?? [])
-  const listReviewTerms = vi
+  const listDueReviewTerms = vi
     .fn()
     .mockImplementation(async (p: { pool: PracticePool }) => params.dueByPool?.[p.pool] ?? [])
   const listDueSummary = vi
@@ -62,7 +62,7 @@ const createDeps = (params: {
   const countReviewBudgetConsumedToday = vi.fn().mockResolvedValue(0)
 
   const deps = {
-    userLookupsRepository: { listParkedTerms, listEligibleNewCitationFacets, listReviewTerms, listDueSummary },
+    userLookupsRepository: { listParkedTerms, listEligibleNewCitationFacets, listDueReviewTerms, listDueSummary },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
     bookPinsRepository: {
       getPin: vi.fn().mockResolvedValue(null),
@@ -71,7 +71,7 @@ const createDeps = (params: {
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
   } as unknown as PlanPracticeQueueDependencies
 
-  return { deps, listParkedTerms, listEligibleNewCitationFacets, listReviewTerms }
+  return { deps, listParkedTerms, listEligibleNewCitationFacets, listDueReviewTerms }
 }
 
 describe('planPracticeQueue', () => {
@@ -269,7 +269,7 @@ describe('planPracticeQueue', () => {
       filter: filter({ render: 'exercises_only' }),
       deps: exercisesOnly.deps,
     })
-    expect(exercisesOnly.listReviewTerms).not.toHaveBeenCalled()
+    expect(exercisesOnly.listDueReviewTerms).not.toHaveBeenCalled()
     expect(plan.perPool.every((p) => p.dueRows.length === 0)).toBe(true)
   })
 })

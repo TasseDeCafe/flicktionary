@@ -27,8 +27,8 @@ export type ComposeQueueFilter = {
   // Serve never-reviewed opt-in (non-citation) facets — pronunciation and
   // form cards — as flashcards. They never park (the exercise bank has no
   // facet identity), so this pass is their ONLY introduction path; it is
-  // reserved for the explicit Learn-new preset, mirroring the old rule that
-  // opt-in new facets are served only in learn_new scope, never mixed.
+  // reserved for the explicit Learn-new preset — the everyday Practice button
+  // never floods a session with every enabled-but-unseen facet.
   includeOptInNew: boolean
   // Explicit "learn extra" request: plan up to this many more recognition
   // terms past the daily-new cap. They still stamp introduced_at when reached.
@@ -79,9 +79,8 @@ export const composePracticeQueue = async (params: {
   const items: ComposedQueueItem[] = []
   for (const poolPlan of plan.perPool) {
     if (wantFlashcards && filter.scope !== 'new_only') {
-      // 'review_due' is load-bearing (enforced by the plan's dueRows fetch):
-      // citation-new terms must NEVER enter the composed queue as flashcards
-      // (they enter via warm-up gates). The opt-in-new pass below is the one
+      // dueRows holds due cards only: citation-new terms must NEVER enter the
+      // composed queue as flashcards (they enter via warm-up gates). The opt-in-new pass below is the one
       // deliberate exception.
       items.push(...poolPlan.dueRows.map((card) => ({ type: 'flashcard' as const, card })))
     }
@@ -130,20 +129,15 @@ export const composePracticeQueue = async (params: {
   }
 
   // Opt-in-new pass: never-reviewed pronunciation/form facets, served as
-  // flashcards. maxNewTerms is pinned to 0 — the citation-new bucket must stay
-  // empty (those terms enter via warm-up gates); only the non-citation opt-in
-  // bucket may contribute.
+  // flashcards. Citation-new terms never come through here — they enter via
+  // warm-up gates.
   if (wantFlashcards && filter.includeOptInNew && filter.scope !== 'due_only') {
     for (const poolPlan of plan.perPool) {
-      const optInNew = await deps.userLookupsRepository.listReviewTerms({
+      const optInNew = await deps.userLookupsRepository.listOptInNewFacets({
         userId,
         targetLanguage,
         pool: poolPlan.pool,
-        scope: 'learn_new',
-        maxReviewTerms: 0,
-        maxLearningTerms: 0,
-        maxNewTerms: 0,
-        maxOptInNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
+        limit: HARD_MAX_PRACTICE_NEW_TERMS,
       })
       items.push(...optInNew.map((card) => ({ type: 'flashcard' as const, card })))
     }

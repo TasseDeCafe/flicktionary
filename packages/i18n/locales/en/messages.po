@@ -539,10 +539,6 @@ msgstr "Add note"
 msgid "Add selection to Flicktionary"
 msgstr "Add selection to Flicktionary"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Add this term to production practice."
-msgstr "Add this term to production practice."
-
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Add to Chrome"
 msgstr "Add to Chrome"
@@ -651,7 +647,6 @@ msgstr "All {denominatorLabel}"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "All caught up"
 msgstr "All caught up"
 
@@ -907,7 +902,6 @@ msgid "Back"
 msgstr "Back"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 #: apps/web/src/features/practice/components/warmup-view.tsx
 msgid "Back to {languageName}"
@@ -921,10 +915,6 @@ msgstr "Back to card"
 msgid "Back to current card"
 msgstr "Back to current card"
 
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "Back to current text"
-msgstr "Back to current text"
-
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Back to dashboard"
 msgstr "Back to dashboard"
@@ -936,10 +926,6 @@ msgstr "Back to Explore"
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Back to forms"
 msgstr "Back to forms"
-
-#: apps/web/src/features/practice/components/reading-history-view.tsx
-msgid "Back to history"
-msgstr "Back to history"
 
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx
 msgid "Back to login"
@@ -1032,7 +1018,6 @@ msgstr "By frequency band"
 #: apps/web/src/features/books/components/book-detail-view.tsx
 #: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
@@ -1691,7 +1676,6 @@ msgstr "Definition"
 msgid "Definition (optional)"
 msgstr "Definition (optional)"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
@@ -1702,14 +1686,9 @@ msgstr "Delete"
 msgid "Delete \"{deleteHeadword}\"?"
 msgstr "Delete \"{deleteHeadword}\"?"
 
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Delete \"{headword}\"?"
 msgstr "Delete \"{headword}\"?"
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Delete from vocabulary"
-msgstr "Delete from vocabulary"
 
 #: apps/native/src/features/profile/components/danger-zone-view.tsx
 #: apps/web/src/features/profile/components/danger-zone-view.tsx
@@ -1720,11 +1699,6 @@ msgstr "Delete my account"
 msgid "Delete term"
 msgstr "Delete term"
 
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "Deleted \"{headword}\""
-msgstr "Deleted \"{headword}\""
-
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
 msgid "Deleting…"
@@ -1857,7 +1831,6 @@ msgstr "Edit card"
 msgid "Edit note"
 msgstr "Edit note"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
 #: apps/web/src/features/practice/components/term-actions-overlay.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 msgid "Edit term"
@@ -2100,10 +2073,6 @@ msgstr "Failed to add the cards"
 msgid "Failed to add the word"
 msgstr "Failed to add the word"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to advance"
-msgstr "Failed to advance"
-
 #: apps/web/src/features/admin/api/dev-tools-hooks.ts
 msgid "Failed to advance the practice clock"
 msgstr "Failed to advance the practice clock"
@@ -2133,7 +2102,6 @@ msgstr "Failed to create checkout session"
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
@@ -2150,10 +2118,6 @@ msgstr "Failed to fetch subscription details"
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to generate next text"
-msgstr "Failed to generate next text"
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Failed to import into Flicktionary."
@@ -2191,10 +2155,6 @@ msgstr "Failed to load exercises"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to load history"
-msgstr "Failed to load history"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Failed to load languages"
@@ -2364,10 +2324,6 @@ msgstr "Failed to rename term"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts
-msgid "Failed to restore term"
-msgstr "Failed to restore term"
 
 #: apps/web/src/features/telegram-pair/api/telegram-pair-hooks.ts
 msgid "Failed to resume your Telegram import"
@@ -2615,7 +2571,6 @@ msgid "Forms you've encountered"
 msgstr "Forms you've encountered"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
 msgid "Forward"
 msgstr "Forward"
 
@@ -2705,7 +2660,6 @@ msgstr "Generating full exploration… this takes a few seconds."
 msgid "Generating..."
 msgstr "Generating..."
 
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "Generating…"
@@ -2846,17 +2800,9 @@ msgstr "Hide from vocabulary and Practice"
 msgid "Hide it from your list — kept vocabulary stays"
 msgstr "Hide it from your list — kept vocabulary stays"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Hide this term from Practice and Vocabulary. You can restore it later."
-msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
-
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
 msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
-
-#: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
 
 #: apps/web/src/features/review/components/focus-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx
@@ -2889,10 +2835,6 @@ msgstr "Hint used — this card counts as Hard."
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint:"
 msgstr "Hint:"
-
-#: apps/web/src/features/practice/components/reading-history-view.tsx
-msgid "History · {languageName}"
-msgstr "History · {languageName}"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx
 msgid "Home"
@@ -3258,10 +3200,6 @@ msgstr "Load Subtitles"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
-#: apps/web/src/features/practice/components/reading-history-view.tsx
-msgid "Loading history…"
-msgstr "Loading history…"
-
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Loading more…"
 msgstr "Loading more…"
@@ -3408,7 +3346,6 @@ msgstr "More formal:"
 msgid "More frequent synonym"
 msgstr "More frequent synonym"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
 #: apps/web/src/features/sessions/components/session-card.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
@@ -3430,10 +3367,6 @@ msgstr "Move bottom subtitles down"
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Move this term back to recognition practice only."
-msgstr "Move this term back to recognition practice only."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Move top subtitles down"
@@ -3542,7 +3475,6 @@ msgstr "Newest first"
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/practice/components/recap-mc-exercise.tsx
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
@@ -3603,10 +3535,6 @@ msgstr "No languages found."
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "No matches."
 msgstr "No matches."
-
-#: apps/web/src/features/practice/components/reading-history-view.tsx
-msgid "No past texts yet. Read some practice texts and they'll show up here."
-msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "No pronunciation data yet"
@@ -3871,7 +3799,6 @@ msgstr "Open the Flicktionary extension popup to set your level for this languag
 msgid "Open the Flicktionary popup and choose <0>Sign in with Flicktionary</0> to connect your account — that's what lets you save terms."
 msgstr "Open the Flicktionary popup and choose <0>Sign in with Flicktionary</0> to connect your account — that's what lets you save terms."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
 #: apps/web/src/features/practice/components/term-actions-overlay.tsx
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
@@ -3963,18 +3890,6 @@ msgstr "Particle"
 #: apps/web/src/features/sessions/components/word-family-line.tsx
 msgid "passive of {lemma}"
 msgstr "passive of {lemma}"
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Past generated texts (recognition pool)."
-msgstr "Past generated texts (recognition pool)."
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Past generated texts for the production pool."
-msgstr "Past generated texts for the production pool."
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Past generated texts."
-msgstr "Past generated texts."
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
@@ -4220,10 +4135,6 @@ msgstr "Preparing your next exercise…"
 msgid "Preparing your session…"
 msgstr "Preparing your session…"
 
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "Preparing your text…"
-msgstr "Preparing your text…"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Preposition"
 msgstr "Preposition"
@@ -4244,10 +4155,6 @@ msgstr "Previous card"
 #: apps/web/src/features/dashboard/components/activity-calendar-card.tsx
 msgid "Previous month"
 msgstr "Previous month"
-
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "Previous text"
-msgstr "Previous text"
 
 #: apps/web/src/features/books/components/book-part-nav.tsx
 msgid "Previous: {previousTitle}"
@@ -4370,14 +4277,6 @@ msgstr "Quiz your terms"
 msgid "rank {rankLabel}"
 msgstr "rank {rankLabel}"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Rate"
-msgstr "Rate"
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Read"
-msgstr "Read"
-
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 msgid "Read a whole book chapter by chapter, with instant glosses. Works with DRM-free EPUB, FB2 and MOBI files."
 msgstr "Read a whole book chapter by chapter, with instant glosses. Works with DRM-free EPUB, FB2 and MOBI files."
@@ -4390,10 +4289,6 @@ msgstr "Read an EPUB, FB2 or MOBI book chapter by chapter"
 #: apps/web/src/features/sessions/components/sessions-empty-state.tsx
 msgid "Read more in the guide"
 msgstr "Read more in the guide"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
-msgstr "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
 
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Read the full guide"
@@ -4414,19 +4309,6 @@ msgstr "Reading book…"
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "Reading file…"
 msgstr "Reading file…"
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Reading history"
-msgstr "Reading history"
-
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Reading history (production)"
-msgstr "Reading history (production)"
-
-#. placeholder {0}: reading.termCount
-#: apps/web/src/features/practice/components/practice-language-view.tsx
-msgid "Reading in progress ({0, plural, one {# term} other {# terms}}) — continue"
-msgstr "Reading in progress ({0, plural, one {# term} other {# terms}}) — continue"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 msgid "Reading the notes — this takes about a minute…"
@@ -4620,11 +4502,6 @@ msgstr "Reset subtitle offset"
 msgid "Rest of book"
 msgstr "Rest of book"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "Restore"
-msgstr "Restore"
-
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "Restore generated value"
 msgstr "Restore generated value"
@@ -4632,10 +4509,6 @@ msgstr "Restore generated value"
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "Restore Wiktionary value"
 msgstr "Restore Wiktionary value"
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Restoring…"
-msgstr "Restoring…"
 
 #: apps/web/src/features/sessions/components/segment-list.tsx
 msgid "Resumed here"
@@ -4691,9 +4564,9 @@ msgstr "Review it any time from the Vocabulary tab — newest terms are listed f
 msgid "Review terms"
 msgstr "Review terms"
 
-#: apps/web/src/features/practice/components/custom-practice-overlay.tsx
-msgid "Review through a short generated text."
-msgstr "Review through a short generated text."
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "Review your saved vocabulary with spaced-repetition flashcards and quick exercises."
+msgstr "Review your saved vocabulary with spaced-repetition flashcards and quick exercises."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Reviewing and practicing"
@@ -5543,14 +5416,6 @@ msgstr "Swahili"
 msgid "Switch"
 msgstr "Switch"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Switch to production"
-msgstr "Switch to production"
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "Switch to recognition"
-msgstr "Switch to recognition"
-
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Synonyms"
 msgstr "Synonyms"
@@ -5606,10 +5471,6 @@ msgstr "Term actions"
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Term deleted"
 msgstr "Term deleted"
-
-#: apps/web/src/features/practice/components/reading-history-view.tsx
-msgid "terms"
-msgstr "terms"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
 msgid "Terms coming back for their scheduled review."
@@ -5818,10 +5679,6 @@ msgstr "This selection is too long to import ({textLength} characters — the li
 #: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "This show has no episodes."
 msgstr "This show has no episodes."
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx
-msgid "This term is removed from your vocabulary. Restore it to keep practicing."
-msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
 
 #: apps/extension/src/services/flicktionary/import-text.ts
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
@@ -6629,10 +6486,6 @@ msgstr "You are a special user with free access. You have no active subscription
 msgid "You are now subscribed to Premium!"
 msgstr "You are now subscribed to Premium!"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-msgid "You can also practice by reading: short generated texts weave in your vocabulary, and you rate terms by tapping them."
-msgstr "You can also practice by reading: short generated texts weave in your vocabulary, and you rate terms by tapping them."
-
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "You can study it as a regular flashcard instead — or open the menu above to edit the term if something looks off (exercises get another try after a fix)."
 msgstr "You can study it as a regular flashcard instead — or open the menu above to edit the term if something looks off (exercises get another try after a fix)."
@@ -6705,10 +6558,6 @@ msgstr "You've reached the end"
 #: apps/web/src/features/books/components/book-part-nav.tsx
 msgid "You've reached the end of the book."
 msgstr "You've reached the end of the book."
-
-#: apps/web/src/features/practice/components/reading-mode-view.tsx
-msgid "You've reviewed every due term for this language. Come back later when more are ready."
-msgstr "You've reviewed every due term for this language. Come back later when more are ready."
 
 #: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Your {pendingLanguageName} level"

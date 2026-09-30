@@ -31,13 +31,11 @@ export type RateTermDependencies = {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   // Per-language daily-new limit source for rateTerm (the language is only
   // known once the lookup row loads). applyTermRating itself takes the
-  // resolved maxNewTerms — advanceReadingText computes its own.
+  // resolved maxNewTerms.
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   withTransaction: WithTransaction
-  // Optional fire-and-forget exercise-bank warmer. Both rating surfaces
-  // (flashcards via rateTerm, reading via advanceReadingText) share
-  // applyTermRating, so wiring it here covers again/hard triggers in both
-  // render modes. Absent in unit tests and callers that don't care.
+  // Optional fire-and-forget exercise-bank warmer for again/hard triggers.
+  // Absent in unit tests and callers that don't care.
   warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void
 }
 
@@ -48,14 +46,14 @@ export type ApplyTermRatingResult =
   | { ok: true; introducedNew: boolean; parked: boolean; eventId: string | null }
   | { ok: false; reason: 'daily_cap_reached' }
 
-// Apply one rating event to a user_lookup in the given pool. Shared by the
-// flashcard reviewer (rateTerm) and the reading-text finalizer
-// (advanceReadingText) so both introduce/grade terms identically.
+// Apply one rating event to a user_lookup in the given pool. Shared by every
+// rating surface (flashcards via rateTerm, checkpoint credits, lesson-import
+// lapses) so all of them introduce/grade terms identically.
 //
 // New-term introductions (state IS NULL) are gated at introduction time:
 //   - recognition: the atomic daily-cap guard stamps the row only if the day's
 //     introduced count is still under maxNewTerms. Refusal => no FSRS applied,
-//     the caller drops the term (flashcard) or leaves it new (reading).
+//     and the caller drops the term.
 //   - production: not daily-capped — initialize unconditionally.
 // Already-scheduled terms skip the guard entirely.
 //
@@ -80,10 +78,8 @@ export const applyTermRating = async (params: {
   rating: AppRating
   pool: PracticePool
   maxNewTerms: number
-  // false = implicit 'good' on a reading-text advance.
+  // false = an implicit rating (checkpoint credit, lesson-import lapse).
   wasExplicit?: boolean
-  // Reading-mode context for the event row; absent for flashcards.
-  practiceTextId?: string
   // Lesson-import provenance for the event row; set only on the implicit
   // 'again' lapses a confirmed import applies (excluded from review budgets).
   importBatchId?: string
@@ -99,9 +95,8 @@ export const applyTermRating = async (params: {
   const skill = lookup.skill
   const targetForm = lookup.target_form
   if (isParked(lookup)) {
-    // Stale queues can outlive parking: an old flashcard tab or an already
-    // generated reading text may still submit a rating after the facet left
-    // rotation. Parked facets must not mutate FSRS until rehab graduates them.
+    // Stale queues can outlive parking: an old flashcard tab may still submit
+    // a rating after the facet left rotation. Parked facets must not mutate FSRS until rehab graduates them.
     // No event is logged, so eventId is null — there is nothing to undo.
     return { ok: true, introducedNew: false, parked: true, eventId: null }
   }
@@ -218,7 +213,6 @@ export const applyTermRating = async (params: {
         wasExplicit: params.wasExplicit ?? true,
         wasIntroduction,
         causedParking: parked,
-        practiceTextId: params.practiceTextId ?? null,
         importBatchId: params.importBatchId ?? null,
         studySessionId: params.studySessionId ?? null,
         checkpointId: params.checkpointId ?? null,
@@ -254,8 +248,7 @@ export const applyTermRating = async (params: {
 
   // A correct citation-production answer also credits the recognition sibling
   // (see recognition-bridge.ts) — every production rating surface routes
-  // through here (flashcards, production reading advances), so this is the
-  // single hook point. Failures propagate nothing: missing a production isn't
+  // through here, so this is the single hook point. Failures propagate nothing: missing a production isn't
   // evidence the user can't recognize. Best-effort: the production rating has
   // already committed above, so a bridge error must not fail the endpoint
   // (a client retry would double-apply the rating) — the next production

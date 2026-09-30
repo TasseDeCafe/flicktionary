@@ -56,10 +56,8 @@ import { Route as AuthenticatedAppSessionsBookContentSourceIdRouteImport } from 
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppPracticeWarmupTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/warmup/$targetLanguage'
 import { Route as AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/strengthen/$targetLanguage'
-import { Route as AuthenticatedAppPracticeReviewTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/review/$targetLanguage'
 import { Route as AuthenticatedAppPracticeRecapTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/recap/$targetLanguage'
 import { Route as AuthenticatedAppPracticeLanguageTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/language/$targetLanguage'
-import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/history/$targetLanguage'
 import { Route as AuthenticatedAppPracticeComposedTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/composed/$targetLanguage'
 import { Route as AuthenticatedAppLessonsImportBatchIdRouteImport } from './routes/_authenticated/_app/lessons/import/$batchId'
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
@@ -331,12 +329,6 @@ const AuthenticatedAppPracticeStrengthenTargetLanguageRoute =
     path: '/practice/strengthen/$targetLanguage',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppPracticeReviewTargetLanguageRoute =
-  AuthenticatedAppPracticeReviewTargetLanguageRouteImport.update({
-    id: '/practice/review/$targetLanguage',
-    path: '/practice/review/$targetLanguage',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
 const AuthenticatedAppPracticeRecapTargetLanguageRoute =
   AuthenticatedAppPracticeRecapTargetLanguageRouteImport.update({
     id: '/practice/recap/$targetLanguage',
@@ -347,12 +339,6 @@ const AuthenticatedAppPracticeLanguageTargetLanguageRoute =
   AuthenticatedAppPracticeLanguageTargetLanguageRouteImport.update({
     id: '/practice/language/$targetLanguage',
     path: '/practice/language/$targetLanguage',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
-const AuthenticatedAppPracticeHistoryTargetLanguageRoute =
-  AuthenticatedAppPracticeHistoryTargetLanguageRouteImport.update({
-    id: '/practice/history/$targetLanguage',
-    path: '/practice/history/$targetLanguage',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppPracticeComposedTargetLanguageRoute =
@@ -420,10 +406,8 @@ export interface FileRoutesByFullPath {
   '/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
   '/lessons/import/$batchId': typeof AuthenticatedAppLessonsImportBatchIdRoute
   '/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
-  '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/recap/$targetLanguage': typeof AuthenticatedAppPracticeRecapTargetLanguageRoute
-  '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -475,10 +459,8 @@ export interface FileRoutesByTo {
   '/vocabulary': typeof AuthenticatedAppVocabularyIndexRoute
   '/lessons/import/$batchId': typeof AuthenticatedAppLessonsImportBatchIdRoute
   '/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
-  '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/recap/$targetLanguage': typeof AuthenticatedAppPracticeRecapTargetLanguageRoute
-  '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -533,10 +515,8 @@ export interface FileRoutesById {
   '/_authenticated/_app/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
   '/_authenticated/_app/lessons/import/$batchId': typeof AuthenticatedAppLessonsImportBatchIdRoute
   '/_authenticated/_app/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
-  '/_authenticated/_app/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/_authenticated/_app/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/_authenticated/_app/practice/recap/$targetLanguage': typeof AuthenticatedAppPracticeRecapTargetLanguageRoute
-  '/_authenticated/_app/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/_authenticated/_app/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/_authenticated/_app/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -590,10 +570,8 @@ export interface FileRouteTypes {
     | '/vocabulary/'
     | '/lessons/import/$batchId'
     | '/practice/composed/$targetLanguage'
-    | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/recap/$targetLanguage'
-    | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
@@ -645,10 +623,8 @@ export interface FileRouteTypes {
     | '/vocabulary'
     | '/lessons/import/$batchId'
     | '/practice/composed/$targetLanguage'
-    | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/recap/$targetLanguage'
-    | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
@@ -702,10 +678,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/vocabulary/'
     | '/_authenticated/_app/lessons/import/$batchId'
     | '/_authenticated/_app/practice/composed/$targetLanguage'
-    | '/_authenticated/_app/practice/history/$targetLanguage'
     | '/_authenticated/_app/practice/language/$targetLanguage'
     | '/_authenticated/_app/practice/recap/$targetLanguage'
-    | '/_authenticated/_app/practice/review/$targetLanguage'
     | '/_authenticated/_app/practice/strengthen/$targetLanguage'
     | '/_authenticated/_app/practice/warmup/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
@@ -1064,13 +1038,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/_app/practice/review/$targetLanguage': {
-      id: '/_authenticated/_app/practice/review/$targetLanguage'
-      path: '/practice/review/$targetLanguage'
-      fullPath: '/practice/review/$targetLanguage'
-      preLoaderRoute: typeof AuthenticatedAppPracticeReviewTargetLanguageRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/_app/practice/recap/$targetLanguage': {
       id: '/_authenticated/_app/practice/recap/$targetLanguage'
       path: '/practice/recap/$targetLanguage'
@@ -1083,13 +1050,6 @@ declare module '@tanstack/react-router' {
       path: '/practice/language/$targetLanguage'
       fullPath: '/practice/language/$targetLanguage'
       preLoaderRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/_app/practice/history/$targetLanguage': {
-      id: '/_authenticated/_app/practice/history/$targetLanguage'
-      path: '/practice/history/$targetLanguage'
-      fullPath: '/practice/history/$targetLanguage'
-      preLoaderRoute: typeof AuthenticatedAppPracticeHistoryTargetLanguageRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/_app/practice/composed/$targetLanguage': {
@@ -1144,10 +1104,8 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppVocabularyIndexRoute: typeof AuthenticatedAppVocabularyIndexRoute
   AuthenticatedAppLessonsImportBatchIdRoute: typeof AuthenticatedAppLessonsImportBatchIdRoute
   AuthenticatedAppPracticeComposedTargetLanguageRoute: typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
-  AuthenticatedAppPracticeHistoryTargetLanguageRoute: typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   AuthenticatedAppPracticeLanguageTargetLanguageRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   AuthenticatedAppPracticeRecapTargetLanguageRoute: typeof AuthenticatedAppPracticeRecapTargetLanguageRoute
-  AuthenticatedAppPracticeReviewTargetLanguageRoute: typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   AuthenticatedAppPracticeWarmupTargetLanguageRoute: typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -1184,14 +1142,10 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppLessonsImportBatchIdRoute,
   AuthenticatedAppPracticeComposedTargetLanguageRoute:
     AuthenticatedAppPracticeComposedTargetLanguageRoute,
-  AuthenticatedAppPracticeHistoryTargetLanguageRoute:
-    AuthenticatedAppPracticeHistoryTargetLanguageRoute,
   AuthenticatedAppPracticeLanguageTargetLanguageRoute:
     AuthenticatedAppPracticeLanguageTargetLanguageRoute,
   AuthenticatedAppPracticeRecapTargetLanguageRoute:
     AuthenticatedAppPracticeRecapTargetLanguageRoute,
-  AuthenticatedAppPracticeReviewTargetLanguageRoute:
-    AuthenticatedAppPracticeReviewTargetLanguageRoute,
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute:
     AuthenticatedAppPracticeStrengthenTargetLanguageRoute,
   AuthenticatedAppPracticeWarmupTargetLanguageRoute:

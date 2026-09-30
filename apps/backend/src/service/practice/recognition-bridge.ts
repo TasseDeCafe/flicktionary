@@ -14,9 +14,9 @@ export type RecognitionBridgeDependencies = {
 // Production evidence waters the recognition schedule: a correct answer on the
 // citation production facet proves the strictly harder skill, so the citation
 // RECOGNITION sibling is credited without the user ever drilling it directly.
-// Paired with the intro-side exclusion (noLiveProductionSiblingSql /
-// the park guard's not_eligible), this is why a term with production work in
-// flight never enters recognition warm-up or the recognition new bucket — its
+// Paired with the intro-side exclusion (the eligibility filter in
+// book-priority.ts / the park guard's not_eligible), this is why a term with
+// production work in flight never enters recognition warm-up — its
 // recognition schedule arrives here instead.
 //
 // Two shapes, both DIRECT facet writes with NO practice_rating_events row —

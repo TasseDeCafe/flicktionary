@@ -72,7 +72,6 @@ import { CardChatMessagesRepository } from './transport/database/card-chat-messa
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
 import { StudyFacetsRepository } from './transport/database/study-facets/study-facets-repository'
-import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
 import { PracticeExercisesRepository } from './transport/database/practice-exercises/practice-exercises-repository'
 import { PracticeRatingEventsRepository } from './transport/database/practice-rating-events/practice-rating-events-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
@@ -384,7 +383,6 @@ export const buildApp = ({
   const lemmaLookupsRepository = LemmaLookupsRepository()
   const bookPinsRepository = BookPinsRepository()
   const studyFacetsRepository = StudyFacetsRepository()
-  const practiceTextsRepository = PracticeTextsRepository()
   const practiceExercisesRepository = PracticeExercisesRepository()
   const practiceRatingEventsRepository = PracticeRatingEventsRepository()
   const processingTelemetryRepository = ProcessingTelemetryRepository()
@@ -695,7 +693,6 @@ export const buildApp = ({
     API_V1,
     PracticeRouter({
       anthropicPasses,
-      practiceTextsRepository,
       practiceExercisesRepository,
       practiceRatingEventsRepository,
       userLookupsRepository,

@@ -149,20 +149,6 @@ describe('pinned-book introduction order', () => {
     } while (cursor)
     expect(paged).toEqual(upNext.map((row) => row.id))
 
-    // Reading mode's recognition new bucket serves the same order.
-    const served = await userLookupsRepository.listReviewTerms({
-      userId,
-      targetLanguage: 'ru',
-      pool: 'recognition',
-      scope: 'learn_new',
-      maxReviewTerms: 0,
-      maxLearningTerms: 0,
-      maxNewTerms: 50,
-      maxOptInNewTerms: 0,
-      bookRemaining: 2,
-    })
-    expect(served.map((row) => row.id)).toEqual(discovery)
-
     // No quota left today: plain tier order.
     const exhausted = await userLookupsRepository.listEligibleNewCitationFacets({
       userId,

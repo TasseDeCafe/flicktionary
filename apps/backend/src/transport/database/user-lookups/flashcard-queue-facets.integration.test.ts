@@ -7,10 +7,10 @@ import { __createUserInSupabaseAndGetHisIdAndToken } from '../../../test/test-ut
 
 // Phase-2 facet plumbing against a real DB: the per-facet review budget
 // (COUNT DISTINCT (lookup, skill, target_form)), facet-keyed undo lookup, the
-// queue's sibling spacing, and the opt-in-new bucket split. These exercise the
+// queue's sibling spacing, and the opt-in-new selector. These exercise the
 // MULTI-facet shapes that the product paths can't build until Phase 4 — we
 // insert form facets directly to prove the machinery is ready.
-describe('listReviewTerms + rating-event budget: facet plumbing', () => {
+describe('flashcard queue + rating-event budget: facet plumbing', () => {
   const userLookupsRepository = UserLookupsRepository()
   const studyFacetsRepository = StudyFacetsRepository()
   const ratingEventsRepository = PracticeRatingEventsRepository()
@@ -58,7 +58,6 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       wasExplicit: true,
       wasIntroduction: false,
       causedParking: false,
-      practiceTextId: null,
       headword: 'h',
       sense: 'x',
       // review-state pre-snapshot => charges the review budget.
@@ -156,15 +155,12 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       })
     }
 
-    const rows = await userLookupsRepository.listReviewTerms({
+    const rows = await userLookupsRepository.listDueReviewTerms({
       userId,
       targetLanguage: 'es',
       pool: 'recognition',
-      scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
-      maxNewTerms: 0,
-      maxOptInNewTerms: 0,
     })
     expect(rows).toHaveLength(4)
     // No two consecutive rows share a term (separators are available).
@@ -186,21 +182,18 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       srsDue: due,
     })
 
-    const rows = await userLookupsRepository.listReviewTerms({
+    const rows = await userLookupsRepository.listDueReviewTerms({
       userId,
       targetLanguage: 'es',
       pool: 'recognition',
-      scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
-      maxNewTerms: 0,
-      maxOptInNewTerms: 0,
     })
     expect(rows).toHaveLength(2)
     expect(rows.every((r) => r.id === term.id)).toBe(true)
   })
 
-  test('opt-in new facet is served in learn_new but never in mixed', async () => {
+  test('listOptInNewFacets serves unseen form facets, never the citation card', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const term = await createKeptTerm(userId, 'nuevo')
     await studyFacetsRepository.ensureCitationFacet(term.id) // citation recognition, state NULL (new)
@@ -213,25 +206,13 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       srsDue: null,
     })
 
-    const baseParams = {
+    const rows = await userLookupsRepository.listOptInNewFacets({
       userId,
       targetLanguage: 'es',
-      pool: 'recognition' as const,
-      maxReviewTerms: 0,
-      maxLearningTerms: 0,
-      maxNewTerms: 50,
-    }
-    // mixed: opt-in cap 0 -> only the citation new card.
-    const mixed = await userLookupsRepository.listReviewTerms({ ...baseParams, scope: 'mixed', maxOptInNewTerms: 0 })
-    expect(mixed.map((r) => r.target_form).sort()).toEqual([''])
-
-    // learn_new: opt-in cap > 0 -> both the citation and the form new card.
-    const learn = await userLookupsRepository.listReviewTerms({
-      ...baseParams,
-      scope: 'learn_new',
-      maxOptInNewTerms: 50,
+      pool: 'recognition',
+      limit: 50,
     })
-    expect(learn.map((r) => r.target_form).sort()).toEqual(['', 'nuevos'])
+    expect(rows.map((r) => r.target_form)).toEqual(['nuevos'])
   })
 
   // Phase 4a: pronunciation is a recognition-mode (recognition) facet. A ready,
@@ -267,15 +248,12 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       disabledAt: due,
     })
 
-    const rows = await userLookupsRepository.listReviewTerms({
+    const rows = await userLookupsRepository.listDueReviewTerms({
       userId,
       targetLanguage: 'es',
       pool: 'recognition',
-      scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
-      maxNewTerms: 0,
-      maxOptInNewTerms: 0,
     })
 
     // The served term's pronunciation facet is present; the disabled one's is not.
@@ -305,22 +283,18 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       srsDue: due,
     })
 
-    const production = await userLookupsRepository.listReviewTerms({
+    const production = await userLookupsRepository.listDueReviewTerms({
       userId,
       targetLanguage: 'es',
       pool: 'production',
-      scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
-      maxNewTerms: 0,
-      maxOptInNewTerms: 0,
     })
     expect(production.some((r) => r.skill === 'pronunciation')).toBe(false)
   })
 
-  // Production FORM facets are opt-in news in the ACTIVE pool: served by the
-  // opt-in bucket in learn_new, never in mixed (Trap 22 applies to both pools).
-  test('unseen production form facet is served in production learn_new, not mixed', async () => {
+  // Production FORM facets are opt-in news in the production pool.
+  test('listOptInNewFacets serves an unseen production form facet', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const term = await createKeptTerm(userId, 'hablar')
     // Citation production facet already scheduled (not new) — only the form is unseen.
@@ -341,23 +315,13 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       srsDue: null,
     })
 
-    const baseParams = {
+    const rows = await userLookupsRepository.listOptInNewFacets({
       userId,
       targetLanguage: 'es',
-      pool: 'production' as const,
-      maxReviewTerms: 0,
-      maxLearningTerms: 0,
-      maxNewTerms: 50,
-    }
-    const learn = await userLookupsRepository.listReviewTerms({
-      ...baseParams,
-      scope: 'learn_new',
-      maxOptInNewTerms: 50,
+      pool: 'production',
+      limit: 50,
     })
-    expect(learn.map((r) => r.target_form)).toEqual(['hablo'])
-
-    const mixed = await userLookupsRepository.listReviewTerms({ ...baseParams, scope: 'mixed', maxOptInNewTerms: 0 })
-    expect(mixed.some((r) => r.target_form === 'hablo')).toBe(false)
+    expect(rows.map((r) => r.target_form)).toEqual(['hablo'])
   })
 
   // Composed-queue discovery: which terms may enter warm-up, oldest-added
@@ -428,8 +392,8 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
   // The production→recognition bridge's intro-side exclusion: a term whose
   // enabled production citation sibling is LIVE (scheduled or parked) gets its
   // recognition schedule from the bridge, so it must vanish from every
-  // recognition-introduction surface — eligibility, the new bucket, and the
-  // due summary's new_count promise.
+  // recognition-introduction surface — eligibility and the due summary's
+  // new_count promise.
   test('a live production sibling removes the term from recognition intro eligibility', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
 
@@ -490,25 +454,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     })
     expect(productionEligible).toContain(unseen.id)
 
-    // The recognition NEW bucket refuses the same terms...
-    const served = await userLookupsRepository.listReviewTerms({
-      userId,
-      targetLanguage: 'es',
-      pool: 'recognition',
-      scope: 'learn_new',
-      maxReviewTerms: 100,
-      maxLearningTerms: 100,
-      maxNewTerms: 100,
-      maxOptInNewTerms: 0,
-    })
-    const servedIds = served.map((row) => row.id)
-    expect(servedIds).not.toContain(scheduled.id)
-    expect(servedIds).not.toContain(parked.id)
-    expect(servedIds).toContain(demoted.id)
-    expect(servedIds).toContain(unseen.id)
-    expect(servedIds).toContain(solo.id)
-
-    // ...and the due summary's new_count only promises what the queue serves
+    // The due summary's new_count only promises what warm-up can introduce
     // (solo + demoted + unseen).
     const summary = (await userLookupsRepository.listDueSummary(userId)).find((s) => s.targetLanguage === 'es')
     expect(summary?.newCount).toBe(3)
@@ -553,7 +499,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
   })
 
   // The landing/learn-new counts must mirror the queue's enabled-facet filter:
-  // a disabled recognition facet is invisible to listReviewTerms, so counting
+  // a disabled recognition facet is invisible to the queue, so counting
   // it in the due summary promises cards ("2 new available") that the session
   // then refuses to serve ("No new terms to learn"). Introductions performed
   // today still count toward the daily-new budget even if disabled afterwards.
@@ -591,7 +537,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     expect(summary?.newIntroducedTodayCount).toBe(1)
   })
 
-  // The opt-in counters mirror the queue's opt-in new bucket: enabled+ready
+  // The opt-in counters mirror listOptInNewFacets: enabled+ready
   // unseen non-citation facets (plus citation pronunciation — it IS opt-in),
   // split by review mode. Disabled and pending_data facets don't count.
   test('due summary counts unseen opt-in facets per mode', async () => {

@@ -1,7 +1,7 @@
 # How the SRS works
 
 The **single authoritative spec** for the practice/SRS system (web app): data model,
-scheduler, budgets, queues, reading mode, parking/exercises, and the practice UI surfaces.
+scheduler, budgets, queues, parking/exercises, and the practice UI surfaces.
 `SPEC.md` carries only a summary + pointer here. Describes current behavior. Update this
 doc alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
 
@@ -9,12 +9,12 @@ Code map:
 
 - Scheduler: `apps/backend/src/service/practice/fsrs.ts` (`ts-fsrs` wrapper)
 - Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`); undo: `undo-rating.ts`
-- Queue: `list-review-terms.ts` + `listReviewTerms` in `user-lookups-repository.ts`
+- Flashcard selection: `list-due-review-terms.ts` + `listDueReviewTerms` / `listOptInNewFacets` in
+  `user-lookups-repository.ts`
 - Composed queue: `plan-practice-queue.ts`, `compose-practice-queue.ts`,
   `claim-practice-introduction.ts`
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
 - Leeches: `leech-config.ts`, `rehab.ts`, `exercise-bank.ts`
-- Reading mode: `generate-reading-text.ts`, `advance-reading-text.ts`
 - Audit log: `practice-rating-events-repository.ts`
 - Frontend session: `apps/web/src/features/practice/components/composed-practice-view.tsx`
 
@@ -237,14 +237,14 @@ uncapped (NULL).
 
 **Production-first is a per-session rule, not a daily reservation**: within one
 composed/warm-up session production is planned and served before recognition, but across a day whichever
-path introduces first (reading, a direct rating, or a displayed onboarding gate) consumes budget in event order —
+path introduces first (a direct rating or a displayed onboarding gate) consumes budget in event order —
 deliberately, since a global priority would need cross-surface coordination for little gain.
 
 Daily budgets:
 
 - **New budget** (combined, both pools) = limit − count of citation facets (either pool) with
   `introduced_at` = today. Consumed by introductions (first citation-facet rating or warm-up
-  park), from flashcards, warm-up AND reading mode. All capped guards compare against the same
+  park), from flashcards and warm-up. All capped guards compare against the same
   combined-count subquery under one advisory lock key
   (`flashcards:{userId}:{targetLanguage}`), so two pools introducing concurrently can't both
   pass the count.
@@ -262,22 +262,23 @@ served regardless of spent/zero budgets so it can never be stranded. Only the ha
 caps it. *Consequence: setting review-limit 0 does not silence a language that has pending
 learning-state cards — they keep appearing under "Follow-ups" until cleared.*
 
-## 4. The queue (listReviewTerms)
+## 4. Flashcard selection (listDueReviewTerms, listOptInNewFacets)
 
-Scopes: `mixed` (due first, then new), `review_due` (due only), `learn_new` (new only).
-The query serves the pool's **skill set** (passive = `{meaning_recognition, pronunciation}`,
-active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) and ready
-(`data_status='ready'`) facets. It is four sub-selects, each separately capped, then spaced:
+Two repository selectors feed the composed queue's flashcards. Both serve the pool's **skill
+set** (passive = `{meaning_recognition, pronunciation}`, active = `{meaning_production}`),
+filtered to enabled (`disabled_at IS NULL`), ready (`data_status='ready'`), non-parked facets:
 
-| bucket | predicate | cap | order |
+| selector | predicate | cap | order |
 |---|---|---|---|
-| review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC |
-| learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
-| new (capped) | `srs_state IS NULL`, **primary citation** facet, not decayed | remaining **new budget** | tier ASC, zipf DESC |
-| new (opt-in) | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, **`learn_new` only** | tier ASC, zipf DESC |
+| `listDueReviewTerms` review-state | `srs_state IN ('new','review')`, due | remaining **review budget** (`resolveReviewCaps`) | due ASC |
+| `listDueReviewTerms` learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
+| `listOptInNewFacets` | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, `includeOptInNew` only | tier ASC, zipf DESC |
+
+Citation-new terms never come through either selector: they enter via warm-up gates
+(`listEligibleNewCitationFacets` → the composed queue's planned introductions, §4b).
 
 **New-term priority tiers** (`new-term-priority.ts` — the single home of the constants and
-SQL fragments). Both new buckets order by a computed tier, then `zipf_estimate DESC NULLS
+SQL fragments). Warm-up discovery, `Up next`, and the opt-in selector order by a computed tier, then `zipf_estimate DESC NULLS
 LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
 the stable tiebreak, closed by `headword ASC, sense ASC, id ASC` so the ordering is strictly
 unique. With a pinned book, the recognition order interleaves the book stream on top of
@@ -373,9 +374,6 @@ backfill.
   equals the tier order.
 - **Consumers.**
   - `listEligibleNewCitationFacets` (recognition; production keeps the tier order).
-  - `listReviewTerms`' recognition capped new bucket, which reading mode uses. The
-    position rides through the `spaced` window and the final `ORDER BY`; other buckets
-    carry NULL positions.
   - `Up next`: cursor `(pos, lane, seq, id)`, and boosted rows carry
     `pinnedBookPriority` for the row's "Book" badge. Positions are recomputed per
     request, so an introduction between page loads can shift them.
@@ -389,43 +387,41 @@ backfill.
     since the source row survives for dedup.
 
 **Decay (virtual shelf)**: never-introduced terms with `last_encountered_at` older than 90
-days are excluded from both new buckets, from warm-up discovery
+days are excluded from the opt-in selector, from warm-up discovery
 (`listEligibleNewCitationFacets`), **and from the matching landing counts** (`new_count`,
 `production_new_count`, the opt-in counts) — the badges must not advertise terms the queue
 refuses to serve. Decayed terms stay visible in the Vocabulary list (`unseen` status) and any
 re-save revives them (`recordEncounter` refreshes `last_encountered_at`). Deliberately
-OUTSIDE the decay predicate: due/learning buckets, `listParkedTerms`, and the
+OUTSIDE the decay predicate: due/learning selection, `listParkedTerms`, and the
 leech-rehab/warm-up surfaces — parked terms have their own lifecycle (`leech_parked_at ASC`
 ordering, rehab graduation) and must not silently decay. All predicates are `NOW()`-relative,
 so `pnpm db:advance-day` time travel works.
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
 `(meaning_recognition,'')`, active → `(meaning_production,'')`; both draw on the one
-combined budget). A recognition primary-citation card is additionally excluded — from the
-new bucket, warm-up discovery, `new_count`, AND the introduction write gates — when the
+combined budget). A recognition primary-citation card is additionally excluded — from
+warm-up discovery, `new_count`, AND the introduction write gates — when the
 term's enabled production citation facet is **live** (scheduled or parked): such terms get
 their recognition schedule from the production→recognition bridge instead (§7). **Opt-in
 new** facets
-(pronunciation/forms) bypass the daily-new cap but are served **only in `learn_new`**,
-never `mixed` — otherwise the primary Practice button would flood a session with every
-enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
-outside passive `learn_new`).
+(pronunciation/forms) bypass the daily-new cap but are served **only** by the composed
+queue's `includeOptInNew` pass (the Learn-new preset) — otherwise the primary Practice
+button would flood a session with every enabled-but-unseen facet.
 
-**Sibling spacing**: a term's facets ("siblings") must not be adjacent. Each selected facet is
-ranked within its term by priority (due-review > intraday-learning > unseen) via `ROW_NUMBER()
+**Sibling spacing** (`listDueReviewTerms`): a term's facets ("siblings") must not be adjacent. Each selected facet is
+ranked within its term by priority (due-review > intraday-learning) via `ROW_NUMBER()
 OVER (PARTITION BY user_lookup_id …)`; the outer queue orders by that rank first, so every
 term's rank-1 facet precedes any rank-2. Best-effort: a term dominating the due set has no
 separators left for its high-rank siblings, which go adjacent at the tail (accepted, not a
 guarantee). For a term with only its citation facet the rank is always 1, so the order collapses
-to plain due-time-then-new ordering.
+to plain due-time ordering.
 
-Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms woven into the
-currently-open reading text (`excludeUserLookupIds`).
+Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`).
 
 **Over-cap learning**: the ONLY past-the-cap path is the composed queue's **Learn
 extra** (§4b) — an explicit batch whose display-time claims pass `bypassCap` to the
 warm-up park guard (introductions still stamp `introduced_at`, so they count toward
-today). Neither the rating path nor reading mode has a cap bypass.
+today). The rating path has no cap bypass.
 
 ## 4b. The composed queue (composePracticeQueue)
 
@@ -458,8 +454,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 - **Planned introductions + display-time claim.** With `autoWarmup` on (the default
   Practice), composition includes eligible never-reviewed citation terms as onboarding
   gates — discovery is by (user, language) via `listEligibleNewCitationFacets`
-  (tier-ordered like the flashcard
-  new bucket, decayed terms excluded — see §4; recognition candidates also exclude terms
+  (tier-ordered, decayed terms excluded — see §4; recognition candidates also exclude terms
   whose production citation facet is live — the bridge covers those, see §7).
   **Production is allocated first**, then
   recognition, under the COMBINED daily budget. The per-compose budget is
@@ -474,9 +469,8 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   re-entry).
 - **Serve pass**, production-first (`prod flashcards → prod gates → recog flashcards →
   recog gates → opt-in-new` — pure concatenation of deterministic sub-lists, a stable
-  one-shot snapshot). Due flashcards come from `listReviewTerms` pinned so **citation-new
-  contributes 0 flashcard rows** (`review_due` scope for the due pass; `maxNewTerms = 0`
-  on the opt-in pass). Gates come from `getStrengthenExercises` over a pre-sliced id set:
+  one-shot snapshot). Due flashcards come from `listDueReviewTerms` and opt-in flashcards
+  from `listOptInNewFacets`, so **citation-new contributes 0 flashcard rows**. Gates come from `getStrengthenExercises` over a pre-sliced id set:
   `listParkedTerms(excludeCreditedToday: true)` — a term whose rehab day-credit was
   already earned today is **excluded** (answering it would consume a banked exercise
   while advancing nothing) — oldest-parked first, capped at `MAX_GATES_PER_COMPOSE`
@@ -489,7 +483,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 - **Opt-in-new pass** (`includeOptInNew`, the Learn-new preset): never-reviewed
   pronunciation/form facets served as flashcards — they never park (the exercise bank
   has no facet identity), so this is their ONLY introduction path, reserved for the
-  explicit Learn-new entry like the old learn_new-scope rule.
+  explicit Learn-new entry.
 - **Learn extra** (`learnExtraCount`, 1–20): an explicit batch past the daily-new cap —
   those planned items carry `bypassDailyCap`, applied by the same display-time claim
   (skips only the count predicate; `introduced_at` still stamps, so extras count toward
@@ -503,9 +497,7 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
   stable. The client uses it only to swap `generating` exercise placeholders to
   `ready`/`failed` in place (keyed `(pool, userLookupId)`), never to append.
 
-The old standalone flashcard queue (`mode=flashcards` on `/practice/review`, the
-learn-new batch sheet, and the language-wide `warmup-continue` resume) is gone; reading
-mode keeps `/practice/review` to itself. The post-session Strengthen CTA remains a
+The composed queue is the only flashcard surface. The post-session Strengthen CTA remains a
 dedicated surface. The session-scoped warm-up (`/practice/warmup/$lang`) still exists
 but has no UI entry point — the session-vocabulary footer now launches the zero-SRS
 session recap quiz instead (client-side, no FSRS writes; see docs/REVIEW-SPEC.md), leaving the
@@ -513,7 +505,7 @@ composed queue's display-time claims as the sole warm-up on-ramp.
 
 ## 5. Rating flow (applyTermRating)
 
-Shared by flashcards (`rateTerm`) and reading advances (`advanceReadingText`). Per rating:
+Shared by flashcards (`rateTerm`), checkpoint credits, and lesson-import lapses. Per rating:
 
 1. **Refusals (no FSRS, no event)**: `not_in_active_pool`; parked term (stale queue/tab —
    accepted as a no-op); introduction over the daily cap.
@@ -526,7 +518,8 @@ Shared by flashcards (`rateTerm`) and reading advances (`advanceReadingText`). P
    `practice_rating_events` insert commit together. The event carries the rated **facet
    identity** (`skill`, `target_form`) alongside `pool` (the session queue — distinct
    namespaces), the **pre-rating SRS snapshot** (`prev_srs_*`), `was_explicit` (false =
-   implicit reading 'good'), `was_introduction`, `caused_parking`, `practice_text_id`, and a
+   an implicit rating — checkpoint credit or lesson-import lapse), `was_introduction`,
+   `caused_parking`, and a
    `reverted_at` tombstone column — the foundation for undo and the review-budget count.
    Append-only; every event row represents an applied write.
 
@@ -551,7 +544,7 @@ is fully undoable). `practice.undoRating` takes that handle and, in one transact
    (user, lookup, skill, target_form) — `FOR UPDATE` serializes concurrent undos. Keyed on
    facet identity, **not pool**: the passive queue can serve multiple facets per term, so pool
    would address the wrong card. If the passed eventId isn't that event (a later rating landed
-   from another tab / reading mode, or it's already reverted), the undo is a stale-safe no-op:
+   from another tab, or it's already reverted), the undo is a stale-safe no-op:
    `{ undone: false }` (200), **never an error** — only the latest event's snapshot describes
    the row's current state, so an older one must never restore.
 2. Restores the facet's SRS family from the event's `prev_srs_*` snapshot
@@ -566,108 +559,9 @@ immediately follows a successful undo with a fresh `rateTerm`, which re-runs all
 **Re-rate = undo + fresh rate** (Anki semantics), so the new rating goes through the full
 cap/introduction/leech machinery.
 
-## 6. Reading mode
-
-Reading is **sessionless** (the `practice_sessions` table was dropped): state lives on
-`practice_texts` directly, keyed `(user_id, target_language, pool, ord)`, with a partial
-unique index allowing at most one `status='reading'` text per (user, language, pool).
-Opening `Read` (`/practice/review/$targetLanguage?pool=&scope=`) resumes that in-progress
-text when one exists — the language card's per-pool resume chips read the same state via
-`listCurrentReadings`. Background pre-generation is opportunistic and must never surface
-user-facing errors.
-
-### Scopes and pools
-
-A text is scoped to one target language, one pool, and one scope. Pool `production` is the
-old active drill — it serves only terms with an enabled `(meaning_production, '')` facet;
-its new-term intake draws on the same combined daily budget as recognition (the reading
-chips cap the advertised production-new count by the remaining budget). Scopes:
-`review_due` (already-introduced due terms only), `learn_new` (unseen terms up to the
-remaining per-day allowance), `mixed` (default; both). The scope is a **live filter
-re-evaluated per text** (`listReviewTerms`), not a frozen snapshot, and an in-progress or
-pre-generated text built under a different scope is discarded before resume — entering
-e.g. `Learn new` never surfaces a leftover `mixed` text. (Accepted transitional
-inconsistency: reading introduces new terms directly into FSRS via implicit ratings — a
-second intro path beside the composed queue's exercise-first on-ramp; reading lives under
-Custom practice.)
-
-### Text generation
-
-One short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of
-chunk level). The `status` + `ord` columns implement slot-based pre-generation:
-`prepareNextReadingText` reserves the next slot and runs the LLM in a detached promise
-behind a `generation_token` fence (raced or stale writers silently no-op), and the next
-advance promotes the ready slot instead of generating synchronously.
-
-The generation prompt is the methodology preamble + language instructions + user profile +
-the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`,
-`native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense,
-surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are
-unreliable at character arithmetic; the server locates each `surface_form` in `body` and
-computes offsets itself, claiming non-overlapping positions when a surface form repeats.
-
-Candidates come from the same `listReviewTerms` set as flashcards (same scopes/budgets —
-no learn-new bypass), filtered to **citation meaning facets** (a text must never embed a
-pronunciation or specific-form facet, whose front isn't the lemma) and excluding terms in
-the currently-reading text plus just-rated terms that may not have left the due window
-yet. When that set is empty, `generateNextReadingText` returns `done: true` and the
-reading view shows an "All caught up" view. Generation itself never introduces terms —
-facets enter FSRS lazily at rate/advance time (§5) and count against the daily-new
-allowance there.
-
-### Reading UX
-
-The body renders each annotation as a clickable yellow span (rated → muted gray;
-soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet`
-(`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. Its 3-dots overflow has `Edit term`
-(navigates to the focus view of the chunk's representative card with `?scope=language`;
-chevron-back pops history to the same text), `Switch to active vocabulary` / `Switch to
-passive vocabulary` (label follows the term's derived `learningMode`; calls
-`chunks.setFacetEnabled` with `skill=meaning_production`, `targetForm=''`; hidden when
-the annotation has no canonical `user_lookups` row), and `Delete from vocabulary`
-(soft-delete via `chunks.deleteChunk` + a Sonner toast with a `Restore` action backed by
-`chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only
-variant of the RateSheet. The `Next text` button advances; **every annotation not
-explicitly rated is auto-rated `good`** (`was_explicit = false`) so passive reading still
-informs the SRS.
-
-**Peek + save unannotated spans.** Tap-to-select on plain body text (not covered by an
-annotation) opens a `LookupSheet` with a fast one-line gloss + optional POS / register
-chips. A single click/tap selects one `Intl.Segmenter` word in the text's target
-language; press-and-drag extends to a word range — a range may sweep across annotations
-(the gloss handles the full phrase); a stationary tap on an annotation stays reserved for
-the `RateSheet`. The gloss is the stateless `glosses.fastGloss` (the same Haiku-powered
-`fastGlossPass` as the session view and the extension): the client passes the text body
-as the context line and renders the server-picked dialect-correct `ipaDisplay` verbatim.
-`Save to vocabulary` fires the `cards.createAdhoc` adhoc flow (passing the text body as
-the LLM context, truncated to 2000 chars) **fire-and-forget**: the button morphs to a
-disabled `Saved` state with an (i) popover pointing at the Vocabulary tab (newest terms
-sort first) and the session stays put — no navigation to the focus view. Failures surface
-as error toasts that survive closing the sheet; a missing CEFR level opens the inline
-CEFR dialog while the selection is still on screen. Closing the sheet clears the
-selection paint.
-
-### Advance (advanceReadingText)
-
-On **advance**:
-
-- `claimFinalize` is a one-shot status transition (reading → done); only the winner applies
-  ratings — double-clicks/retries are no-ops.
-- Every woven annotation's term gets rated: explicit if the user rated it in the sheet,
-  otherwise an **implicit `good`** (`was_explicit = false`). Annotations resolve to their
-  term by the `user_lookup_id` stamped into the annotation at generation time (fallback:
-  the `(headword, sense)` key, for texts stored before ids were stamped), so a mid-text
-  `chunks.rename` never drops a rating.
-- Skipped: terms already reviewed after the text was prepared
-  (`wasReviewedAfterTextWasPrepared`), terms ineligible for the session's scope, deleted
-  terms, and facets with `disabled_at` set — a facet disabled mid-text (production
-  demotion, dormant term) keeps its history but must not be advanced, or introduced, by
-  the implicit pass.
-
 ## 6b. Checkpoint reviews (real sessions)
 
-Reading mode's implicit-goods contract extended to real sessions (movies, texts,
-YouTube): an explicit checkpoint press — the reader-footer "I've followed up to
+Implicit reviews from real sessions (movies, texts, YouTube): an explicit checkpoint press — the reader-footer "I've followed up to
 here" button, or the extension overlay's checkpoint button — credits an implicit
 `good` to every saved term appearing in the newly-read span whose recognition
 facet is review-state and due. **Nothing is ever credited automatically**;
@@ -886,7 +780,7 @@ study-sessions contract.
   explicit-or-checkpoint evidence, where the assertion lane
   (`was_explicit = TRUE AND checkpoint_id IS NOT NULL`) is structurally
   excluded — so neither an assertion, a pronunciation good, nor a
-  reading-mode implicit good can flip a term to verified.
+  non-checkpoint implicit rating can flip a term to verified.
 
 ## 7. Parking + scaffolded exercises: leech rehab AND warm-up
 
@@ -916,9 +810,8 @@ sets from the same column. Everything below "park" is shared.
   a lower desired retention (§2), which roughly doubles its expected lapse rate. New-lapse
   **delta**, not an absolute check, so graduated high-lapse terms aren't re-parked by
   good/easy ratings. Per pool.
-- **Parked** = out of every queue (flashcards and reading candidates — both feed from
-  `listReviewTerms`, which filters on the parked column; this is intentional, since
-  reading's implicit `good` on advance must never mutate a parked facet's FSRS). The
+- **Parked** = out of every flashcard queue (both selectors filter on the parked
+  column). The
   due-summary aggregates exclude parked rows too, so the landing never claims terms the
   queue refuses to serve. Ratings from stale queues are accepted as no-ops. The flashcard
   client reacts to `rateTerm`'s `parked: true` with a toast ("… keeps tripping you up —
@@ -972,8 +865,8 @@ sets from the same column. Everything below "park" is shared.
   pool with the same id) and its `origin` (`onboarding`/`leech`, derived from `srs_state`)
   so mixed-origin queues pick the right copy; `submitExerciseAnswer` routes to the right
   facet.
-- Warm-up entry consumes the **same combined daily new-term budget** as flashcard and
-  reading introductions, in both pools — over-cap terms wait for tomorrow.
+- Warm-up entry consumes the **same combined daily new-term budget** as flashcard
+  introductions, in both pools — over-cap terms wait for tomorrow.
   `initializeCitationFacetIfUnderDailyCap` also carries an `AND leech_parked_at IS NULL` guard
   so a parked warm-up facet is never re-introduced as a flashcard.
 - **Serve-only refresh.** `refreshWarmupSession` (session, both pools) re-serves with no
@@ -991,9 +884,8 @@ warm-up.
 
 - **Intro-side exclusion.** While a term's ENABLED production citation facet is **live**
   (`srs_state IS NOT NULL OR leech_parked_at IS NOT NULL` — scheduled or parked), its
-  recognition citation facet is excluded from `listEligibleNewCitationFacets`, the
-  recognition flashcard new bucket, and the due summary's `new_count`
-  (`noLiveProductionSiblingSql`). Enforced at BOTH atomic write gates, not just queue
+  recognition citation facet is excluded from `listEligibleNewCitationFacets` (via the
+  introduction order in `book-priority.ts`) and the due summary's `new_count`. Enforced at BOTH atomic write gates, not just queue
   selection: the warm-up park guard returns `not_eligible` and
   `initializeCitationFacetIfUnderDailyCap` refuses (reads as a cap refusal — the client
   drops the card), so a queue item or plan computed before production went live can't
@@ -1002,7 +894,7 @@ warm-up.
   partition must cover every kept term; the bridge moves them to `review` at the next
   production credit.
 - **Bridged credit** (`recognition-bridge.ts`, hooked after `applyTermRating`'s commit —
-  covers every production rating surface: flashcards, production reading advances). A
+  covers every production rating surface). A
   citation-production `good`/`easy` credits the recognition sibling: a never-scheduled
   facet is seeded straight into review with the generous known-assert schedule
   (`seedKnownAssertFacet` — no `introduced_at`, so bridged introductions never consume
@@ -1035,7 +927,7 @@ warm-up.
   only** (`gate_eligible = false`) — an LLM grading error must never block a graduation.
   Strengthen serves one gate exercise per parked term (oldest first) plus bonus exercises
   for this session's again/hard set.
-- **Lifecycle + consume-on-answer.** Slots mirror the `practice_texts` fencing lifecycle:
+- **Lifecycle + consume-on-answer.** Slots follow a fenced lifecycle:
   `pending → generating` (mints a `generation_token`) `→ ready → used | failed`; stale
   pending/generating slots (> 300s) are fenced off and replaced; an advisory lock per
   `(term, pool)` makes concurrent ensure calls race-safe. Serving is read-only
@@ -1260,7 +1152,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 - **Select-to-gloss on exercise sentences.** Exercise stems render through
   `SelectableSentence` (word pieces per the `use-word-selection` span contract) inside a
   per-exercise `GlossableArea`, which owns the gesture and mounts the same fire-and-forget
-  `LookupSheet` as reading mode (stateless `glosses.fastGloss`, `cards.createAdhoc` save;
+  `LookupSheet` (stateless `glosses.fastGloss`, `cards.createAdhoc` save;
   the stem sentence is the context). Gating, enforced by a pure resolver
   (`resolveGlossSelection`) that rejects any selection overlapping a rejected range:
   - The **cloze blank** (`mc_cloze` / `production_cloze`) renders as the `______` gap and
@@ -1275,7 +1167,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
     are native-language paraphrases and stay plain.
   Exercise hotkeys (numbers, Skip, Enter/Space, production's Escape) are inert while a
   gloss sheet is open; closing the sheet clears the selection paint. Saved terms land
-  Unseen, exactly like reading-mode saves — no effect on the running session or budgets.
+  Unseen — no effect on the running session or budgets.
   Applies to every exercise host: warm-up/strengthen sessions, the composed queue, and
   flashcard-hint mode (the session-recap quiz mirrors this — see REVIEW-SPEC).
 - **Flashcard hint**: on the un-flipped front of a live citation-meaning flashcard, a
@@ -1342,7 +1234,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   `review-counts.ts`). Chips bucket by **learning stage, not render type**, four buckets:
   `new` (planned onboarding gates — `isNewIntroduction` — plus
   never-reviewed opt-in flashcards), `warmup` (returning backlog gates from earlier
-  composes; the pill hides at 0 — reading mode and gate-free sessions never have any),
+  composes; the pill hides at 0 — gate-free sessions never have any),
   `learning` (learning/relearning flashcards + `Again`-redrills + rehab gates), `review`.
   The split makes introductions visible in-session and matches the landing's vocabulary:
   the session-plan card shows the same four numbers before the user presses Practice.
@@ -1422,8 +1314,8 @@ too, and a failed preview renders "Couldn't load your session preview" rather th
 reading as caught up — the language landing behind the row owns retry.
 
 Above the language list, first-time users see a one-time **"How practice works"
-explainer card** (spaced repetition, session composition + daily limits, warm-up,
-reading mode — four short points, plus a deep link to `/user-guide#practice`). "Got it"
+explainer card** (spaced repetition, session composition + daily limits, warm-up —
+three short points, plus a deep link to `/user-guide#practice`). "Got it"
 or the X records the `practice_explainer_dismissed` account flag
 (`users.account_flags`, synced across devices), after which the card never returns and
 the static one-line intro paragraph takes its place; neither renders until prefs have
@@ -1459,11 +1351,10 @@ status summary and stat cards (Follow-ups / New today / Unseen / Total):
 
 A secondary **Custom practice** button opens an
 overlay with the focused presets (`Review (due, no new)`, `Flashcards only`, `Learn new`,
-`Exercises only`, `Production focus` — each just a composed-queue filter spec), the `Read`
-reading mode, per-pool reading history, and a build-your-own filter panel (pools / scope /
+`Exercises only`, `Production focus` — each just a composed-queue filter spec) and a
+build-your-own filter panel (pools / scope /
 item types / opt-in-new toggle, with inline reasons on contradictory combos — e.g.
-new-only + flashcards-only without opt-in cards is empty by construction). In-progress
-reading texts keep their per-pool resume chips on the card.
+new-only + flashcards-only without opt-in cards is empty by construction).
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`

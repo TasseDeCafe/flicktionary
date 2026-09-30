@@ -22,10 +22,6 @@ import {
 } from '../../transport/database/study-facets/study-facets-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import type {
-  PracticeTextsRepositoryInterface,
-  DbPracticeText,
-} from '../../transport/database/practice-texts/practice-texts-repository'
 import type { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { beginTx } from '../../transport/database/postgres-client'
@@ -49,14 +45,11 @@ import { claimPracticeIntroduction } from '../../service/practice/claim-practice
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/rehab'
-import { generateReadingText, prepareNextReadingText } from '../../service/practice/generate-reading-text'
-import { advanceReadingText, type AdvanceReadingTextDependencies } from '../../service/practice/advance-reading-text'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 
 export type PracticeRouterDependencies = {
   anthropicPasses: AnthropicPassesInterface
-  practiceTextsRepository: PracticeTextsRepositoryInterface
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
@@ -65,71 +58,6 @@ export type PracticeRouterDependencies = {
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   bookPinsRepository: BookPinsRepositoryInterface
-}
-
-type RawAnnotation = {
-  headword?: unknown
-  sense?: unknown
-  surface_form?: unknown
-  char_start?: unknown
-  char_end?: unknown
-  user_lookup_id?: unknown
-}
-
-type ChunkContent = {
-  userLookupId: string
-  cardId: string | null
-  // Source session of the representative card. Needed so the practice text's
-  // "Edit term" action can deep-link to `/sessions/$sessionId/review/$cardId`.
-  cardSessionId: string | null
-  translation: string | null
-  definition: string | null
-  grammar: Record<string, unknown> | null
-  deletedAt: Date | null
-  isProductionEnabled: boolean
-}
-
-const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
-const lookupIdKey = (id: string) => `id:${id}`
-
-const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkContent>) => {
-  const annRaw = Array.isArray(row.annotations) ? (row.annotations as RawAnnotation[]) : []
-  const annotations = annRaw.map((a) => {
-    const headword = typeof a.headword === 'string' ? a.headword : ''
-    const sense = typeof a.sense === 'string' ? a.sense : ''
-    // The generation-time id survives a rename of the (headword, sense) key;
-    // texts stored before ids were stamped resolve by the key alone.
-    const contentById =
-      typeof a.user_lookup_id === 'string' ? contentByKey.get(lookupIdKey(a.user_lookup_id)) : undefined
-    const content = contentById ?? contentByKey.get(lookupKey(headword, sense))
-    return {
-      headword,
-      sense,
-      surfaceForm: typeof a.surface_form === 'string' ? a.surface_form : '',
-      charStart: typeof a.char_start === 'number' ? a.char_start : 0,
-      charEnd: typeof a.char_end === 'number' ? a.char_end : 0,
-      translation: content?.translation ?? null,
-      definition: content?.definition ?? null,
-      grammar: content?.grammar ?? null,
-      userLookupId: content?.userLookupId ?? null,
-      cardId: content?.cardId ?? null,
-      cardSessionId: content?.cardSessionId ?? null,
-      deletedAt: content?.deletedAt ? new Date(content.deletedAt).toISOString() : null,
-      isProductionEnabled: content?.isProductionEnabled ?? null,
-    }
-  })
-  return {
-    id: row.id,
-    pool: (row.pool as PracticePool) ?? 'recognition',
-    ord: row.ord,
-    status: row.status,
-    body: row.body,
-    annotations,
-    generationWarning: row.generation_warning,
-    createdAt: new Date(row.created_at).toISOString(),
-    readyAt: row.ready_at ? new Date(row.ready_at).toISOString() : null,
-    readAt: row.read_at ? new Date(row.read_at).toISOString() : null,
-  }
 }
 
 // 'wiktionary' when the citation card's displayed IPA is dictionary-grounded:
@@ -147,7 +75,7 @@ export const computeIpaSource = (row: DbUserLookupWithFacet): 'wiktionary' | nul
 }
 
 // Maps a user_lookups row to the review-term DTO. grammar JSONB is passed
-// through like toPracticeTextDto does; the contract's GrammarSchema validates it.
+// through; the contract's GrammarSchema validates it.
 const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   userLookupId: row.id,
   headword: row.headword,
@@ -210,42 +138,6 @@ export const toPreviewDto = (plan: PracticeQueuePlan) => {
   }
 }
 
-// Builds the (headword, sense) -> content map for the row's annotations by
-// hitting user_lookups once per practice text. Returns an empty map when the
-// row has no annotations (or the body hasn't been generated yet).
-const fetchAnnotationContent = async (
-  row: DbPracticeText,
-  userId: string,
-  targetLanguage: string,
-  userLookupsRepository: UserLookupsRepositoryInterface
-): Promise<Map<string, ChunkContent>> => {
-  const annRaw = Array.isArray(row.annotations) ? (row.annotations as RawAnnotation[]) : []
-  const keys = annRaw
-    .map((a) => ({
-      headword: typeof a.headword === 'string' ? a.headword : '',
-      sense: typeof a.sense === 'string' ? a.sense : '',
-    }))
-    .filter((k) => k.headword.length > 0)
-  if (keys.length === 0) return new Map()
-  const rows = await userLookupsRepository.listChunkContentForKeys({ userId, targetLanguage, keys })
-  const map = new Map<string, ChunkContent>()
-  for (const r of rows) {
-    const content: ChunkContent = {
-      userLookupId: r.id,
-      cardId: r.firstCardId,
-      cardSessionId: r.firstCardSessionId,
-      translation: r.translation,
-      definition: r.definition,
-      grammar: r.grammar,
-      deletedAt: r.deletedAt,
-      isProductionEnabled: r.isProductionEnabled,
-    }
-    map.set(lookupKey(r.headword, r.sense), content)
-    map.set(lookupIdKey(r.id), content)
-  }
-  return map
-}
-
 export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const implementer = implement(practiceContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -267,7 +159,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     bookPinsRepository: deps.bookPinsRepository,
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
-  // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
+  // ratings pre-generate Strengthen exercises.
   const warmBank = (params: { lookup: DbUserLookup; pool: PracticePool }) =>
     warmExerciseBank({ ...params, deps: exerciseBankDeps })
 
@@ -276,40 +168,18 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   // our callbacks always resolve a single value, never a query array.
   const withTransaction: WithTransaction = (fn) => beginTx(fn) as ReturnType<typeof fn>
 
-  const readingDeps: AdvanceReadingTextDependencies = {
-    anthropicPasses: deps.anthropicPasses,
-    practiceTextsRepository: deps.practiceTextsRepository,
-    userLookupsRepository: deps.userLookupsRepository,
-    studyFacetsRepository: deps.studyFacetsRepository,
-    usersRepository: deps.usersRepository,
-    userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
-    practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
-    bookPinsRepository: deps.bookPinsRepository,
-    withTransaction,
-    warmExerciseBank: warmBank,
-  }
-  // Shape a practice_text into its DTO, joining live annotation content.
-  const shapeText = async (text: DbPracticeText, userId: string, targetLanguage: string) => {
-    const contentByKey = await fetchAnnotationContent(text, userId, targetLanguage, deps.userLookupsRepository)
-    return toPracticeTextDto(text, contentByKey)
-  }
-
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
       // reviewedTodayCount comes off the rating-event log (recognition review
       // budget only — the production pool has no review budget) in one grouped
-      // query, merged per language. Open reading-mode texts ride along so the
-      // landing can offer "continue reading" (they're otherwise invisible —
-      // an abandoned reading is only reachable by re-entering Read mode).
-      const [summary, reviewedTodayByLanguage, currentReadings, lastRatedByLanguage, lastUsedByLanguage] =
-        await Promise.all([
-          deps.userLookupsRepository.listDueSummary(userId),
-          deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
-          deps.practiceTextsRepository.listCurrentReadings(userId),
-          deps.practiceRatingEventsRepository.getLastRatedAtByLanguage(userId),
-          deps.practiceExercisesRepository.getLastUsedAtByLanguage(userId),
-        ])
+      // query, merged per language.
+      const [summary, reviewedTodayByLanguage, lastRatedByLanguage, lastUsedByLanguage] = await Promise.all([
+        deps.userLookupsRepository.listDueSummary(userId),
+        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
+        deps.practiceRatingEventsRepository.getLastRatedAtByLanguage(userId),
+        deps.practiceExercisesRepository.getLastUsedAtByLanguage(userId),
+      ])
       // lastPracticedAt = the later of the last live rating and the last
       // answered exercise (kept as two grouped reads — a join into the summary
       // aggregate would fan out its counts).
@@ -323,9 +193,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         ...entry,
         reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
         lastPracticedAt: lastPracticedAt(entry.targetLanguage),
-        currentReadings: currentReadings
-          .filter((reading) => reading.targetLanguage === entry.targetLanguage)
-          .map(({ pool, scope, termCount }) => ({ pool, scope, termCount })),
       }))
       return { data: { perLanguage } }
     }),
@@ -391,80 +258,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
       return { data: { undone: result.undone } }
-    }),
-
-    generateNextReadingText: implementer.generateNextReadingText.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const result = await generateReadingText(userId, input.targetLanguage, input.pool, input.scope, readingDeps)
-      if (!result.ok) {
-        if (result.reason === 'no_native_language') {
-          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
-        }
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: result.warning ?? 'Practice text generation failed' }] },
-        })
-      }
-      if (result.done) return { data: { done: true as const } }
-      return {
-        data: {
-          done: false as const,
-          practiceText: await shapeText(result.practiceText, userId, input.targetLanguage),
-        },
-      }
-    }),
-
-    prepareNextReadingText: implementer.prepareNextReadingText.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const result = await prepareNextReadingText(
-        userId,
-        input.targetLanguage,
-        input.pool,
-        input.scope,
-        input.excludeUserLookupIds,
-        readingDeps
-      )
-      if (!result.ok) {
-        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
-      }
-      if (result.status === 'no_work') return { data: { status: 'no_work' as const } }
-      return { data: { status: result.status, practiceTextId: result.practiceTextId } }
-    }),
-
-    advanceReadingText: implementer.advanceReadingText.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const result = await advanceReadingText(userId, input.textId, input.pool, input.scope, input.ratings, readingDeps)
-      if (!result.ok) {
-        if (result.reason === 'text_not_found') {
-          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
-        }
-        if (result.reason === 'no_native_language') {
-          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
-        }
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: result.warning ?? 'Practice text generation failed' }] },
-        })
-      }
-      if (result.done) return { data: { done: true as const, introduced: result.introduced } }
-      const found = await deps.practiceTextsRepository.findByIdForUser(result.practiceText.id, userId)
-      const targetLanguage = found?.targetLanguage ?? result.practiceText.target_language
-      return {
-        data: {
-          done: false as const,
-          nextText: await shapeText(result.practiceText, userId, targetLanguage),
-          introduced: result.introduced,
-        },
-      }
-    }),
-
-    readingHistory: implementer.readingHistory.handler(async ({ input, context }) => {
-      const userId = context.res.locals.userId
-      const rows = await deps.practiceTextsRepository.listHistory({
-        userId,
-        targetLanguage: input.targetLanguage,
-        pool: input.pool,
-      })
-      const texts = await Promise.all(rows.map((row) => shapeText(row, userId, input.targetLanguage)))
-      return { data: { texts } }
     }),
 
     startStrengthenSession: implementer.startStrengthenSession.handler(async ({ input, context }) => {

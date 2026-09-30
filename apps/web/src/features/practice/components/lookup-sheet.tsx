@@ -31,7 +31,6 @@ import {
   useStatelessGloss,
 } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
-import type { PlainSelection } from './annotated-text'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type GlossState =
@@ -47,6 +46,19 @@ type GlossState =
       knownLemmaCandidates: string[]
     }
   | { kind: 'error' }
+
+// A word-range selection the sheet glosses (peek + Save to vocabulary). May
+// span several words — the gloss prompt gets the full surface text.
+export type PlainSelection = {
+  text: string
+  // Inclusive/exclusive offsets into the context text. Lets the caller render
+  // the exact source surface and pass surrounding context to the gloss prompt.
+  charStart: number
+  charEnd: number
+  // Snapshot of the selection's bounding box so the floating sheet can anchor
+  // on desktop after the selection paint clears.
+  rect: DOMRect
+}
 
 interface LookupSheetProps {
   open: boolean
@@ -146,8 +158,8 @@ export const LookupSheet = ({
     createAdhoc({
       targetLanguage: lang,
       headword: selection.text,
-      // Send the surrounding text as the LLM's context window. Truncated
-      // defensively even though our generated texts are well under 2k chars.
+      // Send the surrounding text as the LLM's context window, truncated
+      // defensively.
       context: contextText.slice(0, CONTEXT_MAX),
       // Touched study options ride the save (applied inline, before the keep
       // transition). Untouched → undefined → backend default. Read live so

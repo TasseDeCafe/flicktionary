@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
-import { plural } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { BookOpen, Brain, ChevronLeft, CircleAlert, CircleCheck, Flame, SlidersHorizontal } from 'lucide-react'
+import { Brain, ChevronLeft, CircleAlert, CircleCheck, Flame, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -68,30 +67,6 @@ export const PracticeLanguageView = () => {
         includeOptInNew: false,
       },
     })
-
-  // An open reading-mode text is otherwise invisible from the landing (it's
-  // only reachable by re-entering Read mode, and only under its own scope —
-  // a different scope discards it), so surface it with a resume affordance.
-  const renderReadingAffordance = (pool: PracticePool) => {
-    const reading = entry?.currentReadings.find((r) => r.pool === pool)
-    if (!reading) return null
-    return (
-      <button
-        type='button'
-        onClick={() =>
-          void navigate({
-            to: '/practice/review/$targetLanguage',
-            params: { targetLanguage },
-            search: { pool, scope: reading.scope ?? 'mixed' },
-          })
-        }
-        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left text-sm text-sky-800 transition-colors hover:bg-sky-100 active:bg-sky-100'
-      >
-        <BookOpen className='h-4 w-4 shrink-0' />
-        {t`Reading in progress (${plural(reading.termCount, { one: '# term', other: '# terms' })}) — continue`}
-      </button>
-    )
-  }
 
   return (
     <div className='flex h-full flex-col'>
@@ -161,8 +136,6 @@ export const PracticeLanguageView = () => {
                     onRetry={() => void refetchPreview()}
                   />
                 </div>
-                {renderReadingAffordance('recognition')}
-                {renderReadingAffordance('production')}
                 <div className='mt-4 flex flex-col gap-2'>
                   <Button type='button' size='xl' className='w-full' onClick={openPractice}>
                     <Brain className='h-4 w-4' />

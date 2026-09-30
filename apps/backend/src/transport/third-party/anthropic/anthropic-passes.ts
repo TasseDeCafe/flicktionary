@@ -10,7 +10,6 @@ import { fastGlossPass } from './passes/fast-gloss-pass'
 import { generateContextBlob } from './passes/generate-context-blob'
 import { generateExercisePass } from './passes/generate-exercise-pass'
 import { generateFormData } from './passes/generate-form-data'
-import { generatePracticeText } from './passes/generate-practice-text'
 import { gradeUseInSentencePass } from './passes/grade-use-in-sentence-pass'
 import { languageDetectionPass } from './passes/language-detection-pass'
 import { moderationPass } from './passes/moderation-pass'
@@ -38,7 +37,6 @@ export type AnthropicPassesInterface = {
   generateContextBlob: typeof generateContextBlob
   generateExercisePass: typeof generateExercisePass
   generateFormData: typeof generateFormData
-  generatePracticeText: typeof generatePracticeText
   gradeUseInSentencePass: typeof gradeUseInSentencePass
   languageDetectionPass: typeof languageDetectionPass
   moderationPass: typeof moderationPass
@@ -65,7 +63,6 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   generateContextBlob,
   generateExercisePass,
   generateFormData,
-  generatePracticeText,
   gradeUseInSentencePass,
   languageDetectionPass,
   moderationPass,
@@ -95,7 +92,6 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   generateContextBlob: notScripted('generateContextBlob'),
   generateExercisePass: notScripted('generateExercisePass'),
   generateFormData: notScripted('generateFormData'),
-  generatePracticeText: notScripted('generatePracticeText'),
   gradeUseInSentencePass: notScripted('gradeUseInSentencePass'),
   languageDetectionPass: notScripted('languageDetectionPass'),
   moderationPass: notScripted('moderationPass'),

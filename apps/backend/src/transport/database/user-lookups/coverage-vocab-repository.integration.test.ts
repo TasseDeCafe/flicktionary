@@ -38,7 +38,6 @@ describe('listCoverageVocab', () => {
       wasIntroduction: false,
       wasExplicit: overrides.wasExplicit,
       causedParking: false,
-      practiceTextId: null,
       studySessionId: null,
       checkpointId: overrides.checkpointId ?? null,
       headword: 'слово',
@@ -93,9 +92,9 @@ describe('listCoverageVocab', () => {
     const pronunciationOnly = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
     await insertEvent(userId, pronunciationOnly, { wasExplicit: true, skill: 'pronunciation' })
 
-    // Reading-mode implicit good: neither explicit nor checkpoint evidence.
-    const readingImplicit = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
-    await insertEvent(userId, readingImplicit, { wasExplicit: false })
+    // Implicit rating outside a checkpoint (e.g. a lesson-import lapse): neither explicit nor checkpoint evidence.
+    const importImplicit = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
+    await insertEvent(userId, importImplicit, { wasExplicit: false })
 
     const againOnly = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
     await insertEvent(userId, againOnly, { wasExplicit: true, rating: 'again' })
@@ -125,7 +124,7 @@ describe('listCoverageVocab', () => {
     expect(verifiedById.get(checkpointCredit)).toBe(true)
     expect(verifiedById.get(assertion)).toBe(false)
     expect(verifiedById.get(pronunciationOnly)).toBe(false)
-    expect(verifiedById.get(readingImplicit)).toBe(false)
+    expect(verifiedById.get(importImplicit)).toBe(false)
     expect(verifiedById.get(againOnly)).toBe(false)
     expect(verifiedById.get(reverted)).toBe(false)
     expect(verifiedById.get(neverRated)).toBe(false)

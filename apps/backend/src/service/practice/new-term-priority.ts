@@ -1,12 +1,12 @@
 import { sql } from '../../transport/database/postgres-client'
 
-// New-term (never-introduced) priority: the queue's new buckets serve tiers
-// instead of pure created_at FIFO. The signals live on user_lookups
+// New-term (never-introduced) priority: introductions follow tiers instead of
+// pure created_at FIFO. The signals live on user_lookups
 // (encounter_count / last_encountered_at, maintained by recordEncounter at
 // user-intent boundaries; zipf_estimate, emitted by the basic-data pass and
 // the backfill script). The SQL fragments below are the single source for the
-// tier expression, the decay predicate, and the new-bucket ORDER BY so the
-// three serving queries and the landing-page count queries cannot drift.
+// tier expression, the decay predicate, and the new-term ORDER BY so the
+// serving queries and the landing-page count queries cannot drift.
 //
 // All predicates are NOW()-relative, so `pnpm db:advance-day` time travel
 // keeps working.
@@ -38,7 +38,7 @@ export const NEW_TERM_DECAY_DAYS = 90
 //       rarer than FRESH_SAVE_MIN_ZIPF
 //   3 — the backlog (ordered by frequency prior within the tier)
 // `ul` must be the user_lookups alias in the enclosing query.
-export const newTermTierSql = () => sql`
+const newTermTierSql = () => sql`
   CASE WHEN ul.encounter_count >= 2 THEN 1
        WHEN ul.last_encountered_at > NOW() - make_interval(days => ${NEW_TERM_FRESHNESS_DAYS})
          AND (ul.zipf_estimate IS NULL OR ul.zipf_estimate >= ${FRESH_SAVE_MIN_ZIPF}) THEN 2

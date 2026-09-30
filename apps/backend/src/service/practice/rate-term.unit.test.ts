@@ -255,7 +255,6 @@ describe('rateTerm rating-event log', () => {
         wasExplicit: true,
         wasIntroduction: true,
         causedParking: false,
-        practiceTextId: null,
         headword: 'gato',
         sense: 'cat',
         prevSrsState: null,
@@ -364,8 +363,7 @@ describe('rateTerm rating-event log', () => {
   })
 })
 
-// Parking goes through the SHARED applyTermRating path (rateTerm here, the
-// reading finalizer in advance-reading-text.unit.test.ts). Threshold is per
+// Parking goes through the SHARED applyTermRating path. Threshold is per
 // pool (recognition 6, production 4); the condition is a new-lapse DELTA, not
 // an absolute check.
 describe('rateTerm leech parking', () => {

@@ -508,7 +508,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         onError: () => setPendingRerate(null),
         onSuccess: (undoResp) => {
           if (!undoResp.data.undone) {
-            // Stale handle — a later rating (other tab, reading mode) is now
+            // Stale handle — a later rating (e.g. another tab) is now
             // the latest live event, or it was already reverted. The server
             // refused to restore; treat the card as unknown-but-consistent:
             // drop the record and let it resurface for a clean rating.

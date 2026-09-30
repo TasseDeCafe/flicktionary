@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getConfig } from '../../../config/environment-config'
 
 // Pinned model versions. Opus handles the accuracy-first passes (full
-// exploration, exercise generation, practice texts, card chat). Sonnet 5
+// exploration, exercise generation, card chat). Sonnet 5
 // handles the passes where near-Opus quality at 60% of the price is the better
 // trade. Haiku handles the latency-sensitive tap-to-translate fast-gloss path.
 //

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { BookOpen, Brain, ChevronDown, ChevronUp, Dumbbell, History, Layers, Sparkles, Star } from 'lucide-react'
+import { Brain, ChevronDown, ChevronUp, Dumbbell, Layers, Sparkles, Star } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import {
@@ -49,8 +49,8 @@ const FilterChip = ({
 )
 
 // Every secondary practice mode, behind the landing's single "Custom practice"
-// button: presets named by the exact item classes they produce, the reading
-// mode, per-pool history, and a build-your-own filter panel. Each preset is
+// button: presets named by the exact item classes they produce and a
+// build-your-own filter panel. Each preset is
 // just the composed engine with a filter spec — render type is derived from
 // term state, presets only scope populations.
 export const CustomPracticeOverlay = ({
@@ -80,19 +80,6 @@ export const CustomPracticeOverlay = ({
     onOpenChange(false)
     void navigate({ to: '/practice/composed/$targetLanguage', params: { targetLanguage }, search })
   }
-  const openRead = () => {
-    onOpenChange(false)
-    void navigate({
-      to: '/practice/review/$targetLanguage',
-      params: { targetLanguage },
-      search: { pool: 'recognition', scope: 'mixed' },
-    })
-  }
-  const openHistory = (pool: PracticePool) => {
-    onOpenChange(false)
-    void navigate({ to: '/practice/history/$targetLanguage', params: { targetLanguage }, search: { pool } })
-  }
-
   const presets: Array<{
     key: string
     icon: React.ReactNode
@@ -184,30 +171,6 @@ export const CustomPracticeOverlay = ({
                 onSelect={() => startComposed(preset.search)}
               />
             ))}
-
-          <OptionCard
-            variant='navigation'
-            icon={<BookOpen />}
-            title={t`Read`}
-            description={t`Review through a short generated text.`}
-            onSelect={openRead}
-          />
-          <OptionCard
-            variant='navigation'
-            icon={<History />}
-            title={t`Reading history`}
-            description={productionTotal > 0 ? t`Past generated texts (recognition pool).` : t`Past generated texts.`}
-            onSelect={() => openHistory('recognition')}
-          />
-          {productionTotal > 0 && (
-            <OptionCard
-              variant='navigation'
-              icon={<History />}
-              title={t`Reading history (production)`}
-              description={t`Past generated texts for the production pool.`}
-              onSelect={() => openHistory('production')}
-            />
-          )}
 
           {/* Build-your-own filter panel — the full-options escape hatch. */}
           <button

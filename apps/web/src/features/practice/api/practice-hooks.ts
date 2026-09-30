@@ -2,8 +2,6 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { dropTermFromComposedSession } from '../components/composed-session-snapshot'
-import { dropTermFromExerciseSession } from '../components/exercise-session-snapshot'
 
 // The landing's two summary queries — the drifting due summary and the
 // session-plan preview — are ONE invalidation unit: anything that can change
@@ -221,94 +219,6 @@ export const useHintExercise = (params: { userLookupId: string; pool: PracticePo
       enabled: params != null,
       select: (response) => response.data.exercise,
       meta: { showErrorToast: false },
-    })
-  )
-}
-
-// Bootstrap or resume the current reading text for a (language, pool).
-// Invalidates the landing summary: this is the call that flips a text to
-// 'reading', and the landing's "continue reading" affordance reads off that.
-export const useGenerateNextReadingText = () => {
-  const { t } = useLingui()
-  return useMutation(
-    orpcQuery.practice.generateNextReadingText.mutationOptions({
-      meta: {
-        invalidates: [...practiceSummaryKeys()],
-        errorMessage: t`Failed to generate next text`,
-      },
-    })
-  )
-}
-
-// Fire-and-forget pre-generation. Eagerly kicks off the LLM call for the next
-// slot as soon as the current text loads so advance can hand back a 'ready' row
-// instantly. Failures are non-fatal (advance regenerates fresh).
-export const usePrepareNextReadingText = () => {
-  return useMutation(
-    orpcQuery.practice.prepareNextReadingText.mutationOptions({
-      meta: { showErrorToast: false },
-    })
-  )
-}
-
-// The single reading-mode mutation: finalize the current text (FSRS for every
-// annotation) and surface the next. Invalidates the landing's drifting counts.
-export const useAdvanceReadingText = () => {
-  const { t } = useLingui()
-  return useMutation(
-    orpcQuery.practice.advanceReadingText.mutationOptions({
-      meta: {
-        invalidates: [...practiceSummaryKeys(), ...difficultyInvalidates()],
-        errorMessage: t`Failed to advance`,
-      },
-    })
-  )
-}
-
-export const useReadingHistory = (targetLanguage: string, pool: PracticePool) => {
-  const { t } = useLingui()
-  return useQuery(
-    orpcQuery.practice.readingHistory.queryOptions({
-      input: { targetLanguage, pool },
-      select: (r) => r.data.texts,
-      meta: { errorMessage: t`Failed to load history` },
-    })
-  )
-}
-
-// Soft-delete from inside a practice text. The reading view holds its text in
-// local component state (mutation response), so the annotation's deleted state
-// is flipped optimistically there; here we only refresh the vocab list and the
-// landing counts.
-export const useDeleteChunkFromPractice = () => {
-  const { t } = useLingui()
-  return useMutation(
-    orpcQuery.chunks.deleteChunk.mutationOptions({
-      // An interrupted practice session stashed for resume (composed or
-      // strengthen/warm-up) must not re-serve the deleted term's
-      // cards/exercises.
-      onSuccess: (_data, { id }) => {
-        dropTermFromComposedSession(id)
-        dropTermFromExerciseSession(id)
-      },
-      meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
-        errorMessage: t`Failed to delete term`,
-      },
-    })
-  )
-}
-
-// Counterpart to useDeleteChunkFromPractice. Clears deleted_at without touching
-// count/status — the chunk resumes participating in SRS with its existing schedule.
-export const useRestoreChunkFromPractice = () => {
-  const { t } = useLingui()
-  return useMutation(
-    orpcQuery.chunks.restoreChunk.mutationOptions({
-      meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
-        errorMessage: t`Failed to restore term`,
-      },
     })
   )
 }

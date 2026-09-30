@@ -141,7 +141,6 @@ export const assertKnownBacklog = async (
           prevLeechParkedAt: isParked ? facet.leech_parked_at : null,
           prevLeechRehabCorrectDays: isParked ? facet.leech_rehab_correct_days : null,
           prevLeechRehabLastCorrectOn: isParked ? facet.leech_rehab_last_correct_on : null,
-          practiceTextId: null,
           studySessionId: params.sessionId,
           checkpointId: params.checkpointId,
           headword: lookup.headword,
