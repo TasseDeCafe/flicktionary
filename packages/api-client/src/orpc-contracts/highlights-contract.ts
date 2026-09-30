@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import { GrammarIpaBagSchema, HighlightSchema, StudyIntentSchema } from './common/flicktionary-schemas'
+import { WordFamilySchema } from './glosses-contract'
 
 export const highlightsContract = {
   listBySession: oc
@@ -85,6 +86,11 @@ export const highlightsContract = {
           ipaLemma: z.string().nullable(),
           // Known-mark chip read path — see glosses-contract's fastGloss.
           knownLemmaCandidates: z.array(z.string()),
+          // The same word-family line the preview gloss showed, so it survives
+          // Save and reopen. Null when the reader has the hints off or there is
+          // nothing to show; insightPending → glosses.wordFamilyInsight fills
+          // it in (see glosses-contract's fastGloss).
+          wordFamily: WordFamilySchema.nullable(),
         }),
       })
     ),

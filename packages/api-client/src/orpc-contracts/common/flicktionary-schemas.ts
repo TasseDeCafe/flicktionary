@@ -91,14 +91,15 @@ export const HighlightSchema = z.object({
   // term is still pre-enrich (no facets exist yet).
   studyIntent: StudyIntentSchema.nullable(),
   // The user_lookups id once the enrich job has materialized this highlight's
-  // card/term (cards.highlight_id → cards.user_lookup_id). Null pre-enrich. When
-  // set, the saved gloss sheet switches from intent-editing to live-facet editing.
+  // card/term (cards.highlight_id → cards.user_lookup_id). Null pre-enrich and
+  // while the enrich job is still running. When set, the saved gloss sheet
+  // switches from the stored intent to the term's live facets.
   chunkId: z.string().uuid().nullable(),
   // True while the WORD is not saved as a study card: the highlight's card is
-  // parked in needs_data — the state a note-only save creates (stub card whose
-  // only job is hosting the note/chat). The gloss sheets render this as "note
-  // saved" and offer highlights.saveWord to upgrade; flips false once the
-  // upgrade's enrich job fills the card and auto-keeps it.
+  // parked in needs_data with no enrichment running — the state a note-only
+  // save creates (stub card whose only job is hosting the note/chat). The gloss
+  // sheets render this as "note saved" and offer highlights.saveWord to
+  // upgrade; flips false as soon as the upgrade enqueues its enrich job.
   noteOnly: z.boolean(),
   createdAt: z.string(),
 })

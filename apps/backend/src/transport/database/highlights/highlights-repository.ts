@@ -8,11 +8,14 @@ export type DbHighlight = Tables<'highlights'>
 // for the highlight's card (the partial unique index on cards(highlight_id)
 // guarantees at most one). Null until the enrich job materializes the card.
 // card_status rides along to distinguish a note-only stub (a card parked in
-// needs_data — full-lane cards auto-keep within their enrich run) from a real
-// study card.
+// needs_data) from a real study card. `enriching` is true while a live
+// enrich_highlight job exists: a full-lane card is ALSO needs_data between its
+// materialize and its auto-keep (grounding + study intent run in between), so
+// needs_data alone can't tell a stub from a card mid-enrichment.
 export type DbHighlightWithChunk = DbHighlight & {
   chunk_id: string | null
   card_status: Tables<'cards'>['status'] | null
+  enriching: boolean
 }
 
 export type HighlightInsertParams = {
@@ -61,7 +64,13 @@ const insertHighlight = async (params: HighlightInsertParams, executor: postgres
 
 const listBySessionId = async (studySessionId: string): Promise<DbHighlightWithChunk[]> => {
   return (await sql`
-    SELECT h.*, c.user_lookup_id AS chunk_id, c.status AS card_status
+    SELECT h.*, c.user_lookup_id AS chunk_id, c.status AS card_status,
+      EXISTS (
+        SELECT 1 FROM public.processing_jobs j
+        WHERE j.highlight_id = h.id
+          AND j.kind = 'enrich_highlight'
+          AND j.status IN ('pending', 'processing')
+      ) AS enriching
     FROM public.highlights h
     LEFT JOIN public.cards c ON c.highlight_id = h.id
     WHERE h.study_session_id = ${studySessionId}

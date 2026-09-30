@@ -16,17 +16,11 @@ import { recordLookup, type RecordLookupDependencies } from '../../service/lemma
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import {
   buildWordFamily,
+  explanationLanguageFor,
   loadWordFamilyEntries,
   type WordFamilyDependencies,
 } from '../../service/word-family/word-family'
 import { DEFAULT_IPA_DIALECTS, IPA_DIALECT_LANGUAGES, pickIpa } from '@flicktionary/core/utils/pick-ipa'
-
-// Word-family explanations follow the gloss: in the native language, or in
-// the target language for translations-off learners.
-const explanationLanguageFor = (
-  targetLanguage: string,
-  prefs: { nativeLanguage: string | null; hideTranslationFields: boolean }
-): string => (prefs.hideTranslationFields || !prefs.nativeLanguage ? targetLanguage : prefs.nativeLanguage)
 
 // Stateless gloss lookups (browser-extension subtitle hover, the web app's
 // practice-surface lookup sheet). Takes the context line directly and is bound

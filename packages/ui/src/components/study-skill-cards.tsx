@@ -98,7 +98,9 @@ const SkillCard = ({ card }: { card: StudySkillCardItem }) => {
         card.available === false
           ? 'border-border bg-background text-muted-foreground/60 cursor-not-allowed'
           : card.selected
-            ? 'border-foreground bg-muted text-foreground ring-foreground ring-1'
+            ? // Inset ring: the extra weight stays inside the card, so a scroll
+              // container starting flush with the grid can't clip it.
+              'border-foreground bg-muted text-foreground ring-foreground ring-1 ring-inset'
             : 'border-border bg-background text-foreground hover:border-foreground/40 hover:bg-accent',
         card.disabled && card.available !== false && 'cursor-not-allowed'
       )}

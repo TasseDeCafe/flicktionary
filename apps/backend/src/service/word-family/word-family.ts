@@ -11,6 +11,9 @@ import type {
 } from '../../transport/database/word-family/word-family-repository'
 import type { WiktionaryMatchRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-match-repository'
 import { foldSelectionTokens } from '../checkpoint/checkpoint-matching'
+import { getLanguageMode } from '../user-prefs/language-mode'
+import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { normalizeFastGlossPos } from '../wiktionary-grounding/fast-gloss-ipa'
 import { isInformativeStructure, parseWordFamily, type ParsedWordFamily, type StructurePart } from './parse-word-family'
 
@@ -363,4 +366,46 @@ export const buildWordFamily = async (
     cognates,
     insightPending,
   }
+}
+
+// Word-family explanations follow the gloss: in the native language, or in
+// the target language for translations-off learners.
+export const explanationLanguageFor = (
+  targetLanguage: string,
+  prefs: { nativeLanguage: string | null; hideTranslationFields: boolean }
+): string => (prefs.hideTranslationFields || !prefs.nativeLanguage ? targetLanguage : prefs.nativeLanguage)
+
+// The word-family line for a word whose gloss (and so POS) is already known —
+// a saved highlight's gloss sheet, so the line it showed in preview survives
+// Save and reopen. Reads the language mode the same way the preview gloss
+// does, so it resolves the same cached insight. Null when the reader has the
+// hints off for this language.
+export const loadGlossedWordFamily = async (
+  params: { userId: string; targetLanguage: string; selectionText: string; pos: string | null },
+  deps: WordFamilyDependencies & {
+    usersRepository: UsersRepositoryInterface
+    userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  }
+): Promise<WordFamily | null> => {
+  const { userId, targetLanguage, selectionText, pos } = params
+  if (!(await deps.userTargetLanguagePrefsRepository.getWordFamilyHintsEnabled(userId, targetLanguage))) return null
+  const [languagePrefs, lookup] = await Promise.all([
+    getLanguageMode({
+      userId,
+      targetLanguage,
+      usersRepository: deps.usersRepository,
+      targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+    }),
+    loadWordFamilyEntries({ targetLanguage, selectionText }, deps),
+  ])
+  return buildWordFamily(
+    {
+      userId,
+      targetLanguage,
+      explanationLanguage: explanationLanguageFor(targetLanguage, languagePrefs),
+      lookup,
+      pos,
+    },
+    deps
+  )
 }
