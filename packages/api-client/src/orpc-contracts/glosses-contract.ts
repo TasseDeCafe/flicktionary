@@ -120,6 +120,30 @@ export const glossesContract = {
       })
     ),
 
+  // The word-family line for a dictionary headword whose POS is already known
+  // (a practice card's back). Never generates the LLM insight — it is applied
+  // only when already cached, and `insightPending` is informational. Null when
+  // the user has the hints off for the language or there is nothing to show.
+  wordFamily: oc
+    .route({ method: 'POST', path: '/glosses/word-family', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        headword: z.string().trim().min(1).max(200),
+        targetLanguage: z.string().trim().min(1).max(40),
+        pos: z.string().nullable(),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          wordFamily: WordFamilySchema.nullable(),
+        }),
+      })
+    ),
+
   // Records an EXPLICIT lookup (a tap that opens the gloss sheet, a pinned
   // extension hover gloss — never a bare hover, which calls fastGloss on a
   // debounce) as a new-term demand signal: repeated lookups of a word lift it

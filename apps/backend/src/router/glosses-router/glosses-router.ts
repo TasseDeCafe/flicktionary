@@ -17,6 +17,7 @@ import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-glos
 import {
   buildWordFamily,
   explanationLanguageFor,
+  loadGlossedWordFamily,
   loadWordFamilyEntries,
   type WordFamilyDependencies,
 } from '../../service/word-family/word-family'
@@ -143,6 +144,19 @@ export const GlossesRouter = (
           generateInsight: true,
         },
         wordFamilyDependencies
+      )
+      return { data: { wordFamily } }
+    }),
+
+    wordFamily: implementer.wordFamily.handler(async ({ input, context }) => {
+      const wordFamily = await loadGlossedWordFamily(
+        {
+          userId: context.res.locals.userId,
+          targetLanguage: input.targetLanguage,
+          selectionText: input.headword,
+          pos: input.pos,
+        },
+        { ...wordFamilyDependencies, usersRepository, userTargetLanguagePrefsRepository }
       )
       return { data: { wordFamily } }
     }),
