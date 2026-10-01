@@ -13,6 +13,7 @@ export type CardSlotKey =
   | 'nativeExample' // example translation; presence-based, same rule
   | 'definition' // target-language definition; primary gloss when translations are OFF, fallback gloss otherwise
   | 'grammar' // GrammarChips (already POS+language filtered)
+  | 'wordFamily' // word-family line (how the word is built + relatives the user has); back only — on a production front it would spell the answer
 
 export type CardFaceConfig = {
   front: readonly CardSlotKey[]
@@ -29,7 +30,7 @@ export type CardFaceConfig = {
 // two resolves, so the order is invisible there.
 export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
   front: ['headword', 'targetExample'],
-  back: ['definition', 'translation', 'nativeExample', 'grammar'],
+  back: ['definition', 'translation', 'nativeExample', 'grammar', 'wordFamily'],
 }
 
 // Production cards flip the direction: the front prompts with the gloss —
@@ -42,7 +43,7 @@ export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
 // recognition layout for that card.
 export const PRODUCTION_CARD_FACE_CONFIG: CardFaceConfig = {
   front: ['definition', 'translation', 'nativeExample'],
-  back: ['headword', 'ipa', 'targetExample', 'grammar'],
+  back: ['headword', 'ipa', 'targetExample', 'grammar', 'wordFamily'],
 }
 
 // Languages absent here use the default. The listed languages carry a
@@ -54,20 +55,20 @@ export const PRODUCTION_CARD_FACE_CONFIG: CardFaceConfig = {
 export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceConfig>> = {
   ru: {
     front: ['headword', 'targetExample'],
-    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar', 'wordFamily'],
     hideStressOnFront: true,
   },
   en: {
     front: ['headword', 'targetExample'],
-    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar', 'wordFamily'],
   },
   es: {
     front: ['headword', 'targetExample'],
-    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar', 'wordFamily'],
   },
   pt: {
     front: ['headword', 'targetExample'],
-    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar', 'wordFamily'],
   },
 }
 
@@ -90,6 +91,7 @@ export type CardSlotConditions = {
   hasTranslation: boolean
   hasDefinition: boolean
   hasGrammarChips: boolean
+  hasWordFamily: boolean
 }
 
 // Drop slots whose data is missing or whose condition excludes them.
@@ -116,6 +118,8 @@ export const resolveCardSlots = (slots: readonly CardSlotKey[], cond: CardSlotCo
         return (cond.hideTranslationFields || !cond.hasTranslation) && cond.hasDefinition
       case 'grammar':
         return cond.hasGrammarChips
+      case 'wordFamily':
+        return cond.hasWordFamily
       default:
         return false
     }

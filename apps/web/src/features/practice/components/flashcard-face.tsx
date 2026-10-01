@@ -7,6 +7,8 @@ import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils
 import { ipaDialectsFromPrefs, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
+import { WORD_FAMILY_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
+import { WordFamilyLine } from '@flicktionary/ui/components/word-family-line'
 import {
   getCardFaceConfig,
   resolveCardSlots,
@@ -19,6 +21,7 @@ import type {
   ReviewTerm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveCardContent } from '../utils/resolve-card-content'
+import { useCardWordFamily } from '../api/practice-hooks'
 
 // The pool a queued card belongs to is fully determined by its facet skill —
 // the composed queue mixes pools in one session, so it can't be a view-level
@@ -94,6 +97,22 @@ export const FlashcardFace = ({
   // demoted to a secondary line on the back. Citation cards resolve to the lemma.
   const content = resolveCardContent(card, targetLanguage, ipaDialects)
 
+  // The lemma's word-family line for the back (both pools). Fetched while the
+  // front shows, so it is ready on reveal; the hints pref is enforced
+  // server-side. The LLM insight part only shows when it's already cached —
+  // nothing is generated from practice.
+  const { data: wordFamily } = useCardWordFamily(
+    !isPronunciation && WORD_FAMILY_LANGUAGES.has(targetLanguage)
+      ? { headword: card.headword, targetLanguage, pos: card.grammar?.pos ?? null }
+      : null
+  )
+  const hasWordFamily =
+    !!wordFamily &&
+    (!!wordFamily.formOf ||
+      !!wordFamily.parts?.length ||
+      wordFamily.anchors.length > 0 ||
+      wordFamily.cognates.length > 0)
+
   // A production front prompts with the gloss alone, which for aspect-pair
   // languages is ambiguous between the twins ("to see" → ви́деть/уви́деть) — so
   // the prompt carries a dictionary-style aspect tag. Front only: the back
@@ -109,6 +128,7 @@ export const FlashcardFace = ({
     hasTranslation: !!content.translation,
     hasDefinition: !!content.definition,
     hasGrammarChips: !!content.grammar,
+    hasWordFamily,
   }
 
   // Production fronts are gloss-only; a card with no translation, no
@@ -180,6 +200,12 @@ export const FlashcardFace = ({
             <GrammarChips grammar={content.grammar} targetLanguage={targetLanguage} />
           </div>
         )
+      case 'wordFamily':
+        return wordFamily ? (
+          <div key='wordFamily' lang={targetLanguage} className='w-full text-center'>
+            <WordFamilyLine wordFamily={wordFamily} />
+          </div>
+        ) : null
       default:
         return null
     }

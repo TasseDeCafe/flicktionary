@@ -15,6 +15,7 @@ const cond = (overrides: Partial<CardSlotConditions>): CardSlotConditions => ({
   hasTranslation: false,
   hasDefinition: false,
   hasGrammarChips: false,
+  hasWordFamily: false,
   ...overrides,
 })
 
@@ -96,5 +97,18 @@ describe('active card face', () => {
       cond({ hasIpa: true, hasTargetExample: true, hasGrammarChips: true })
     )
     expect(slots).toEqual(['headword', 'ipa', 'targetExample', 'grammar'])
+  })
+
+  it('word-family line closes the back, after the grammar chips', () => {
+    const slots = resolveCardSlots(
+      PRODUCTION_CARD_FACE_CONFIG.back,
+      cond({ hasGrammarChips: true, hasWordFamily: true })
+    )
+    expect(slots).toEqual(['headword', 'grammar', 'wordFamily'])
+  })
+
+  it('word-family line never reaches the front, where it would spell the answer', () => {
+    expect(PRODUCTION_CARD_FACE_CONFIG.front).not.toContain('wordFamily')
+    expect(getCardFaceConfig('ru').front).not.toContain('wordFamily')
   })
 })
