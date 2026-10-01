@@ -287,7 +287,7 @@ when behavior changes.
   no windows are requested, no ghost outlines render, and no `Use suggested`
   adoption action appears. Manual highlights are still enriched into cards. The
   `Session vocabulary` button remains available even with zero highlights.
-- Word-family hints toggle per target language (default on; shown only for word-family languages, currently `ru`) — the reader gloss sheet's word-family line and guess-before-reveal hold (`docs/READER-SPEC.md`), and the same line in the extension's gloss popovers.
+- Word-family hints toggle per target language (default on; shown only for word-family languages, currently `ru`) — the reader gloss sheet's word-family line and guess-before-reveal hold (`docs/READER-SPEC.md`), the same line in the extension's gloss popovers, and on practice flashcard backs (`docs/SRS.md`).
 - Show translations toggle per target language (default on). This means
   "show/generate native-language translation fields for this target language",
   not "pretend the learner has no native language." Backend call sites use the
