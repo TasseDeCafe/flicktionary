@@ -57,6 +57,8 @@ describe('glosses-router', () => {
       ipaDisplay: null,
       ipaLemma: null,
       knownLemmaCandidates: [],
+      // Echoed so a client that omitted it can call wordFamilyInsight.
+      targetLanguage: 'de',
       wordFamily: null,
     })
     // The gloss language is the language of the text, resolved by detection —

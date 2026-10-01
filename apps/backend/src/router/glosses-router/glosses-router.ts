@@ -112,6 +112,7 @@ export const GlossesRouter = (
           ipaDisplay: pickIpa(ipa, targetLanguage, dialects) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
           knownLemmaCandidates,
+          targetLanguage,
           wordFamily,
         },
       }
