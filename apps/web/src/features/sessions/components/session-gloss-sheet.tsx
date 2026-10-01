@@ -45,7 +45,7 @@ import {
 } from '../api/sessions-hooks'
 import { SavedStudyTargets } from './saved-study-targets'
 import { KnownLemmaChip } from './known-lemma-chip'
-import { WordFamilyLine } from './word-family-line'
+import { WordFamilyLine } from '@flicktionary/ui/components/word-family-line'
 import type { SelectionResult } from '../utils/selection-adapter'
 
 export type ExistingHighlightInput = {

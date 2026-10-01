@@ -10,7 +10,7 @@
 // pronunciation of its own and we fell back to its lemma's (null otherwise);
 // surfaces label the IPA with it so an inflected form isn't implied to be
 // pronounced that way.
-// The reader's word-family line (web gloss sheet only): mirrors the
+// The word-family line (web gloss sheet + extension popovers): mirrors the
 // glosses.fastGloss `wordFamily` DTO structurally, since core can't import the
 // api-client contracts.
 export type GlossWordFamily = {
@@ -39,7 +39,7 @@ export type GlossViewState =
       // gloss-sheet chip; the extension doesn't consume it). Absent on
       // cached-gloss seeds — the async fetch refresh fills it.
       knownLemmaCandidates?: string[]
-      // How the word is built + relatives the user has (web gloss sheet's
-      // preview mode only; absent everywhere else).
+      // How the word is built + relatives the user has. Absent on
+      // cached-gloss seeds and on surfaces that don't request it.
       wordFamily?: GlossWordFamily | null
     }

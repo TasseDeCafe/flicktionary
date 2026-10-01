@@ -617,7 +617,7 @@ msgstr "Advanced — flexible, effective use in complex contexts."
 msgid "Adverb"
 msgstr "Adverb"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "adverbial participle of {lemma}"
 msgstr "adverbial participle of {lemma}"
 
@@ -2602,7 +2602,7 @@ msgstr "Frequency"
 msgid "Frequent in the chapters ahead, not yet in your vocabulary."
 msgstr "Frequent in the chapters ahead, not yet in your vocabulary."
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "from {derivedFromText}"
 msgstr "from {derivedFromText}"
 
@@ -2681,7 +2681,7 @@ msgstr "Genitive"
 msgid "German"
 msgstr "German"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "gerund of {lemma}"
 msgstr "gerund of {lemma}"
 
@@ -3243,7 +3243,7 @@ msgstr "Looks like {detectedLanguageName} — use it"
 msgid "Looks like {suggestedLanguageName}"
 msgstr "Looks like {suggestedLanguageName}"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "Looks like: {cognateList}"
 msgstr "Looks like: {cognateList}"
 
@@ -3888,7 +3888,7 @@ msgstr "Part {position}"
 msgid "Part of speech"
 msgstr "Part of speech"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "participle of {lemma}"
 msgstr "participle of {lemma}"
 
@@ -3896,7 +3896,7 @@ msgstr "participle of {lemma}"
 msgid "Particle"
 msgstr "Particle"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "passive of {lemma}"
 msgstr "passive of {lemma}"
 
@@ -4670,7 +4670,7 @@ msgstr "Saved to this card's chat — delete the highlight to change it."
 msgid "Saved to your vocabulary"
 msgstr "Saved to your vocabulary"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "Saved: {savedList}"
 msgstr "Saved: {savedList}"
 
@@ -6147,7 +6147,7 @@ msgstr "Using Flicktionary as a guest — translations only."
 msgid "Verb"
 msgstr "Verb"
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "verbal noun of {lemma}"
 msgstr "verbal noun of {lemma}"
 
@@ -6532,7 +6532,7 @@ msgstr "You have already used your free trial."
 msgid "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 msgstr "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 
-#: apps/web/src/features/sessions/components/word-family-line.tsx
+#: packages/ui/src/components/word-family-line.tsx
 msgid "You know: {knownList}"
 msgstr "You know: {knownList}"
 
