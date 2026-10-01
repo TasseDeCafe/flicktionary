@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react/macro'
 import { useNavigate } from '@tanstack/react-router'
 import { Loader2, MessageCircle, Plus, Search, X } from 'lucide-react'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Input } from '@flicktionary/ui/components/input'
 import { SkeletonList } from '@flicktionary/ui/components/skeleton'
@@ -54,19 +55,33 @@ export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?:
   const [query, setQuery] = useState(q ?? '')
   const [context, setContext] = useState(ctx ?? '')
   const [isContextOpen, setIsContextOpen] = useState(!!ctx)
+  const [isContextKept, setIsContextKept] = useState(false)
 
   const trimmedQuery = query.trim()
   const trimmedContext = context.trim()
   const candidates = translation?.candidates ?? []
+  // A context belongs to the search it was submitted with: once the query
+  // moves on to another word, the untouched context is left out unless the
+  // learner keeps it (Use again) or edits it. Typing a new word right after a
+  // search otherwise silently carries the old sentence into it.
+  const isContextStale = !!ctx && trimmedContext === ctx && trimmedQuery !== q && !isContextKept
+  const effectiveContext = isContextStale ? '' : trimmedContext
 
   // Searches replace the history entry: stepping through lookups isn't a
   // stack, so back/close leaves the screen instead of replaying each search.
   const setSearch = (next: { q?: string; lang?: string; ctx?: string }) =>
     void navigate({ to: '/vocabulary/new-word', search: next, replace: true })
 
+  const closeContext = () => {
+    setContext('')
+    setIsContextOpen(false)
+  }
+
   const handleTranslate = () => {
     if (!targetLanguage || !trimmedQuery) return
-    setSearch({ lang: targetLanguage, q: trimmedQuery, ...(trimmedContext ? { ctx: trimmedContext } : {}) })
+    if (isContextStale) closeContext()
+    setIsContextKept(false)
+    setSearch({ lang: targetLanguage, q: trimmedQuery, ...(effectiveContext ? { ctx: effectiveContext } : {}) })
   }
 
   const switchLanguage = (code: string) => {
@@ -74,11 +89,6 @@ export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?:
     setContext('')
     setIsContextOpen(false)
     setSearch({ lang: code })
-  }
-
-  const closeContext = () => {
-    setContext('')
-    setIsContextOpen(false)
   }
 
   // With results on screen, the chat opens on them (the search and its
@@ -91,7 +101,7 @@ export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?:
       ? trimmedQuery !== q
         ? trimmedQuery
         : ''
-      : [trimmedQuery, trimmedContext].filter(Boolean).join('\n\n')
+      : [trimmedQuery, effectiveContext].filter(Boolean).join('\n\n')
     void navigate({
       to: '/chat/new',
       search: {
@@ -164,26 +174,45 @@ export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?:
                   </Button>
                 </div>
                 {isContextOpen ? (
-                  <div className='flex items-start gap-2'>
-                    <Textarea
-                      value={context}
-                      maxLength={CONTEXT_MAX}
-                      onChange={(e) => setContext(e.target.value)}
-                      placeholder={t`Where you met it: a sentence, even partial`}
-                      className='max-h-40 min-h-16 text-base'
-                      rows={2}
-                      autoFocus={!ctx}
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      className='size-11 shrink-0'
-                      onClick={closeContext}
-                      aria-label={t`Remove context`}
-                    >
-                      <X className='size-4' />
-                    </Button>
+                  <div className='flex flex-col gap-1'>
+                    <div className='flex items-start gap-2'>
+                      <Textarea
+                        value={context}
+                        maxLength={CONTEXT_MAX}
+                        onChange={(e) => setContext(e.target.value)}
+                        placeholder={t`Where you met it: a sentence, even partial`}
+                        className={cn('max-h-40 min-h-16 text-base', isContextStale && 'opacity-50')}
+                        rows={2}
+                        autoFocus={!ctx}
+                      />
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        className='size-11 shrink-0'
+                        onClick={closeContext}
+                        aria-label={t`Remove context`}
+                      >
+                        <X className='size-4' />
+                      </Button>
+                    </div>
+                    {/* Shown once the query moved on: this context won't be
+                        sent unless the learner keeps it. */}
+                    {isContextStale && (
+                      <div className='text-muted-foreground flex items-center gap-1 text-sm'>
+                        <span>{t`From your last search`}</span>
+                        <span aria-hidden>·</span>
+                        <Button
+                          type='button'
+                          variant='link'
+                          size='sm'
+                          className='h-auto px-0'
+                          onClick={() => setIsContextKept(true)}
+                        >
+                          {t`Use again`}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <Button

@@ -2614,6 +2614,10 @@ msgstr "From the community"
 msgid "From the notes"
 msgstr "From the notes"
 
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "From your last search"
+msgstr "From your last search"
+
 #: apps/web/src/features/sessions/hooks/use-difficulty-label-text.ts
 msgid "frustrating"
 msgstr "frustrating"
@@ -6096,6 +6100,10 @@ msgstr "Use a different email"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Use a subtitle file you already have."
 msgstr "Use a subtitle file you already have."
+
+#: apps/web/src/features/vocab-chat/components/capture-view.tsx
+msgid "Use again"
+msgstr "Use again"
 
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 msgid "Use an EPUB, FB2 or MOBI file."
