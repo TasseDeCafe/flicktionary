@@ -29,7 +29,15 @@ describe('glossQueryOptions', () => {
 
     const data = await queryClient.fetchQuery(glossQueryOptions('кот', 'кот спит', true))
 
-    expect(data).toEqual({ gloss: 'кот → cat', pos: 'noun', register: null, ipaDisplay: null, ipaLemma: null })
+    expect(data).toEqual({
+      gloss: 'кот → cat',
+      pos: 'noun',
+      register: null,
+      ipaDisplay: null,
+      ipaLemma: null,
+      wordFamily: null,
+      targetLanguage: null,
+    })
     expect(mockedRequestGloss).toHaveBeenCalledWith('кот', 'кот спит', undefined)
   })
 

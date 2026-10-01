@@ -14,9 +14,10 @@ import { Button } from '@flicktionary/ui/components/button'
 import { FloatingSheet, FloatingSheetContent } from '@flicktionary/ui/components/floating-sheet'
 import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
 import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
+import { WordFamilyLine } from '@flicktionary/ui/components/word-family-line'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
-import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
+import type { GlossViewState, GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
 import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 import {
   fetchSavedGloss,
@@ -27,6 +28,7 @@ import {
   type GlossData,
 } from '../../services/flicktionary/flicktionary-client'
 import { PERSISTENT_HOST_ATTR } from '../../services/element-overlay'
+import { useWordFamilyInsight } from './use-gloss'
 
 // The shared gloss view state under this file's historical name — the overlay
 // never constructs the web-only `idle` member.
@@ -69,12 +71,43 @@ const POPOVER_CONTENT_CLASS = 'dark w-88 pointer-events-auto z-[2147483647]'
 // (`data-asb-subtitles`, the composed-path target).
 const SUBTITLE_SURFACE_SELECTOR = `[${PERSISTENT_HOST_ATTR}], [data-asb-subtitles]`
 
+// The word-family line to show for a ready gloss: the fastGloss line, swapped
+// for its LLM-insight version once `fetchInsight` allows the request (a pinned
+// preview or a saved popover — never a bare hover). Unlike the web reader, the
+// translation is never held back behind the line: a hover over a playing video
+// is a glance, and Space already toggles playback.
+const useDisplayedWordFamily = (
+  word: string,
+  content: GlossContent,
+  targetLanguage: string | null,
+  fetchInsight: boolean
+): GlossWordFamily | null => {
+  const ready = content.status === 'ready' ? content : null
+  const wordFamily = ready?.wordFamily ?? null
+  const { data: insightWordFamily } = useWordFamilyInsight(
+    ready && wordFamily?.insightPending && fetchInsight && targetLanguage
+      ? { selectionText: word, targetLanguage, pos: ready.pos }
+      : null
+  )
+  return wordFamily?.insightPending && insightWordFamily !== undefined ? insightWordFamily : wordFamily
+}
+
 // The gloss body, shared by the preview and saved modes: the web app's
-// GlossCardBody (IPA + gloss + POS/register badges + loading skeletons) plus
-// the extension-only empty/error rows GlossCardBody doesn't model.
-const GlossBody = ({ content, srDescription }: { content: GlossContent; srDescription: string }) => (
+// GlossCardBody (IPA + word-family line + gloss + POS/register badges +
+// loading skeletons) plus the extension-only empty/error rows GlossCardBody
+// doesn't model.
+const GlossBody = ({
+  content,
+  wordFamily,
+  srDescription,
+}: {
+  content: GlossContent
+  wordFamily: GlossWordFamily | null
+  srDescription: string
+}) => (
   <>
     <GlossCardBody
+      beforeGloss={wordFamily ? <WordFamilyLine wordFamily={wordFamily} /> : undefined}
       loading={content.status === 'loading'}
       gloss={content.status === 'ready' ? content.gloss || null : null}
       pos={content.status === 'ready' ? content.pos : null}
@@ -99,6 +132,12 @@ export interface GlossTooltipProps {
   anchor: HTMLElement
   word: string
   content: GlossContent
+  // The pointer has entered the popover (or it's a born-pinned chunk gloss):
+  // only then is the word-family insight fetched.
+  pinned: boolean
+  // The gloss's language (echoed by the server, else the overlay's) — the
+  // insight request needs it.
+  targetLanguage: string | null
   // Explicit save (mirrors the right-click power-shortcut): persists the
   // highlighted word. Looking via hover stays free. The payload carries the
   // touched "Study options" draft and, when the note editor was used, the
@@ -135,6 +174,8 @@ export function GlossTooltip({
   anchor,
   word,
   content,
+  pinned,
+  targetLanguage,
   onSave,
   onPointerEnter,
   onPointerLeave,
@@ -159,6 +200,7 @@ export function GlossTooltip({
   const [tags, setTags] = useState<string[]>([])
   const [noteViewOpen, setNoteViewOpen] = useState(false)
   const { prompts: presetPrompts } = usePresetTagTexts()
+  const wordFamily = useDisplayedWordFamily(word, content, targetLanguage, pinned)
 
   // A new word = a new save target: re-arm the draft + note view (the section
   // re-collapses via its `key={word}` remount).
@@ -250,7 +292,11 @@ export function GlossTooltip({
           <>
             <div className={CARD_HEADER_CLASS}>
               <div className='text-foreground text-base font-semibold break-words'>{word}</div>
-              <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
+              <GlossBody
+                content={content}
+                wordFamily={wordFamily}
+                srDescription={t`Translation and save action for the hovered word.`}
+              />
             </div>
 
             {/* Study options — only when saving is actually available. The shared
@@ -414,6 +460,8 @@ function resolveSavedTargets({
 export interface SavedGlossTooltipProps {
   anchor: HTMLElement
   sessionId: string
+  // The session's language — the word-family insight request needs it.
+  targetLanguage: string | null
   highlight: SavedHighlightDto
   initialGloss?: GlossData
   // The Remove toggle was clicked. The PARENT performs the delete (so it can
@@ -448,6 +496,7 @@ export interface SavedGlossTooltipProps {
 export function SavedGlossTooltip({
   anchor,
   sessionId,
+  targetLanguage,
   highlight,
   initialGloss,
   onRemove,
@@ -484,6 +533,9 @@ export function SavedGlossTooltip({
   const [wordJustSaved, setWordJustSaved] = useState(false)
 
   const { prompts: presetPrompts } = usePresetTagTexts()
+  // Opening a saved word is a deliberate lookup, so the insight is fetched
+  // straight away (the preview's result is reused when it was already pinned).
+  const wordFamily = useDisplayedWordFamily(highlight.selectionText, content, targetLanguage, true)
 
   // Direct opens of older saved highlights may only have the compact persisted
   // fastGloss (or no gloss at all), so refresh them from the saved-gloss path.
@@ -620,7 +672,11 @@ export function SavedGlossTooltip({
           <>
             <div className={CARD_HEADER_CLASS}>
               <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
-              <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
+              <GlossBody
+                content={content}
+                wordFamily={wordFamily}
+                srDescription={t`Translation and actions for the saved highlight.`}
+              />
               {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
             </div>
 

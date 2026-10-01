@@ -61,6 +61,7 @@ export default class FlicktionaryGlossHandler {
           selectionText: message.selectionText,
           contextLine: message.contextLine,
           ...(message.targetLanguage ? { targetLanguage: message.targetLanguage } : {}),
+          includeWordFamily: true,
         })
         sendResponse({
           gloss: data.gloss,
@@ -68,6 +69,8 @@ export default class FlicktionaryGlossHandler {
           register: data.register,
           ipaDisplay: data.ipaDisplay,
           ipaLemma: data.ipaLemma,
+          targetLanguage: data.targetLanguage,
+          wordFamily: data.wordFamily,
         })
       } catch (error) {
         const apiError = extractFlicktionaryApiError(error, i18n._(msg`Could not fetch a translation.`))

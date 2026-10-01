@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import type { FlicktionaryGlossResponse } from '@asbplayer-fork/common'
-import { GlossData, requestGloss } from '../../services/flicktionary/flicktionary-client'
+import { GlossData, requestGloss, requestWordFamilyInsight } from '../../services/flicktionary/flicktionary-client'
 
 // `targetLanguage` is the video's detected subtitle language ('' while the
 // overlay doesn't know it yet). It is part of the key: a gloss fetched during
@@ -43,6 +43,8 @@ export const glossQueryOptions = (
         register: response.register ?? null,
         ipaDisplay: response.ipaDisplay ?? null,
         ipaLemma: response.ipaLemma ?? null,
+        wordFamily: response.wordFamily ?? null,
+        targetLanguage: response.targetLanguage ?? null,
       }
     },
     enabled: enabled && !!word && !!sentence,
@@ -61,4 +63,23 @@ export function useGloss(
   targetLanguage?: string
 ) {
   return useQuery(glossQueryOptions(word, sentence, enabled, targetLanguage))
+}
+
+// The word-family line with its LLM insight, for a gloss whose line came back
+// with `insightPending`. `params` null = don't fetch: callers only enable it
+// once the popover is pinned or a saved word is opened, since the first request
+// for a word runs an LLM call server-side. Keyed on word + language + POS so
+// the preview's result is reused by the saved popover after Save. Errors aren't
+// cached and never surface — the deterministic line is already on screen.
+export function useWordFamilyInsight(
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null
+) {
+  return useQuery({
+    queryKey: ['word-family-insight', params?.targetLanguage ?? '', params?.selectionText ?? '', params?.pos ?? null],
+    queryFn: () => requestWordFamilyInsight(params!.selectionText, params!.targetLanguage, params!.pos),
+    enabled: params !== null,
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+    retry: false,
+  })
 }

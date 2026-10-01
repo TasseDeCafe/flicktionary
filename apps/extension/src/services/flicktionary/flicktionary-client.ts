@@ -9,6 +9,8 @@ import {
   FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
   FlicktionaryStudyFacetDto,
+  FlicktionaryWordFamilyInsightMessage,
+  FlicktionaryWordFamilyInsightResponse,
   GetFlicktionaryStudyTargetsMessage,
   GetFlicktionaryStudyTargetsResponse,
   LoadFlicktionarySavedHighlightsMessage,
@@ -27,6 +29,7 @@ import {
   UpdateFlicktionaryHighlightNoteResponse,
 } from '@asbplayer-fork/common'
 import { v4 as uuidv4 } from 'uuid'
+import type { GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
 
 // Re-exported so UI call sites get the intent type alongside SaveWordParams.
 export type { SavedHighlightDto, SaveWordStudyIntent, FlicktionaryStudyFacetDto } from '@asbplayer-fork/common'
@@ -51,6 +54,12 @@ export interface GlossData {
   // Lemma the IPA was sourced from on form-of fallback (the surface form has no
   // pronunciation of its own); labeled next to the IPA. Null otherwise.
   ipaLemma: string | null
+  // The word-family line (structure + relatives the user has); null when there
+  // is none.
+  wordFamily: GlossWordFamily | null
+  // The language the gloss was made for — null from the saved-gloss path,
+  // whose caller already knows the session's language.
+  targetLanguage: string | null
 }
 
 // The (segment index, char offsets) trio that resolves a clicked occurrence to
@@ -369,7 +378,32 @@ export async function fetchSavedGloss(sessionId: string, highlightId: string): P
     register: response.register ?? null,
     ipaDisplay: response.ipaDisplay ?? null,
     ipaLemma: response.ipaLemma ?? null,
+    wordFamily: response.wordFamily ?? null,
+    targetLanguage: null,
   }
+}
+
+// The word-family line with its LLM insight (see
+// FlicktionaryWordFamilyInsightMessage). Throws on failure so the query layer
+// doesn't cache it.
+export async function requestWordFamilyInsight(
+  selectionText: string,
+  targetLanguage: string,
+  pos: string | null
+): Promise<GlossWordFamily | null> {
+  const message: TabToExtensionCommand<FlicktionaryWordFamilyInsightMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'flicktionary-word-family-insight',
+      messageId: uuidv4(),
+      selectionText,
+      targetLanguage,
+      pos,
+    },
+  }
+  const response: FlicktionaryWordFamilyInsightResponse | undefined = await browser.runtime.sendMessage(message)
+  if (!response || response.error) throw new Error(response?.error ?? 'No word-family insight')
+  return response.wordFamily ?? null
 }
 
 // Reads a materialized term's live facets (post-enrich saved popover). Returns

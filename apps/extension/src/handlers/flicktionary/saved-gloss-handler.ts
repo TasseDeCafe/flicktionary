@@ -40,6 +40,7 @@ export default class FlicktionarySavedGlossHandler {
           register: data.register,
           ipaDisplay: data.ipaDisplay,
           ipaLemma: data.ipaLemma,
+          wordFamily: data.wordFamily,
         })
       } catch (error) {
         const { message: errorMessage } = extractFlicktionaryApiError(error, 'flicktionary-saved-gloss failed')
