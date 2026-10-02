@@ -408,6 +408,16 @@ describe('peek re-rate (undo → fresh rate)', () => {
     expect(session(hook).canRerate).toBe(false)
   })
 
+  it('ignores a second re-rate pressed within the same render', async () => {
+    const { t, hook, original } = await ratedAndPeeked('good')
+    act(() => {
+      session(hook).handleRerate(original, 'hard')
+      session(hook).handleRerate(original, 'easy')
+    })
+    await flush()
+    expect(t.undo.calls).toHaveLength(1)
+  })
+
   it('ignores a second re-rate while one is in flight', async () => {
     const { t, hook, original } = await ratedAndPeeked('good')
     await rerate(hook, original, 'hard')
