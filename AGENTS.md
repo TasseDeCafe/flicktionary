@@ -119,6 +119,7 @@ The web app follows opinionated UI idioms (hover/press states, `WizardShell`, st
 - Check linting with ESLint: pnpm lint (executed from the root directory)
 - Find dead code (unused files / exports / dependencies): `pnpm knip` — treat its output as candidates, not facts. Follow the **`remove-dead-code` skill** (known false positives, the bundled-dependency trap), and never delete anything it flags without asking the user.
 - Time-travel practice data (test multi-day SRS flows without waiting): `pnpm db:advance-day [--days N] [--email <email>]` shifts every practice timestamp in the dev-tunnel DB backward (all day logic compares against Postgres `NOW()`/`CURRENT_DATE`, so this equals the server day advancing). Same shift, scoped per-account and usable in any environment: the "Practice time travel" card in the web app's admin settings (test users only).
+- Seed a practice scenario (reach a state-dependent practice flow in seconds, no LLM calls): `pnpm dev:scenario <name>` wipes the `dev-scenario@flicktionary.app` dev-tunnel account, writes an exact practice state (due cards, leech edge, warm-up day 2, production hints, word-family anchors), and prints a magic sign-in link; `pnpm dev:scenario` lists scenarios. Composes with `pnpm db:advance-day --email dev-scenario@flicktionary.app`. Name the scenario a PR's manual check starts from. See `apps/backend/src/transport/database/dev-tools/scenarios/README.md`.
 
 # Comments
 
