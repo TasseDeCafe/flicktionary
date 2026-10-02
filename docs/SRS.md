@@ -1201,7 +1201,9 @@ renders.
   prefetched so the button is there from the first frame) has a known/saved relative, a
   form-of note, or an explained part (`frontClueFor`; bare unexplained parts mostly restate
   the headword). Pressing it shows the line under the front **without cognates** ("Looks
-  like: dozen" is near the answer); the revealed back's `wordFamily` slot then carries the
+  like: dozen" is near the answer) and leaves the button in place, disabled as `Clue shown`,
+  so the footer doesn't shift and a double tap can't land on Hint (which would consume the
+  hint exercise and lock the rating); the revealed back's `wordFamily` slot then carries the
   full line, so the front copy hides. Using it **caps the rating at Good**: Easy is disabled
   (with a muted note) and `4` is inert — on the live back and on a peek re-rate of that
   item. Clue use is tracked per queue item (`clueUsed`; an Again redrill is a fresh attempt, but a
