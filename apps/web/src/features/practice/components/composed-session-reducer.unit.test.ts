@@ -120,6 +120,19 @@ describe('rating', () => {
     expect(capped.queue).toHaveLength(state.queue!.length)
   })
 
+  it('caps a production card the same way, through to its failed-rating retry', () => {
+    const production: ComposedQueueItem = {
+      type: 'flashcard',
+      card: { userLookupId: 'p', headword: 'p', skill: 'meaning_production', targetForm: '' } as ReviewTerm,
+      retryCount: 0,
+      requeuedForAgain: false,
+    }
+    const shown = run(withQueue([production]), { type: 'clueShown' })
+    expect(clueCapped(shown)).toBe(true)
+    const failed = reduce(shown, { type: 'rateFailed', item: production, redrill: null })
+    expect(failed.clueUsed.has(failed.queue!.at(-1)!)).toBe(true)
+  })
+
   it('never carries the clue cap to an Again redrill', () => {
     const a = card('a')
     const redrill = redrillOf(a)

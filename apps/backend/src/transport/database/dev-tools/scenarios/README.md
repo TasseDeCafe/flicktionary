@@ -28,6 +28,7 @@ data.
 | `ru-leech-edge` | забывать (recognition, 5 lapses) and внимательный (production, 3 lapses) are one Again from leech parking. Their gate ladders are banked. Three ordinary due cards. |
 | `ru-warmup-day2` | The day after a warm-up: five onboarding-parked gates (скучный graduates on a correct answer), two planned introductions, three review cards. |
 | `ru-production-hints` | Six production cards due. Five have a banked production hint (`mc_cloze`); сравнивать has none. |
+| `ru-production-family` | The `ru-family-due` words as 8 production cards due, same anchors and curated insights. Five offer the meaning-only production Clue (#517), the three opaque ones don't; писатель, водопад and дюжина have a banked hint. |
 
 ## Safety
 

@@ -14,7 +14,9 @@ import { logAnthropicCacheUsage } from '../log-cache-usage'
 // each part of it contributes, parents the kaikki data lacks, which kaikki
 // ancestors a learner can't actually see in it, and native-language cognates.
 // The result is cached per lemma and shown before the translation is
-// revealed, so the prompt forbids giving away the whole word's meaning.
+// revealed, so the prompt forbids giving away the whole word's meaning; part
+// meanings also show on production fronts (#517), so they must never spell
+// the word either.
 
 const TOOL_NAME = 'submit_word_family'
 const MAX_PARTS = 5
@@ -78,7 +80,7 @@ const buildTool = (): Anthropic.Tool => ({
             meaning: {
               type: 'string',
               description:
-                'What this part contributes in THIS word, 1-5 words, lowercase. For an affix, its specific sense here (за-: "into a state"), not its general dictionary list. Never the meaning of the whole word.',
+                'What this part contributes in THIS word, 1-5 words, lowercase. For an affix, its specific sense here (за-: "into a state"), not its general dictionary list. Never the meaning of the whole word, and never a spelling: no word of the target language, no transliteration, no donor-language word or etymology note.',
             },
           },
           required: ['text', 'is_affix', 'meaning'],
@@ -120,7 +122,7 @@ export const buildWordFamilyInsightPrompt = (
 
 For the given ${target} word you:
 1. Give a learner-facing breakdown into parts (prefixes, root word, suffixes). Keep it shallow and useful: stop at a word a learner could know (замёрзнуть = за- + мёрзнуть, not за- + мёрз- + -ну- + -ть). Skip pure inflection endings. A dictionary breakdown may be given; keep it when it is sound, fix it when it is wrong or unhelpful, and leave the parts empty for opaque words.
-2. Say what each part contributes in THIS word, in ${explanation}. An affix has many senses; give the one at work here. Never state the meaning of the whole word — the learner is about to guess it.
+2. Say what each part contributes in THIS word, in ${explanation}. An affix has many senses; give the one at work here. Never state the meaning of the whole word — the learner is about to guess it. Describe what a part means, not where it comes from: a meaning never contains a ${target} word, a transliteration or a donor-language word (no "from French sérieux") — production practice shows these meanings while the learner recalls the word's spelling.
 3. List same-language parents the dictionary data missed, only when the link is transparent to a learner.
 4. Mark listed ancestors a learner cannot recognize in the word (e.g. понимать from иметь: the root is no longer visible). Keep ancestors whose link is visible even if distant. A word you use in your breakdown is visible by definition — never mark it.
 5. ${cognatesAllowed ? `List ${explanation} cognates only when both form and meaning make the link obvious; otherwise none.` : 'Leave cognates empty.'}

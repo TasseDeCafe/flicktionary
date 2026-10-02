@@ -3,7 +3,6 @@ import { BadgeCheck, Volume2 } from 'lucide-react'
 import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { ipaDialectsFromPrefs, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
@@ -18,8 +17,16 @@ import type { Grammar, ReviewTerm } from '@flicktionary/api-client/orpc-contract
 import { resolveCardContent } from '../utils/resolve-card-content'
 import { poolForCard } from '../utils/pool-for-card'
 import { useCardWordFamily } from '../api/practice-hooks'
-import { cardWordFamilyParams } from '../utils/card-word-family'
+import { cardWordFamilyParams, type ProductionClue } from '../utils/card-word-family'
 import type { GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
+import { useHideTranslationFields } from '../utils/use-hide-translation-fields'
+import { ProductionClueLine } from './production-clue-line'
+
+// The word-family clue the learner asked for on a front: the line itself on a
+// recognition card, a meaning-only clue on a production card (whose answer the
+// line would spell).
+export type FrontClue =
+  { pool: 'recognition'; wordFamily: GlossWordFamily } | { pool: 'production'; clue: ProductionClue }
 
 // Presentational flashcard body (front, and the back when `showBack`):
 // pronunciation cards get their dedicated audio-cue layout, meaning cards go
@@ -34,18 +41,15 @@ export const FlashcardFace = ({
   card: ReviewTerm
   targetLanguage: string
   showBack: boolean
-  // The word-family clue the learner asked for on a recognition front. Shown
-  // until the back is revealed, whose own word-family slot then carries the
-  // full line.
-  frontClue?: GlossWordFamily | null
+  // The word-family clue the learner asked for. Shown until the back is
+  // revealed, whose own word-family slot then carries the full line.
+  frontClue?: FrontClue | null
 }) => {
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
   const pool = poolForCard(card)
 
-  const nativeLanguage = userPrefs?.nativeLanguage ?? null
-  const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
-  const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
+  const hideTranslationFields = useHideTranslationFields(targetLanguage)
   const ipaDialects = ipaDialectsFromPrefs(userPrefs)
 
   // Pronunciation facet (recognition queue): front prompts the target + an
@@ -241,8 +245,15 @@ export const FlashcardFace = ({
     <>
       {frontSlots.map((slot) => renderSlot(slot, 'front'))}
       {frontClue && !showBack && (
-        <div lang={targetLanguage} className='w-full text-center'>
-          <WordFamilyLine wordFamily={frontClue} />
+        <div className='w-full text-center'>
+          {frontClue.pool === 'recognition' ? (
+            <div lang={targetLanguage}>
+              <WordFamilyLine wordFamily={frontClue.wordFamily} />
+            </div>
+          ) : (
+            // All meanings, in the native language: no target-language text.
+            <ProductionClueLine clue={frontClue.clue} />
+          )}
         </div>
       )}
       {showBack && (

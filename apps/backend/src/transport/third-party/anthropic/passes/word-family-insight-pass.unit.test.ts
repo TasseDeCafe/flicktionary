@@ -91,4 +91,18 @@ describe('buildWordFamilyInsightPrompt', () => {
     expect(fixed).toContain('Use exactly these parts, in this order')
     expect(fixed).not.toContain('Ancestors in the dictionary data')
   })
+
+  test('forbids spellings in part meanings, which production fronts show', () => {
+    const { system } = buildWordFamilyInsightPrompt({
+      targetLanguage: 'ru',
+      explanationLanguage: 'en',
+      headword: 'серьёзный',
+      pos: 'adj',
+      formOf: null,
+      kaikkiParts: null,
+      ancestors: [],
+      fixedParts: null,
+    })
+    expect(system).toContain('a meaning never contains a Russian word, a transliteration or a donor-language word')
+  })
 })
