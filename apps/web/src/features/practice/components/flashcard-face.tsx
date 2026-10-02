@@ -7,7 +7,6 @@ import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils
 import { ipaDialectsFromPrefs, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import { getAspectTag } from '@flicktionary/core/utils/verbal-aspect'
-import { WORD_FAMILY_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { WordFamilyLine } from '@flicktionary/ui/components/word-family-line'
 import {
   getCardFaceConfig,
@@ -22,6 +21,8 @@ import type {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveCardContent } from '../utils/resolve-card-content'
 import { useCardWordFamily } from '../api/practice-hooks'
+import { cardWordFamilyParams } from '../utils/card-word-family'
+import type { GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
 
 // The pool a queued card belongs to is fully determined by its facet skill —
 // the composed queue mixes pools in one session, so it can't be a view-level
@@ -38,10 +39,15 @@ export const FlashcardFace = ({
   card,
   targetLanguage,
   showBack,
+  frontClue = null,
 }: {
   card: ReviewTerm
   targetLanguage: string
   showBack: boolean
+  // The word-family clue the learner asked for on a recognition front. Shown
+  // until the back is revealed, whose own word-family slot then carries the
+  // full line.
+  frontClue?: GlossWordFamily | null
 }) => {
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
@@ -102,11 +108,7 @@ export const FlashcardFace = ({
   // server-side. The LLM insight part only shows when it's already cached:
   // this read never generates; composing the queue warms missing insights in
   // the background, so they show from a later review.
-  const { data: wordFamily } = useCardWordFamily(
-    !isPronunciation && WORD_FAMILY_LANGUAGES.has(targetLanguage)
-      ? { headword: card.headword, targetLanguage, pos: card.grammar?.pos ?? null }
-      : null
-  )
+  const { data: wordFamily } = useCardWordFamily(cardWordFamilyParams(card, targetLanguage))
   const hasWordFamily =
     !!wordFamily &&
     (!!wordFamily.formOf ||
@@ -248,6 +250,11 @@ export const FlashcardFace = ({
   return (
     <>
       {frontSlots.map((slot) => renderSlot(slot, 'front'))}
+      {frontClue && !showBack && (
+        <div lang={targetLanguage} className='w-full text-center'>
+          <WordFamilyLine wordFamily={frontClue} />
+        </div>
+      )}
       {showBack && (
         <>
           <div className='my-2 w-full border-t' />

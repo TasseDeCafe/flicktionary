@@ -34,6 +34,9 @@ export type ComposedSessionSnapshot = {
   sessionHard: Set<string>
   ratingRecords: Map<ComposedQueueItem, RatingRecord>
   exerciseOutcomes: Map<ComposedQueueItem, ExerciseAnswerData>
+  // Flashcards whose word-family clue was shown — their Easy stays disabled,
+  // including a card the detour interrupted before it was rated.
+  clueUsed: Set<ComposedQueueItem>
   // `${pool}:${userLookupId}` keys of introductions claimed this session — the
   // mix recap counts these, so a detour must not reset the tally.
   claimedIntroductions: Set<string>
@@ -104,7 +107,7 @@ export const ipaSourceForChunk = (chunk: Chunk, targetForm: string): 'wiktionary
 // a focus-view edit made during the detour would otherwise be invisible until
 // the next compose. Called from the chunk edit mutations with the mutation's
 // returned chunk; a no-op when nothing is stashed. Items are patched in place
-// (never replaced): ratingRecords/exerciseOutcomes key on item identity.
+// (never replaced): ratingRecords/exerciseOutcomes/clueUsed key on item identity.
 export const patchTermInComposedSession = (chunk: Chunk) => {
   if (!slot) return
   for (const item of slot.queue) {
@@ -175,6 +178,7 @@ export const dropFacetFromComposedSession = (chunkId: string, skill: FacetSkill,
   for (const item of removed) {
     slot.ratingRecords.delete(item)
     slot.exerciseOutcomes.delete(item)
+    slot.clueUsed.delete(item)
   }
   slot.queue = queue
 }
@@ -198,6 +202,7 @@ export const dropTermFromComposedSession = (userLookupId: string) => {
   for (const item of removed) {
     slot.ratingRecords.delete(item)
     slot.exerciseOutcomes.delete(item)
+    slot.clueUsed.delete(item)
   }
   slot.sessionHard.delete(userLookupId)
   slot.queue = queue

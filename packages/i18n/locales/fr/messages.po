@@ -1213,6 +1213,14 @@ msgstr "Fermer"
 msgid "Closes automatically"
 msgstr "Se ferme automatiquement"
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Clue"
+msgstr "Indice"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Clue used — Easy is off for this card."
+msgstr "Indice utilisé — Facile est désactivé pour cette carte."
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Collecting reviews while you read"
 msgstr "Collecter des révisions en lisant"
