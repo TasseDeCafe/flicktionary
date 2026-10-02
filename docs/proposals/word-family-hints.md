@@ -1,6 +1,6 @@
 # Word-family hints and guess-before-reveal in the reader
 
-> **Status: proposal — v1 implemented, v2 open.** Design for surfacing a tapped word's structure and its known relatives in the web reader's gloss sheet, with the translation held back until the reader has had a chance to infer it. v1 (deterministic, `ru` only) shipped; `docs/READER-SPEC.md` and `docs/DATA-MODEL.md` describe it. Still open: v2 (LLM word-specific meanings), other languages, the extension popover.
+> **Status: proposal — v1, v2, extension popovers and flashcard backs implemented; other languages open.** Design for surfacing a tapped word's structure and its known relatives in the web reader's gloss sheet, with the translation held back until the reader has had a chance to infer it. Shipped for `ru`: the deterministic line + guess-before-reveal (v1), the per-lemma LLM insight (v2), the extension's hover/saved popovers (no guess-before-reveal there) and the line on practice flashcard backs, with insights warmed at queue compose. `docs/READER-SPEC.md`, `docs/SRS.md`, `docs/DATA-MODEL.md` and `apps/extension/EXTENSION-SPEC.md` describe the current behavior. Still open: other languages (coverage results below; German needs case-sensitive folding + a compound splitter), and practice hints from family clues (#516 recognition, #517 production).
 
 Tracking: https://github.com/TasseDeCafe/flicktionary/issues/494 (prerequisite coverage check: https://github.com/TasseDeCafe/flicktionary/issues/495).
 
