@@ -318,6 +318,51 @@ const generateInsight = async (
   }
 }
 
+// Generations in flight, chained per breakdown (target language, lemma, POS):
+// the breakdown is shared by every explanation language, so concurrent callers
+// in two languages would otherwise each pay for a breakdown and the loser for
+// a second call explaining the winner's. A queued caller re-reads the cache
+// once the one ahead finishes, and then explains the stored parts at most.
+const insightGenerations = new Map<string, Promise<void>>()
+// Callers queued or running per breakdown and explanation language, so the
+// practice warmer doesn't spend its budget on a request already on its way.
+const pendingExplanations = new Map<string, number>()
+
+const breakdownKey = (targetLanguage: string, word: ResolvedWord) =>
+  `${targetLanguage}\u0000${word.lemma}\u0000${word.insightPos}`
+const explanationKey = (key: string, explanationLanguage: string) => `${key}\u0000${explanationLanguage}`
+
+const ensureInsight = async (
+  params: { targetLanguage: string; explanationLanguage: string; word: ResolvedWord },
+  deps: WordFamilyDependencies
+): Promise<void> => {
+  const { targetLanguage, explanationLanguage, word } = params
+  const key = breakdownKey(targetLanguage, word)
+  const pendingKey = explanationKey(key, explanationLanguage)
+  const previous = insightGenerations.get(key)
+  const run = (async () => {
+    if (previous) await previous.catch(() => undefined)
+    const existing = await deps.wordFamilyRepository.getInsight({
+      targetLanguage,
+      lemma: word.lemma,
+      lemmaPos: word.insightPos,
+      explanationLanguage,
+    })
+    if (existing?.explanation) return
+    await generateInsight(params, existing, deps)
+  })()
+  insightGenerations.set(key, run)
+  pendingExplanations.set(pendingKey, (pendingExplanations.get(pendingKey) ?? 0) + 1)
+  try {
+    await run
+  } finally {
+    if (insightGenerations.get(key) === run) insightGenerations.delete(key)
+    const remaining = (pendingExplanations.get(pendingKey) ?? 1) - 1
+    if (remaining > 0) pendingExplanations.set(pendingKey, remaining)
+    else pendingExplanations.delete(pendingKey)
+  }
+}
+
 // Finishes the family line once the gloss's POS is known. With
 // `generateInsight`, a missing insight is generated first (the slow path the
 // client triggers after the first render). Null when there is nothing worth
@@ -341,7 +386,7 @@ export const buildWordFamily = async (
   const wantsInsight = INSIGHT_POS.has(word.insightPos)
   let insight = wantsInsight ? await deps.wordFamilyRepository.getInsight(insightKey) : null
   if (wantsInsight && params.generateInsight && !insight?.explanation) {
-    await generateInsight({ targetLanguage, explanationLanguage, word }, insight, deps)
+    await ensureInsight({ targetLanguage, explanationLanguage, word }, deps)
     insight = await deps.wordFamilyRepository.getInsight(insightKey)
   }
   const insightPending = wantsInsight && !insight?.explanation
@@ -422,4 +467,57 @@ export const loadGlossedWordFamily = async (
     },
     deps
   )
+}
+
+// Opus calls one practice compose may start. Insights are cached for every
+// user, so uncovered words get picked up by later composes.
+export const MAX_INSIGHT_WARMS_PER_COMPOSE = 10
+
+export type WarmedWord = { headword: string; pos: string | null }
+
+// Fire-and-forget insight generation for the words a practice queue is about
+// to show, so flashcard backs (which only read the cache) get part meanings
+// on a later review. Resolves each word exactly as the flashcard's
+// glosses.wordFamily request will, so it fills the row the card reads.
+export const warmWordFamilyInsights = async (
+  params: { userId: string; targetLanguage: string; words: readonly WarmedWord[] },
+  deps: WordFamilyDependencies & {
+    usersRepository: UsersRepositoryInterface
+    userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  }
+): Promise<void> => {
+  const { userId, targetLanguage, words } = params
+  if (!WORD_FAMILY_LANGUAGES.has(targetLanguage) || words.length === 0) return
+  if (!(await deps.userTargetLanguagePrefsRepository.getWordFamilyHintsEnabled(userId, targetLanguage))) return
+  const languagePrefs = await getLanguageMode({
+    userId,
+    targetLanguage,
+    usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+  })
+  const explanationLanguage = explanationLanguageFor(targetLanguage, languagePrefs)
+
+  let budget = MAX_INSIGHT_WARMS_PER_COMPOSE
+  const seen = new Set<string>()
+  for (const { headword, pos } of words) {
+    if (budget <= 0) return
+    const lookup = await loadWordFamilyEntries({ targetLanguage, selectionText: headword }, deps)
+    const word = await resolveWord({ targetLanguage, lookup, pos }, deps)
+    if (!word || !INSIGHT_POS.has(word.insightPos)) continue
+    // A term queued in both pools resolves to the same key twice.
+    const key = explanationKey(breakdownKey(targetLanguage, word), explanationLanguage)
+    if (seen.has(key) || pendingExplanations.has(key)) continue
+    seen.add(key)
+    const cached = await deps.wordFamilyRepository.getInsight({
+      targetLanguage,
+      lemma: word.lemma,
+      lemmaPos: word.insightPos,
+      explanationLanguage,
+    })
+    if (cached?.explanation) continue
+    budget -= 1
+    void ensureInsight({ targetLanguage, explanationLanguage, word }, deps).catch((err) =>
+      console.error('word-family insight warm-up threw', { targetLanguage, lemma: word.lemma, err })
+    )
+  }
 }

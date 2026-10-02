@@ -5,10 +5,14 @@ import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-targe
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
 import { getIntroductionExercises, getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
 import { planPracticeQueue } from './plan-practice-queue'
+import type { WarmedWord } from '../word-family/word-family'
 
 export type ComposePracticeQueueDependencies = ExerciseBankDependencies & {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   bookPinsRepository: BookPinsRepositoryInterface
+  // Bound warmWordFamilyInsights (service/word-family), injected so the
+  // composer doesn't carry the word-family repositories.
+  warmWordFamilyInsights: (params: { userId: string; targetLanguage: string; words: WarmedWord[] }) => Promise<void>
 }
 
 // Which terms are in scope, and how they render. Planned citation introductions
@@ -33,6 +37,12 @@ export type ComposeQueueFilter = {
   // Explicit "learn extra" request: plan up to this many more recognition
   // terms past the daily-new cap. They still stamp introduced_at when reached.
   learnExtraCount?: number
+}
+
+// The card's grammar.pos, as the flashcard sends it to glosses.wordFamily.
+const grammarPos = (grammar: unknown): string | null => {
+  const pos = (grammar as Record<string, unknown> | null)?.pos
+  return typeof pos === 'string' ? pos : null
 }
 
 export type ComposedQueueItem =
@@ -64,10 +74,11 @@ export const composePracticeQueue = async (params: {
   userId: string
   targetLanguage: string
   filter: ComposeQueueFilter
-  // Fire-and-forget hint-exercise generation for served flashcard terms whose
-  // bank has no hint-type slot. True only for the initial compose request —
-  // the polled refresh must never kick LLM work.
-  warmHintBanks?: boolean
+  // Fire-and-forget LLM work for the served flashcards: hint exercises for
+  // terms whose bank has no hint-type slot, and word-family insights for
+  // their backs. True only for the initial compose request — the polled
+  // refresh must never kick LLM work.
+  warmFlashcardCaches?: boolean
   deps: ComposePracticeQueueDependencies
 }): Promise<ComposePracticeQueueResult> => {
   const { userId, targetLanguage, filter, deps } = params
@@ -143,11 +154,18 @@ export const composePracticeQueue = async (params: {
     }
   }
 
-  if (params.warmHintBanks) {
-    void warmHintExerciseBanksForFlashcards({
-      cards: items.flatMap((item) => (item.type === 'flashcard' ? [item.card] : [])),
-      deps,
-    }).catch((err) => console.error('hint bank warmer threw', { err }))
+  if (params.warmFlashcardCaches) {
+    const flashcards = items.flatMap((item) => (item.type === 'flashcard' ? [item.card] : []))
+    void warmHintExerciseBanksForFlashcards({ cards: flashcards, deps }).catch((err) =>
+      console.error('hint bank warmer threw', { err })
+    )
+    // Pronunciation cards don't show the word-family line.
+    const words = flashcards
+      .filter((card) => card.skill !== 'pronunciation')
+      .map((card) => ({ headword: card.headword, pos: grammarPos(card.grammar) }))
+    void deps
+      .warmWordFamilyInsights({ userId, targetLanguage, words })
+      .catch((err) => console.error('word-family insight warmer threw', { err }))
   }
 
   return {

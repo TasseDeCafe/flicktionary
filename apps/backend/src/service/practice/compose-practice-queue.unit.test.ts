@@ -91,6 +91,13 @@ const createDeps = (params: {
   const reserveSlots = vi.fn().mockResolvedValue([])
   const listBonusForTerms = vi.fn().mockResolvedValue([])
   const countGateBankSlots = vi.fn().mockResolvedValue({ inflight: 0, failed: 0, failedTypes: 0 })
+  // Every term already has a ready hint exercise, so the hint warmer stays idle.
+  const countSlotsByTermForType = vi
+    .fn()
+    .mockImplementation(async (p: { userLookupIds: string[] }) =>
+      p.userLookupIds.map((lookupId) => ({ user_lookup_id: lookupId, ready: 1, inflight: 0, failed: 0 }))
+    )
+  const warmWordFamilyInsights = vi.fn().mockResolvedValue(undefined)
 
   const deps = {
     userLookupsRepository: {
@@ -108,8 +115,15 @@ const createDeps = (params: {
       countBookIntroductionsToday: vi.fn().mockResolvedValue(0),
     },
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
-    practiceExercisesRepository: { selectNextExercise, reserveSlots, listBonusForTerms, countGateBankSlots },
+    practiceExercisesRepository: {
+      selectNextExercise,
+      reserveSlots,
+      listBonusForTerms,
+      countGateBankSlots,
+      countSlotsByTermForType,
+    },
     usersRepository: {},
+    warmWordFamilyInsights,
   } as unknown as ComposePracticeQueueDependencies
 
   return {
@@ -119,6 +133,7 @@ const createDeps = (params: {
     listDueReviewTerms,
     listOptInNewFacets,
     initializeAndParkCitationFacetIfUnderDailyCap,
+    warmWordFamilyInsights,
   }
 }
 
@@ -393,5 +408,26 @@ describe('composePracticeQueue', () => {
     expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
     expect(result.items.map(itemKey)).toEqual([`ex:recognition:${id(1)}`, `ex:recognition:${id(2)}`])
     expect(result.dailyLimitReached).toBe(false)
+  })
+
+  it('warms word-family insights for the served flashcards only, and only when asked', async () => {
+    const pronunciation = { ...termRow(id(3)), skill: 'pronunciation', target_form: '' } as DbUserLookupWithFacet
+    const recognition = { ...termRow(id(2)), grammar: { pos: 'verb' } } as DbUserLookupWithFacet
+    const { deps, warmWordFamilyInsights } = createDeps({
+      dueByPool: { production: [termRow(id(1), 'production')], recognition: [recognition, pronunciation] },
+      backlogByPool: { recognition: [id(4)] },
+    })
+    await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), deps })
+    expect(warmWordFamilyInsights).not.toHaveBeenCalled()
+
+    await composePracticeQueue({ userId, targetLanguage: lang, filter: filter(), warmFlashcardCaches: true, deps })
+    expect(warmWordFamilyInsights).toHaveBeenCalledWith({
+      userId,
+      targetLanguage: lang,
+      words: [
+        { headword: `w-${id(1)}`, pos: null },
+        { headword: `w-${id(2)}`, pos: 'verb' },
+      ],
+    })
   })
 })

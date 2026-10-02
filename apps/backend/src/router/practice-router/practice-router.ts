@@ -34,6 +34,7 @@ import {
   warmExerciseBank,
   type ExerciseBankDependencies,
 } from '../../service/practice/exercise-bank'
+import { warmWordFamilyInsights, type WordFamilyDependencies } from '../../service/word-family/word-family'
 import { startWarmupSession, refreshWarmupSession, type WarmupDependencies } from '../../service/practice/warmup'
 import {
   composePracticeQueue,
@@ -58,6 +59,7 @@ export type PracticeRouterDependencies = {
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   bookPinsRepository: BookPinsRepositoryInterface
+  wordFamilyDependencies: WordFamilyDependencies
 }
 
 // 'wiktionary' when the citation card's displayed IPA is dictionary-grounded:
@@ -157,6 +159,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     ...exerciseBankDeps,
     practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
     bookPinsRepository: deps.bookPinsRepository,
+    warmWordFamilyInsights: (params) =>
+      warmWordFamilyInsights(params, {
+        ...deps.wordFamilyDependencies,
+        usersRepository: deps.usersRepository,
+        userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+      }),
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings pre-generate Strengthen exercises.
@@ -341,7 +349,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         userId,
         targetLanguage: input.targetLanguage,
         filter: input.filter,
-        warmHintBanks: true,
+        warmFlashcardCaches: true,
         deps: composeDeps,
       })
       return {
