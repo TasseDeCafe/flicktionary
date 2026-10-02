@@ -72,8 +72,9 @@ const POPOVER_CONTENT_CLASS = 'dark w-88 pointer-events-auto z-[2147483647]'
 const SUBTITLE_SURFACE_SELECTOR = `[${PERSISTENT_HOST_ATTR}], [data-asb-subtitles]`
 
 // The word-family line to show for a ready gloss: the fastGloss line, swapped
-// for its LLM-insight version once `fetchInsight` allows the request (a pinned
-// preview or a saved popover — never a bare hover). Unlike the web reader, the
+// for its LLM-insight version once that has been fetched. `fetchInsight` only
+// allows starting the request (a pinned preview or a saved popover — never a
+// bare hover); an insight already fetched shows on any later hover. Unlike the web reader, the
 // translation is never held back behind the line: a hover over a playing video
 // is a glance, and Space already toggles playback.
 const useDisplayedWordFamily = (
@@ -85,9 +86,10 @@ const useDisplayedWordFamily = (
   const ready = content.status === 'ready' ? content : null
   const wordFamily = ready?.wordFamily ?? null
   const { data: insightWordFamily } = useWordFamilyInsight(
-    ready && wordFamily?.insightPending && fetchInsight && targetLanguage
+    ready && wordFamily?.insightPending && targetLanguage
       ? { selectionText: word, targetLanguage, pos: ready.pos }
-      : null
+      : null,
+    fetchInsight
   )
   return wordFamily?.insightPending && insightWordFamily !== undefined ? insightWordFamily : wordFamily
 }

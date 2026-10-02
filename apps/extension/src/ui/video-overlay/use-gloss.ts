@@ -66,20 +66,31 @@ export function useGloss(
 }
 
 // The word-family line with its LLM insight, for a gloss whose line came back
-// with `insightPending`. `params` null = don't fetch: callers only enable it
-// once the popover is pinned or a saved word is opened, since the first request
-// for a word runs an LLM call server-side. Keyed on word + language + POS so
-// the preview's result is reused by the saved popover after Save. Errors aren't
-// cached and never surface — the deterministic line is already on screen.
-export function useWordFamilyInsight(
-  params: { selectionText: string; targetLanguage: string; pos: string | null } | null
-) {
-  return useQuery({
+// with `insightPending`. `params` null = no pending line for this word. The key
+// always names the word (language + word + POS), and `allowFetch` only gates
+// STARTING a request: callers allow it once the popover is pinned or a saved
+// word is opened, since the first request for a word runs an LLM call
+// server-side. A result already in the cache shows regardless — a re-hover
+// unpins the popover, and must not hide an insight that already arrived. The
+// saved popover reuses the preview's result after Save the same way. Errors
+// aren't cached and never surface — the deterministic line is already on
+// screen.
+export const wordFamilyInsightQueryOptions = (
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null,
+  allowFetch: boolean
+) =>
+  queryOptions({
     queryKey: ['word-family-insight', params?.targetLanguage ?? '', params?.selectionText ?? '', params?.pos ?? null],
     queryFn: () => requestWordFamilyInsight(params!.selectionText, params!.targetLanguage, params!.pos),
-    enabled: params !== null,
+    enabled: params !== null && allowFetch,
     staleTime: Infinity,
     gcTime: 30 * 60_000,
     retry: false,
   })
+
+export function useWordFamilyInsight(
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null,
+  allowFetch: boolean
+) {
+  return useQuery(wordFamilyInsightQueryOptions(params, allowFetch))
 }
