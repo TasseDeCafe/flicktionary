@@ -1194,7 +1194,7 @@ renders.
   card hides its headword, which IS the cloze answer). Abandoning between answer and
   Continue loses only the rating (the exercise is already consumed) — same
   dropped-session semantics as the rest of the queue.
-- **Word-family clue** (recognition only): on the un-flipped front of a live
+- **Word-family clue**: on the un-flipped front of a live
   `meaning_recognition` flashcard (citation or form facet) in a word-family language, a
   `Clue` button appears before Hint / Show answer when the card's word-family line
   (`glosses.wordFamily`, the same cached query as the back's slot; the upcoming card's is
@@ -1210,8 +1210,20 @@ renders.
   failed rating's retry copy and a failed re-rate's requeue inherit the cap)
   and rides the resume snapshot, so the Edit-term detour can't hand Easy back. Client-side
   only, like the hint lock. The MC Hint stays available after a clue; its hard/again lock
-  wins. Production cards never offer it (parts and parents would spell the answer — #517),
-  and the word-family hints pref off means no line and so no Clue.
+  wins. The word-family hints pref off means no line and so no Clue.
+  **Production variant**: a live `meaning_production` front (citation or form facet) gets the
+  same button, footer, `C` key and Good cap, but never the line itself: parts, anchors and the
+  form-of lemma would spell the answer. `productionClueFor`
+  (`apps/web/src/features/practice/utils/card-word-family.ts`) derives a meaning-only clue
+  from the same cached line (`ProductionClueLine`): role-labelled part meanings
+  (`prefix *into a state* + root *to freeze*`; a linking vowel is dropped, and an affix-only
+  breakdown like по- + -нимать promotes its stem to root), the form-of kind without its lemma
+  (`participle · …`), and `(a word you know)` / `(a word you saved)` on a root that is one of
+  the learner's anchors (other anchors are not mentioned). No clue when the line has
+  cognates (a loanword: its sound is the answer), no part has a meaning (insight not cached
+  yet, or opaque), a meaning contains Cyrillic, or a meaning is an en etymology note
+  (`from french …`). Hidden when translations are off for the language or no native language
+  is set: explanations are then in the target language and can share the answer's root.
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
   is rolled back by object identity if the server says cap-rejected / parked / error — unless
@@ -1448,9 +1460,10 @@ each headword + `grammar.pos` exactly as `glosses.wordFamily` will, skips cached
 non-content POS, multi-word headwords and requests already in flight, and starts at most
 `MAX_INSIGHT_WARMS_PER_COMPOSE` (10) generations per compose. A warmed insight shows from a
 later review of the card (the current one already fetched its line). On a production front
-the breakdown and parents would spell the answer, so production shows it on the back only;
-a recognition front can show it on request as a clue that caps the rating at Good (see
-"Word-family clue" above). Pronunciation cards don't show it.
+the breakdown and parents would spell the answer, so production shows the line on the back
+only. On request, a recognition front shows it as a clue and a production front shows a
+meaning-only clue; both cap the rating at Good (see "Word-family clue" above).
+Pronunciation cards don't show it.
 
 ### Keyboard shortcuts (desktop)
 
