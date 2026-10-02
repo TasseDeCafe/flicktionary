@@ -1187,6 +1187,22 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   card hides its headword, which IS the cloze answer). Abandoning between answer and
   Continue loses only the rating (the exercise is already consumed) — same
   dropped-session semantics as the rest of the queue.
+- **Word-family clue** (recognition only): on the un-flipped front of a live
+  `meaning_recognition` flashcard (citation or form facet) in a word-family language, a
+  `Clue` button appears before Hint / Show answer when the card's word-family line
+  (`glosses.wordFamily`, the same cached query as the back's slot; the upcoming card's is
+  prefetched so the button is there from the first frame) has a known/saved relative, a
+  form-of note, or an explained part (`frontClueFor`; bare unexplained parts mostly restate
+  the headword). Pressing it shows the line under the front **without cognates** ("Looks
+  like: dozen" is near the answer); the revealed back's `wordFamily` slot then carries the
+  full line, so the front copy hides. Using it **caps the rating at Good**: Easy is disabled
+  (with a muted note) and `4` is inert — on the live back and on a peek re-rate of that
+  item. Clue use is tracked per queue item (`clueUsed`; an Again redrill is a fresh attempt, but a
+  failed rating's retry copy and a failed re-rate's requeue inherit the cap)
+  and rides the resume snapshot, so the Edit-term detour can't hand Easy back. Client-side
+  only, like the hint lock. The MC Hint stays available after a clue; its hard/again lock
+  wins. Production cards never offer it (parts and parents would spell the answer — #517),
+  and the word-family hints pref off means no line and so no Clue.
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
   is rolled back by object identity if the server says cap-rejected / parked / error, guarded
@@ -1417,8 +1433,10 @@ warms): for the served non-pronunciation flashcards, when the hints pref is on, 
 each headword + `grammar.pos` exactly as `glosses.wordFamily` will, skips cached insights,
 non-content POS, multi-word headwords and requests already in flight, and starts at most
 `MAX_INSIGHT_WARMS_PER_COMPOSE` (10) generations per compose. A warmed insight shows from a
-later review of the card (the current one already fetched its line). Back only: on a production front
-the breakdown and parents would spell the answer. Pronunciation cards don't show it.
+later review of the card (the current one already fetched its line). On a production front
+the breakdown and parents would spell the answer, so production shows it on the back only;
+a recognition front can show it on request as a clue that caps the rating at Good (see
+"Word-family clue" above). Pronunciation cards don't show it.
 
 ### Keyboard shortcuts (desktop)
 
@@ -1427,7 +1445,7 @@ and the session recap — is fully keyboard-drivable through one shared data-dri
 (`apps/web/src/hooks/use-hotkeys.ts`: a global keydown listener per view with per-binding
 enabled gates; a matched key always `preventDefault`s, which both stops Space-scroll and
 suppresses native re-activation of a still-focused button). Bindings: flashcard front
-`Space`/`Enter` = Show answer, `H` = Hint (when banked); flashcard back `1`–`4` =
+`Space`/`Enter` = Show answer, `H` = Hint (when banked), `C` = word-family Clue (when offered); flashcard back `1`–`4` =
 Again/Hard/Good/Easy with `Space`/`Enter` = Good (Anki muscle memory; digits match by
 **physical key position** — `event.code Digit/Numpad` — so bare top-row presses work on
 AZERTY); hint outcome `Enter`/`Space` = Continue; MC exercises `1`–`4` pick an option, `H`
@@ -1437,7 +1455,7 @@ desktop, whose own `Enter` submits (use-in-sentence is chat-style: `Enter` submi
 post-answer `Enter`/`Space` = Next; still-generating placeholders `S`/`Esc`/`Enter`/
 `Space` = skip; failed decision cards `Enter`/`Space` = Study as flashcard, `S`/`Esc` =
 skip; peek mode `←`/`→` drive the chevrons (same withhold rules), `1`–`4` re-rate when
-offered, `Enter` returns to the current card; completion screens `Enter` = the primary
+offered (`4` inert on a clue-capped card), `Enter` returns to the current card; completion screens `Enter` = the primary
 action (Strengthen when offered, else close — `Space` is deliberately unbound there so
 Anki-style space-hammering through the last cards can't launch Strengthen). Single letters
 and digits never fire while an editable element has focus, browser/OS chords
