@@ -21,6 +21,7 @@
     "build:word-family": "npx tsx scripts/build-word-family.ts",
     "load:reference-data": "pnpm run export:wordfreq && pnpm run load:kaikki && pnpm run build:lemma-ranks",
     "db:advance-day": "npx tsx scripts/advance-practice-day.ts",
+    "dev:scenario": "NODE_ENV=development-tunnel npx tsx scripts/dev--scenario.ts",
     "db:backfill-backdrops": "npx tsx scripts/backfill-tmdb-backdrops.ts",
     "db:dev:tunnel:reset": "./scripts/db--dev-tunnel--reset.sh",
     "db:dev:tunnel:wipe": "./scripts/db--dev-tunnel--wipe.sh",
