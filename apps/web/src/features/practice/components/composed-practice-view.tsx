@@ -845,11 +845,21 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
             )
           ) : (
             <div className='flex gap-2'>
-              {clueAvailable && (
-                <Button type='button' variant='outline' size='xl' className='flex-1' onClick={showClue}>
+              {/* A shown clue keeps its slot (disabled) so Hint never slides
+                  under the finger that just tapped Clue — a double tap would
+                  otherwise consume the hint exercise and lock the rating. */}
+              {frontClue && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xl'
+                  className='flex-1'
+                  disabled={!clueAvailable}
+                  onClick={showClue}
+                >
                   <Puzzle className='h-4 w-4' />
-                  {t`Clue`}
-                  {showKbd && <Kbd>C</Kbd>}
+                  {clueAvailable ? t`Clue` : t`Clue shown`}
+                  {showKbd && clueAvailable && <Kbd>C</Kbd>}
                 </Button>
               )}
               {servableHint && (
