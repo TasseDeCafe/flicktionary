@@ -25,6 +25,14 @@ msgstr "« {headword} » marqué comme connu"
 msgid "“{headword}” moved to your flashcards."
 msgstr "« {headword} » déplacé vers vos cartes mémoire."
 
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "(a word you know)"
+msgstr "(un mot que vous connaissez)"
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "(a word you saved)"
+msgstr "(un mot que vous avez enregistré)"
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "(Current)"
 msgstr "(Actuel)"
@@ -616,6 +624,10 @@ msgstr "Avancé — utilisation flexible et efficace dans des contextes complexe
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Adverb"
 msgstr "Adverbe"
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "adverbial participle"
+msgstr "participe adverbial"
 
 #: packages/ui/src/components/word-family-line.tsx
 msgid "adverbial participle of {lemma}"
@@ -2692,6 +2704,10 @@ msgstr "Génitif"
 msgid "German"
 msgstr "Allemand"
 
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "gerund"
+msgstr "gérondif"
+
 #: packages/ui/src/components/word-family-line.tsx
 msgid "gerund of {lemma}"
 msgstr "gérondif de {lemma}"
@@ -3899,6 +3915,10 @@ msgstr "Partie {position}"
 msgid "Part of speech"
 msgstr "Partie du discours"
 
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "participle"
+msgstr "participe"
+
 #: packages/ui/src/components/word-family-line.tsx
 msgid "participle of {lemma}"
 msgstr "participe de {lemma}"
@@ -3906,6 +3926,10 @@ msgstr "participe de {lemma}"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Particle"
 msgstr "Particule"
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "passive"
+msgstr "passif"
 
 #: packages/ui/src/components/word-family-line.tsx
 msgid "passive of {lemma}"
@@ -4129,6 +4153,10 @@ msgstr "Pratiqué"
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Practise saying it"
 msgstr "S'entraîner à le prononcer"
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "prefix"
+msgstr "préfixe"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
@@ -4603,6 +4631,10 @@ msgstr "Révisions collectées pour tout ce que vous avez lu."
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "Right-click a word or phrase to save it with the sentence it appeared in."
 msgstr "Faites un clic droit sur un mot ou une phrase pour l'enregistrer avec la phrase dans laquelle il apparaît."
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "root"
+msgstr "racine"
 
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Russian"
@@ -5431,6 +5463,10 @@ msgstr "Largeur des sous-titres"
 msgid "Success!"
 msgstr "Succès !"
 
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "suffix"
+msgstr "suffixe"
+
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Swahili"
 msgstr "Swahili"
@@ -6157,6 +6193,10 @@ msgstr "Utilisation de Flicktionary en tant qu'invité — traductions uniquemen
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Verb"
 msgstr "Verbe"
+
+#: apps/web/src/features/practice/components/production-clue-line.tsx
+msgid "verbal noun"
+msgstr "nom verbal"
 
 #: packages/ui/src/components/word-family-line.tsx
 msgid "verbal noun of {lemma}"

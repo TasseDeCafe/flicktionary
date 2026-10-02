@@ -32,9 +32,11 @@ import {
   useRefreshPracticeQueue,
   useUndoRating,
 } from '../api/practice-hooks'
-import { FlashcardFace } from './flashcard-face'
+import { FlashcardFace, type FrontClue } from './flashcard-face'
 import { poolForCard } from '../utils/pool-for-card'
-import { cardWordFamilyParams, frontClueFor } from '../utils/card-word-family'
+import { cardWordFamilyParams, frontClueFor, productionClueFor } from '../utils/card-word-family'
+import { useHideTranslationFields } from '../utils/use-hide-translation-fields'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { TermActionsOverlay } from './term-actions-overlay'
 import { useComposedSession } from './use-composed-session'
 import { ReviewQueueStats } from './review-queue-stats'
@@ -218,16 +220,32 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
   const activeHintDisplayed = activeHint != null && activeHint.item === current
 
-  // Word-family clue (#516): a recognition front may show the word's
-  // structure and the relatives the learner has, before the answer. Same
+  // Word-family clue: a recognition front may show the word's structure and
+  // the relatives the learner has (#516); a production front only what the
+  // parts mean, since any spelling would give the answer away (#517). Same
   // query as the card back's line, so it costs no extra request; the upcoming
   // card's is prefetched so the Clue button is there from its first frame.
-  const clueCard = currentCard?.skill === 'meaning_recognition' ? currentCard : null
+  const clueCard =
+    currentCard?.skill === 'meaning_recognition' || currentCard?.skill === 'meaning_production' ? currentCard : null
   const { data: currentWordFamily } = useCardWordFamily(
     clueCard ? cardWordFamilyParams(clueCard, targetLanguage) : null
   )
   useCardWordFamily(upcomingItem?.type === 'flashcard' ? cardWordFamilyParams(upcomingItem.card, targetLanguage) : null)
-  const frontClue = clueCard ? frontClueFor(currentWordFamily) : null
+  // Explanations are written in the target language when translations are
+  // off (or no native language is set), and there they can share the
+  // answer's root — no production clue then.
+  const { data: userPrefs } = useGetUserPrefs()
+  const hideTranslationFields = useHideTranslationFields(targetLanguage)
+  const explainsInNativeLanguage = !hideTranslationFields && !!userPrefs?.nativeLanguage
+  const frontClue = ((): FrontClue | null => {
+    if (!clueCard) return null
+    if (clueCard.skill === 'meaning_recognition') {
+      const wordFamily = frontClueFor(currentWordFamily)
+      return wordFamily ? { pool: 'recognition', wordFamily } : null
+    }
+    const clue = explainsInNativeLanguage ? productionClueFor(currentWordFamily, targetLanguage) : null
+    return clue ? { pool: 'production', clue } : null
+  })()
   // Using the clue caps the rating at Good — live and on a peek re-rate.
   const clueAvailable = frontClue != null && !revealed && !clueCapped
 
