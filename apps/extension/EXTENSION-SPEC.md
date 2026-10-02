@@ -600,7 +600,9 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   (TanStack query keyed on language + word + POS, never retried, silent on
   failure) — **only once the popover is pinned** (pointer entered, or a
   born-pinned chunk gloss), never on a bare hover, since a word's first request
-  runs an LLM call. The language comes from `fastGloss`'s echoed
+  runs an LLM call. Pinning only gates *starting* the request: the query key
+  always names the word, so an insight that already arrived keeps showing when
+  a re-hover of the word reopens the popover unpinned. The language comes from `fastGloss`'s echoed
   `targetLanguage` (it may have been server-detected). Unlike the web reader
   there is **no guess-before-reveal hold**: a hover over a playing video is a
   glance, Space is play/pause, and hover has no "second tap" to reveal with.
