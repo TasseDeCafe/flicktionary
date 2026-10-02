@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
@@ -13,19 +12,17 @@ import {
   MoreVertical,
   Puzzle,
 } from 'lucide-react'
+import { useState } from 'react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
-import { RATE_VALUES, RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
+import { RATE_VALUES, RateButtons } from '@flicktionary/ui/components/rate-buttons'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { SuccessCheck } from '@/components/ui/success-check'
 import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
-import type {
-  PracticeQueueFilter,
-  StrengthenExercisePayload,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   useCardWordFamily,
   useClaimPracticeIntroduction,
@@ -38,14 +35,7 @@ import {
 import { FlashcardFace, poolForCard } from './flashcard-face'
 import { cardWordFamilyParams, frontClueFor } from '../utils/card-word-family'
 import { TermActionsOverlay } from './term-actions-overlay'
-import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
-import {
-  clearComposedSession,
-  currentDayKey,
-  saveComposedSession,
-  takeComposedSession,
-  type RatingRecord,
-} from './composed-session-snapshot'
+import { useComposedSession } from './use-composed-session'
 import { ReviewQueueStats } from './review-queue-stats'
 import { getRemainingCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
@@ -60,31 +50,6 @@ import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types
 import { useTermMeaning } from '../utils/use-term-meaning'
 import { computeMixRecap, splitMixChain } from '../utils/daily-mix'
 import { MixInterstitial } from './mix-interstitial'
-
-const POLL_INTERVAL_MS = 4000
-
-// A persistently-failing rateTerm mutation re-appends its card to the queue end
-// (so it isn't silently lost) — capped so a hard failure can't loop forever.
-const MAX_RATE_RETRIES = 2
-
-// The MC exercise a pressed Hint swapped in for the current flashcard,
-// snapshotted from the hint query so a background refetch can't change the
-// exercise mid-interaction. Keyed to the queue item (object identity) so a
-// stale hint from a previous card is never honored.
-type ActiveHint = {
-  item: ComposedQueueItem
-  exerciseId: string
-  payload: Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
-}
-
-// The graded outcome of a hint: the rating it locks in (correct → 'hard',
-// wrong → 'again'). The exercise is consumed at this point; Continue applies
-// the rating through the normal handleRate machinery.
-type HintOutcome = {
-  item: ComposedQueueItem
-  correct: boolean
-  rating: RateValue
-}
 
 const copyVariantFor = (origin: 'onboarding' | 'leech' | null): ExerciseCopyVariant =>
   origin === 'leech' ? 'rehab' : 'warmup'
@@ -104,7 +69,8 @@ type ComposedPracticeViewProps = {
 // exercise placeholders in place, never appends. An interrupted session is
 // stashed on unmount and resumed on the next matching mount (see
 // composed-session-snapshot.ts), so an edit-term detour or back gesture never
-// re-composes an in-progress session.
+// re-composes an in-progress session. The session bookkeeping lives in
+// useComposedSession; this view renders it.
 export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPracticeViewProps) => {
   const { t } = useLingui()
   const isMobile = useIsMobile()
@@ -116,12 +82,77 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   // URL doesn't contain this language — then the session behaves as plain).
   const mixChain = splitMixChain(mix, targetLanguage)
   const mixUpcoming = mixChain?.upcoming ?? []
-  // Deliberate session end (X / Back buttons, error screen) — skips the
-  // unmount save below, so the next Practice entry composes fresh instead of
-  // resuming this session.
-  const endedRef = useRef(false)
+
+  const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
+  const { mutateAsync: claimIntroduction } = useClaimPracticeIntroduction()
+  const { mutateAsync: refreshQueue } = useRefreshPracticeQueue()
+  const { mutate: rateTerm } = useRateTerm()
+  const { mutate: undoRating } = useUndoRating()
+
+  const session = useComposedSession({
+    targetLanguage,
+    filter,
+    composeQueue,
+    rateTerm,
+    undoRating,
+    claimIntroduction,
+    refreshQueue,
+    onParked: (headword) => toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`),
+    onSessionCompleted: ({ totalCount, hardCount }) =>
+      POSTHOG_EVENTS.practiceSessionCompleted({
+        session_type: 'composed',
+        target_language: targetLanguage,
+        total_count: totalCount,
+        hard_count: hardCount,
+        is_daily_mix: mixChain != null,
+      }),
+  })
+  const {
+    queue,
+    index,
+    displayedIndex,
+    current,
+    isPeeking,
+    revealed,
+    reveal,
+    currentAnswered,
+    restoredAnsweredItem,
+    dailyLimitReached,
+    canLearnExtra,
+    capNoticeShown,
+    pendingRatings,
+    pendingRerate,
+    sessionHard: sessionHardSet,
+    ratingRecords,
+    exerciseOutcomes,
+    claimedIntroductionCount,
+    introductionBlocked,
+    introductionClaimFailed,
+    retryIntroductionClaim,
+    activeHint,
+    hintOutcome,
+    openHint,
+    answerHint,
+    closeHint,
+    clueCapped,
+    showClue,
+    peekRecord,
+    canRerate,
+    peekOlder,
+    peekNewer,
+    stopPeeking,
+    advance,
+    handleRate,
+    handleRerate,
+    handleLearnExtra,
+    recordExerciseAnswer,
+    markEnded,
+  } = session
+
+  // Deliberate session end (X / Back buttons, error screen): the session
+  // skips its unmount save, so the next Practice entry composes fresh.
   const close = () => {
-    endedRef.current = true
+    markEnded()
     // A mix is dashboard-owned (its banner is the only entry point), so every
     // mix exit — Finish, "Done for now", the header X — returns to the
     // dashboard; a plain session returns to the language landing it started
@@ -134,214 +165,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   }
   const continueMix = () => {
     // A deliberate hop like close(): the finished session must not stash.
-    endedRef.current = true
+    markEnded()
     void navigate({
       to: '/practice/composed/$targetLanguage',
       params: { targetLanguage: mixUpcoming[0] },
       search: { ...filter, mix },
     })
   }
-
-  const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
-  const { mutateAsync: claimIntroduction } = useClaimPracticeIntroduction()
-  const { mutateAsync: refreshQueue } = useRefreshPracticeQueue()
-  const { mutate: rateTerm } = useRateTerm()
-  const { mutate: undoRating } = useUndoRating()
-
-  // An interrupted same-day session (edit-term detour, back gesture) resumes
-  // where it stood instead of re-composing a new onboarding batch. Lazy
-  // initializer: the take consumes the stash
-  // exactly once per mount, and every piece of session state seeds from it.
-  const [resumedSession] = useState(() => takeComposedSession(targetLanguage, filter))
-  const [queue, setQueue] = useState<ComposedQueueItem[] | null>(resumedSession?.queue ?? null)
-  const [queueFilter, setQueueFilter] = useState<PracticeQueueFilter>(resumedSession?.filter ?? filter)
-  const [index, setIndex] = useState(resumedSession?.index ?? 0)
-  // Mirror of `index` for async rate callbacks: rolling back an optimistic
-  // redrill copy must know whether the copy was already consumed.
-  const indexRef = useRef(resumedSession?.index ?? 0)
-  const [revealed, setRevealed] = useState(false)
-  const [capNoticeShown, setCapNoticeShown] = useState(resumedSession?.capNoticeShown ?? false)
-  const [dailyLimitReached, setDailyLimitReached] = useState(resumedSession?.dailyLimitReached ?? false)
-  // Whether recognition intro candidates remain for a Learn-extra batch — the
-  // compose response knows; a bare dailyLimitReached no longer implies it.
-  const [canLearnExtra, setCanLearnExtra] = useState(resumedSession?.canLearnExtra ?? false)
-  // Peek-back: how many items behind the live index we're re-viewing read-only.
-  const [peekBack, setPeekBack] = useState(0)
-  // A resumed session is already started — the compose effect must not run.
-  const startedRef = useRef(resumedSession != null)
-  // Terms rated again/hard this session — offered post-session Strengthen
-  // exercises. Parked terms are exercises here (never flashcards), so the set
-  // stays non-parked by construction.
-  const sessionHardRef = useRef<Set<string>>(resumedSession?.sessionHard ?? new Set())
-  // Durably-applied ratings keyed by queue-item identity: an entry exists ⇔
-  // the rating landed server-side with an undoable event. Drives the peek
-  // re-rate buttons (flashcard items only — a consumed exercise can't be
-  // un-answered).
-  const ratingRecordsRef = useRef<Map<ComposedQueueItem, RatingRecord>>(resumedSession?.ratingRecords ?? new Map())
-  // Answered-exercise outcomes, for the read-only peek display.
-  const exerciseOutcomesRef = useRef<Map<ComposedQueueItem, ExerciseAnswerData>>(
-    resumedSession?.exerciseOutcomes ?? new Map()
-  )
-  // The peeked item whose undo→re-rate chain is in flight (disables the peek
-  // rate buttons until the chain settles).
-  const [pendingRerate, setPendingRerate] = useState<ComposedQueueItem | null>(null)
-  // In-flight rateTerm mutations. handleRate advances optimistically and
-  // records the rating only on success, so the completion screen can render
-  // before the last rating lands — a mix Continue must wait for zero or the
-  // recap undercounts and a failed rating's requeue is lost.
-  const [pendingRatings, setPendingRatings] = useState(0)
   const [actionsOpen, setActionsOpen] = useState(false)
-  // The resumed current item, when it was answered before the detour. The
-  // answer state lived inside the (unmounted) exercise component and the
-  // server consumed the exercise, so the render path swaps in the read-only
-  // answered panel for this one item instead of remounting the live component
-  // — whose re-submit would be rejected as no longer answerable.
-  const [restoredAnsweredItem] = useState<ComposedQueueItem | null>(() => {
-    if (!resumedSession) return null
-    const item = resumedSession.queue[resumedSession.index]
-    return item && item.type === 'exercise' && resumedSession.exerciseOutcomes.has(item) ? item : null
-  })
-  // Whether the live-index exercise has been answered — gates the header kebab
-  // on unanswered cloze exercises (see kebab derivation below).
-  const [currentAnswered, setCurrentAnswered] = useState(restoredAnsweredItem != null)
-  // Flashcard hint: the MC exercise currently swapped in for the live card,
-  // and the locked-in rating once it's answered (correct → hard, wrong →
-  // again). Both are keyed to the queue item and cleared on advance.
-  const [activeHint, setActiveHint] = useState<ActiveHint | null>(null)
-  const [hintOutcome, setHintOutcome] = useState<HintOutcome | null>(null)
-  // Flashcards whose word-family clue was shown (recognition fronts). Kept
-  // past the advance: it also caps the peek re-rate, and it rides the resume
-  // snapshot so a detour can't hand back an Easy the clue already spent.
-  const [clueUsed, setClueUsed] = useState<Set<ComposedQueueItem>>(() => resumedSession?.clueUsed ?? new Set())
-  const claimedIntroductionsRef = useRef<Set<string>>(resumedSession?.claimedIntroductions ?? new Set())
-  const [claimIntroductionErrorKey, setClaimIntroductionErrorKey] = useState<string | null>(null)
-  const [claimRetry, setClaimRetry] = useState(0)
-
-  useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
-    composeQueue(
-      { targetLanguage, filter },
-      {
-        onSuccess: (resp) => {
-          setQueue(resp.data.items.map(toComposedQueueItem))
-          setDailyLimitReached(resp.data.dailyLimitReached)
-          setCanLearnExtra(resp.data.canLearnExtra)
-        },
-      }
-    )
-  }, [composeQueue, targetLanguage, filter])
-
-  // Live mirror of the snapshot-worthy state for the unmount save below (a
-  // cleanup closure would otherwise see the mount render's values).
-  const sessionStateRef = useRef({
-    queue,
-    index,
-    dailyLimitReached,
-    canLearnExtra,
-    capNoticeShown,
-    queueFilter,
-    clueUsed,
-  })
-  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter, clueUsed }
-  useEffect(
-    () => () => {
-      const snapshot = sessionStateRef.current
-      // Only an interrupted session is worth resuming: when nothing composed
-      // yet, the live queue is exhausted (completion screen), or the user
-      // deliberately ended the session (close()), clear the stash instead of
-      // saving — an ended session must also invalidate any earlier stash so
-      // it can't resurface after the fact.
-      if (endedRef.current || !snapshot.queue || !snapshot.queue[snapshot.index]) {
-        clearComposedSession()
-        return
-      }
-      saveComposedSession({
-        targetLanguage,
-        filter: snapshot.queueFilter,
-        queue: snapshot.queue,
-        index: snapshot.index,
-        dailyLimitReached: snapshot.dailyLimitReached,
-        canLearnExtra: snapshot.canLearnExtra,
-        capNoticeShown: snapshot.capNoticeShown,
-        sessionHard: sessionHardRef.current,
-        ratingRecords: ratingRecordsRef.current,
-        exerciseOutcomes: exerciseOutcomesRef.current,
-        clueUsed: snapshot.clueUsed,
-        claimedIntroductions: claimedIntroductionsRef.current,
-        dayKey: currentDayKey(),
-      })
-    },
-    // The route remounts this view on language/filter change, so these deps
-    // make the cleanup a save-once-on-unmount.
-    [targetLanguage, filter]
-  )
-
-  // Serve-only poll while a 'generating' exercise placeholder is still at or
-  // ahead of the current position, swapping it to ready/failed in place.
-  const pollingRef = useRef(false)
-  const hasPendingAhead =
-    queue?.slice(index).some((item) => item.type === 'exercise' && item.entry.status === 'generating') ?? false
-  useEffect(() => {
-    if (!hasPendingAhead) return
-    const interval = setInterval(async () => {
-      if (pollingRef.current) return
-      pollingRef.current = true
-      try {
-        const resp = await refreshQueue({ targetLanguage, filter: queueFilter })
-        setQueue((prev) => (prev ? mergeComposedPlaceholders(prev, resp.data.items, index) : prev))
-      } catch {
-        // Polling is best-effort; keep the placeholder and try again next tick.
-      } finally {
-        pollingRef.current = false
-      }
-    }, POLL_INTERVAL_MS)
-    return () => clearInterval(interval)
-  }, [refreshQueue, targetLanguage, queueFilter, hasPendingAhead, index])
 
   const remainingCounts = queue ? getRemainingCounts(queue, index) : null
-  const isPeeking = peekBack > 0
-  const displayedIndex = index - peekBack
-  const current = queue?.[displayedIndex]
-  const liveIntroduction = !isPeeking && current?.type === 'exercise' && current.isNewIntroduction ? current : null
-  const liveIntroductionKey = liveIntroduction
-    ? `${liveIntroduction.entry.pool}:${liveIntroduction.entry.userLookupId}`
-    : null
-  const introductionBlocked = liveIntroductionKey != null && !claimedIntroductionsRef.current.has(liveIntroductionKey)
-
-  useEffect(() => {
-    if (!liveIntroduction || !liveIntroductionKey) return
-    if (claimedIntroductionsRef.current.has(liveIntroductionKey)) return
-    if (claimIntroductionErrorKey === liveIntroductionKey) return
-
-    let cancelled = false
-    void claimIntroduction({
-      userLookupId: liveIntroduction.entry.userLookupId,
-      targetLanguage,
-      pool: liveIntroduction.entry.pool,
-      bypassDailyCap: liveIntroduction.bypassDailyCap,
-    })
-      .then((response) => {
-        if (cancelled) return
-        const status = response.data.status
-        if (status === 'claimed' || status === 'already_claimed') {
-          claimedIntroductionsRef.current.add(liveIntroductionKey)
-        } else {
-          setQueue((existing) => (existing ? existing.filter((item) => item !== liveIntroduction) : existing))
-          if (status === 'daily_cap_reached') {
-            setDailyLimitReached(true)
-            setCapNoticeShown(true)
-          }
-        }
-      })
-      .catch(() => {
-        if (cancelled) return
-        setClaimIntroductionErrorKey(liveIntroductionKey)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [claimIntroduction, claimIntroductionErrorKey, claimRetry, liveIntroduction, liveIntroductionKey, targetLanguage])
 
   // A hint only exists for the LIVE, unrevealed flashcard of a citation
   // MEANING facet — the exercise bank tests meaning and has no facet identity,
@@ -395,284 +228,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   useCardWordFamily(upcomingItem?.type === 'flashcard' ? cardWordFamilyParams(upcomingItem.card, targetLanguage) : null)
   const frontClue = clueCard ? frontClueFor(currentWordFamily) : null
   // Using the clue caps the rating at Good — live and on a peek re-rate.
-  const clueCapped = current != null && clueUsed.has(current)
   const clueAvailable = frontClue != null && !revealed && !clueCapped
-  const showClue = () => {
-    if (current) setClueUsed((used) => new Set(used).add(current))
-  }
-  // A failed rating's recovery copy re-asks the same attempt, so it keeps the
-  // clue's cap (unlike an Again redrill, which is a fresh attempt).
-  const carryClueUse = (from: ComposedQueueItem, to: ComposedQueueItem) =>
-    setClueUsed((used) => (used.has(from) ? new Set(used).add(to) : used))
-
-  // One completion event per session, even if a failed rating's retry copy
-  // re-extends the queue after the completion screen already appeared.
-  const completionCapturedRef = useRef(false)
-  // `queuedRedrillCount` lets handleRate signal a redrill appended in the same
-  // render (invisible to this closure's `queue`) so the completion capture
-  // doesn't fire while the session is about to continue.
-  const advanceBy = (queuedRedrillCount: number) => {
-    setRevealed(false)
-    setCurrentAnswered(false)
-    setActiveHint(null)
-    setHintOutcome(null)
-    setIndex((i) => i + 1)
-    indexRef.current += 1
-    // Crossing into the completion screen — an empty compose (nothing served)
-    // never advances, so it never counts as a completed session.
-    const totalCount = (queue?.length ?? 0) + queuedRedrillCount
-    if (totalCount > 0 && indexRef.current >= totalCount && !completionCapturedRef.current) {
-      completionCapturedRef.current = true
-      POSTHOG_EVENTS.practiceSessionCompleted({
-        session_type: 'composed',
-        target_language: targetLanguage,
-        total_count: totalCount,
-        hard_count: sessionHardRef.current.size,
-        is_daily_mix: mixChain != null,
-      })
-    }
-  }
-  const advance = () => advanceBy(0)
-
-  const handleRate = (rating: RateValue) => {
-    const item = queue?.[index]
-    if (!item || item.type !== 'flashcard') return
-    const { card } = item
-    const pool = poolForCard(card)
-
-    if (rating === 'again' || rating === 'hard') {
-      sessionHardRef.current.add(card.userLookupId)
-    }
-
-    // Anki-style: an 'again' card keeps coming back until it gets a
-    // non-'again' rating. The redrill copy is appended in the same render as
-    // the index advance; rolled back (by identity) on the outcomes that must
-    // not redrill: cap-rejected rating, leech parking, mutation error.
-    const redrill: ComposedQueueItem | null =
-      rating === 'again' ? { type: 'flashcard', card, retryCount: item.retryCount, requeuedForAgain: true } : null
-    if (redrill) setQueue((q) => (q ? [...q, redrill] : q))
-    advanceBy(redrill ? 1 : 0)
-    const dropRedrill = () => {
-      if (!redrill) return
-      setQueue((q) => {
-        if (!q) return q
-        const position = q.indexOf(redrill)
-        // Already consumed (re-rated before the response landed): removing it
-        // now would shift the queue under the live index onto the wrong card.
-        if (position === -1 || position < indexRef.current) return q
-        return q.filter((queued) => queued !== redrill)
-      })
-    }
-
-    setPendingRatings((count) => count + 1)
-    rateTerm(
-      {
-        userLookupId: card.userLookupId,
-        rating,
-        pool,
-        // Facet identity of the queued card — the composed queue serves
-        // citation, pronunciation and form facets alike.
-        skill: card.skill,
-        targetForm: card.targetForm,
-      },
-      {
-        onSettled: () => setPendingRatings((count) => count - 1),
-        onSuccess: (resp) => {
-          if (resp.data.dailyCapReached) {
-            // Nothing applied (no event) — no record, nothing to re-rate.
-            dropRedrill()
-            if (!capNoticeShown) setCapNoticeShown(true)
-            return
-          }
-          if (resp.data.parked) {
-            // The term crossed the leech threshold and left every practice
-            // queue — don't redrill it in-session; rehab gates bring it back.
-            dropRedrill()
-            const headword = card.headword
-            toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
-            if (resp.data.eventId) {
-              ratingRecordsRef.current.set(item, { rating, eventId: resp.data.eventId, redrill })
-            }
-            return
-          }
-          if (resp.data.eventId) {
-            ratingRecordsRef.current.set(item, { rating, eventId: resp.data.eventId, redrill })
-          }
-        },
-        onError: () => {
-          dropRedrill()
-          if (item.retryCount < MAX_RATE_RETRIES) {
-            const retry: ComposedQueueItem = {
-              type: 'flashcard',
-              card,
-              retryCount: item.retryCount + 1,
-              requeuedForAgain: item.requeuedForAgain,
-            }
-            setQueue((q) => (q ? [...q, retry] : q))
-            carryClueUse(item, retry)
-          }
-        },
-      }
-    )
-  }
-
-  // Peek re-rate (Anki semantics, flashcard items only): undo the recorded
-  // rating, then apply the new one through the full rateTerm machinery
-  // (cap/introduction/leech). Any outcome that leaves the card unrated
-  // server-side (stale undo, cap refusal, parked no-op, error after a
-  // committed undo) drops the record and re-appends a fresh item so the card
-  // resurfaces rateable.
-  const handleRerate = (item: ComposedQueueItem, newRating: RateValue) => {
-    if (item.type !== 'flashcard') return
-    const record = ratingRecordsRef.current.get(item)
-    if (!record || pendingRerate) return
-    const { card } = item
-    const pool = poolForCard(card)
-    setPendingRerate(item)
-
-    const requeueFresh = () => {
-      ratingRecordsRef.current.delete(item)
-      const fresh: ComposedQueueItem = { type: 'flashcard', card, retryCount: 0, requeuedForAgain: false }
-      setQueue((q) => (q ? [...q, fresh] : q))
-      carryClueUse(item, fresh)
-    }
-
-    undoRating(
-      {
-        userLookupId: card.userLookupId,
-        pool,
-        skill: card.skill,
-        targetForm: card.targetForm,
-        eventId: record.eventId,
-      },
-      {
-        // Mutation error: nothing changed server-side — keep the record (the
-        // hook's meta toast surfaces the failure).
-        onError: () => setPendingRerate(null),
-        onSuccess: (undoResp) => {
-          if (!undoResp.data.undone) {
-            // Stale handle — a later rating (e.g. another tab) is now
-            // the latest live event, or it was already reverted. The server
-            // refused to restore; treat the card as unknown-but-consistent:
-            // drop the record and let it resurface for a clean rating.
-            requeueFresh()
-            setPendingRerate(null)
-            return
-          }
-          rateTerm(
-            {
-              userLookupId: card.userLookupId,
-              rating: newRating,
-              pool,
-              skill: card.skill,
-              targetForm: card.targetForm,
-            },
-            {
-              onError: () => {
-                requeueFresh()
-                setPendingRerate(null)
-              },
-              onSuccess: (resp) => {
-                const parked = resp.data.parked
-                if (resp.data.dailyCapReached || (parked && resp.data.eventId === null)) {
-                  // The fresh rating didn't apply (cap consumed meanwhile, or
-                  // the term got parked by another surface) — card is unrated.
-                  requeueFresh()
-                  if (resp.data.dailyCapReached && !capNoticeShown) setCapNoticeShown(true)
-                  if (parked) {
-                    const headword = card.headword
-                    toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
-                  }
-                  setPendingRerate(null)
-                  return
-                }
-
-                // Applied (incl. newly-parked-with-eventId). Reconcile the
-                // redrill copy with the rating change.
-                const oldRedrill = record.redrill
-                let newRedrill: ComposedQueueItem | null = oldRedrill
-                const dropOldRedrill = () => {
-                  if (!oldRedrill) return
-                  setQueue((q) => {
-                    if (!q) return q
-                    const position = q.indexOf(oldRedrill)
-                    // Already consumed: the live index walked past it — can't
-                    // pull a card the session already showed.
-                    if (position === -1 || position < indexRef.current) return q
-                    return q.filter((queued) => queued !== oldRedrill)
-                  })
-                  newRedrill = null
-                }
-                if (parked) {
-                  // Newly parked: out of rotation — no redrill either way.
-                  dropOldRedrill()
-                  const headword = card.headword
-                  toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
-                } else if (record.rating === 'again' && newRating !== 'again') {
-                  dropOldRedrill()
-                } else if (record.rating !== 'again' && newRating === 'again') {
-                  const fresh: ComposedQueueItem = {
-                    type: 'flashcard',
-                    card,
-                    retryCount: item.retryCount,
-                    requeuedForAgain: true,
-                  }
-                  setQueue((q) => (q ? [...q, fresh] : q))
-                  newRedrill = fresh
-                }
-
-                // Keyed by lookupId — may over-clear when a redrill copy is
-                // still hard; acceptable, Strengthen is best-effort.
-                if (newRating === 'again' || newRating === 'hard') {
-                  sessionHardRef.current.add(card.userLookupId)
-                } else {
-                  sessionHardRef.current.delete(card.userLookupId)
-                }
-
-                ratingRecordsRef.current.set(item, {
-                  rating: newRating,
-                  eventId: resp.data.eventId as string,
-                  redrill: newRedrill,
-                })
-                setPeekBack(0)
-                setPendingRerate(null)
-              },
-            }
-          )
-        },
-      }
-    )
-  }
-
-  // Learn extra: an explicit one-tap batch past the daily-new cap, offered on
-  // the completion screen when the cap stopped auto-warm-up. Re-composes with
-  // learnExtraCount and starts a fresh mini-session over the result (a
-  // mutation, not a URL param, so refresh/back can never repeat the bypass).
-  const handleLearnExtra = (learnExtraCount: number) => {
-    setQueue(null)
-    setIndex(0)
-    indexRef.current = 0
-    setPeekBack(0)
-    setRevealed(false)
-    setCurrentAnswered(false)
-    setActiveHint(null)
-    setHintOutcome(null)
-    setClueUsed(new Set())
-    const extraFilter = { ...filter, learnExtraCount }
-    setQueueFilter(extraFilter)
-    ratingRecordsRef.current.clear()
-    exerciseOutcomesRef.current.clear()
-    composeQueue(
-      { targetLanguage, filter: extraFilter },
-      {
-        onSuccess: (resp) => {
-          setQueue(resp.data.items.map(toComposedQueueItem))
-          setDailyLimitReached(resp.data.dailyLimitReached)
-          setCanLearnExtra(resp.data.canLearnExtra)
-        },
-      }
-    )
-  }
 
   // ----- Hotkeys. One flat binding list for every state of this screen; the
   // per-binding enabled flags are mutually exclusive by construction (front vs
@@ -700,8 +256,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   // applied rating AND its redrill copy wasn't itself rated yet — once the
   // copy is rated, the original's event is no longer the latest live one (the
   // server would refuse the undo too; don't offer dead buttons).
-  const peekRecord = isPeeking && current ? ratingRecordsRef.current.get(current) : undefined
-  const canRerate = !!peekRecord && (!peekRecord.redrill || !ratingRecordsRef.current.has(peekRecord.redrill))
   const peekRerateEnabled = isPeeking && current?.type === 'flashcard' && canRerate && !pendingRerate
   // Completion screen: Enter drives its primary action (Strengthen when the
   // session produced again/hard terms, otherwise close). Space is deliberately
@@ -725,18 +279,18 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     void navigate({
       to: '/practice/strengthen/$targetLanguage',
       params: { targetLanguage },
-      search: { pool: 'recognition', sessionHard: [...sessionHardRef.current], mix },
+      search: { pool: 'recognition', sessionHard: [...sessionHardSet], mix },
     })
   useHotkeys(
     [
-      { key: 'space', enabled: showingFront, onPress: () => setRevealed(true) },
-      { key: 'enter', enabled: showingFront, onPress: () => setRevealed(true) },
+      { key: 'space', enabled: showingFront, onPress: reveal },
+      { key: 'enter', enabled: showingFront, onPress: reveal },
       {
         key: 'h',
         enabled: showingFront && servableHint != null,
         onPress: () => {
           if (current && servableHint) {
-            setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
+            openHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
           }
         },
       },
@@ -772,9 +326,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
       {
         key: 'arrowleft',
         enabled: current != null && displayedIndex > 0 && !liveExerciseDisplayed,
-        onPress: () => setPeekBack((p) => p + 1),
+        onPress: peekOlder,
       },
-      { key: 'arrowright', enabled: isPeeking, onPress: () => setPeekBack((p) => Math.max(0, p - 1)) },
+      { key: 'arrowright', enabled: isPeeking, onPress: peekNewer },
       ...RATE_VALUES.map((value, index): HotkeyBinding => ({
         key: String(index + 1),
         enabled: peekRerateEnabled && !(value === 'easy' && clueCapped),
@@ -782,8 +336,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
           if (current) handleRerate(current, value)
         },
       })),
-      { key: 'enter', enabled: isPeeking, onPress: () => setPeekBack(0) },
-      { key: 'space', enabled: isPeeking, onPress: () => setPeekBack(0) },
+      { key: 'enter', enabled: isPeeking, onPress: stopPeeking },
+      { key: 'space', enabled: isPeeking, onPress: stopPeeking },
       {
         key: 'enter',
         enabled: sessionComplete,
@@ -794,7 +348,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
             continueMix()
             return
           }
-          if (sessionHardRef.current.size > 0) openStrengthen()
+          if (sessionHardSet.size > 0) openStrengthen()
           else close()
         },
       },
@@ -873,18 +427,11 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   }
 
   if (introductionBlocked) {
-    if (claimIntroductionErrorKey === liveIntroductionKey) {
+    if (introductionClaimFailed) {
       return wrap(
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <p className='text-lg font-semibold'>{t`Couldn't start this exercise.`}</p>
-          <Button
-            type='button'
-            size='lg'
-            onClick={() => {
-              setClaimIntroductionErrorKey(null)
-              setClaimRetry((value) => value + 1)
-            }}
-          >
+          <Button type='button' size='lg' onClick={retryIntroductionClaim}>
             {t`Try again`}
           </Button>
         </div>
@@ -895,7 +442,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
 
   // Done: live queue exhausted (also the empty-compose case).
   if (!queue[index] && !isPeeking) {
-    const sessionHard = [...sessionHardRef.current]
+    const sessionHard = [...sessionHardSet]
     const hardCount = sessionHard.length
 
     // Mid-mix: the interstitial replaces the completion screen — recap of this
@@ -907,9 +454,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
           done={mixChain.done}
           upcoming={mixUpcoming}
           recap={computeMixRecap({
-            ratedItems: [...ratingRecordsRef.current.keys()],
-            answeredExercises: [...exerciseOutcomesRef.current.keys()],
-            claimedIntroductionCount: claimedIntroductionsRef.current.size,
+            ratedItems: [...ratingRecords.keys()],
+            answeredExercises: [...exerciseOutcomes.keys()],
+            claimedIntroductionCount,
           })}
           hardCount={hardCount}
           isSettling={isSettling}
@@ -1031,7 +578,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         size='icon'
         aria-label={t`Previous card`}
         disabled={displayedIndex <= 0 || liveExerciseDisplayed}
-        onClick={() => setPeekBack((p) => p + 1)}
+        onClick={peekOlder}
       >
         <ChevronLeft className='h-5 w-5' />
       </Button>
@@ -1042,7 +589,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         size='icon'
         aria-label={t`Forward`}
         disabled={!isPeeking}
-        onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
+        onClick={peekNewer}
       >
         <ChevronRight className='h-5 w-5' />
       </Button>
@@ -1081,13 +628,13 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     if (isPeeking) {
       return wrap(
         <AnsweredExercisePanel
-          outcome={exerciseOutcomesRef.current.get(current) ?? null}
+          outcome={exerciseOutcomes.get(current) ?? null}
           headword={entry.headword}
           targetLanguage={targetLanguage}
           header={header}
           statusBar={statusRow}
           actionLabel={t`Back to current card`}
-          onAction={() => setPeekBack(0)}
+          onAction={stopPeeking}
           showKbd={showKbd}
         />
       )
@@ -1095,7 +642,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
 
     // Resumed onto an exercise answered before the detour: read-only outcome
     // with a Next that advances (see restoredAnsweredItem above).
-    const restoredOutcome = current === restoredAnsweredItem ? exerciseOutcomesRef.current.get(current) : undefined
+    const restoredOutcome = current === restoredAnsweredItem ? exerciseOutcomes.get(current) : undefined
     if (restoredOutcome) {
       return wrap(
         <AnsweredExercisePanel
@@ -1111,10 +658,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
       )
     }
 
-    const handleAnswered = (data: ExerciseAnswerData) => {
-      exerciseOutcomesRef.current.set(current, data)
-      setCurrentAnswered(true)
-    }
+    const handleAnswered = (data: ExerciseAnswerData) => recordExerciseAnswer(current, data)
 
     if (entry.status === 'failed') {
       return wrap(
@@ -1225,13 +769,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         nextLabel={t`Show answer`}
         skipLabel={t`Back to card`}
         hotkeysEnabled={!actionsOpen}
-        onAnswered={(data) =>
-          setHintOutcome({ item: current, correct: data.correct, rating: data.correct ? 'hard' : 'again' })
-        }
-        onNext={() => {
-          setActiveHint(null)
-          if (hintOutcome?.item === current) setRevealed(true)
-        }}
+        onAnswered={(data) => answerHint(current, data.correct)}
+        onNext={closeHint}
       />
     )
   }
@@ -1270,7 +809,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   />
                 </div>
               )}
-              <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
+              <Button type='button' size='xl' variant='outline' className='w-full' onClick={stopPeeking}>
                 {t`Back to current card`}
                 {showKbd && <Kbd>↵</Kbd>}
               </Button>
@@ -1319,7 +858,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   size='xl'
                   className='flex-1'
                   onClick={() =>
-                    setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
+                    openHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
                   }
                 >
                   <Lightbulb className='h-4 w-4' />
@@ -1327,7 +866,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   {showKbd && <Kbd>H</Kbd>}
                 </Button>
               )}
-              <Button type='button' size='xl' className='flex-1' onClick={() => setRevealed(true)}>
+              <Button type='button' size='xl' className='flex-1' onClick={reveal}>
                 {t`Show answer`}
                 {showKbd && <Kbd>Space</Kbd>}
               </Button>
