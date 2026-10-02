@@ -38,8 +38,11 @@ export type ComposedSessionParams = {
   targetLanguage: string
   filter: PracticeQueueFilter
   composeQueue: ReturnType<typeof useComposePracticeQueue>['mutate']
-  rateTerm: ReturnType<typeof useRateTerm>['mutate']
-  undoRating: ReturnType<typeof useUndoRating>['mutate']
+  // Promise-returning (`mutateAsync`): each call settles on its own. A shared
+  // `mutate` keeps only the LATEST call's callbacks, so a rating sent before
+  // the previous one returned would drop that one's bookkeeping.
+  rateTerm: ReturnType<typeof useRateTerm>['mutateAsync']
+  undoRating: ReturnType<typeof useUndoRating>['mutateAsync']
   claimIntroduction: ReturnType<typeof useClaimPracticeIntroduction>['mutateAsync']
   refreshQueue: ReturnType<typeof useRefreshPracticeQueue>['mutateAsync']
   // A rating parked the term as a leech (the view toasts).
@@ -75,6 +78,34 @@ export const useComposedSession = ({
   const endedRef = useRef(false)
   // A resumed session is already started — the compose effect must not run.
   const startedRef = useRef(state.queue != null)
+  // Rating outcomes are applied only while mounted: after an Edit-term detour
+  // unmounts the view, the saved snapshot is the session, and a late response
+  // neither updates it nor starts a re-rate's follow-up rating.
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+  const whenSettled = <T>(
+    request: Promise<T>,
+    handlers: { onSuccess: (value: T) => void; onError: () => void; onSettled?: () => void }
+  ) => {
+    request.then(
+      (value) => {
+        if (!mountedRef.current) return
+        handlers.onSuccess(value)
+        handlers.onSettled?.()
+      },
+      () => {
+        // The global mutation-cache handler already toasts the failure.
+        if (!mountedRef.current) return
+        handlers.onError()
+        handlers.onSettled?.()
+      }
+    )
+  }
 
   useEffect(() => {
     if (startedRef.current) return
@@ -192,8 +223,8 @@ export const useComposedSession = ({
     const redrill: ComposedQueueItem | null =
       rating === 'again' ? { type: 'flashcard', card, retryCount: item.retryCount, requeuedForAgain: true } : null
     dispatch({ type: 'rateRequested', item, rating, redrill })
-    rateTerm(
-      {
+    whenSettled(
+      rateTerm({
         userLookupId: card.userLookupId,
         rating,
         pool: poolForCard(card),
@@ -201,7 +232,7 @@ export const useComposedSession = ({
         // citation, pronunciation and form facets alike.
         skill: card.skill,
         targetForm: card.targetForm,
-      },
+      }),
       {
         onSettled: () => dispatch({ type: 'rateSettled' }),
         onSuccess: (resp) => {
@@ -235,55 +266,49 @@ export const useComposedSession = ({
     }
     dispatch({ type: 'rerateStarted', item })
 
-    undoRating(
-      { ...facet, eventId: record.eventId },
-      {
-        // Nothing changed server-side — the record holds (the hook's meta toast
-        // surfaces the failure).
-        onError: () => {
+    whenSettled(undoRating({ ...facet, eventId: record.eventId }), {
+      // Nothing changed server-side — the record holds (the hook's meta toast
+      // surfaces the failure).
+      onError: () => {
+        finish()
+        dispatch({ type: 'rerateUndoFailed' })
+      },
+      onSuccess: (undoResp) => {
+        if (!undoResp.data.undone) {
+          // Stale handle: a later rating is now the latest live event, or it
+          // was already reverted. The card resurfaces for a clean rating.
           finish()
-          dispatch({ type: 'rerateUndoFailed' })
-        },
-        onSuccess: (undoResp) => {
-          if (!undoResp.data.undone) {
-            // Stale handle: a later rating is now the latest live event, or it
-            // was already reverted. The card resurfaces for a clean rating.
+          dispatch({ type: 'rerateUnapplied', item, capReached: false })
+          return
+        }
+        whenSettled(rateTerm({ ...facet, rating: newRating }), {
+          onError: () => {
             finish()
             dispatch({ type: 'rerateUnapplied', item, capReached: false })
-            return
-          }
-          rateTerm(
-            { ...facet, rating: newRating },
-            {
-              onError: () => {
-                finish()
-                dispatch({ type: 'rerateUnapplied', item, capReached: false })
-              },
-              onSuccess: (resp) => {
-                finish()
-                const { parked, dailyCapReached, eventId } = resp.data
-                if (dailyCapReached || (parked && eventId === null)) {
-                  // The fresh rating didn't apply (cap consumed meanwhile, or
-                  // the term got parked by another surface) — card is unrated.
-                  dispatch({ type: 'rerateUnapplied', item, capReached: dailyCapReached })
-                  if (parked) onParked(card.headword)
-                  return
-                }
-                dispatch({
-                  type: 'rerateApplied',
-                  item,
-                  previous: record,
-                  rating: newRating,
-                  eventId: eventId as string,
-                  parked,
-                })
-                if (parked) onParked(card.headword)
-              },
+          },
+          onSuccess: (resp) => {
+            finish()
+            const { parked, dailyCapReached, eventId } = resp.data
+            if (dailyCapReached || (parked && eventId === null)) {
+              // The fresh rating didn't apply (cap consumed meanwhile, or
+              // the term got parked by another surface) — card is unrated.
+              dispatch({ type: 'rerateUnapplied', item, capReached: dailyCapReached })
+              if (parked) onParked(card.headword)
+              return
             }
-          )
-        },
-      }
-    )
+            dispatch({
+              type: 'rerateApplied',
+              item,
+              previous: record,
+              rating: newRating,
+              eventId: eventId as string,
+              parked,
+            })
+            if (parked) onParked(card.headword)
+          },
+        })
+      },
+    })
   }
 
   // Learn extra: an explicit one-tap batch past the daily-new cap, offered on

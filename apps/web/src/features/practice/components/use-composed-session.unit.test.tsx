@@ -108,8 +108,8 @@ const setup = () => {
           targetLanguage: 'ru',
           filter: FILTER,
           composeQueue: composeM.mutate as never,
-          rateTerm: rateM.mutate as never,
-          undoRating: undoM.mutate as never,
+          rateTerm: rateM.mutateAsync as never,
+          undoRating: undoM.mutateAsync as never,
           claimIntroduction: claimM.mutateAsync as never,
           refreshQueue: refreshM.mutateAsync as never,
           onParked,
@@ -651,18 +651,78 @@ describe('completion, settling and learn extra', () => {
 })
 
 describe('overlapping ratings', () => {
-  // Current behavior: the shared rateTerm observer keeps only the LATEST
-  // mutate call's callbacks, so the first rating's bookkeeping is lost.
-  it('loses the earlier rating’s callbacks when two ratings overlap', async () => {
+  // A rating sent before the previous one returned: each settles on its own
+  // (one shared `mutate` would keep only the latest call's callbacks).
+  it('applies every rating’s outcome when ratings overlap, in either response order', async () => {
     const t = setup()
     const hook = await t.start([flashcard('a'), flashcard('b'), flashcard('c')])
     await rateCurrent(hook, 'good')
     await rateCurrent(hook, 'good')
-    t.rate.calls[0].resolve(rated('ev-a'))
-    await flush()
     t.rate.calls[1].resolve(rated('ev-b'))
     await flush()
-    expect([...session(hook).ratingRecords.values()].map((record) => record.eventId)).toEqual(['ev-b'])
-    expect(session(hook).pendingRatings).toBe(1)
+    t.rate.calls[0].resolve(rated('ev-a'))
+    await flush()
+    expect([...session(hook).ratingRecords.values()].map((record) => record.eventId).sort()).toEqual(['ev-a', 'ev-b'])
+    expect(session(hook).pendingRatings).toBe(0)
+  })
+
+  it('keeps a redrill the session already rated past when its refusal lands late', async () => {
+    const t = setup()
+    const hook = await t.start([flashcard('a')])
+    await rateCurrent(hook, 'again')
+    await rateCurrent(hook, 'good') // rates the redrill copy before the first response
+    t.rate.calls[0].resolve(rated(null, { dailyCapReached: true }))
+    await flush()
+    expect(ids(hook)).toEqual(['a', 'a'])
+    expect(session(hook).capNoticeShown).toBe(true)
+  })
+
+  it('a failed earlier rating still re-appends its retry copy when a later one succeeded first', async () => {
+    const t = setup()
+    const hook = await t.start([flashcard('a'), flashcard('b')])
+    await rateCurrent(hook, 'good')
+    await rateCurrent(hook, 'good')
+    t.rate.calls[1].resolve(rated('ev-b'))
+    await flush()
+    t.rate.calls[0].reject(new Error('network'))
+    await flush()
+    expect(ids(hook)).toEqual(['a', 'b', 'a'])
+    expect(session(hook).pendingRatings).toBe(0)
+  })
+})
+
+describe('responses after unmount (Edit-term detour)', () => {
+  it('a re-rate interrupted after the undo starts no follow-up rating', async () => {
+    const { t, hook, original } = await ratedAndPeeked('good')
+    await rerate(hook, original, 'hard')
+    hook.unmount()
+    t.undo.calls[0].resolve({ data: { undone: true } })
+    await flush()
+    expect(t.rate.calls).toHaveLength(1)
+  })
+
+  it('a late fresh rating or ordinary rating leaves the saved session as it was', async () => {
+    const { t, hook, original } = await ratedAndPeeked('good')
+    act(() => session(hook).stopPeeking())
+    await rateCurrent(hook, 'again') // b, in flight across the detour
+    await rerate(hook, original, 'hard')
+    t.undo.calls[0].resolve({ data: { undone: true } })
+    await flush()
+    hook.unmount()
+    t.rate.calls[1].resolve(rated(null, { dailyCapReached: true }))
+    t.rate.calls[2].resolve(rated('ev-2'))
+    await flush()
+
+    const resumed = t.render()
+    await flush()
+    const s = resumed.result.current
+    // b's redrill is still queued and a's record still points at the undone event.
+    expect(s.queue!.map((item) => (item.type === 'flashcard' ? item.card.userLookupId : ''))).toEqual([
+      'a',
+      'b',
+      'c',
+      'b',
+    ])
+    expect(s.ratingRecords.get(original)?.eventId).toBe('ev-1')
   })
 })

@@ -87,8 +87,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   const { mutate: composeQueue, isPending: composePending, isError: composeError } = useComposePracticeQueue()
   const { mutateAsync: claimIntroduction } = useClaimPracticeIntroduction()
   const { mutateAsync: refreshQueue } = useRefreshPracticeQueue()
-  const { mutate: rateTerm } = useRateTerm()
-  const { mutate: undoRating } = useUndoRating()
+  const { mutateAsync: rateTerm } = useRateTerm()
+  const { mutateAsync: undoRating } = useUndoRating()
 
   const session = useComposedSession({
     targetLanguage,
