@@ -1218,6 +1218,10 @@ msgid "Clue"
 msgstr "Indice"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Clue shown"
+msgstr "Indice affiché"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Clue used — Easy is off for this card."
 msgstr "Indice utilisé — Facile est désactivé pour cette carte."
 
