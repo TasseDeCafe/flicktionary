@@ -32,7 +32,8 @@ import {
   useRefreshPracticeQueue,
   useUndoRating,
 } from '../api/practice-hooks'
-import { FlashcardFace, poolForCard } from './flashcard-face'
+import { FlashcardFace } from './flashcard-face'
+import { poolForCard } from '../utils/pool-for-card'
 import { cardWordFamilyParams, frontClueFor } from '../utils/card-word-family'
 import { TermActionsOverlay } from './term-actions-overlay'
 import { useComposedSession } from './use-composed-session'

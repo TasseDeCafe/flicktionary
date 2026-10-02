@@ -11,7 +11,7 @@ import type {
   useRefreshPracticeQueue,
   useUndoRating,
 } from '../api/practice-hooks'
-import { poolForCard } from './flashcard-face'
+import { poolForCard } from '../utils/pool-for-card'
 import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
 import {
   clearComposedSession,
