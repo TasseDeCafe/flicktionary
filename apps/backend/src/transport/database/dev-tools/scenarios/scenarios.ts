@@ -244,7 +244,70 @@ const ruProductionHints: ScenarioSpec = {
   ],
 }
 
-export const SCENARIOS: readonly ScenarioSpec[] = [ruFamilyDue, ruLeechEdge, ruWarmupDay2, ruProductionHints]
+const dueProduction = (
+  term: CatalogTerm,
+  dueInHours: number,
+  hint: 'ready' | 'failed',
+  insight: 'curated' | 'fill' = 'fill'
+): ScenarioTerm => ({
+  term,
+  recognition: bridged,
+  production: review(dueInHours),
+  bank: productionHint(hint),
+  insight,
+  savedDaysAgo: 30,
+})
+
+const ruProductionFamily: ScenarioSpec = {
+  name: 'ru-production-family',
+  description:
+    'Russian production cards due today; five have explained word-family insights (a meaning-only Clue), three are opaque. Some cards also have a banked hint.',
+  targetLanguage: 'ru',
+  nativeLanguage: 'en',
+  cefr: 'B1',
+  terms: [
+    dueProduction(писатель, -6, 'ready', 'curated'),
+    dueProduction(читатель, -5, 'failed', 'curated'),
+    dueProduction(переводчик, -4, 'failed', 'curated'),
+    dueProduction(безопасность, -3, 'failed', 'curated'),
+    dueProduction(водопад, -2, 'ready', 'curated'),
+    dueProduction(дюжина, -2, 'ready', 'curated'),
+    dueProduction(собака, -1, 'failed', 'curated'),
+    dueProduction(окно, -1, 'failed', 'curated'),
+    // Saved relatives (anchors), scheduled far out.
+    { term: читать, recognition: notDue, savedDaysAgo: 45 },
+    { term: перевод, recognition: notDue, savedDaysAgo: 45 },
+  ],
+  knownLemmas: ['писать', 'опасность', 'вода'],
+  expectations: {
+    preview: { new: 0, warmup: 0, learning: 0, review: 8 },
+    familyAnchors: {
+      писатель: ['писать'],
+      читатель: ['читать'],
+      переводчик: ['перевод'],
+      безопасность: ['опасность'],
+      водопад: ['вода'],
+      дюжина: null,
+      собака: null,
+      окно: null,
+    },
+  },
+  tryIt: [
+    'Practice → Russian: the first five production cards offer a Clue with part meanings only — no Russian on the front.',
+    'писатель marks its root "(a word you know)", читатель "(a word you saved)"; переводчик / безопасность mention no relative.',
+    'дюжина / собака / окно have no Clue. Hint (mc_cloze) shows on писатель, водопад, дюжина only.',
+    'After the Clue, Easy is off; Clue then Hint → the Hint lock (Hard/Again) wins.',
+    'Settings → turn Russian translations off: no production Clue.',
+  ],
+}
+
+export const SCENARIOS: readonly ScenarioSpec[] = [
+  ruFamilyDue,
+  ruLeechEdge,
+  ruWarmupDay2,
+  ruProductionHints,
+  ruProductionFamily,
+]
 
 export const findScenario = (name: string): ScenarioSpec | undefined =>
   SCENARIOS.find((scenario) => scenario.name === name)
