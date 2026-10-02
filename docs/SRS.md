@@ -1410,8 +1410,14 @@ lemma — structure (`за- + брать`) and up to 3 relatives the user knows 
 cards in word-family languages (`ru`) fetch it through `glosses.wordFamily` (headword +
 `grammar.pos`; `useCardWordFamily`) while the front shows, so it is ready on reveal; the
 `word_family_hints_enabled` pref is enforced server-side. The endpoint never generates the
-LLM insight — part meanings and cognates appear only when the reader already cached them for
-that lemma (generation from practice is tracked in #515). Back only: on a production front
+LLM insight — part meanings and cognates appear only once it is cached for that lemma. The
+initial compose request warms missing ones in the background (`warmWordFamilyInsights`,
+next to the hint-bank warmer, same `warmFlashcardCaches` flag — the serve-only refresh never
+warms): for the served non-pronunciation flashcards, when the hints pref is on, it resolves
+each headword + `grammar.pos` exactly as `glosses.wordFamily` will, skips cached insights,
+non-content POS, multi-word headwords and requests already in flight, and starts at most
+`MAX_INSIGHT_WARMS_PER_COMPOSE` (10) generations per compose. A warmed insight shows from a
+later review of the card (the current one already fetched its line). Back only: on a production front
 the breakdown and parents would spell the answer. Pronunciation cards don't show it.
 
 ### Keyboard shortcuts (desktop)

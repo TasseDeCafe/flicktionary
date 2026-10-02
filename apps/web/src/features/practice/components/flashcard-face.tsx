@@ -99,8 +99,9 @@ export const FlashcardFace = ({
 
   // The lemma's word-family line for the back (both pools). Fetched while the
   // front shows, so it is ready on reveal; the hints pref is enforced
-  // server-side. The LLM insight part only shows when it's already cached —
-  // nothing is generated from practice.
+  // server-side. The LLM insight part only shows when it's already cached:
+  // this read never generates; composing the queue warms missing insights in
+  // the background, so they show from a later review.
   const { data: wordFamily } = useCardWordFamily(
     !isPronunciation && WORD_FAMILY_LANGUAGES.has(targetLanguage)
       ? { headword: card.headword, targetLanguage, pos: card.grammar?.pos ?? null }

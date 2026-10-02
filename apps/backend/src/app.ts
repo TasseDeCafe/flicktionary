@@ -709,6 +709,7 @@ export const buildApp = ({
       userTargetLanguagePrefsRepository,
       studySessionsRepository,
       bookPinsRepository,
+      wordFamilyDependencies,
     })
   )
 
