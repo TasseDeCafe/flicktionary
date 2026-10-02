@@ -67,6 +67,32 @@ describe('pickFamilyEntries', () => {
     expect(pickFamilyEntries(entries, 'стали', 'verb', 'ru')?.folded).toBe('стать')
   })
 
+  test("a bare entry of the gloss POS borrows its own headword's participle stub", () => {
+    // Haiku tags сложившейся as an adjective; kaikki's adj entry for
+    // сложившийся has no etymology, its verb entry is the participle stub.
+    const picked = pickFamilyEntries(
+      [lemmaEntry('сложившийся', 'adj'), participleStub('сложившийся', 'сложиться')],
+      'сложившейся',
+      'adj',
+      'ru'
+    )
+    expect(picked?.folded).toBe('сложившийся')
+    expect(picked?.entries.map((entry) => entry.parsed.formOf)).toContainEqual({
+      kind: 'participle',
+      lemma: 'сложиться',
+    })
+  })
+
+  test('an entry of the gloss POS with its own structure borrows nothing', () => {
+    const picked = pickFamilyEntries(
+      [lemmaEntry('сложившийся', 'adj', ['сложиться', '-ий']), participleStub('сложившийся', 'сложиться')],
+      'сложившейся',
+      'adj',
+      'ru'
+    )
+    expect(picked?.entries.every((entry) => entry.parsed.formOf === null)).toBe(true)
+  })
+
   test('unresolved homographs get no family line', () => {
     expect(
       pickFamilyEntries([lemmaEntry('стать', 'verb'), lemmaEntry('сталь', 'noun')], 'стали', null, 'ru')
