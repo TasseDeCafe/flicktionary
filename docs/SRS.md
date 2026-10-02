@@ -16,7 +16,8 @@ Code map:
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
 - Leeches: `leech-config.ts`, `rehab.ts`, `exercise-bank.ts`
 - Audit log: `practice-rating-events-repository.ts`
-- Frontend session: `apps/web/src/features/practice/components/composed-practice-view.tsx`
+- Frontend session: `apps/web/src/features/practice/components/composed-practice-view.tsx` (render),
+  `use-composed-session.ts` (side effects), `composed-session-reducer.ts` (bookkeeping)
 
 All "today" windows below use the **server's `CURRENT_DATE`** (Postgres, UTC) — not the
 client's timezone.
@@ -1099,6 +1100,12 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
 
 ## 8. Frontend session model (composed-practice-view.tsx)
 
+The session's bookkeeping (queue, position, redrills, retries, re-rate, rating records,
+hint/clue state, introduction claims, resume snapshot) is a pure reducer
+(`composed-session-reducer.ts`); `useComposedSession` runs the side effects (compose,
+ratings, undo, claims, placeholder poll, stash) and dispatches their outcomes; the view
+renders.
+
 - The queue is a **one-shot client-side slice of union items**
   (`{type:'flashcard'} | {type:'exercise'}`): seeded from the compose response (the
   route keys the view on the serialized filter). The read-only refresh
@@ -1205,14 +1212,19 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   and the word-family hints pref off means no line and so no Clue.
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
-  is rolled back by object identity if the server says cap-rejected / parked / error, guarded
-  by `indexRef` so an already-consumed copy is never removed.
-- `sessionHardRef` collects this session's again/hard terms → offered to Strengthen
+  is rolled back by object identity if the server says cap-rejected / parked / error — unless
+  the session already walked past it (the reducer checks the live index), so a consumed
+  copy is never removed.
+- `sessionHard` collects this session's again/hard terms → offered to Strengthen
   afterwards.
 - **Completion settling barrier**: `handleRate` advances optimistically and records the
-  rating only in `onSuccess` (a failed mutation re-appends the card), so the completion
-  screen can render while the last rating is still in flight. A reactive pending counter
-  (incremented per `rateTerm`, decremented `onSettled`; re-rates count too) gates every
+  rating only when its response lands (a failed mutation re-appends the card), so the
+  completion screen can render while the last rating is still in flight. Each rating (and
+  each half of a re-rate) settles on its own request promise — a rating sent before the
+  previous one returned keeps both outcomes. Responses landing after the view unmounted
+  (an Edit-term detour) are ignored: the saved snapshot is the session, and an interrupted
+  re-rate starts no follow-up rating. A reactive pending counter
+  (incremented per `rateTerm`, decremented when it settles; an in-flight re-rate counts too) gates every
   completion-screen exit while anything settles: a "Saving your ratings…" line replaces
   the recap/actions state, Strengthen / Back / Learn-extra (and the mix interstitial's
   Continue / Strengthen-first / Done-for-now) are disabled, the completion `Enter`
@@ -1225,7 +1237,7 @@ practice rotation"); the dueSummary invalidation drops the parked counts.
   previous rating highlighted — unless its redrill copy was itself already rated (the
   original's event is no longer latest; the server would refuse, so no dead buttons).
   Re-rate runs undo → fresh rate (§5), then reconciles: old `again` → new `good`+ removes
-  the unconsumed redrill copy; old `good`+ → new `again` appends one; `sessionHardRef`
+  the unconsumed redrill copy; old `good`+ → new `again` appends one; `sessionHard`
   updates by lookupId. Any outcome that leaves the card unrated server-side (stale undo,
   cap refusal on the fresh rate, error after a committed undo) drops the record and
   re-appends a fresh queue item so the card resurfaces rateable. A peeked **exercise**

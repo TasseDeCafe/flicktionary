@@ -14,22 +14,12 @@ import {
   type CardSlotConditions,
   type CardSlotKey,
 } from '@flicktionary/core/constants/card-face-config'
-import type {
-  Grammar,
-  PracticePool,
-  ReviewTerm,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Grammar, ReviewTerm } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveCardContent } from '../utils/resolve-card-content'
+import { poolForCard } from '../utils/pool-for-card'
 import { useCardWordFamily } from '../api/practice-hooks'
 import { cardWordFamilyParams } from '../utils/card-word-family'
 import type { GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
-
-// The pool a queued card belongs to is fully determined by its facet skill —
-// the composed queue mixes pools in one session, so it can't be a view-level
-// constant anymore.
-// eslint-disable-next-line react-refresh/only-export-components -- tiny pure helper deliberately co-located with the flashcard face; a one-line module just for HMR purity isn't worth the indirection
-export const poolForCard = (card: ReviewTerm): PracticePool =>
-  card.skill === 'meaning_production' ? 'production' : 'recognition'
 
 // Presentational flashcard body (front, and the back when `showBack`):
 // pronunciation cards get their dedicated audio-cue layout, meaning cards go
