@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import type { FlicktionaryGlossResponse } from '@asbplayer-fork/common'
-import { GlossData, requestGloss } from '../../services/flicktionary/flicktionary-client'
+import { GlossData, requestGloss, requestWordFamilyInsight } from '../../services/flicktionary/flicktionary-client'
 
 // `targetLanguage` is the video's detected subtitle language ('' while the
 // overlay doesn't know it yet). It is part of the key: a gloss fetched during
@@ -43,6 +43,8 @@ export const glossQueryOptions = (
         register: response.register ?? null,
         ipaDisplay: response.ipaDisplay ?? null,
         ipaLemma: response.ipaLemma ?? null,
+        wordFamily: response.wordFamily ?? null,
+        targetLanguage: response.targetLanguage ?? null,
       }
     },
     enabled: enabled && !!word && !!sentence,
@@ -61,4 +63,34 @@ export function useGloss(
   targetLanguage?: string
 ) {
   return useQuery(glossQueryOptions(word, sentence, enabled, targetLanguage))
+}
+
+// The word-family line with its LLM insight, for a gloss whose line came back
+// with `insightPending`. `params` null = no pending line for this word. The key
+// always names the word (language + word + POS), and `allowFetch` only gates
+// STARTING a request: callers allow it once the popover is pinned or a saved
+// word is opened, since the first request for a word runs an LLM call
+// server-side. A result already in the cache shows regardless — a re-hover
+// unpins the popover, and must not hide an insight that already arrived. The
+// saved popover reuses the preview's result after Save the same way. Errors
+// aren't cached and never surface — the deterministic line is already on
+// screen.
+export const wordFamilyInsightQueryOptions = (
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null,
+  allowFetch: boolean
+) =>
+  queryOptions({
+    queryKey: ['word-family-insight', params?.targetLanguage ?? '', params?.selectionText ?? '', params?.pos ?? null],
+    queryFn: () => requestWordFamilyInsight(params!.selectionText, params!.targetLanguage, params!.pos),
+    enabled: params !== null && allowFetch,
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+    retry: false,
+  })
+
+export function useWordFamilyInsight(
+  params: { selectionText: string; targetLanguage: string; pos: string | null } | null,
+  allowFetch: boolean
+) {
+  return useQuery(wordFamilyInsightQueryOptions(params, allowFetch))
 }

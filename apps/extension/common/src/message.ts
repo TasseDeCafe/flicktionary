@@ -9,6 +9,7 @@ import {
   RichSubtitleModel,
 } from './model'
 import { AsbPlayerToVideoCommandV2 } from './command'
+import type { GlossWordFamily } from '@flicktionary/core/types/gloss-view-state'
 
 export interface Message {
   readonly command: string
@@ -430,6 +431,28 @@ export interface FlicktionaryGlossResponse {
   // Lemma the IPA was sourced from on form-of fallback (the surface form has no
   // pronunciation of its own) — labeled next to the IPA. Null/absent otherwise.
   readonly ipaLemma?: string | null
+  // The language the gloss was made for (sent, or detected server-side) — the
+  // word-family insight request needs it.
+  readonly targetLanguage?: string
+  // How the word is built + the relatives the user has; null when the
+  // language has no word-family data, the setting is off, or there's nothing
+  // to show.
+  readonly wordFamily?: GlossWordFamily | null
+  readonly error?: string
+}
+
+// Fills in the word-family line's LLM insight (glosses.wordFamilyInsight) for
+// a gloss whose line came back with `insightPending`. The first request for a
+// word runs an LLM call server-side (cached for every user afterwards).
+export interface FlicktionaryWordFamilyInsightMessage extends MessageWithId {
+  readonly command: 'flicktionary-word-family-insight'
+  readonly selectionText: string
+  readonly targetLanguage: string
+  readonly pos: string | null
+}
+
+export interface FlicktionaryWordFamilyInsightResponse {
+  readonly wordFamily?: GlossWordFamily | null
   readonly error?: string
 }
 
@@ -769,6 +792,8 @@ export interface FlicktionarySavedGlossResponse {
   readonly ipaDisplay?: string | null
   // Lemma the IPA was sourced from on form-of fallback — same convention.
   readonly ipaLemma?: string | null
+  // Same convention as FlicktionaryGlossResponse.
+  readonly wordFamily?: GlossWordFamily | null
   readonly error?: string
 }
 

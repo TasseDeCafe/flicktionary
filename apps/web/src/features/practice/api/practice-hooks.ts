@@ -222,3 +222,20 @@ export const useHintExercise = (params: { userLookupId: string; pool: PracticePo
     })
   )
 }
+
+// The word-family line for a flashcard's back: the deterministic relatives,
+// plus the LLM insight only when it is already cached (the endpoint never
+// generates it). Fetched as soon as the card shows, so the line is there by
+// the time it's revealed. Best-effort: a failure just leaves the line out.
+export const useCardWordFamily = (params: { headword: string; targetLanguage: string; pos: string | null } | null) =>
+  useQuery(
+    orpcQuery.glosses.wordFamily.queryOptions({
+      input: params ?? { headword: '', targetLanguage: '', pos: null },
+      enabled: params !== null,
+      select: (response) => response.data.wordFamily,
+      // Anchors follow the user's vocabulary, which changes slowly mid-session.
+      staleTime: 10 * 60_000,
+      retry: false,
+      meta: { showErrorToast: false },
+    })
+  )

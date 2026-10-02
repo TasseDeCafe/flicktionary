@@ -57,6 +57,8 @@ describe('glosses-router', () => {
       ipaDisplay: null,
       ipaLemma: null,
       knownLemmaCandidates: [],
+      // Echoed so a client that omitted it can call wordFamilyInsight.
+      targetLanguage: 'de',
       wordFamily: null,
     })
     // The gloss language is the language of the text, resolved by detection —
@@ -125,11 +127,73 @@ describe('glosses-router', () => {
       insightPending: true,
     })
 
-    // Not requested (extension hovers, practice lookups) → never computed.
+    // Not requested (practice lookups) → never computed.
     expect((await gloss()).body.data.wordFamily).toBeNull()
 
     await UserTargetLanguagePrefsRepository().setWordFamilyHintsEnabled(id, 'ru', false)
     expect((await gloss(true)).body.data.wordFamily).toBeNull()
+  })
+
+  test('word-family for a headword: the cheap line, never generating the insight', async () => {
+    const cyrillic = 'абвгдежзиклмнопрстуфхцчшщ'
+    const u = Array.from({ length: 10 }, () => cyrillic[Math.floor(Math.random() * cyrillic.length)]).join('')
+    const word = `забрать${u}`
+    const root = `брать${u}`
+    await sql`
+      INSERT INTO public.wiktionary_entries (target_language, headword, pos, data)
+      VALUES
+        ('ru', ${word}, 'verb', ${sql.json({
+          head_templates: [{ name: 'ru-verb' }],
+          senses: [{ glosses: ['to take away'] }],
+          etymology_templates: [{ name: 'af', args: { '1': 'ru', '2': 'за-', '3': root } }],
+        })}),
+        ('ru', ${root}, 'verb', ${sql.json({ head_templates: [{ name: 'ru-verb' }], senses: [{ glosses: ['to take'] }] })})
+    `
+    await sql`
+      INSERT INTO public.wiktionary_word_family_edges (target_language, lemma, lemma_pos, relative, kind, depth)
+      VALUES ('ru', ${word}, 'verb', ${root}, 'ancestor', 1)
+    `
+    const { id, token } = await __createUserInSupabaseAndGetHisIdAndToken()
+    await __createOrGetUserWithOurApi({ testApp, token, referral: null })
+    await UsersRepository().setNativeLanguage(id, 'en')
+    await UserTargetLanguagePrefsRepository().upsertCefr(id, 'ru', 'B1')
+    await KnownLemmasRepository().bulkMarkKnown({
+      userId: id,
+      targetLanguage: 'ru',
+      lemmas: [root],
+      source: 'bulk_text',
+      sourceId: null,
+      sweepBatchId: null,
+    })
+
+    const unauthenticated = await request(testApp)
+      .post('/api/v1/glosses/word-family')
+      .send({ headword: word, targetLanguage: 'ru', pos: 'verb' })
+    expect(unauthenticated.status).toBe(401)
+
+    const wordFamily = () =>
+      request(testApp)
+        .post('/api/v1/glosses/word-family')
+        .set({ Authorization: `Bearer ${token}` })
+        .send({ headword: word, targetLanguage: 'ru', pos: 'verb' })
+
+    const insightCallsBefore = wordFamilyInsightPass.mock.calls.length
+    const response = await wordFamily()
+    expect(response.status).toBe(200)
+    expect(response.body.data.wordFamily).toEqual({
+      formOf: null,
+      parts: [
+        { text: 'за-', isAffix: true, meaning: null },
+        { text: root, isAffix: false, meaning: null },
+      ],
+      anchors: [{ lemma: root, source: 'known' }],
+      cognates: [],
+      insightPending: true,
+    })
+    expect(wordFamilyInsightPass.mock.calls.length).toBe(insightCallsBefore)
+
+    await UserTargetLanguagePrefsRepository().setWordFamilyHintsEnabled(id, 'ru', false)
+    expect((await wordFamily()).body.data.wordFamily).toBeNull()
   })
 
   test('word-family insight: generated once, applied to the line, then served from the cache', async () => {

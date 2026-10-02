@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
-import { requestGloss } from '../../services/flicktionary/flicktionary-client'
-import { glossQueryKey, glossQueryOptions } from './use-gloss.ts'
+import { requestGloss, requestWordFamilyInsight } from '../../services/flicktionary/flicktionary-client'
+import { glossQueryKey, glossQueryOptions, wordFamilyInsightQueryOptions } from './use-gloss.ts'
 
 vi.mock('../../services/flicktionary/flicktionary-client', () => ({
   requestGloss: vi.fn(),
+  requestWordFamilyInsight: vi.fn(),
 }))
 
 const mockedRequestGloss = vi.mocked(requestGloss)
@@ -29,7 +30,15 @@ describe('glossQueryOptions', () => {
 
     const data = await queryClient.fetchQuery(glossQueryOptions('кот', 'кот спит', true))
 
-    expect(data).toEqual({ gloss: 'кот → cat', pos: 'noun', register: null, ipaDisplay: null, ipaLemma: null })
+    expect(data).toEqual({
+      gloss: 'кот → cat',
+      pos: 'noun',
+      register: null,
+      ipaDisplay: null,
+      ipaLemma: null,
+      wordFamily: null,
+      targetLanguage: null,
+    })
     expect(mockedRequestGloss).toHaveBeenCalledWith('кот', 'кот спит', undefined)
   })
 
@@ -103,5 +112,46 @@ describe('glossQueryOptions', () => {
     expect(glossQueryOptions(undefined, undefined, true).enabled).toBe(false)
     expect(glossQueryOptions('кот', 'кот спит', false).enabled).toBe(false)
     expect(glossQueryOptions('кот', 'кот спит', true).enabled).toBe(true)
+  })
+})
+
+describe('wordFamilyInsightQueryOptions', () => {
+  const params = { selectionText: 'зайти', targetLanguage: 'ru', pos: 'verb' }
+  const insight = {
+    formOf: null,
+    parts: [
+      { text: 'за-', isAffix: true, meaning: 'briefly into' },
+      { text: 'идти', isAffix: false, meaning: 'go on foot' },
+    ],
+    anchors: [{ lemma: 'идти', source: 'known' as const }],
+    cognates: [],
+    insightPending: false,
+  }
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    queryClient = new QueryClient()
+  })
+
+  afterEach(() => {
+    queryClient.clear()
+    vi.clearAllMocks()
+  })
+
+  it('only starts a request once fetching is allowed (a pinned or saved popover)', () => {
+    expect(wordFamilyInsightQueryOptions(params, false).enabled).toBe(false)
+    expect(wordFamilyInsightQueryOptions(params, true).enabled).toBe(true)
+    expect(wordFamilyInsightQueryOptions(null, true).enabled).toBe(false)
+  })
+
+  it('keeps the same key when the popover unpins, so a fetched insight stays on screen', async () => {
+    vi.mocked(requestWordFamilyInsight).mockResolvedValueOnce(insight)
+    await queryClient.fetchQuery(wordFamilyInsightQueryOptions(params, true))
+
+    // A re-hover of the word resets the pinned state; the insight that already
+    // arrived must still be served from the cache.
+    const unpinned = wordFamilyInsightQueryOptions(params, false)
+    expect(queryClient.getQueryData(unpinned.queryKey)).toEqual(insight)
+    expect(requestWordFamilyInsight).toHaveBeenCalledTimes(1)
   })
 })

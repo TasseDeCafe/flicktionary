@@ -590,7 +590,22 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
   response's `ipaLemma` labels the IPA with that lemma (`beheben /bəˈheːbən/`
   under a `behoben` selection) so an inflected form is not implied to be
   pronounced like its lemma; null otherwise. Then a one-line gloss, POS and
-  register badges.
+  register badges. Between the IPA row and the gloss sits the shared
+  **word-family line** (`@flicktionary/ui/components/word-family-line`, the web
+  reader's — `docs/READER-SPEC.md`): the gloss request passes
+  `includeWordFamily: true` and the backend fills `wordFamily` only for
+  word-family languages (`ru`) with the user's per-language setting on. When
+  the response says `insightPending`, the LLM-insight version of the line is
+  fetched via `flicktionary-word-family-insight` → `glosses.wordFamilyInsight`
+  (TanStack query keyed on language + word + POS, never retried, silent on
+  failure) — **only once the popover is pinned** (pointer entered, or a
+  born-pinned chunk gloss), never on a bare hover, since a word's first request
+  runs an LLM call. Pinning only gates *starting* the request: the query key
+  always names the word, so an insight that already arrived keeps showing when
+  a re-hover of the word reopens the popover unpinned. The language comes from `fastGloss`'s echoed
+  `targetLanguage` (it may have been server-detected). Unlike the web reader
+  there is **no guess-before-reveal hold**: a hover over a playing video is a
+  glance, Space is play/pause, and hover has no "second tap" to reveal with.
   Both popovers (preview + saved mode) are built from the web app's shared
   components — `FloatingSheet`/`GlossCardBody`/`Badge`/`Button`/`Textarea`
   from `@flicktionary/ui` — with the web's DARK theme hardcoded via a `dark`
@@ -797,9 +812,13 @@ collapsible space; `text-balance` evens out the soft-wrapped lines.
     ghost-extend: cached `fastGloss` parses instantly (the shared
     `@flicktionary/core/utils/parse-fast-gloss`, same decoder as the web
     sheet). A direct open refreshes via `flicktionary-saved-gloss` →
-    `highlights.fastGloss` to add the server-picked IPA; a just-saved handoff
-    keeps the richer preview gloss already on screen and skips that immediate
-    refresh. **Remove highlight** is the **cyclable green "Saved" control**
+    `highlights.fastGloss` to add the server-picked IPA and the word-family
+    line; a just-saved handoff keeps the richer preview gloss (and its line)
+    already on screen and skips that immediate refresh. The saved popover
+    fetches the line's insight straight away (opening a saved word is a
+    deliberate lookup), reusing the preview's cached result after a Save. The
+    popover is keyed on the highlight id, so a hover that switches it to
+    another saved span remounts it instead of carrying over note drafts. **Remove highlight** is the **cyclable green "Saved" control**
     itself — clicking it removes the span (`delete-flicktionary-highlight`, 404
     counts as success) silently (no success toast — the wash disappearing is the
     feedback, same as the right-click remove), replacing the old standalone trash
@@ -1324,7 +1343,8 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `extensionAuth.bootstrapPrefs` | primary target language after pairing (`email` is null for guest sessions) |
 | `extensionAuth.revokeSession` | sign-out |
 | `extensionAuth.setCefrLevel` | CEFR picker |
-| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
+| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma, targetLanguage, wordFamily}` with `includeWordFamily: true` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
+| `glosses.wordFamilyInsight` | the word-family line's LLM insight, for pinned/saved popovers whose line is `insightPending` |
 | `studySessions.findOrCreateForYoutubeVideo` | session registration on a video's first save (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration on a video's first save (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading and the passive badge probe (never creates rows; `data: null` = no session) |
@@ -1337,7 +1357,7 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `studySessions.unmarkKnownBySession` | combined Undo, sweep part (batch-scoped) |
 | `highlights.create` | saving a word/chunk, optionally with the preview `{gloss, pos, register}` persisted as `fastGloss` |
 | `highlights.listBySession` | loading saved highlights for the persistent spans |
-| `highlights.fastGloss` | saved-mode popover gloss for direct/older saved-highlight opens (server-cached, IPA-enriched) |
+| `highlights.fastGloss` | saved-mode popover gloss + word-family line for direct/older saved-highlight opens (server-cached, IPA-enriched) |
 | `highlights.updateNoteAndTags` | saved-mode note + preset tags (+ chatSeedPrompt) |
 | `highlights.delete` | Remove highlight from the saved-mode popover |
 | `userPrefs.getPrefs` | UI-prefs refresh on popup/options open; `nativeLanguage === null` gates the finish-setup section |

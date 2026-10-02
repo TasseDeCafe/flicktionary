@@ -1382,7 +1382,7 @@ the plan card promising a session the compose no longer produces.
 Card face composition is declarative in
 `packages/core/src/constants/card-face-config.ts`. `DEFAULT_CARD_FACE_CONFIG` shows
 `headword` + `targetExample` on the front and `translation` / `definition` /
-`nativeExample` / `grammar` on the back; `ru` and `en` (the Kaikki-grounded languages with
+`nativeExample` / `grammar` / `wordFamily` on the back; `ru` and `en` (the Kaikki-grounded languages with
 Wiktionary IPA today) defer `ipa` to the back on recognition cards, since pronunciation is
 part of the answer. The resolver filters abstract slots by runtime conditions:
 translations/native examples hide when L1 = L2 or Show translations is off, definition
@@ -1393,7 +1393,8 @@ so Russian stress-marked forms carry through.
 
 Production cards flip the direction (`PRODUCTION_CARD_FACE_CONFIG`, language-independent):
 the front prompts with the gloss (translation, or definition per the same resolver rules) +
-the example translation; the back reveals `headword` / `ipa` / `targetExample` / `grammar`.
+the example translation; the back reveals `headword` / `ipa` / `targetExample` / `grammar` /
+`wordFamily`.
 A card with no gloss data at all would resolve an empty front, so it falls back to the
 recognition layout. For languages whose grammar config lists `aspect` (Russian today), the
 front's gloss line carries a muted dictionary-style aspect tag — "to see *(impf.)*" — so
@@ -1402,6 +1403,16 @@ the prompt disambiguates aspect twins (ви́деть vs уви́деть). The 
 chips (a stray aspect value on a non-verb never surfaces); form cards inherit the lemma's
 aspect through the `resolveCardContent` grammar fallback. Front only — the back's grammar
 chips already show aspect, and a recognition front shows the headword itself.
+
+Both pools' backs end with a `wordFamily` slot: the reader's word-family line
+(`packages/ui/src/components/word-family-line.tsx`, `docs/READER-SPEC.md`) for the card's
+lemma — structure (`за- + брать`) and up to 3 relatives the user knows or has saved. Meaning
+cards in word-family languages (`ru`) fetch it through `glosses.wordFamily` (headword +
+`grammar.pos`; `useCardWordFamily`) while the front shows, so it is ready on reveal; the
+`word_family_hints_enabled` pref is enforced server-side. The endpoint never generates the
+LLM insight — part meanings and cognates appear only when the reader already cached them for
+that lemma (generation from practice is tracked in #515). Back only: on a production front
+the breakdown and parents would spell the answer. Pronunciation cards don't show it.
 
 ### Keyboard shortcuts (desktop)
 

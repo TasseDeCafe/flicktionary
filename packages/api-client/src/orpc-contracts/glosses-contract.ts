@@ -56,8 +56,8 @@ export const glossesContract = {
         // gloss must never depend on the user's *primary* target language —
         // the target IS the language of the text being glossed.
         targetLanguage: z.string().trim().min(1).max(40).optional(),
-        // Only the web reader's gloss sheet asks for the word-family line;
-        // hovers and other lookups skip its queries.
+        // Only the web reader's gloss sheet and the extension's hover popover
+        // ask for the word-family line; other lookups skip its queries.
         includeWordFamily: z.boolean().optional(),
       })
     )
@@ -83,6 +83,10 @@ export const glossesContract = {
           // (folded strings). Empty → no "Marked as known" chip. Un-marking
           // sends these back verbatim to studySessions.unmarkKnownLemma.
           knownLemmaCandidates: z.array(z.string()),
+          // The language the gloss was made for: the input's, or the one
+          // detected from `contextLine` when it was omitted. Callers that
+          // didn't know it need it for glosses.wordFamilyInsight.
+          targetLanguage: z.string(),
           // Null unless requested (includeWordFamily), enabled for the
           // language (word_family_hints_enabled + a word-family language),
           // and there is an informative structure or an anchor to show.
@@ -104,6 +108,30 @@ export const glossesContract = {
     .input(
       z.object({
         selectionText: z.string().trim().min(1).max(200),
+        targetLanguage: z.string().trim().min(1).max(40),
+        pos: z.string().nullable(),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          wordFamily: WordFamilySchema.nullable(),
+        }),
+      })
+    ),
+
+  // The word-family line for a dictionary headword whose POS is already known
+  // (a practice card's back). Never generates the LLM insight — it is applied
+  // only when already cached, and `insightPending` is informational. Null when
+  // the user has the hints off for the language or there is nothing to show.
+  wordFamily: oc
+    .route({ method: 'POST', path: '/glosses/word-family', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        headword: z.string().trim().min(1).max(200),
         targetLanguage: z.string().trim().min(1).max(40),
         pos: z.string().nullable(),
       })

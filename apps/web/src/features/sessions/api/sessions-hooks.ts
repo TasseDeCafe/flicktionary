@@ -733,7 +733,11 @@ export const useSetNativeLanguage = () => {
     orpcQuery.userPrefs.setNativeLanguage.mutationOptions({
       meta: {
         // Word-family insights depend on this pref (explanation language / gate).
-        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
+        invalidates: [
+          orpcQuery.userPrefs.getPrefs.key(),
+          orpcQuery.glosses.wordFamilyInsight.key(),
+          orpcQuery.glosses.wordFamily.key(),
+        ],
         errorMessage: t`Failed to set native language`,
         showErrorModal: true,
       },
@@ -773,7 +777,11 @@ export const useSetShowTranslationsForLanguage = () => {
     orpcQuery.userPrefs.setShowTranslationsForLanguage.mutationOptions({
       meta: {
         // Word-family insights depend on this pref (explanation language / gate).
-        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
+        invalidates: [
+          orpcQuery.userPrefs.getPrefs.key(),
+          orpcQuery.glosses.wordFamilyInsight.key(),
+          orpcQuery.glosses.wordFamily.key(),
+        ],
         errorMessage: t`Failed to update show-translations setting`,
         showErrorModal: true,
       },
@@ -787,7 +795,11 @@ export const useSetWordFamilyHintsForLanguage = () => {
     orpcQuery.userPrefs.setWordFamilyHintsForLanguage.mutationOptions({
       meta: {
         // Word-family insights depend on this pref (explanation language / gate).
-        invalidates: [orpcQuery.userPrefs.getPrefs.key(), orpcQuery.glosses.wordFamilyInsight.key()],
+        invalidates: [
+          orpcQuery.userPrefs.getPrefs.key(),
+          orpcQuery.glosses.wordFamilyInsight.key(),
+          orpcQuery.glosses.wordFamily.key(),
+        ],
         errorMessage: t`Failed to update word-family hints setting`,
         showErrorModal: true,
       },

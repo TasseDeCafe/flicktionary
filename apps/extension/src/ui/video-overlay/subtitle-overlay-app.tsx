@@ -284,6 +284,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // gloss replacing it. A hover that never enters the popover keeps the light
   // hover-out dismissal — the quick-lookup flow stays friction-free.
   const glossPinnedRef = useRef(false)
+  // Render-side mirror of glossPinnedRef: the word-family insight (an LLM call
+  // on a word's first request) is only fetched for a pinned popover, never on
+  // a bare hover.
+  const [glossPinned, setGlossPinned] = useState(false)
 
   // ---- helpers ---------------------------------------------------------------
 
@@ -304,6 +308,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const hideGloss = useCallback(() => {
     cancelGlossHide()
     glossPinnedRef.current = false
+    setGlossPinned(false)
     setGlossSaving(false)
     setGloss(null)
   }, [cancelGlossHide])
@@ -330,6 +335,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const onGlossPointerEnter = useCallback(() => {
     if (!glossPinnedRef.current && gloss && effectiveLanguage) recordLookup(gloss.word, effectiveLanguage)
     glossPinnedRef.current = true
+    setGlossPinned(true)
     cancelGlossHide()
   }, [cancelGlossHide, gloss, effectiveLanguage])
 
@@ -711,6 +717,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // A new gloss target starts unpinned (fresh hover semantics) and is not
       // mid-save.
       glossPinnedRef.current = false
+      setGlossPinned(false)
       setGlossSaving(false)
       setGloss({ lineIndex, anchor, word, sentence, save })
     },
@@ -744,6 +751,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       showGloss(tl.line.index, anchor, words, tl.line.text, { kind: 'chunk', tl, minOrd, maxOrd })
       // showGloss arms the unpinned default; chunk glosses override it.
       glossPinnedRef.current = true
+      setGlossPinned(true)
     },
     [showGloss, findSavedChunkExact, hideGloss, interaction]
   )
@@ -1255,8 +1263,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
             savedSessionId &&
             savedPopover.anchor.isConnected && (
               <SavedGlossTooltip
+                // A hover can switch the open popover to another highlight while
+                // it stays mounted; remount so no note draft or gloss carries over.
+                key={savedPopoverHighlight.id}
                 anchor={savedPopover.anchor}
                 sessionId={savedSessionId}
+                targetLanguage={savedTargetLanguage ?? null}
                 highlight={savedPopoverHighlight}
                 initialGloss={savedPopover.initialGloss}
                 onRemove={() => {
@@ -1294,6 +1306,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               anchor={gloss.anchor}
               word={gloss.word}
               content={glossContent}
+              pinned={glossPinned}
+              targetLanguage={glossQuery.data?.targetLanguage ?? effectiveLanguage ?? null}
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
               signedIn={authTier !== 'signed-out'}
               onSignIn={onSignIn}

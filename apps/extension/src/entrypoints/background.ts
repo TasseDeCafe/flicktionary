@@ -43,6 +43,7 @@ import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/upda
 import SaveFlicktionaryWordHandler from '@/handlers/flicktionary/save-flicktionary-word-handler'
 import GetFlicktionaryStudyTargetsHandler from '@/handlers/flicktionary/get-study-targets-handler'
 import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
+import FlicktionaryWordFamilyInsightHandler from '@/handlers/flicktionary/word-family-insight-handler'
 import CollectCheckpointHandler from '@/handlers/flicktionary/collect-checkpoint-handler'
 import UndoCheckpointHandler from '@/handlers/flicktionary/undo-checkpoint-handler'
 import CheckpointAvailabilityHandler from '@/handlers/flicktionary/checkpoint-availability-handler'
@@ -130,6 +131,7 @@ export default defineBackground(() => {
     new SaveFlicktionaryWordHandler(),
     new GetFlicktionaryStudyTargetsHandler(),
     new FlicktionarySavedGlossHandler(),
+    new FlicktionaryWordFamilyInsightHandler(),
     new CollectCheckpointHandler(),
     new UndoCheckpointHandler(),
     new CheckpointAvailabilityHandler(),

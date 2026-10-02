@@ -74,7 +74,21 @@ export const pickFamilyEntries = (
   if (parsed.length === 0) return null
 
   const posMatches = kaikkiPos ? parsed.filter((entry) => entry.pos === kaikkiPos) : []
-  const byPos = posMatches.length > 0 ? posMatches : parsed
+  // A lexicalized participle (сложившийся) has a bare adj entry beside its
+  // participle stub, and the gloss model tags it as an adjective — which alone
+  // would pick the entry with no structure. When every POS match is bare, the
+  // same headword's form-of entries join them, so the line still reads
+  // "participle of сложиться".
+  const bare = posMatches.every((entry) => !entry.parsed.formOf && !entry.parsed.parts)
+  const borrowed = bare
+    ? parsed.filter(
+        (entry) =>
+          entry.pos !== kaikkiPos &&
+          entry.parsed.formOf !== null &&
+          posMatches.some((match) => match.folded === entry.folded)
+      )
+    : []
+  const byPos = posMatches.length > 0 ? [...posMatches, ...borrowed] : parsed
   const direct = byPos.filter((entry) => entry.folded === foldedToken)
   const pool = direct.length > 0 ? direct : byPos
 
