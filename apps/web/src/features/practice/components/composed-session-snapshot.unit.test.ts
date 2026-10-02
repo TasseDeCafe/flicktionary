@@ -54,6 +54,7 @@ const snapshot = (over: Partial<ComposedSessionSnapshot> = {}): ComposedSessionS
   sessionHard: new Set(),
   ratingRecords: new Map(),
   exerciseOutcomes: new Map(),
+  clueUsed: new Set(),
   claimedIntroductions: new Set(),
   dayKey: currentDayKey(),
   ...over,
@@ -292,5 +293,27 @@ describe('ipaSourceForChunk', () => {
     expect(ipaSourceForChunk(editedChunk({ grammar: { ipa } }), '')).toBeNull()
     // Grounded, but the snapshot carried no IPA bag: nothing to verify against.
     expect(ipaSourceForChunk(editedChunk({ groundedAt: '2026-01-01', grammar: { ipa } }), '')).toBeNull()
+  })
+})
+
+describe('clueUsed', () => {
+  it('survives the resume round-trip, so an unrated card keeps its Easy cap after a detour', () => {
+    const live = cardItem('u1')
+    saveComposedSession(snapshot({ queue: [live, exerciseItem('u2')], clueUsed: new Set([live]) }))
+
+    const resumed = takeComposedSession('en', filter())
+    expect(resumed?.clueUsed.has(live)).toBe(true)
+  })
+
+  it('drops the clue mark of a deleted term with its other bookkeeping', () => {
+    const live = cardItem('victim')
+    const other = cardItem('other')
+    saveComposedSession(snapshot({ queue: [live, other], clueUsed: new Set([live, other]) }))
+
+    dropTermFromComposedSession('victim')
+
+    const resumed = takeComposedSession('en', filter())
+    expect(resumed?.clueUsed.has(live)).toBe(false)
+    expect(resumed?.clueUsed.has(other)).toBe(true)
   })
 })

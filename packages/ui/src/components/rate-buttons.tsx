@@ -15,6 +15,8 @@ interface RateButtonsProps {
   value?: RateValue
   onSelect: (value: RateValue) => void
   disabled?: boolean
+  // Ratings that can't be picked for this card (Easy after a practice clue).
+  disabledValues?: readonly RateValue[]
   // Renders a 1-4 <Kbd> badge on each button. Only for hosts that actually
   // bind those keys (the composed queue on desktop) — keep it off on touch
   // surfaces.
@@ -22,7 +24,14 @@ interface RateButtonsProps {
   className?: string
 }
 
-export const RateButtons = ({ value = 'good', onSelect, disabled, showKbdHints, className }: RateButtonsProps) => {
+export const RateButtons = ({
+  value = 'good',
+  onSelect,
+  disabled,
+  disabledValues,
+  showKbdHints,
+  className,
+}: RateButtonsProps) => {
   const { t } = useLingui()
 
   const labels: Record<RateValue, string> = {
@@ -40,7 +49,7 @@ export const RateButtons = ({ value = 'good', onSelect, disabled, showKbdHints, 
           type='button'
           size='xl'
           variant={value === key ? 'default' : 'outline'}
-          disabled={disabled}
+          disabled={disabled || disabledValues?.includes(key)}
           onClick={() => onSelect(key)}
         >
           {labels[key]}

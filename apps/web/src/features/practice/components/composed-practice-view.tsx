@@ -2,7 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, Dumbbell, Flame, Hourglass, Lightbulb, Loader2, MoreVertical } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Flame,
+  Hourglass,
+  Lightbulb,
+  Loader2,
+  MoreVertical,
+  Puzzle,
+} from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
@@ -17,6 +27,7 @@ import type {
   StrengthenExercisePayload,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
+  useCardWordFamily,
   useClaimPracticeIntroduction,
   useComposePracticeQueue,
   useHintExercise,
@@ -25,6 +36,7 @@ import {
   useUndoRating,
 } from '../api/practice-hooks'
 import { FlashcardFace, poolForCard } from './flashcard-face'
+import { cardWordFamilyParams, frontClueFor } from '../utils/card-word-family'
 import { TermActionsOverlay } from './term-actions-overlay'
 import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
 import {
@@ -197,6 +209,10 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   // again). Both are keyed to the queue item and cleared on advance.
   const [activeHint, setActiveHint] = useState<ActiveHint | null>(null)
   const [hintOutcome, setHintOutcome] = useState<HintOutcome | null>(null)
+  // Flashcards whose word-family clue was shown (recognition fronts). Kept
+  // past the advance: it also caps the peek re-rate, and it rides the resume
+  // snapshot so a detour can't hand back an Easy the clue already spent.
+  const [clueUsed, setClueUsed] = useState<Set<ComposedQueueItem>>(() => resumedSession?.clueUsed ?? new Set())
   const claimedIntroductionsRef = useRef<Set<string>>(resumedSession?.claimedIntroductions ?? new Set())
   const [claimIntroductionErrorKey, setClaimIntroductionErrorKey] = useState<string | null>(null)
   const [claimRetry, setClaimRetry] = useState(0)
@@ -218,8 +234,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
 
   // Live mirror of the snapshot-worthy state for the unmount save below (a
   // cleanup closure would otherwise see the mount render's values).
-  const sessionStateRef = useRef({ queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter })
-  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter }
+  const sessionStateRef = useRef({
+    queue,
+    index,
+    dailyLimitReached,
+    canLearnExtra,
+    capNoticeShown,
+    queueFilter,
+    clueUsed,
+  })
+  sessionStateRef.current = { queue, index, dailyLimitReached, canLearnExtra, capNoticeShown, queueFilter, clueUsed }
   useEffect(
     () => () => {
       const snapshot = sessionStateRef.current
@@ -243,6 +267,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         sessionHard: sessionHardRef.current,
         ratingRecords: ratingRecordsRef.current,
         exerciseOutcomes: exerciseOutcomesRef.current,
+        clueUsed: snapshot.clueUsed,
         claimedIntroductions: claimedIntroductionsRef.current,
         dayKey: currentDayKey(),
       })
@@ -359,6 +384,27 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
   const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
   const activeHintDisplayed = activeHint != null && activeHint.item === current
 
+  // Word-family clue (#516): a recognition front may show the word's
+  // structure and the relatives the learner has, before the answer. Same
+  // query as the card back's line, so it costs no extra request; the upcoming
+  // card's is prefetched so the Clue button is there from its first frame.
+  const clueCard = currentCard?.skill === 'meaning_recognition' ? currentCard : null
+  const { data: currentWordFamily } = useCardWordFamily(
+    clueCard ? cardWordFamilyParams(clueCard, targetLanguage) : null
+  )
+  useCardWordFamily(upcomingItem?.type === 'flashcard' ? cardWordFamilyParams(upcomingItem.card, targetLanguage) : null)
+  const frontClue = clueCard ? frontClueFor(currentWordFamily) : null
+  // Using the clue caps the rating at Good — live and on a peek re-rate.
+  const clueCapped = current != null && clueUsed.has(current)
+  const clueAvailable = frontClue != null && !revealed && !clueCapped
+  const showClue = () => {
+    if (current) setClueUsed((used) => new Set(used).add(current))
+  }
+  // A failed rating's recovery copy re-asks the same attempt, so it keeps the
+  // clue's cap (unlike an Again redrill, which is a fresh attempt).
+  const carryClueUse = (from: ComposedQueueItem, to: ComposedQueueItem) =>
+    setClueUsed((used) => (used.has(from) ? new Set(used).add(to) : used))
+
   // One completion event per session, even if a failed rating's retry copy
   // re-extends the queue after the completion screen already appeared.
   const completionCapturedRef = useRef(false)
@@ -456,19 +502,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
         onError: () => {
           dropRedrill()
           if (item.retryCount < MAX_RATE_RETRIES) {
-            setQueue((q) =>
-              q
-                ? [
-                    ...q,
-                    {
-                      type: 'flashcard',
-                      card,
-                      retryCount: item.retryCount + 1,
-                      requeuedForAgain: item.requeuedForAgain,
-                    },
-                  ]
-                : q
-            )
+            const retry: ComposedQueueItem = {
+              type: 'flashcard',
+              card,
+              retryCount: item.retryCount + 1,
+              requeuedForAgain: item.requeuedForAgain,
+            }
+            setQueue((q) => (q ? [...q, retry] : q))
+            carryClueUse(item, retry)
           }
         },
       }
@@ -491,7 +532,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
 
     const requeueFresh = () => {
       ratingRecordsRef.current.delete(item)
-      setQueue((q) => (q ? [...q, { type: 'flashcard', card, retryCount: 0, requeuedForAgain: false }] : q))
+      const fresh: ComposedQueueItem = { type: 'flashcard', card, retryCount: 0, requeuedForAgain: false }
+      setQueue((q) => (q ? [...q, fresh] : q))
+      carryClueUse(item, fresh)
     }
 
     undoRating(
@@ -614,6 +657,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     setCurrentAnswered(false)
     setActiveHint(null)
     setHintOutcome(null)
+    setClueUsed(new Set())
     const extraFilter = { ...filter, learnExtraCount }
     setQueueFilter(extraFilter)
     ratingRecordsRef.current.clear()
@@ -696,9 +740,10 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
           }
         },
       },
+      { key: 'c', enabled: showingFront && clueAvailable, onPress: showClue },
       ...RATE_VALUES.map((value, index): HotkeyBinding => ({
         key: String(index + 1),
-        enabled: showingBack && !currentHintOutcome,
+        enabled: showingBack && !currentHintOutcome && !(value === 'easy' && clueCapped),
         onPress: () => handleRate(value),
       })),
       // Anki muscle memory: Space (or Enter) on the revealed back = Good.
@@ -732,7 +777,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
       { key: 'arrowright', enabled: isPeeking, onPress: () => setPeekBack((p) => Math.max(0, p - 1)) },
       ...RATE_VALUES.map((value, index): HotkeyBinding => ({
         key: String(index + 1),
-        enabled: peekRerateEnabled,
+        enabled: peekRerateEnabled && !(value === 'easy' && clueCapped),
         onPress: () => {
           if (current) handleRerate(current, value)
         },
@@ -1200,7 +1245,12 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
-          <FlashcardFace card={card} targetLanguage={targetLanguage} showBack={showBack} />
+          <FlashcardFace
+            card={card}
+            targetLanguage={targetLanguage}
+            showBack={showBack}
+            frontClue={clueCapped && !isPeeking ? frontClue : null}
+          />
         </div>
       </div>
       <div className='bg-background pb-safe border-t px-4 pt-3'>
@@ -1214,6 +1264,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   <RateButtons
                     value={peekRecord.rating}
                     disabled={pendingRerate != null}
+                    disabledValues={clueCapped ? ['easy'] : undefined}
                     showKbdHints={showKbd}
                     onSelect={(value) => handleRerate(current, value)}
                   />
@@ -1244,34 +1295,43 @@ export const ComposedPracticeView = ({ targetLanguage, filter, mix }: ComposedPr
                   {showKbd && <Kbd>↵</Kbd>}
                 </Button>
               </div>
+            ) : clueCapped ? (
+              <div className='flex flex-col gap-1.5'>
+                <p className='text-muted-foreground text-center text-xs'>{t`Clue used — Easy is off for this card.`}</p>
+                <RateButtons showKbdHints={showKbd} disabledValues={['easy']} onSelect={handleRate} />
+              </div>
             ) : (
               <RateButtons showKbdHints={showKbd} onSelect={handleRate} />
             )
-          ) : servableHint ? (
+          ) : (
             <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                size='xl'
-                className='flex-1'
-                onClick={() =>
-                  setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
-                }
-              >
-                <Lightbulb className='h-4 w-4' />
-                {t`Hint`}
-                {showKbd && <Kbd>H</Kbd>}
-              </Button>
+              {clueAvailable && (
+                <Button type='button' variant='outline' size='xl' className='flex-1' onClick={showClue}>
+                  <Puzzle className='h-4 w-4' />
+                  {t`Clue`}
+                  {showKbd && <Kbd>C</Kbd>}
+                </Button>
+              )}
+              {servableHint && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xl'
+                  className='flex-1'
+                  onClick={() =>
+                    setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
+                  }
+                >
+                  <Lightbulb className='h-4 w-4' />
+                  {t`Hint`}
+                  {showKbd && <Kbd>H</Kbd>}
+                </Button>
+              )}
               <Button type='button' size='xl' className='flex-1' onClick={() => setRevealed(true)}>
                 {t`Show answer`}
                 {showKbd && <Kbd>Space</Kbd>}
               </Button>
             </div>
-          ) : (
-            <Button type='button' size='xl' className='w-full' onClick={() => setRevealed(true)}>
-              {t`Show answer`}
-              {showKbd && <Kbd>Space</Kbd>}
-            </Button>
           )}
         </div>
       </div>
