@@ -25,6 +25,7 @@ import {
   useDeleteHighlight,
   useGetStudySession,
   useGetUserPrefs,
+  useGetWelcomeBack,
   useListSegmentsByTrack,
   useListHighlightsBySession,
   useListGhostsBySession,
@@ -79,15 +80,34 @@ const MARK_KNOWN_OFFER_FLOOR = 20
 // (bounce, clamp), not an intent to re-read.
 const SCROLL_UP_GATE_PX = 120
 
-const alignBottomTo = (scrollContainer: HTMLElement, target: Element): void => {
-  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
-  scrollContainer.scrollTop += delta
-}
+// How long the reader's first paint waits for the welcome-back offer. The
+// offer is fetched in parallel with the session; one that misses the opening
+// frame is skipped for the sitting rather than inserted above text the
+// reader has started on.
+const WELCOME_WAIT_MS = 1500
 
-const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
-  const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
+// The resume frame parks the last-read line's bottom this far below the top
+// of the viewport: enough of its tail stays visible to recognize where
+// reading stopped, with the divider (and the unread text) right under it.
+const RESUME_CONTEXT_PX = 160
+
+type WelcomeBackOffer = NonNullable<ReturnType<typeof useGetWelcomeBack>['data']>
+
+// Lands the reader just after the resume anchor: the anchor's bottom edge
+// sits a little below the viewport top, so the unread text fills the screen
+// whatever its size. No anchor (nothing scrolled past yet) means the start.
+// scrollTop is clamped by the browser, so near the ends it lands as close as
+// the scroll range allows.
+const alignResumeFrame = (scrollContainer: HTMLElement, anchorSegmentId: string | null): boolean => {
+  if (anchorSegmentId == null) {
+    scrollContainer.scrollTop = 0
+    return true
+  }
+  const target = scrollContainer.querySelector(`[data-segment-id="${anchorSegmentId}"]`)
   if (!target) return false
-  alignBottomTo(scrollContainer, target)
+  const contextPx = Math.min(RESUME_CONTEXT_PX, scrollContainer.clientHeight * 0.2)
+  scrollContainer.scrollTop +=
+    target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().top - contextPx
   return true
 }
 
@@ -205,11 +225,23 @@ export const SessionView = () => {
     for (const s of allSegments ?? []) max = max === null || s.index > max ? s.index : max
     return max
   }, [allSegments])
-  const furthestReadSegmentId = useMemo(() => {
-    const index = session?.furthestReadSegmentIndex
-    if (index == null) return null
-    return allSegments?.find((s) => s.index === index)?.id ?? null
-  }, [allSegments, session?.furthestReadSegmentIndex])
+  // The row before each row, by track index. Walks track order rather than
+  // subtracting one: indices are positions, not guaranteed contiguous.
+  const previousIndexByIndex = useMemo(() => {
+    const map = new Map<number, number>()
+    const segments = allSegments ?? []
+    for (let i = 1; i < segments.length; i++) map.set(segments[i]!.index, segments[i - 1]!.index)
+    return map
+  }, [allSegments])
+  // The live resume anchor (where "Last read" returns to) and the segment
+  // reading resumes on right after it (the one flashed on arrival).
+  const resumeAfterIndex = session?.resumeAfterSegmentIndex ?? null
+  const resumeFrame = useMemo(() => {
+    if (resumeAfterIndex == null) return { anchorId: null, resumeId: allSegments?.[0]?.id ?? null }
+    const position = allSegments?.findIndex((s) => s.index === resumeAfterIndex) ?? -1
+    if (position < 0) return null
+    return { anchorId: allSegments![position]!.id, resumeId: allSegments![position + 1]?.id ?? null }
+  }, [allSegments, resumeAfterIndex])
   const { shallowestIndex, deepestIndex } = useVisibleSegmentRange(scrollEl, indexBySegmentId)
   // While searching, the scroll container renders only the (filtered) search
   // results, so the deepest-visible segment jumps to an arbitrary match and would
@@ -260,6 +292,13 @@ export const SessionView = () => {
   // Scroll a segment to the center of the viewport and flash it briefly. Shared by
   // the deep-link (`?segment=`) restore and the "jump to last highlight" button.
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Briefly tints the row the reader was moved to, so a programmatic jump
+  // (deep link, resume, Last read) reads as "you are here".
+  const flashSegment = useCallback((segmentId: string) => {
+    setFlashSegmentId(segmentId)
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
+  }, [])
   const scrollToSegment = useCallback(
     (segmentId: string) => {
       const el = document.querySelector(`[data-segment-id="${segmentId}"]`)
@@ -269,11 +308,9 @@ export const SessionView = () => {
         suppressScrollGate(800)
         ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
       }
-      setFlashSegmentId(segmentId)
-      if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-      flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
+      flashSegment(segmentId)
     },
-    [suppressScrollGate]
+    [suppressScrollGate, flashSegment]
   )
 
   useEffect(() => () => (flashTimerRef.current ? clearTimeout(flashTimerRef.current) : undefined), [])
@@ -285,59 +322,129 @@ export const SessionView = () => {
     return () => cancelAnimationFrame(raf)
   }, [targetSegmentId, allSegments, scrollToSegment])
 
-  // Persist the deepest segment the reader reaches (resume position), but only on a
-  // normal read: never while searching (deepest-visible then reflects arbitrary
-  // filtered matches) and never under a deep-link open (the "open source" jump from a
-  // card / Vocabulary mustn't move the saved position). Monotonic + throttled: one
-  // write per few seconds carrying the latest max, plus a best-effort flush on leave.
+  // Persist the reading pointers, but only on a normal read: never while
+  // searching (the visible range then reflects arbitrary filtered matches) and
+  // never under a deep-link open (the "open source" jump from a card /
+  // Vocabulary mustn't move the saved position). Two pointers, monotonic and
+  // throttled together — one write per few seconds carrying the latest values,
+  // plus a best-effort flush on leave:
+  // - furthest-read: the deepest segment on screen. Progress, checkpoints and
+  //   the end-of-text surfaces key on it.
+  // - the resume anchor: the last segment scrolled past (the viewport's top
+  //   row minus one), or read into by a gloss/save. Reopening resumes right
+  //   after it — the deepest visible line runs a whole viewport ahead on a big
+  //   screen, so resuming there strands the reader on a phone.
   const { mutate: updateReadingProgress } = useUpdateReadingProgress()
   const writtenMaxRef = useRef(-1)
+  const writtenResumeRef = useRef(-1)
   useEffect(() => {
     if (session?.furthestReadSegmentIndex != null) {
       writtenMaxRef.current = Math.max(writtenMaxRef.current, session.furthestReadSegmentIndex)
     }
-  }, [session?.furthestReadSegmentIndex])
+    if (session?.resumeAfterSegmentIndex != null) {
+      writtenResumeRef.current = Math.max(writtenResumeRef.current, session.resumeAfterSegmentIndex)
+    }
+  }, [session?.furthestReadSegmentIndex, session?.resumeAfterSegmentIndex])
 
-  // Resume-reading: on a normal open (no deep-link target), land the reader back at
-  // their furthest-read segment with NO visible scroll. We position the container in
-  // a layout effect — synchronously, before the browser paints — so the content
-  // appears already parked there (the same trick the chat uses to open at the
-  // bottom), rather than starting at the top and animating down. Runs once per mount.
+  // The welcome-back offer is fetched in parallel with the session (the server
+  // resolves the anchor), and the opening frame waits for it — briefly: the
+  // card belongs to the frame the reader lands on, never inserted after
+  // they've started reading. Deep-link opens don't offer it at all.
+  const welcomeQuery = useGetWelcomeBack(sessionId, !targetSegmentId)
+  const [welcomeWaitExpired, setWelcomeWaitExpired] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setWelcomeWaitExpired(true), WELCOME_WAIT_MS)
+    return () => clearTimeout(timer)
+  }, [])
+  const welcomeSettled = !!targetSegmentId || !welcomeQuery.isPending || welcomeWaitExpired
+  const isTextReady = !isSegmentsLoading && welcomeSettled
+
+  // Resume-reading: on a normal open (no deep-link target), land the reader just
+  // after their resume anchor with NO visible scroll. We position the container
+  // in a layout effect — synchronously, before the browser paints — so the
+  // content appears already parked there (the same trick the chat uses to open
+  // at the bottom), rather than starting at the top and animating down. The
+  // first unread line flashes so the jump reads as "you left off here". Runs
+  // once per mount.
   const didRestoreRef = useRef(false)
-  const restoredScrollTopRef = useRef<number | null>(null)
   useLayoutEffect(() => {
     if (didRestoreRef.current) return
     if (targetSegmentId) return // an explicit deep-link target wins over resume
     const el = scrollEl
-    // Wait until both the container and the rows exist; this is our one shot.
-    if (!el || !session || !allSegments || allSegments.length === 0) return
+    // Wait until the container, the rows and the welcome offer are in; this is
+    // our one shot.
+    if (!el || !session || !allSegments || allSegments.length === 0 || !isTextReady) return
     // Consume the one-shot now, even if there's nothing to restore to — otherwise a
-    // later optimistic cache bump (furthest null → a real value as the reader
+    // later optimistic cache bump (pointers null → real values as the reader
     // scrolls) would re-trigger this effect and yank a reader of a fresh session.
     didRestoreRef.current = true
-    if (!furthestReadSegmentId) return
-    // Align the deepest-read line to the bottom of the viewport — reproduces the
-    // frame the reader left on, with everything below it still unread. scrollTop is
-    // clamped by the browser, so an early segment just lands at the top.
-    if (alignSegmentToBottom(el, furthestReadSegmentId)) {
-      // Remembered so the welcome-back reveal below can tell "still parked at
-      // the restore frame" from "already reading".
-      restoredScrollTopRef.current = el.scrollTop
+    if (session.resumeAfterSegmentIndex == null || !resumeFrame) return
+    if (alignResumeFrame(el, resumeFrame.anchorId)) {
       suppressScrollGate()
+      if (resumeFrame.resumeId) flashSegment(resumeFrame.resumeId)
     }
-  }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId, suppressScrollGate])
+  }, [scrollEl, session, allSegments, targetSegmentId, isTextReady, resumeFrame, suppressScrollGate, flashSegment])
 
   const writeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingMaxRef = useRef<number | null>(null)
+  const pendingProgressRef = useRef<{ furthest: number | null; resumeAfter: number | null }>({
+    furthest: null,
+    resumeAfter: null,
+  })
   const trackingEnabled = !isSearching && !targetSegmentId
   const flushReadingProgress = useCallback(() => {
-    const toWrite = pendingMaxRef.current
-    pendingMaxRef.current = null
-    if (toWrite != null && toWrite > writtenMaxRef.current) {
-      writtenMaxRef.current = toWrite
-      updateReadingProgress({ sessionId, segmentIndex: toWrite })
-    }
+    const { furthest, resumeAfter } = pendingProgressRef.current
+    pendingProgressRef.current = { furthest: null, resumeAfter: null }
+    const nextMax = furthest != null && furthest > writtenMaxRef.current ? furthest : null
+    if (nextMax != null) writtenMaxRef.current = nextMax
+    // The anchor never passes the furthest-read pointer (the server clamps too).
+    const clampedResume = resumeAfter == null ? null : Math.min(resumeAfter, writtenMaxRef.current)
+    const nextResume = clampedResume != null && clampedResume > writtenResumeRef.current ? clampedResume : null
+    if (nextResume != null) writtenResumeRef.current = nextResume
+    if (nextMax == null && nextResume == null) return
+    updateReadingProgress({
+      sessionId,
+      segmentIndex: writtenMaxRef.current,
+      ...(nextResume != null ? { resumeAfterSegmentIndex: nextResume } : {}),
+    })
   }, [sessionId, updateReadingProgress])
+
+  // Raises the pending pointers and schedules the throttled write. Callers own
+  // the gating (tracking enabled, not placing, no manual-set pin).
+  const queueReadingProgress = useCallback(
+    (next: { furthest?: number | null; resumeAfter?: number | null }) => {
+      const pending = pendingProgressRef.current
+      let raised = false
+      if (next.furthest != null && next.furthest > Math.max(writtenMaxRef.current, pending.furthest ?? -1)) {
+        pending.furthest = next.furthest
+        raised = true
+      }
+      if (
+        next.resumeAfter != null &&
+        next.resumeAfter > Math.max(writtenResumeRef.current, pending.resumeAfter ?? -1)
+      ) {
+        pending.resumeAfter = next.resumeAfter
+        raised = true
+      }
+      if (!raised) return
+      // Reaching the last line flushes immediately: the close-out surfaces and
+      // the checkpoint press key on the persisted pointer, and a 3s throttle
+      // lag right at the finish line is user-visible.
+      if (maxSegmentIndex != null && pending.furthest != null && pending.furthest >= maxSegmentIndex) {
+        if (writeTimerRef.current) {
+          clearTimeout(writeTimerRef.current)
+          writeTimerRef.current = null
+        }
+        flushReadingProgress()
+        return
+      }
+      if (writeTimerRef.current) return // throttle: a trailing write is already queued
+      writeTimerRef.current = setTimeout(() => {
+        writeTimerRef.current = null
+        flushReadingProgress()
+      }, 3000)
+    },
+    [flushReadingProgress, maxSegmentIndex]
+  )
 
   // --- Manual reading-position bookmark (the "read up to here" divider) --------
   // Placement mode: taps place the divider instead of glossing/selecting, and a
@@ -369,25 +476,21 @@ export const SessionView = () => {
     // Suspended while placing (browsing for a line isn't reading) and while
     // the pin holds.
     if (isPlacingBookmarkRef.current || autoTrackPinRef.current != null) return
-    if (deepestIndex <= writtenMaxRef.current) return
-    pendingMaxRef.current = deepestIndex
-    // Reaching the last line flushes immediately: the close-out surfaces and
-    // the checkpoint press key on the persisted pointer, and a 3s throttle
-    // lag right at the finish line is user-visible.
-    if (maxSegmentIndex != null && deepestIndex >= maxSegmentIndex) {
-      if (writeTimerRef.current) {
-        clearTimeout(writeTimerRef.current)
-        writeTimerRef.current = null
-      }
-      flushReadingProgress()
-      return
-    }
-    if (writeTimerRef.current) return // throttle: a trailing write is already queued
-    writeTimerRef.current = setTimeout(() => {
-      writeTimerRef.current = null
-      flushReadingProgress()
-    }, 3000)
-  }, [deepestIndex, shallowestIndex, trackingEnabled, flushReadingProgress, maxSegmentIndex])
+    queueReadingProgress({
+      furthest: deepestIndex,
+      resumeAfter: shallowestIndex == null ? null : (previousIndexByIndex.get(shallowestIndex) ?? null),
+    })
+  }, [deepestIndex, shallowestIndex, trackingEnabled, queueReadingProgress, previousIndexByIndex])
+
+  // A gloss or save is the one direct signal of where the eyes were: the
+  // resume anchor moves up to just before that line (it can't run past what
+  // the scroll tracker has seen — the word was on screen).
+  const noteReadInto = (segmentId: string) => {
+    if (!trackingEnabled || isPlacingBookmarkRef.current || autoTrackPinRef.current != null) return
+    const index = indexBySegmentId.get(segmentId)
+    const previousIndex = index == null ? undefined : previousIndexByIndex.get(index)
+    if (previousIndex != null) queueReadingProgress({ resumeAfter: previousIndex })
+  }
 
   useEffect(
     () => () => {
@@ -494,15 +597,15 @@ export const SessionView = () => {
   const wholeMarkKnownCount =
     wholeMarkKnownQuery.data?.status === 'ready' ? wholeMarkKnownQuery.data.markableLemmaCount : 0
   // --- Welcome-back offer (once per mount) -------------------------------------
-  // Snapshot the pointer the mount opened with: the card refers to LAST
-  // sitting's span, so its anchor and count never follow the live pointer as
-  // the reader reads on. Write-once render snapshot (undefined = session not
-  // loaded yet).
-  const welcomeAnchorIndexRef = useRef<number | null | undefined>(undefined)
-  if (welcomeAnchorIndexRef.current === undefined && session) {
-    welcomeAnchorIndexRef.current = session.furthestReadSegmentIndex ?? null
+  // Snapshotted the moment the text first renders: an offer that arrived in
+  // time is part of the opening frame; a later one is dropped for the
+  // sitting (inserting it above the resumed text would shove it down).
+  // `undefined` = text not shown yet; a render-phase one-shot (same pattern
+  // as the resting divider below).
+  const [welcomeOffer, setWelcomeOffer] = useState<WelcomeBackOffer | null | undefined>(undefined)
+  if (welcomeOffer === undefined && session && isTextReady) {
+    setWelcomeOffer(welcomeQuery.data ?? null)
   }
-  const welcomeAnchorIndex = welcomeAnchorIndexRef.current ?? null
   // The divider rests where this sitting opened (or where a manual set placed
   // it) and stays there for the WHOLE sitting — WhatsApp's unread-messages
   // bar. It never chases the live pointer and never unmounts mid-sitting:
@@ -516,7 +619,7 @@ export const SessionView = () => {
     { index: number | null; origin: 'resume' | 'manual' } | undefined
   >(undefined)
   if (restingDivider === undefined && session) {
-    setRestingDivider({ index: session.furthestReadSegmentIndex ?? null, origin: 'resume' })
+    setRestingDivider({ index: session.resumeAfterSegmentIndex ?? null, origin: 'resume' })
   }
   const restingDividerSegmentId = useMemo(() => {
     const index = restingDivider?.index
@@ -524,44 +627,24 @@ export const SessionView = () => {
     return allSegments?.find((s) => s.index === index)?.id ?? null
   }, [allSegments, restingDivider])
   const [welcomeDismissed, setWelcomeDismissed] = useState(false)
-  // Suppressed on deep-link opens: following a word into the text isn't
-  // "returning to read".
-  const welcomeEligible =
+  // The offer covers the span up to the resume anchor — lines scrolled past,
+  // not the unread bottom of last sitting's screen — and sits under the
+  // sitting-open divider, so it only shows while the two agree (a manual set
+  // moves the divider away from it).
+  const welcomeAnchorIndex = welcomeOffer?.anchorSegmentIndex ?? null
+  const showWelcomeCard =
     !welcomeDismissed &&
     !targetSegmentId &&
     welcomeAnchorIndex != null &&
+    restingDivider?.origin === 'resume' &&
+    restingDivider.index === welcomeAnchorIndex &&
     maxSegmentIndex != null &&
-    welcomeAnchorIndex < maxSegmentIndex
-  const welcomeQuery = useMarkKnownPreview(sessionId, markKnownSupported && welcomeEligible, welcomeAnchorIndex)
-  const welcomeCount =
-    welcomeEligible && welcomeQuery.data?.status === 'ready' ? welcomeQuery.data.markableLemmaCount : 0
-  const showWelcomeCard = welcomeCount >= MARK_KNOWN_OFFER_FLOOR
+    welcomeAnchorIndex < maxSegmentIndex &&
+    (welcomeOffer?.markableLemmaCount ?? 0) >= MARK_KNOWN_OFFER_FLOOR
   const welcomeAnchorSegment = useMemo(() => {
     if (welcomeAnchorIndex == null) return null
     return allSegments?.find((s) => s.index === welcomeAnchorIndex) ?? null
   }, [allSegments, welcomeAnchorIndex])
-
-  // The card lands async (its preview query resolves after the resume-scroll
-  // has run), which would leave it just below the fold. One shot: extend the
-  // restored frame to include it — but only while the reader is still parked
-  // exactly at the restore position; once they've scrolled, yanking the
-  // viewport would be worse than the card waiting below.
-  const didRevealWelcomeRef = useRef(false)
-  useLayoutEffect(() => {
-    if (didRevealWelcomeRef.current) return
-    if (!showWelcomeCard || !scrollEl || !didRestoreRef.current) return
-    const restoredTop = restoredScrollTopRef.current
-    if (restoredTop == null || Math.abs(scrollEl.scrollTop - restoredTop) > 2) {
-      didRevealWelcomeRef.current = true
-      return
-    }
-    const card = scrollEl.querySelector('[data-welcome-card]')
-    if (!card) return
-    didRevealWelcomeRef.current = true
-    alignBottomTo(scrollEl, card)
-    restoredScrollTopRef.current = scrollEl.scrollTop
-    suppressScrollGate()
-  }, [showWelcomeCard, scrollEl, suppressScrollGate])
 
   // The footer's declaration pill: the ambient entry to the merged
   // checkpoint + sweep sheet. No floor — the pill is a passive meter, not an
@@ -804,20 +887,20 @@ export const SessionView = () => {
     }
   }
 
-  // Offer a quick return to the furthest-read segment when the reader scrolls back
-  // up to re-read. Suppressed while searching, since the list then renders only
-  // filtered matches and the anchor row may be absent.
-  const furthestReadPosition = useSegmentPosition(scrollEl, furthestReadSegmentId)
-  const showJumpToLastRead =
-    !isSearching && hasScrolledUp && furthestReadSegmentId != null && furthestReadPosition === 'below'
+  // Offer a quick return to the resume frame when the reader scrolls back up
+  // to re-read — keyed on the first unread row having dropped below the
+  // viewport, so the jump always goes forward (a tall last-read paragraph can
+  // put the frame above the viewport while deeper rows are below it).
+  // Suppressed while searching, since the list then renders only filtered
+  // matches and the anchor row may be absent.
+  const resumeRowPosition = useSegmentPosition(scrollEl, resumeFrame?.resumeId ?? null)
+  const showJumpToLastRead = !isSearching && hasScrolledUp && resumeRowPosition === 'below'
   const jumpToLastRead = useCallback(() => {
-    if (!scrollEl || !furthestReadSegmentId) return
-    if (!alignSegmentToBottom(scrollEl, furthestReadSegmentId)) return
+    if (!scrollEl || !resumeFrame) return
+    if (!alignResumeFrame(scrollEl, resumeFrame.anchorId)) return
     suppressScrollGate()
-    setFlashSegmentId(furthestReadSegmentId)
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-    flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
-  }, [furthestReadSegmentId, scrollEl, suppressScrollGate])
+    if (resumeFrame.resumeId) flashSegment(resumeFrame.resumeId)
+  }, [resumeFrame, scrollEl, suppressScrollGate, flashSegment])
 
   // Tap-to-select-word gesture. Replaces native browser selection: a single
   // click/tap selects a word, press-and-drag extends a range. The adapter maps
@@ -867,6 +950,7 @@ export const SessionView = () => {
       // A fresh selection opens the sheet in preview mode, which fires the
       // stateless gloss — record the span for checkpoint suppression.
       recordPreviewedSpan(normalized.startSegmentId, normalized.selectionText)
+      noteReadInto(normalized.startSegmentId)
     },
   })
 
@@ -907,6 +991,7 @@ export const SessionView = () => {
     const saveKey = `${normalized.startSegmentId}:${normalized.startOffset}:${normalized.endOffset}`
     if (pendingRightClickSavesRef.current.has(saveKey)) return
     pendingRightClickSavesRef.current.add(saveKey)
+    noteReadInto(normalized.startSegmentId)
     createHighlightFromRightClick(
       {
         sessionId,
@@ -944,6 +1029,7 @@ export const SessionView = () => {
     if (isOptimisticHighlightId(target.dataset.highlightId)) return
     const match = highlights?.find((h) => h.id === target.dataset.highlightId)
     if (!match) return
+    noteReadInto(match.startSegmentId)
     // Switching to a saved highlight while the sheet is open: drop any lingering
     // blue selection paint from the previous preview word (the highlight shows
     // its own yellow wash; the gesture didn't run to clear it here).
@@ -1039,8 +1125,9 @@ export const SessionView = () => {
       clearTimeout(writeTimerRef.current)
       writeTimerRef.current = null
     }
-    pendingMaxRef.current = null
+    pendingProgressRef.current = { furthest: null, resumeAfter: null }
     writtenMaxRef.current = placementIndex
+    writtenResumeRef.current = placementIndex
     setReadingPosition({ sessionId, segmentIndex: placementIndex })
     setIsPlacingBookmark(false)
     isPlacingBookmarkRef.current = false
@@ -1215,7 +1302,7 @@ export const SessionView = () => {
           onPointerDown={handleRightClickToggle}
         >
           <div className='mx-auto max-w-4xl'>
-            {isSegmentsLoading ? (
+            {!isTextReady ? (
               <SegmentListSkeleton />
             ) : (
               <>
@@ -1235,7 +1322,7 @@ export const SessionView = () => {
                   welcomeCard={
                     welcomeAnchorSegment ? (
                       <WelcomeBackCard
-                        count={welcomeCount}
+                        count={welcomeOffer?.markableLemmaCount ?? 0}
                         untilLabel={formatTimestamp(welcomeAnchorSegment.startMs) || null}
                         isMarking={isMarkingKnown}
                         onMarkKnown={() => {

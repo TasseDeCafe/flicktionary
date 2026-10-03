@@ -30,22 +30,31 @@ const isStudySessionQueryData = (value: unknown): value is StudySessionQueryData
 // corrected. The next advance write re-arms the guard.
 const manualReadingPositionSessionIds = new Set<string>()
 
-const mergeFurthestReadSegmentIndex = (cached: unknown, incoming: unknown): unknown => {
+const maxNullable = (a: number | null, b: number | null): number | null =>
+  a == null ? b : b == null ? a : Math.max(a, b)
+
+// Both reading pointers (furthest-read and the resume anchor) only move
+// forward outside a manual set, so a refetch racing a throttled write can't
+// lower either.
+const mergeReadingPointers = (cached: unknown, incoming: unknown): unknown => {
   if (!isStudySessionQueryData(incoming)) return incoming
   if (manualReadingPositionSessionIds.has(incoming.data.id)) return incoming
-  const cachedData = isStudySessionQueryData(cached) ? cached : undefined
-  const cachedIndex = cachedData?.data.furthestReadSegmentIndex
-  const incomingIndex = incoming.data.furthestReadSegmentIndex
-  if (cachedIndex == null) return incoming
-  const furthestReadSegmentIndex = incomingIndex == null ? cachedIndex : Math.max(cachedIndex, incomingIndex)
-  if (furthestReadSegmentIndex === incomingIndex) return incoming
-  return {
-    ...incoming,
-    data: {
-      ...incoming.data,
-      furthestReadSegmentIndex,
-    },
+  if (!isStudySessionQueryData(cached)) return incoming
+  const furthestReadSegmentIndex = maxNullable(
+    cached.data.furthestReadSegmentIndex,
+    incoming.data.furthestReadSegmentIndex
+  )
+  const resumeAfterSegmentIndex = maxNullable(
+    cached.data.resumeAfterSegmentIndex,
+    incoming.data.resumeAfterSegmentIndex
+  )
+  if (
+    furthestReadSegmentIndex === incoming.data.furthestReadSegmentIndex &&
+    resumeAfterSegmentIndex === incoming.data.resumeAfterSegmentIndex
+  ) {
+    return incoming
   }
+  return { ...incoming, data: { ...incoming.data, furthestReadSegmentIndex, resumeAfterSegmentIndex } }
 }
 
 export const useListStudySessions = () => {
@@ -249,7 +258,7 @@ export const useGetStudySession = (sessionId: string, options?: { enabled?: bool
       input: { sessionId },
       enabled: options?.enabled ?? true,
       select: (response) => response.data,
-      structuralSharing: mergeFurthestReadSegmentIndex,
+      structuralSharing: mergeReadingPointers,
       meta: { errorMessage: t`Failed to load session` },
     })
   )
@@ -340,30 +349,34 @@ export const useRetryEnrichment = (sessionId: string) => {
   )
 }
 
-// Fire-and-forget write of the reader's furthest-read position. Stays silent on
-// failure — it's resume-position telemetry, not a user-facing action.
+// Fire-and-forget write of the reader's reading pointers (furthest-read + the
+// resume anchor). Stays silent on failure — it's resume-position telemetry,
+// not a user-facing action.
 //
 // We never *invalidate* the session query (no refetch on every throttled ping), but
-// we DO optimistically patch its cache synchronously in onMutate. Without that, the
-// cached session lags the DB by a full open/close cycle: the restore-on-open effect
-// reads the stale cached value (and locks it in) before any background refetch can
-// correct it, so the reader lands at their previous position, not the latest. The
-// patch is monotonic (Math.max), matching the server's GREATEST; useGetStudySession
-// applies the same merge to GET responses so a racing refetch cannot lower it.
+// we DO optimistically patch its cache synchronously in onMutate, so in-mount
+// consumers (the Last read pill, checkpoint spans) follow the latest values.
+// The patch is monotonic (Math.max), matching the server's GREATEST;
+// useGetStudySession applies the same merge to GET responses so a racing
+// refetch cannot lower it.
 export const useUpdateReadingProgress = () => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.updateReadingProgress.mutationOptions({
-      onMutate: ({ sessionId, segmentIndex }) => {
+      onMutate: ({ sessionId, segmentIndex, resumeAfterSegmentIndex: resumeAfterWrite }) => {
         // An advance means normal monotonic semantics are back — re-arm the
         // merge guard a manual set may have stood down.
         manualReadingPositionSessionIds.delete(sessionId)
         const key = orpcQuery.studySessions.get.queryKey({ input: { sessionId } })
         queryClient.setQueryData<StudySessionQueryData>(key, (cached) => {
           if (!cached?.data) return cached
-          const cur = cached.data.furthestReadSegmentIndex
-          const next = cur == null ? segmentIndex : Math.max(cur, segmentIndex)
-          return { ...cached, data: { ...cached.data, furthestReadSegmentIndex: next } }
+          const furthestReadSegmentIndex = maxNullable(cached.data.furthestReadSegmentIndex, segmentIndex)
+          // Mirrors the server's clamp: the anchor never passes furthest-read.
+          const resumeAfterSegmentIndex = maxNullable(
+            cached.data.resumeAfterSegmentIndex,
+            resumeAfterWrite == null ? null : Math.min(resumeAfterWrite, furthestReadSegmentIndex ?? -1)
+          )
+          return { ...cached, data: { ...cached.data, furthestReadSegmentIndex, resumeAfterSegmentIndex } }
         })
       },
       meta: { showErrorModal: false },
@@ -372,7 +385,7 @@ export const useUpdateReadingProgress = () => {
 }
 
 // The manual bookmark ("read up to here"): an explicit, possibly-backward SET
-// of the pointer from the reader's placement mode. Patches the cache to the
+// of both pointers from the reader's placement mode. Patches the cache to the
 // exact value (the merge guard stands down via manualReadingPositionSessionIds)
 // and refetches everything whose span hangs off the pointer.
 export const useSetReadingPosition = (sessionId: string) => {
@@ -385,7 +398,10 @@ export const useSetReadingPosition = (sessionId: string) => {
         const key = orpcQuery.studySessions.get.queryKey({ input: { sessionId } })
         queryClient.setQueryData<StudySessionQueryData>(key, (cached) => {
           if (!cached?.data) return cached
-          return { ...cached, data: { ...cached.data, furthestReadSegmentIndex: segmentIndex } }
+          return {
+            ...cached,
+            data: { ...cached.data, furthestReadSegmentIndex: segmentIndex, resumeAfterSegmentIndex: segmentIndex },
+          }
         })
       },
       meta: {
@@ -396,6 +412,25 @@ export const useSetReadingPosition = (sessionId: string) => {
         ],
         errorMessage: t`Failed to set the reading position`,
       },
+    })
+  )
+}
+
+// The reader's welcome-back offer for the sitting being opened. The server
+// resolves the resume anchor itself, so this runs in parallel with the
+// session fetch instead of waiting on it. One answer per mount: the offer
+// describes LAST sitting, so it must neither refetch as the live anchor moves
+// nor outlive the mount (gcTime 0 — the next open asks again).
+export const useGetWelcomeBack = (sessionId: string, enabled: boolean) => {
+  return useQuery(
+    orpcQuery.studySessions.getWelcomeBack.queryOptions({
+      input: { sessionId },
+      enabled,
+      select: (response) => response.data,
+      staleTime: Infinity,
+      gcTime: 0,
+      refetchOnWindowFocus: false,
+      meta: { showErrorToast: false },
     })
   )
 }
