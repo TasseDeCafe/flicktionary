@@ -197,7 +197,11 @@ const computeSpanMatch = async (
     return out
   }
 
-  const vocab = await deps.userLookupsRepository.listCheckpointVocab({ userId, targetLanguage: lang })
+  const vocab = await deps.userLookupsRepository.listCheckpointVocab({
+    userId,
+    targetLanguage: lang,
+    contentSourceId: session.content_source_id,
+  })
   const matched = matchVocabAgainstSpanLemmas({
     vocab,
     spanLemmas,

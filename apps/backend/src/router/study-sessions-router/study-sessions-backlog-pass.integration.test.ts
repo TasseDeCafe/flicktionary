@@ -8,7 +8,7 @@ import {
   appendSegment,
   createReadingSession,
   insertWiktionaryLemma,
-  saveAdhocTerm,
+  saveOldAdhocTerm,
   setupCheckpointUser,
   uniqueCyrillicSuffix,
 } from './checkpoint-test-helpers'
@@ -42,7 +42,7 @@ describe('study-sessions checkpoint backlog pass', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `молот${suf}`
-    await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'hammer')
+    await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'hammer')
     await insertWiktionaryLemma(word, [`${word}ом`])
     const session = await createReadingSession(userId, 'ru')
     const lastIndex = await appendSegment(session.text_track_id, `Ударил ${word}ом по столу.`)
@@ -65,7 +65,7 @@ describe('study-sessions checkpoint backlog pass', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `щит${suf}`
-    await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'shield')
+    await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'shield')
     await insertWiktionaryLemma(word, [`${word}ы`])
     const session = await createReadingSession(userId, 'ru')
     const lastIndex = await appendSegment(session.text_track_id, `Висят ${word}ы на стене.`)
@@ -80,7 +80,7 @@ describe('study-sessions checkpoint backlog pass', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `забор${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'fence')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'fence')
     await insertWiktionaryLemma(word, [])
     const session = await createReadingSession(userId, 'ru')
     const cased = `${word.charAt(0).toUpperCase()}${word.slice(1)}`
@@ -103,7 +103,7 @@ describe('study-sessions checkpoint backlog pass', () => {
     const commonWord = `нога${suf}`
     const rareWord = `переть${suf}`
     const sharedForm = `форма${suf}`
-    const rareId = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', rareWord, 'to barge')
+    const rareId = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', rareWord, 'to barge')
     await insertWiktionaryLemma(commonWord, [sharedForm])
     await insertWiktionaryLemma(rareWord, [sharedForm, rareWord])
     await sql`

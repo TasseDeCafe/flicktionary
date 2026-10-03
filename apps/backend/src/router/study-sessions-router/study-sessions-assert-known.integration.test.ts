@@ -11,7 +11,7 @@ import {
   getRecognitionFacet,
   insertWiktionaryLemma,
   patchRecognitionFacet,
-  saveAdhocTerm,
+  saveOldAdhocTerm,
   setupCheckpointUser,
   uniqueCyrillicSuffix,
 } from './checkpoint-test-helpers'
@@ -68,7 +68,7 @@ describe('study-sessions assert-known', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `сапог${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'boot')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'boot')
     await insertWiktionaryLemma(word, [`${word}а`])
     const { session, collected } = await collectWithWords(userId, token, [word])
     expect(collected.backlogCandidates).toEqual([
@@ -97,7 +97,7 @@ describe('study-sessions assert-known', () => {
     // same-day introduction still works (the daily-new count saw nothing).
     expect(await reviewBudget(userId)).toBe(0)
     const otherWord = `ботинок${suf}`
-    const otherId = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', otherWord, 'shoe')
+    const otherId = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', otherWord, 'shoe')
     const rated = await request(testApp)
       .post(`/api/v1/practice/review-terms/${otherId}/ratings`)
       .set(buildAuthorizationHeaders(token))
@@ -129,7 +129,7 @@ describe('study-sessions assert-known', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `шарф${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'scarf')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'scarf')
     // Onboarding-parked: srs_state NULL, parked, introduced_at stamped at
     // park time, PARTIAL rehab progress (warm-up gates advance rehab days).
     await sql`
@@ -190,8 +190,8 @@ describe('study-sessions assert-known', () => {
     const { userId, token } = await setupCheckpointUser(testApp)
     const wordA = `плащ${suf}`
     const wordB = `пояс${suf}`
-    const idA = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'coat')
-    const idB = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'belt')
+    const idA = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'coat')
+    const idB = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'belt')
     await insertWiktionaryLemma(wordA, [`${wordA}а`])
     await insertWiktionaryLemma(wordB, [`${wordB}а`])
     const { session, collected } = await collectWithWords(userId, token, [wordA, wordB])
@@ -228,8 +228,8 @@ describe('study-sessions assert-known', () => {
     const { userId, token } = await setupCheckpointUser(testApp)
     const wordA = `сундук${suf}`
     const wordB = `фонар${suf}`
-    const idA = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'chest')
-    const idB = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'lantern')
+    const idA = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'chest')
+    const idB = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'lantern')
     await insertWiktionaryLemma(wordA, [`${wordA}а`])
     await insertWiktionaryLemma(wordB, [`${wordB}а`])
 
@@ -290,8 +290,8 @@ describe('study-sessions assert-known', () => {
     const { userId, token } = await setupCheckpointUser(testApp)
     const dueWord = `котел${suf}`
     const backlogWord = `ковер${suf}`
-    const dueId = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', dueWord, 'kettle')
-    const backlogId = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', backlogWord, 'carpet')
+    const dueId = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', dueWord, 'kettle')
+    const backlogId = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', backlogWord, 'carpet')
     await patchRecognitionFacet(dueId, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(dueWord, [`${dueWord}а`])
     await insertWiktionaryLemma(backlogWord, [`${backlogWord}а`])

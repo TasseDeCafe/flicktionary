@@ -234,6 +234,10 @@ export const createAdhocCard = async (params: {
     userLookupId: insertedCard.user_lookup_id,
     cardId: insertedCard.id,
   })
+  // Re-adding an already-saved term is a deliberate re-save, the same demand
+  // signal the reader's save path records (a no-op for a lookup created just
+  // now — its creation is the encounter).
+  await deps.userLookupsRepository.recordEncounter([insertedCard.user_lookup_id])
   // Explicit lookups of the word before adding it are demand (idempotent via
   // the lemma_lookups watermark).
   await deps.lemmaLookupsRepository.creditLookupDemand([insertedCard.user_lookup_id])

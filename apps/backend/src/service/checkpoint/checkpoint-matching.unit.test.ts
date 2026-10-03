@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import type { DbUserLookup, CheckpointVocabRow } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
   applyFrequencyAsymmetryGuard,
+  BACKLOG_MIN_DEMAND_AGE_DAYS,
   findMweCandidates,
   foldSelectionTokens,
   HOMOGRAPH_RANK_FACTOR,
@@ -48,10 +49,12 @@ const FUTURE = '2026-07-19T12:00:00Z'
 
 const makeRow = (
   facet: CheckpointVocabRow['facet'],
-  lookupOverrides: Partial<DbUserLookup> = {}
+  lookupOverrides: Partial<DbUserLookup> = {},
+  savedInSource = false
 ): CheckpointVocabRow => ({
   lookup: makeLookup(lookupOverrides),
   facet,
+  savedInSource,
 })
 
 const asMatch = (row: CheckpointVocabRow): MatchedVocabRow => ({
@@ -285,6 +288,21 @@ describe('partitionMatches', () => {
     const onboardingParked = asMatch(makeRow({ ...readyFacet, leech_parked_at: PAST }))
     const result = partitionMatches([unparked, onboardingParked], NOW)
     expect(result.backlog).toHaveLength(2)
+  })
+
+  test('a never-introduced term saved from the source being read is encounter-only', () => {
+    const result = partitionMatches([asMatch(makeRow(readyFacet, {}, true))], NOW)
+    expect(result.backlog).toHaveLength(0)
+    expect(result.encounterOnly).toHaveLength(1)
+  })
+
+  test('a never-introduced term is offered only once its last save/lookup is old enough', () => {
+    const daysAgo = (days: number): string => new Date(NOW.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
+    const fresh = asMatch(makeRow(readyFacet, { last_demand_at: daysAgo(BACKLOG_MIN_DEMAND_AGE_DAYS - 0.5) }))
+    const old = asMatch(makeRow(readyFacet, { last_demand_at: daysAgo(BACKLOG_MIN_DEMAND_AGE_DAYS) }))
+    const result = partitionMatches([fresh, old], NOW)
+    expect(result.backlog).toEqual([old])
+    expect(result.encounterOnly).toEqual([fresh])
   })
 
   test('a leech-parked facet (with SRS history) is excluded from both lanes', () => {

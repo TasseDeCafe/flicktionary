@@ -2,6 +2,7 @@ import { CITATION_FORM } from '../../transport/database/study-facets/study-facet
 import type { BacklogEvidenceEntry } from '../../transport/database/study-sessions/study-session-checkpoints-repository'
 import { knownAssertResult } from '../practice/fsrs'
 import type { BacklogCandidate, CheckpointDependencies } from './collect-checkpoint'
+import { isBacklogOfferable } from './checkpoint-matching'
 
 export type AssertKnownResult = { ok: false; reason: 'not_found' } | { ok: true; asserted: number; skipped: number }
 
@@ -28,12 +29,19 @@ export const listBacklogClaims = async (
   const rows = await deps.userLookupsRepository.listAssertableBacklogCandidates({
     userId: params.userId,
     userLookupIds: checkpoint.backlog_candidate_ids,
+    contentSourceId: session.content_source_id,
   })
   // Preserve the checkpoint's stored candidate order (the collect's backlog
   // ordering) rather than the join's row order. Evidence rehydrates from the
   // checkpoint row; rows predating the column fall back to null fields.
   const evidence = (checkpoint.backlog_evidence ?? {}) as Record<string, BacklogEvidenceEntry>
-  const rowById = new Map(rows.map((row) => [row.id, row]))
+  // A save or lookup since the checkpoint withdraws the offer, same rule as
+  // the collect.
+  const now = new Date()
+  const offerableRows = rows.filter((row) =>
+    isBacklogOfferable({ savedInSource: row.saved_in_source, lastDemandAt: row.last_demand_at }, now)
+  )
+  const rowById = new Map(offerableRows.map((row) => [row.id, row]))
   const candidates = checkpoint.backlog_candidate_ids.flatMap((id) => {
     const row = rowById.get(id)
     if (!row) return []

@@ -10,7 +10,7 @@ import {
   getRecognitionFacet,
   insertWiktionaryLemma,
   patchRecognitionFacet,
-  saveAdhocTerm,
+  saveOldAdhocTerm,
   setupCheckpointUser,
   uniqueCyrillicSuffix,
 } from './checkpoint-test-helpers'
@@ -34,7 +34,7 @@ describe('study-sessions checkpoints MWE matching', () => {
     const wordA = `бить${suf}`
     const wordB = `баклуши${suf}`
     const mwe = `${wordA} ${wordB}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', mwe, 'to idle')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', mwe, 'to idle')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     // The verb appears INFLECTED in the segment; the noun appears verbatim.
     await insertWiktionaryLemma(wordA, [`${wordA}ет`])
