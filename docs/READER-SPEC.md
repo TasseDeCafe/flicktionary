@@ -83,24 +83,37 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
 - **Note-only stub state ("note saved, word not saved").** After `Save note` (and on reopening such a highlight) the sheet morphs into a state that is deliberately DISTINCT from saved mode: the study-target picker stays **editable** (the study choice is still open), the committed note shows locked inline, and the footer is primary **Save** + a green cyclable **Note saved** control. `Save` **upgrades the stub into a full study card** via `highlights.saveWord`: it persists the chosen study intent on the highlight and enqueues the normal `enrich_highlight` job (no debounce — the choice is explicit). The enrich run **re-points the stub's still-`needs_data` card** to the enriched lemma+sense lookup (`insertCardForHighlightIdempotent`'s conflict-update; the stub card was pinned to a raw-selection lookup at save time) — same card row, so the note and its seeded chat survive — then auto-keeps it exactly like a full save. Kept cards are never rebound. `Note saved` cycles to `Remove` on hover and discards the stub (highlight + card + chat), morphing back to preview. Stub-ness is the DTO's `noteOnly` flag, derived server-side (`highlights.listBySession`) as "the highlight's card is parked in `needs_data` and no `enrich_highlight` job for it is pending/processing" — a full-lane card is also `needs_data` from its materialize until its auto-keep, so the live-job guard keeps it out; a card stranded in `needs_data` after a failed enrichment still reads as a stub, surfacing the Save upgrade as a natural retry. After `saveWord`, the enqueued job flips `noteOnly` off at once; `useSaveWord` writes the response row into the highlights cache so the sheet doesn't flash back to the stub state before the refetch lands. The alternative upgrade path — generating the card's data from the session vocabulary list or through the card's chat — still exists (see `docs/REVIEW-SPEC.md`).
 - **Cyclable Save ⇄ Saved.** Once fully saved, the green **Saved** state is itself the remove control — clicking it removes the highlight and morphs the sheet back to preview (the on-screen counterpart of the right-click save→remove toggle), replacing the old standalone trash button.
 - In saved mode the floating sheet bundles every action that used to live in a second-tap menu: optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`), and the cyclable **Saved** remove control. Composing/editing an uncommitted note happens in the same inner **note view** as preview (footer: `Saved` + `Add note`/`Edit note`-with-dot; the note view's single `Save note` patches the note/tags via `updateNoteAndTags`); the mobile sheet can be flicked down by its drag handle to dismiss. The note and tags are passed to the LLM at processing time. **The note/presets seed the card chat exactly once and lock on save** (like the study-target picker): a committed note/preset set renders read-only inline on the MAIN view — the saved note + selected chips, uniformly dimmed + non-interactive, with a lock caption — and the footer collapses to the cyclable **Saved** control (no `Edit note` / `Save note`). Re-saving would post a duplicate seeded chat turn (the seed is keyed per highlight, not per save), so the only way to change a committed note is to delete the highlight and start over; the card's own chat input handles genuine follow-ups. An empty save (no note, no chips) seeds nothing and stays editable, so a word saved without a note can still get one — once.
-- **Reading position.** The reader tracks the deepest segment the user reaches by
-  segment index (not scroll pixels), so it survives search filtering and a future
-  virtualized reader. The value is persisted (throttled, monotonic) on
-  `study_session.furthest_read_segment_index`; every progress write (and the
-  manual bookmark set) also stamps `study_session.last_read_at`. Reopening the
-  session lands back at that line with no visible scroll (positioned in a
-  pre-paint layout effect). The restore always uses the server's position: the
-  reader route (`session-reader-route.tsx`) remounts per session and drops the
-  cached session before it loads (a stale cache would restore another device's
-  older line, or discard a lower bookmark set there through the monotonic merge),
+- **Reading position.** The reader tracks two pointers by segment index (not
+  scroll pixels), so they survive search filtering and a future virtualized
+  reader, both persisted (throttled, monotonic, one `updateReadingProgress`
+  write) on `study_session`:
+  - `furthest_read_segment_index` — the deepest segment on screen. Progress,
+    checkpoints, the mark-known span and the end-of-text surfaces key on it.
+  - `resume_after_segment_index` — the **resume anchor**: the row before the
+    viewport's top row (the last segment scrolled past), raised to the row
+    before a glossed/saved word's segment (a tap is direct evidence of where
+    the eyes were). Predecessors walk track order, never `index - 1`. Clamped
+    to furthest-read client- and server-side. The deepest visible line runs a
+    whole viewport ahead on a large screen, so it is never the resume point.
+  Every progress write (and the manual bookmark set) also stamps
+  `study_session.last_read_at`. Reopening the session parks the anchor's
+  bottom edge `min(160px, 20%)` below the viewport top with no visible scroll
+  (positioned in a pre-paint layout effect), so the unread text fills the
+  screen on any device, and the first unread row flashes (the same yellow
+  flash as `?segment=` jumps). A NULL anchor opens at the start. The restore
+  always uses the server's position: the reader route
+  (`session-reader-route.tsx`) remounts per session and drops the cached
+  session before it loads (a stale cache would restore another device's older
+  line, or discard a lower bookmark set there through the monotonic merge),
   so each open shows the loading skeleton until the fresh session arrives.
-  A floating `Last read` pill appears when that furthest-read segment has
-  scrolled *below* the viewport AND the reader actually scrolled up (a
-  ~120px-above-the-deepest-point gate; programmatic scrolls — the restore, the
-  welcome-card reveal, deep-link jumps, search enter/exit clamps, placement
-  confirm/cancel — re-baseline the gate, so a container resize or list swap can
-  never pop the pill in on its own). Tapping
-  it returns to the same saved line, aligned at the bottom of the viewport.
+  A floating `Last read` pill appears when the first unread row (the one
+  after the anchor) has scrolled *below* the viewport — so the jump always
+  goes forward — AND the reader actually scrolled up (a
+  ~120px-above-the-deepest-point gate; programmatic scrolls — the restore,
+  deep-link jumps, search enter/exit clamps, placement confirm/cancel —
+  re-baseline the gate, so a container resize or list swap can never pop the
+  pill in on its own). Tapping it returns to the restore frame for the live
+  anchor, with the same flash.
   Restore and the pill are suppressed while searching, and resume-tracking is
   also suppressed under a deep-link open (the `Open source` jump from a card /
   Vocabulary carries `?segment=`), so peeking at a term's source never moves the
@@ -118,7 +131,8 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
     place via the click path — and placement works in the search-filtered
     list too, indices being track-relative); a sticky footer replaces the
     vocabulary footer with Cancel / **Set reading position**. Confirming
-    calls `setReadingPosition` — a plain SET, deliberately non-monotonic:
+    calls `setReadingPosition` — a plain SET of both pointers to the line
+    (it is read, so reading resumes after it), deliberately non-monotonic:
     backwards corrects scroll inflation, forwards asserts previously-read
     content — and drops any queued throttled advance first (the server's
     GREATEST on the advance path would immediately re-raise the pointer over
@@ -133,7 +147,7 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
     pointer on the next scroll tick. The pin is client-session state only: a
     remount resumes at the pointer, so tracking re-engages next sitting.
   - **The divider rests for the whole sitting.** A hairline divider row
-    renders below the position the sitting opened with (labeled `Resumed
+    renders below the resume anchor the sitting opened with (labeled `Resumed
     here`) or a manual set placed (`Read up to here` — nothing was resumed
     there), and STAYS mounted there for the entire sitting even after the
     reader passes it — WhatsApp's unread-messages bar; unmounting or chasing
@@ -545,7 +559,8 @@ stat is always a live query — never pre-aggregated or snapshotted.
   batch-scoped undo; their counts only ever cover words actually READ: the
   read span mid-text via the checkpoint preview's debounced pointer with a
   raw fallback for the first fetch, the whole text at reached-end, nothing on
-  a never-scrolled session; all gated on an `available` profile so a passive
+  a never-scrolled session; the span and whole-text previews are gated on an
+  `available` profile so a passive
   offer never polls a pending build; the previews hold the previous span's
   data across debounce re-keys — `keepPreviousData` — so count-driven UI
   doesn't blink out while a new key loads):
@@ -563,17 +578,22 @@ stat is always a live query — never pre-aggregated or snapshotted.
     button. Any non-zero count shows — a surface the reader deliberately
     reached needs no floor.
   - **Welcome-back card**: once per mount, on returning to a partially-read
-    session with at least the floor's worth (20) of unswept read words: an
-    inline card below the divider — "N words from last time (up to
-    <timestamp>) aren't marked as known yet." with secondary-weight **Mark
-    as known** / **Not yet** (the footer CTA stays the only primary on
-    screen). Its anchor and
-    count are snapshotted from the pointer the mount OPENED with (last
-    sitting's span, never the live pointer). The resume scroll extends once
-    to include the card when its preview lands — but only while the reader
-    is still parked at the restore frame, so a late preview never yanks
-    someone already reading. "Not yet" dismisses for the sitting only;
-    deep-link opens suppress the card entirely.
+    session with at least the floor's worth (20) of unswept words up to the
+    resume anchor: an inline card below the divider — "N words from last
+    time (up to <timestamp>) aren't marked as known yet." with
+    secondary-weight **Mark as known** / **Not yet** (the footer CTA stays
+    the only primary on screen). Its own endpoint,
+    `studySessions.getWelcomeBack`, resolves the anchor server-side and
+    returns it with the count (a live span tokenization; 0 for unsupported
+    languages), so it is fetched in parallel with the session, not after it.
+    The span ends at the anchor — lines scrolled past — never at the deepest
+    line last sitting had on screen. The text waits up to 1.5s
+    (`WELCOME_WAIT_MS`) for the offer and the card is snapshotted into the
+    opening frame; an offer that misses it is dropped for the sitting rather
+    than inserted above text being read. Shown only while the resting divider
+    is the sitting-open one at the same anchor (a manual set hides it). "Not
+    yet" and Mark as known dismiss it for the sitting; deep-link opens skip
+    the fetch entirely.
   - **Post-sweep confirmation**: welcome-back and close-out sweeps don't
     toast — a footer strip takes the pill's slot ("N words marked as known"
     + the batch-scoped **Undo**) for ~8 seconds, then the footer returns to
