@@ -488,6 +488,9 @@ export type CheckpointVocabFacet = {
 export type CheckpointVocabRow = {
   lookup: DbUserLookup
   facet: CheckpointVocabFacet | null
+  // The term has a card in ANY session of the content source being read (e.g.
+  // an earlier part of the same book) — a deliberate save from this very text.
+  savedInSource: boolean
 }
 
 // The user's full live vocabulary for one language, LEFT JOINed with the
@@ -497,9 +500,23 @@ export type CheckpointVocabRow = {
 const listCheckpointVocab = async (params: {
   userId: string
   targetLanguage: string
+  // null skips the saved-in-source probe (callers that never offer backlog
+  // claims, e.g. the mark-known sweep); every row then reads false.
+  contentSourceId: string | null
 }): Promise<CheckpointVocabRow[]> => {
   const rows = (await sql`
     SELECT ul.*,
+      ${
+        params.contentSourceId === null
+          ? sql`FALSE`
+          : sql`EXISTS (
+              SELECT 1
+              FROM public.cards c
+              JOIN public.study_sessions s ON s.id = c.study_session_id
+              WHERE c.user_lookup_id = ul.id
+                AND s.content_source_id = ${params.contentSourceId}
+            )`
+      } AS saved_in_source,
       (f.user_lookup_id IS NOT NULL) AS facet_exists,
       f.srs_state AS facet_srs_state,
       f.srs_due AS facet_srs_due,
@@ -517,6 +534,7 @@ const listCheckpointVocab = async (params: {
       AND ul.deleted_at IS NULL
   `) as Array<
     DbUserLookup & {
+      saved_in_source: boolean
       facet_exists: boolean
       facet_srs_state: SrsState | null
       facet_srs_due: string | null
@@ -527,6 +545,7 @@ const listCheckpointVocab = async (params: {
   >
   return rows.map((row) => {
     const {
+      saved_in_source,
       facet_exists,
       facet_srs_state,
       facet_srs_due,
@@ -546,6 +565,7 @@ const listCheckpointVocab = async (params: {
             data_status: facet_data_status ?? 'ready',
           }
         : null,
+      savedInSource: saved_in_source,
     }
   })
 }
@@ -554,6 +574,10 @@ export type AssertableBacklogCandidateRow = {
   id: string
   headword: string
   sense: string
+  last_demand_at: string
+  // Same probe as listCheckpointVocab's saved_in_source, against the
+  // checkpointed session's content source.
+  saved_in_source: boolean
 }
 
 // The subset of a checkpoint's stored backlog_candidate_ids that is STILL
@@ -564,10 +588,18 @@ export type AssertableBacklogCandidateRow = {
 const listAssertableBacklogCandidates = async (params: {
   userId: string
   userLookupIds: readonly string[]
+  contentSourceId: string
 }): Promise<AssertableBacklogCandidateRow[]> => {
   if (params.userLookupIds.length === 0) return []
   return (await sql`
-    SELECT ul.id, ul.headword, ul.sense
+    SELECT ul.id, ul.headword, ul.sense, ul.last_demand_at,
+      EXISTS (
+        SELECT 1
+        FROM public.cards c
+        JOIN public.study_sessions s ON s.id = c.study_session_id
+        WHERE c.user_lookup_id = ul.id
+          AND s.content_source_id = ${params.contentSourceId}
+      ) AS saved_in_source
     FROM public.user_lookups ul
     JOIN public.study_facets f
       ON f.user_lookup_id = ul.id
@@ -2292,10 +2324,15 @@ export interface UserLookupsRepositoryInterface {
     executor?: postgres.Sql
   ) => Promise<string[]>
   recordContentEncounter: (userLookupIds: string[], executor?: postgres.Sql) => Promise<void>
-  listCheckpointVocab: (params: { userId: string; targetLanguage: string }) => Promise<CheckpointVocabRow[]>
+  listCheckpointVocab: (params: {
+    userId: string
+    targetLanguage: string
+    contentSourceId: string | null
+  }) => Promise<CheckpointVocabRow[]>
   listAssertableBacklogCandidates: (params: {
     userId: string
     userLookupIds: readonly string[]
+    contentSourceId: string
   }) => Promise<AssertableBacklogCandidateRow[]>
   listDifficultyVocab: (params: { userId: string; targetLanguage: string }) => Promise<DifficultyVocabRow[]>
   listCoverageVocab: (params: { userId: string; targetLanguage: string }) => Promise<CoverageVocabRow[]>

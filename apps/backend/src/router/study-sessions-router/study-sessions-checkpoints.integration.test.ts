@@ -15,8 +15,10 @@ import {
   createReadingSession,
   getRecognitionFacet,
   insertWiktionaryLemma,
+  adhocChunk,
   patchRecognitionFacet,
-  saveAdhocTerm,
+  saveOldAdhocTerm,
+  saveCardInSiblingSession,
   setupCheckpointUser,
   uniqueCyrillicSuffix,
 } from './checkpoint-test-helpers'
@@ -79,12 +81,12 @@ describe('study-sessions checkpoints', () => {
     const wordC = `дом${suf}`
     const wordD = `река${suf}`
     const wordP = `печь${suf}`
-    const idA = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'table')
-    const idB = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'window')
-    const idC = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordC, 'house')
-    const idD = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordD, 'river')
-    const idPStove = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'stove')
-    const idPBake = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'to bake')
+    const idA = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordA, 'table')
+    const idB = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordB, 'window')
+    const idC = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordC, 'house')
+    const idD = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordD, 'river')
+    const idPStove = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'stove')
+    const idPBake = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordP, 'to bake')
 
     await patchRecognitionFacet(idA, { state: 'review', dueOffsetDays: -1 })
     await patchRecognitionFacet(idB, { state: 'review', dueOffsetDays: 5 })
@@ -202,7 +204,7 @@ describe('study-sessions checkpoints', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `трава${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'grass')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'grass')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}у`])
     const session = await createReadingSession(userId, 'ru')
@@ -228,7 +230,7 @@ describe('study-sessions checkpoints', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `гриб${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'mushroom')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'mushroom')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}ы`])
     const session = await createReadingSession(userId, 'ru')
@@ -261,8 +263,8 @@ describe('study-sessions checkpoints', () => {
     // through the flashcard API before answering, simulating a concurrent
     // rating during the LLM call.
     const word = `ключ${suf}`
-    const idKey = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'key')
-    const idSpring = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'spring')
+    const idKey = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'key')
+    const idSpring = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'spring')
     await patchRecognitionFacet(idKey, { state: 'review', dueOffsetDays: -1 })
     await patchRecognitionFacet(idSpring, { state: 'review', dueOffsetDays: 5 })
     await insertWiktionaryLemma(word, [`${word}и`])
@@ -300,7 +302,7 @@ describe('study-sessions checkpoints', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `заяц${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'hare')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'hare')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}ы`])
     const session = await createReadingSession(userId, 'ru')
@@ -345,7 +347,7 @@ describe('study-sessions checkpoints', () => {
     const suf = uniqueCyrillicSuffix()
     const { userId, token } = await setupCheckpointUser(testApp)
     const word = `волк${suf}`
-    const id = await saveAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'wolf')
+    const id = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', word, 'wolf')
     await patchRecognitionFacet(id, { state: 'review', dueOffsetDays: -1 })
     await insertWiktionaryLemma(word, [`${word}и`])
     const session = await createReadingSession(userId, 'ru')
@@ -399,5 +401,59 @@ describe('study-sessions checkpoints', () => {
     // The explicit rating's effect survives.
     const facet = await getRecognitionFacet(id)
     expect(facet!.srs_state).not.toBeNull()
+  })
+
+  test('backlog never offers a fresh save/lookup or a term saved from the same source', async () => {
+    const suf = uniqueCyrillicSuffix()
+    const { userId, token } = await setupCheckpointUser(testApp)
+
+    // All three are never-introduced and appear in the span: O is an old save
+    // (offered), F is an old save just re-added through the adhoc endpoint, S
+    // has a card in an earlier part of the source being read.
+    const wordO = `гора${suf}`
+    const wordF = `поле${suf}`
+    const wordS = `лес${suf}`
+    const idO = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordO, 'mountain')
+    const idF = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordF, 'field')
+    const idS = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', wordS, 'forest')
+    for (const word of [wordO, wordF, wordS]) {
+      await insertWiktionaryLemma(word, [`${word}а`])
+    }
+    basicDataPass.mockResolvedValueOnce([adhocChunk(wordF, 'field')])
+    const resaved = await request(testApp)
+      .post('/api/v1/cards/adhoc')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'ru', headword: wordF, context: null })
+    expect(resaved.status).toBe(200)
+
+    const session = await createReadingSession(userId, 'ru')
+    await saveCardInSiblingSession(userId, session, idS, 'ru')
+    const lastIndex = await appendSegment(session.text_track_id, `Вот ${wordO}а, ${wordF}а и ${wordS}а.`)
+
+    const preview = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-preview?toSegmentIndex=${lastIndex}`)
+      .set(buildAuthorizationHeaders(token))
+    expect(preview.status).toBe(200)
+    expect(preview.body.data.backlogCount).toBe(1)
+
+    const collected = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoints`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans: [] })
+    expect(collected.status).toBe(200)
+    expect(collected.body.data.backlogCandidates.map((c: { userLookupId: string }) => c.userLookupId)).toEqual([idO])
+    const [resavedLookup] = (await sql`SELECT encounter_count FROM public.user_lookups WHERE id = ${idF}`) as [
+      { encounter_count: number },
+    ]
+    expect(resavedLookup.encounter_count).toBe(2)
+
+    // Rehydration re-applies the rule: a lookup of O after the checkpoint
+    // withdraws the stored offer.
+    await sql`UPDATE public.user_lookups SET last_demand_at = NOW() WHERE id = ${idO}`
+    const claims = await request(testApp)
+      .get(`/api/v1/study-sessions/${session.id}/checkpoint-claims`)
+      .set(buildAuthorizationHeaders(token))
+    expect(claims.status).toBe(200)
+    expect(claims.body.data.candidates).toEqual([])
   })
 })

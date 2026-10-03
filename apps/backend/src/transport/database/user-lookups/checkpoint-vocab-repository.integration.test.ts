@@ -23,10 +23,70 @@ describe('checkpoint vocab repository methods', () => {
     await StudyFacetsRepository().ensureCitationFacet(withFacet)
     const withoutFacet = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
 
-    const rows = await UserLookupsRepository().listCheckpointVocab({ userId, targetLanguage: 'ru' })
+    const rows = await UserLookupsRepository().listCheckpointVocab({
+      userId,
+      targetLanguage: 'ru',
+      contentSourceId: null,
+    })
     const byId = new Map(rows.map((r) => [r.lookup.id, r]))
     expect(byId.get(withFacet)?.facet).toMatchObject({ srs_state: null, data_status: 'ready' })
     expect(byId.get(withoutFacet)?.facet).toBeNull()
+  })
+
+  test('listCheckpointVocab flags terms with a card in any session of the given content source', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const savedHere = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
+    const savedElsewhere = await insertLookup(userId, 'ru', __generateUniqueId('слово'))
+    // Adhoc sources are one per (user, language), so two languages give two
+    // distinct content sources.
+    const createSession = async (
+      targetLanguage: string
+    ): Promise<{ id: string; content_source_id: string; text_track_id: string }> => {
+      const { session } = await StudySessionsRepository().getOrCreateAdhocStudySession({
+        userId,
+        targetLanguage,
+        nativeLanguage: 'en',
+        cefrLevel: 'B1',
+        title: 'saved-in-source test',
+        trackHash: __generateUniqueId('track'),
+        contextBlob: 'ctx',
+      })
+      return session
+    }
+    const reading = await createSession('ru')
+    const insertCard = async (lookupId: string, session: { id: string; text_track_id: string }): Promise<void> => {
+      const [segment] = (await sql`
+        INSERT INTO public.text_segments (text_track_id, index, text)
+        VALUES (${session.text_track_id}, 0, 'текст')
+        ON CONFLICT DO NOTHING
+        RETURNING id
+      `) as Array<{ id: string }>
+      const segmentId =
+        segment?.id ??
+        (
+          (await sql`
+          SELECT id FROM public.text_segments WHERE text_track_id = ${session.text_track_id} AND index = 0
+        `) as [{ id: string }]
+        )[0].id
+      await sql`
+        INSERT INTO public.cards (segment_id, study_session_id, surface_form, user_lookup_id)
+        VALUES (${segmentId}, ${session.id}, 'текст', ${lookupId})
+      `
+    }
+    await insertCard(savedHere, reading)
+    await insertCard(savedElsewhere, await createSession('de'))
+
+    const repository = UserLookupsRepository()
+    const flags = async (contentSourceId: string | null): Promise<Map<string, boolean>> => {
+      const rows = await repository.listCheckpointVocab({ userId, targetLanguage: 'ru', contentSourceId })
+      return new Map(rows.map((r) => [r.lookup.id, r.savedInSource]))
+    }
+    const scoped = await flags(reading.content_source_id)
+    expect(scoped.get(savedHere)).toBe(true)
+    expect(scoped.get(savedElsewhere)).toBe(false)
+    const unscoped = await flags(null)
+    expect(unscoped.get(savedHere)).toBe(false)
+    expect(unscoped.get(savedElsewhere)).toBe(false)
   })
 
   test('recordContentEncounter bumps content aggregates and last_encountered_at, never encounter_count', async () => {

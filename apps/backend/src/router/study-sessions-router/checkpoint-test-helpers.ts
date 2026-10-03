@@ -141,13 +141,22 @@ export const saveAdhocTerm = async (
   return card.body.data.userLookupId as string
 }
 
+// A term saved long ago. A save is "I don't know this" evidence, so the claims
+// sheet only offers terms whose last save/lookup is old enough — backlog
+// fixtures need this, not a save made moments before the checkpoint.
+export const saveOldAdhocTerm = async (...args: Parameters<typeof saveAdhocTerm>): Promise<string> => {
+  const userLookupId = await saveAdhocTerm(...args)
+  await sql`UPDATE public.user_lookups SET last_demand_at = NOW() - INTERVAL '30 days' WHERE id = ${userLookupId}`
+  return userLookupId
+}
+
 // A dedicated reading session (NOT the adhoc session): adhoc card saves
 // create highlights in the adhoc session, and highlight suppression would
 // correctly suppress every credit there.
 export const createReadingSession = async (
   userId: string,
   targetLanguage: string
-): Promise<{ id: string; text_track_id: string }> => {
+): Promise<{ id: string; text_track_id: string; content_source_id: string }> => {
   const [source] = (await sql`
     INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
     VALUES ('text', 'checkpoint test', ${targetLanguage}, '{}'::jsonb, ${userId})
@@ -162,8 +171,38 @@ export const createReadingSession = async (
     INSERT INTO public.study_sessions (user_id, content_source_id, text_track_id, native_language, target_language, cefr_level)
     VALUES (${userId}, ${source.id}, ${track.id}, 'en', ${targetLanguage}, 'B1')
     RETURNING *
-  `) as [{ id: string; text_track_id: string }]
+  `) as [{ id: string; text_track_id: string; content_source_id: string }]
   return session
+}
+
+// A card for the term in a sibling session of the same content source (e.g.
+// an earlier part of the same book): its own track, segment, and session.
+export const saveCardInSiblingSession = async (
+  userId: string,
+  session: { content_source_id: string },
+  userLookupId: string,
+  targetLanguage: string
+): Promise<void> => {
+  const [track] = (await sql`
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    VALUES (${session.content_source_id}, 'paste', ${targetLanguage}, NULL, ${__generateUniqueId('track')})
+    RETURNING id
+  `) as [{ id: string }]
+  const [sibling] = (await sql`
+    INSERT INTO public.study_sessions (user_id, content_source_id, text_track_id, native_language, target_language, cefr_level)
+    VALUES (${userId}, ${session.content_source_id}, ${track.id}, 'en', ${targetLanguage}, 'B1')
+    RETURNING id
+  `) as [{ id: string }]
+  const segment = await TextSegmentsRepository().appendSegmentAtomic({
+    textTrackId: track.id,
+    text: 'текст',
+    startMs: null,
+    endMs: null,
+  })
+  await sql`
+    INSERT INTO public.cards (segment_id, study_session_id, surface_form, user_lookup_id)
+    VALUES (${segment.id}, ${sibling.id}, 'текст', ${userLookupId})
+  `
 }
 
 export const appendSegment = async (textTrackId: string, text: string): Promise<number> => {

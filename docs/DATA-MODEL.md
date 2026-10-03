@@ -350,9 +350,10 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- FRESH_SAVE_MIN_ZIPF (3.5) gets no tier 2
                                     -- (docs/SRS.md §4).
   last_encountered_at timestamptz   -- refreshed by recordEncounter() at user-intent
-                                    -- boundaries (highlight-save enrichment,
-                                    -- lesson-import confirm, an explicit lookup of the
-                                    -- saved term) and by checkpoint content encounters.
+                                    -- boundaries (highlight-save enrichment, an adhoc
+                                    -- re-save, lesson-import confirm, an explicit lookup
+                                    -- of the saved term) and by checkpoint content
+                                    -- encounters.
                                     -- Drives the tier-2 freshness window and the
                                     -- 90-day new-term decay.
   last_demand_at      timestamptz default now() -- the collapse clock for explicit demand:

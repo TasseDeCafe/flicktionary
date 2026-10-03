@@ -636,7 +636,12 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   - never-introduced (`srs_state IS NULL`, incl. onboarding-parked) → offered
     as backlog known-assertion candidates
     (`study_session_checkpoints.backlog_candidate_ids`), excluding terms
-    highlighted anywhere in the session or glossed in the span. Stored and
+    highlighted anywhere in the session or glossed in the span, terms with a
+    card in any session of the same content source (earlier parts of the same
+    book), and terms whose `last_demand_at` (save, re-save, or explicit
+    lookup) is under `BACKLOG_MIN_DEMAND_AGE_DAYS` (7) old — a save is
+    evidence the user did NOT know the word, so a reappearance soon after
+    can't turn it into a known-assertion (`isBacklogOfferable`). Stored and
     returned capped at 200 (`MAX_BACKLOG_CANDIDATES` — the assert contract's
     max batch, so the claims sheet's single confirm can never exceed it);
     the preview's backlog count is capped to match. Candidates past the cap
@@ -725,7 +730,8 @@ study-sessions contract.
   lives only in client memory, but the ids persist on the checkpoint row —
   `getCheckpointClaims` (GET) re-offers the latest LIVE checkpoint's
   candidates that still pass the assert eligibility (recognition facet never
-  introduced, enabled, ready; parked or not), preserving the stored order and
+  introduced, enabled, ready; parked or not) and are still offerable (a save
+  or lookup since the checkpoint withdraws the offer), preserving the stored order and
   re-attaching the stored evidence, so
   a reload or navigation can't strand the claims re-entry. Client precedence:
   a local collect/assert/undo this mount overrides the server copy (an

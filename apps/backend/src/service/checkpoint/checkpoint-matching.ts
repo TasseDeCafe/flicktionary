@@ -344,6 +344,21 @@ export const applyFrequencyAsymmetryGuard = (
   return result
 }
 
+// A save is evidence the user did NOT know the word, so a recent one can't be
+// offered back as "I already know this" just because the word reappears.
+// last_demand_at moves on every save, re-save, and explicit lookup of the
+// term, so it measures the latest "I don't know this" signal.
+export const BACKLOG_MIN_DEMAND_AGE_DAYS = 7
+const BACKLOG_MIN_DEMAND_AGE_MS = BACKLOG_MIN_DEMAND_AGE_DAYS * 24 * 60 * 60 * 1000
+
+// Whether a never-introduced term may be offered as a known-assertion: not
+// saved from the text being read (any part of the same book, any earlier
+// session of the same source), and no recent save/lookup.
+// Shared by collect/preview and the claims rehydration, so a save or lookup
+// after the checkpoint also withdraws an already-stored offer.
+export const isBacklogOfferable = (term: { savedInSource: boolean; lastDemandAt: string }, now: Date): boolean =>
+  !term.savedInSource && now.getTime() - new Date(term.lastDemandAt).getTime() >= BACKLOG_MIN_DEMAND_AGE_MS
+
 export type PartitionedMatches = {
   // The review-budget predicate: enabled, ready, unparked recognition facet in
   // srs_state new/review and due. Gets the implicit good.
@@ -351,6 +366,7 @@ export type PartitionedMatches = {
   // Never-introduced (srs_state NULL) enabled+ready facets — the backlog
   // known-assertion candidates. Includes onboarding-parked facets (the
   // assertion exits onboarding); the seed guards discriminate at write time.
+  // Terms failing isBacklogOfferable land in encounterOnly instead.
   backlog: MatchedVocabRow[]
   // Matched but not gradable/claimable: missing facet, disabled, pending
   // data, not due, or mid learning-ladder. Only encounter aggregates persist.
@@ -371,7 +387,12 @@ export const partitionMatches = (matched: readonly MatchedVocabRow[], now: Date)
     }
     if (facet.srs_state === null) {
       // Unparked never-introduced AND onboarding-parked both land in backlog.
-      result.backlog.push(match)
+      const offerable = isBacklogOfferable(
+        { savedInSource: match.row.savedInSource, lastDemandAt: match.row.lookup.last_demand_at },
+        now
+      )
+      if (offerable) result.backlog.push(match)
+      else result.encounterOnly.push(match)
       continue
     }
     if (facet.leech_parked_at !== null) {

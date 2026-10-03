@@ -153,7 +153,11 @@ export const computeMarkableLemmas = async (
   }
   const candidateLemmas = await collectCreditableLemmas({ lemmasByToken, targetLanguage }, deps)
 
-  const vocab = await deps.userLookupsRepository.listCheckpointVocab({ userId: params.userId, targetLanguage })
+  const vocab = await deps.userLookupsRepository.listCheckpointVocab({
+    userId: params.userId,
+    targetLanguage,
+    contentSourceId: null,
+  })
 
   // Saved-term exclusion is lemma-keyed through the same headword fold the
   // checkpoint matcher uses ("to run" excludes "run").
