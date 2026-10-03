@@ -126,9 +126,14 @@ study_session
                                    -- processing lifecycle to track. Live job state lives
                                    -- in processing_jobs.)
   processing_warnings text[]       -- per-pass / per-highlight non-fatal failures
-  furthest_read_segment_index int? -- resume-reading position: deepest segment index the
-                                   -- reader has reached (track-relative, monotonic).
-                                   -- NULL until they scroll a normal session view.
+  furthest_read_segment_index int? -- deepest segment index the reader has had on
+                                   -- screen (track-relative, monotonic). Progress,
+                                   -- checkpoints, sweeps. NULL until they scroll a
+                                   -- normal session view.
+  resume_after_segment_index int?  -- resume anchor: last segment scrolled past or read
+                                   -- into (gloss/save); the reader resumes after it.
+                                   -- Monotonic, <= furthest_read; the manual bookmark
+                                   -- sets both. NULL = resume at the start.
   last_read_at        timestamptz? -- stamped by every reading-progress write and
                                    -- bookmark set; a book's current part is its
                                    -- session with the latest value. NULL = never read.

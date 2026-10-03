@@ -88,6 +88,7 @@ export const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   contextBlob: row.context_blob,
   processingWarnings: row.processing_warnings,
   furthestReadSegmentIndex: row.furthest_read_segment_index,
+  resumeAfterSegmentIndex: row.resume_after_segment_index,
   reviewedUntilSegmentIndex: row.reviewed_until_segment_index,
   createdAt: new Date(row.created_at).toISOString(),
   contentSourceTitle: row.content_source_title,
@@ -301,7 +302,10 @@ export const StudySessionsRouter = (
 
     updateReadingProgress: implementer.updateReadingProgress.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const ok = await studySessionsRepository.updateReadingProgress(input.sessionId, userId, input.segmentIndex)
+      const ok = await studySessionsRepository.updateReadingProgress(input.sessionId, userId, {
+        segmentIndex: input.segmentIndex,
+        resumeAfterSegmentIndex: input.resumeAfterSegmentIndex ?? null,
+      })
       if (!ok) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Study session not found' }] },
@@ -492,6 +496,27 @@ export const StudySessionsRouter = (
         difficultyDependencies
       )
       return { data: { difficulties } }
+    }),
+
+    getWelcomeBack: implementer.getWelcomeBack.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUserWithSource(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      const anchorSegmentIndex = session.resume_after_segment_index
+      if (anchorSegmentIndex == null) return { data: { anchorSegmentIndex, markableLemmaCount: 0 } }
+      const computation = await computeMarkableLemmas(
+        { sessionId: input.sessionId, userId, toSegmentIndex: anchorSegmentIndex },
+        markKnownDependencies
+      )
+      if (!computation.ok) {
+        if (computation.reason === 'not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+        }
+        return { data: { anchorSegmentIndex, markableLemmaCount: 0 } }
+      }
+      return { data: { anchorSegmentIndex, markableLemmaCount: computation.markableLemmas.length } }
     }),
 
     getMarkKnownPreview: implementer.getMarkKnownPreview.handler(async ({ input, context, errors }) => {

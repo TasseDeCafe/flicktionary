@@ -436,9 +436,16 @@ export const StudySessionSchema = z.object({
   cefrLevel: z.string(),
   contextBlob: z.string().nullable(),
   processingWarnings: z.array(z.string()),
-  // Deepest segment index the reader has reached (resume-reading position). NULL
-  // until the reader scrolls in a normal session view. Track-relative index.
+  // Deepest segment index the reader has had on screen. NULL until the reader
+  // scrolls in a normal session view. Track-relative index. Drives progress,
+  // checkpoints and end-of-text surfaces — not where reading resumes (it runs
+  // a full viewport ahead on large screens).
   furthestReadSegmentIndex: z.number().int().nullable(),
+  // The resume anchor: the last segment the reader scrolled past or read into
+  // (a gloss/save). Reopening resumes right after it, on any screen size.
+  // NULL = nothing scrolled past yet (resume at the start). Never above
+  // furthestReadSegmentIndex.
+  resumeAfterSegmentIndex: z.number().int().nullable(),
   // Monotonic checkpoint-review pointer: the deepest segment index the user has
   // explicitly collected reviews up to ("I understood up to here"). NULL until
   // the first checkpoint press. Parallel to furthestReadSegmentIndex, which

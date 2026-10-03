@@ -14,6 +14,7 @@ const session = (overrides: Partial<StudySession>): StudySession => ({
   contextBlob: null,
   processingWarnings: [],
   furthestReadSegmentIndex: null,
+  resumeAfterSegmentIndex: null,
   reviewedUntilSegmentIndex: null,
   createdAt: '2026-09-01T00:00:00.000Z',
   contentSourceTitle: 'Убик',

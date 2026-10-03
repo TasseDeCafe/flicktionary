@@ -722,15 +722,32 @@ const updateContextBlob = async (sessionId: string, userId: string, contextBlob:
   return result.count === 1
 }
 
-// Records the deepest segment the reader has reached. GREATEST keeps it monotonic
-// server-side too, so an out-of-order (lower) write — e.g. a throttled flush that
-// lands after a later one — can never walk the resume position backwards.
-// last_read_at marks the session as the one read most recently (a book's
-// current part).
-const updateReadingProgress = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
+// Records reading progress: the deepest segment the reader has seen
+// (furthest_read) and, optionally, the resume anchor — the last segment they
+// scrolled past or read into (resume_after). GREATEST keeps both monotonic
+// server-side, so an out-of-order (lower) write — e.g. a throttled flush that
+// lands after a later one — can never walk them backwards; the anchor is also
+// clamped to the furthest-read pointer it can never pass. last_read_at marks
+// the session as the one read most recently (a book's current part).
+const updateReadingProgress = async (
+  sessionId: string,
+  userId: string,
+  progress: { segmentIndex: number; resumeAfterSegmentIndex: number | null }
+): Promise<boolean> => {
+  const { segmentIndex, resumeAfterSegmentIndex } = progress
+  // SET expressions read the pre-update row, so the clamp recomputes the new
+  // furthest-read value rather than referencing the column.
   const result = await sql`
     UPDATE public.study_sessions
     SET furthest_read_segment_index = GREATEST(COALESCE(furthest_read_segment_index, -1), ${segmentIndex}),
+        ${
+          resumeAfterSegmentIndex == null
+            ? sql``
+            : sql`resume_after_segment_index = GREATEST(
+                COALESCE(resume_after_segment_index, -1),
+                LEAST(${resumeAfterSegmentIndex}::int, GREATEST(COALESCE(furthest_read_segment_index, -1), ${segmentIndex}))
+              ),`
+        }
         last_read_at = NOW()
     WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
   `
@@ -740,10 +757,13 @@ const updateReadingProgress = async (sessionId: string, userId: string, segmentI
 // The manual bookmark ("set reading position"): a plain SET, deliberately
 // non-monotonic — the explicit press may pull the pointer backwards to correct
 // scroll inflation, or push it forwards to assert previously-read content.
+// The declared line is read, so the reader resumes right after it.
 const setReadingPosition = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
-    SET furthest_read_segment_index = ${segmentIndex}, last_read_at = NOW()
+    SET furthest_read_segment_index = ${segmentIndex},
+        resume_after_segment_index = ${segmentIndex},
+        last_read_at = NOW()
     WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
   `
   return result.count === 1
@@ -948,7 +968,11 @@ export interface StudySessionsRepositoryInterface {
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
   hasVisibleSession: (userId: string) => Promise<boolean>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
-  updateReadingProgress: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
+  updateReadingProgress: (
+    sessionId: string,
+    userId: string,
+    progress: { segmentIndex: number; resumeAfterSegmentIndex: number | null }
+  ) => Promise<boolean>
   setReadingPosition: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
   lockReviewedUntilForUpdate: (
     sessionId: string,
