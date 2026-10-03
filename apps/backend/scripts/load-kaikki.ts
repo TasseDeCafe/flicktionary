@@ -13,6 +13,7 @@ import { snapshotReferenceTables } from './snapshot-reference-tables'
 import { DEFAULT_LOCAL_DEV_CONNECTION, maskConnectionString, resolveConnectionString } from './db-connection'
 import { LOAD_LANGUAGES, WORD_FAMILY_LANGUAGES } from './kaikki-languages'
 import { verifyKaikkiLoad } from './verify-kaikki-load'
+import { isInflectionForm } from '../src/service/wiktionary-grounding/kaikki-forms'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
@@ -98,18 +99,6 @@ const stripStress = (s: string): string => {
   return s.normalize('NFC').replace(/́/g, '')
 }
 
-// kaikki packs internal metadata into the same `forms[]` array as real surface
-// forms. Skip those — they're not lookup-able strings.
-const NON_FORM_TAGS = new Set(['romanization', 'class', 'inflection-template', 'table-tags'])
-
-const isRealForm = (tags: unknown): boolean => {
-  if (!Array.isArray(tags)) return true
-  for (const t of tags) {
-    if (typeof t === 'string' && NON_FORM_TAGS.has(t)) return false
-  }
-  return true
-}
-
 interface CsvOutputs {
   entriesCsv: string
   formsCsv: string
@@ -173,7 +162,7 @@ const generateCsvs = async (gzPath: string): Promise<CsvOutputs> => {
       for (const f of entry.forms as Array<{ form?: unknown; tags?: unknown }>) {
         const raw = typeof f?.form === 'string' ? f.form.trim() : ''
         if (!raw || raw === '-') continue
-        if (!isRealForm(f.tags)) continue
+        if (!isInflectionForm(f.tags)) continue
         const formStr = stripStress(raw)
         if (!formStr || seen.has(formStr)) continue
         seen.add(formStr)
