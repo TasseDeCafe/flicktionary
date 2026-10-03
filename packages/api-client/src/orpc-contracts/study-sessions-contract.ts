@@ -102,16 +102,23 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid() }))
     .output(z.object({ data: z.object({ accepted: z.literal(true) }) })),
 
-  // Resume-reading position: record the deepest segment the reader has reached so
-  // reopening the session can land them back there. Fire-and-forget from the client
-  // (throttled); the server keeps it monotonic via GREATEST.
+  // Reading progress: the deepest segment the reader has had on screen, plus
+  // (when known) the resume anchor — the last segment scrolled past or read
+  // into. Fire-and-forget from the client (throttled); the server keeps both
+  // monotonic via GREATEST and clamps the anchor to the furthest-read pointer.
   updateReadingProgress: oc
     .route({ method: 'POST', path: '/study-sessions/{sessionId}/reading-progress', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        segmentIndex: z.number().int().nonnegative(),
+        resumeAfterSegmentIndex: z.number().int().nonnegative().optional(),
+      })
+    )
     .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 
   // The manual bookmark: an explicit "read up to here" assertion from the
@@ -329,6 +336,28 @@ export const studySessionsContract = {
               knownLemmaCount: z.number().int().nullable(),
             })
           ),
+        }),
+      })
+    ),
+
+  // The reader's welcome-back offer, resolved against the session's resume
+  // anchor server-side so the reader can fetch it in parallel with the
+  // session itself (no waterfall). `anchorSegmentIndex` is the anchor the
+  // count was computed for (NULL: nothing read yet, count 0); the sweep is
+  // markRemainingKnown with that toSegmentIndex. Unsupported languages
+  // answer count 0.
+  getWelcomeBack: oc
+    .route({ method: 'GET', path: '/study-sessions/{sessionId}/welcome-back', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(
+      z.object({
+        data: z.object({
+          anchorSegmentIndex: z.number().int().nullable(),
+          markableLemmaCount: z.number().int(),
         }),
       })
     ),

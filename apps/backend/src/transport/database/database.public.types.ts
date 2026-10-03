@@ -1458,6 +1458,7 @@ export type Database = {
           last_read_at: string | null
           native_language: string
           processing_warnings: string[]
+          resume_after_segment_index: number | null
           reviewed_until_segment_index: number | null
           target_language: string
           text_track_id: string
@@ -1474,6 +1475,7 @@ export type Database = {
           last_read_at?: string | null
           native_language: string
           processing_warnings?: string[]
+          resume_after_segment_index?: number | null
           reviewed_until_segment_index?: number | null
           target_language: string
           text_track_id: string
@@ -1490,6 +1492,7 @@ export type Database = {
           last_read_at?: string | null
           native_language?: string
           processing_warnings?: string[]
+          resume_after_segment_index?: number | null
           reviewed_until_segment_index?: number | null
           target_language?: string
           text_track_id?: string
