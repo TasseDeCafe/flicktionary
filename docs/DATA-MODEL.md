@@ -585,6 +585,10 @@ wiktionary_forms                   -- flattened paradigm cells (stress-stripped,
   target_language     text         -- case-preserved), many-to-many form → entry
   form                text
   entry_id            bigint -> wiktionary_entries.id
+                                   -- inflections only: kaikki metadata rows and
+                                   -- cross-references to another lexeme (ru
+                                   -- aspect partners, de auxiliaries) are
+                                   -- skipped at load (isInflectionForm)
 
 wiktionary_form_redirects          -- precomputed stub resolution (form-of /
   target_language     text         -- alt-of chains followed ≤2 hops); rows exist
