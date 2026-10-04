@@ -124,6 +124,11 @@ describe('vocab-chat-router', () => {
       .set(headers)
       .send({ targetLanguage: 'ru', content: 'How do I say "to fall asleep"?' })
     expect(started.status).toBe(201)
+    // Each tool round caches the conversation for the next round to read.
+    expect(createChatCompletion.mock.calls.slice(-2).map(([params]) => params.cache_control)).toEqual([
+      { type: 'ephemeral' },
+      { type: 'ephemeral' },
+    ])
     const { sessionId, title, messages } = started.body.data
     expect(messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant'])
     const assistantMessage = messages[1]

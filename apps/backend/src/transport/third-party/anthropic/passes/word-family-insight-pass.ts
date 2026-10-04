@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import {
+  cachedSystem,
   getAnthropicClient,
   MODEL_HAIKU,
   MODEL_WORD_FAMILY,
@@ -198,7 +199,7 @@ export const wordFamilyInsightPass = async (
     model: MODEL_WORD_FAMILY,
     ...(MODEL_WORD_FAMILY === MODEL_HAIKU ? {} : reasoningParams(MODEL_WORD_FAMILY, 'low')),
     max_tokens: 2000,
-    system,
+    system: cachedSystem(system),
     tools: [buildTool()],
     // Opus 5.5 rejects a forced tool_choice; the prompt names the tool.
     tool_choice: MODEL_WORD_FAMILY === MODEL_HAIKU ? { type: 'tool', name: TOOL_NAME } : TOOL_CHOICE_AUTO,

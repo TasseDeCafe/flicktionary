@@ -5,6 +5,7 @@ import {
   type SupportedLanguageCode,
 } from '@flicktionary/core/constants/supported-languages'
 import {
+  cachedSystem,
   getAnthropicClient,
   MODEL_HAIKU,
   MODEL_TRANSLATE,
@@ -113,7 +114,7 @@ Rules:
     // reasoning setting (see reasoningParams).
     ...(MODEL_TRANSLATE === MODEL_HAIKU ? {} : reasoningParams(MODEL_TRANSLATE, 'low')),
     max_tokens: 1000,
-    system,
+    system: cachedSystem(system),
     tools: [buildTool()],
     // Opus 5.5 rejects a forced tool_choice; the prompt names the tool, which
     // is how the other Opus passes get their tool call.

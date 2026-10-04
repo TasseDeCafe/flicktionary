@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
+import { cachedSystem, getAnthropicClient, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const TOOL_NAME = 'report_extraction'
@@ -152,7 +152,7 @@ export const extractLessonPass = async (params: {
     model: params.model,
     ...reasoningParams(params.model, 'low'),
     max_tokens: 16000,
-    system: buildSystem(params.targetLanguage, params.teacherProfile),
+    system: cachedSystem(buildSystem(params.targetLanguage, params.teacherProfile)),
     tools: [buildTool()],
     tool_choice: TOOL_CHOICE_AUTO,
     messages: [

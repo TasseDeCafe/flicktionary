@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getLanguageName, isSupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
-import { MODEL_OPUS, reasoningParams } from '../../transport/third-party/anthropic/anthropic-client'
+import { AUTO_CACHE, MODEL_OPUS, reasoningParams } from '../../transport/third-party/anthropic/anthropic-client'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/log-cache-usage'
 import { buildPracticeMethodologySystem } from '../../transport/third-party/anthropic/methodology-prompt'
@@ -403,13 +403,16 @@ export const runVocabChat = async (
 
   // Tool loop: Opus 5.5 folds pre-tool prose into thinking, so the visible
   // reply usually comes from the round after the tool results. The last round
-  // forbids tools so the turn always ends in prose.
+  // forbids tools so the turn always ends in prose. Every other round caches
+  // the conversation so the next round (and the next turn, while the verbatim
+  // window isn't sliding) reads it back; the last round's tool_choice change
+  // invalidates the messages cache, so a write there would never be read.
   const texts: string[] = []
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const lastRound = round === MAX_TOOL_ROUNDS
     const response = await deps.anthropicPasses.createChatCompletion({
       ...request,
-      ...(lastRound ? { tool_choice: { type: 'none' as const } } : {}),
+      ...(lastRound ? { tool_choice: { type: 'none' as const } } : { cache_control: AUTO_CACHE }),
       messages,
     })
     logAnthropicCacheUsage('vocab-chat', response)
