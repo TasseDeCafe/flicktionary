@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type Anthropic from '@anthropic-ai/sdk'
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { buildPromptContext } from '../processing/build-prompt-context'
@@ -240,8 +241,11 @@ describe('runCardChat — tool_result follow-up turn', () => {
     const result = await runCardChat({ cardId, userId, content: 'Change the translation and explain' }, deps)
 
     expect(createChatCompletion).toHaveBeenCalledTimes(2)
+    expect(createChatCompletion.mock.calls[0]![0].cache_control).toEqual({ type: 'ephemeral' })
     const followUp = createChatCompletion.mock.calls[1]![0]
     expect(followUp.tool_choice).toEqual({ type: 'none' })
+    // The tool_choice change invalidates the messages cache, so no write here.
+    expect(followUp.cache_control).toBeUndefined()
     expect(followUp.tools).toHaveLength(1)
     const [assistantTurn, toolResultTurn] = followUp.messages.slice(-2)
     // Passed back unchanged, thinking block included.
@@ -306,5 +310,19 @@ describe('runCardChat — tool_result follow-up turn', () => {
     await runCardChat({ cardId, userId, content: 'What does it mean?' }, deps)
 
     expect(deps.anthropicPasses.createChatCompletion).toHaveBeenCalledTimes(1)
+  })
+
+  it('caches the seed turn on its own breakpoint, ahead of the conversation', async () => {
+    const { deps } = createDeps()
+    const createChatCompletion = vi.mocked(deps.anthropicPasses.createChatCompletion)
+    createChatCompletion.mockResolvedValue({ content: [{ type: 'text', text: 'It means "word".' }] } as never)
+
+    await runCardChat({ cardId, userId, content: 'What does it mean?' }, deps)
+
+    const params = createChatCompletion.mock.calls[0]![0]
+    expect(params.cache_control).toEqual({ type: 'ephemeral' })
+    const [seed] = params.messages[0]!.content as Anthropic.TextBlockParam[]
+    expect(seed!.cache_control).toEqual({ type: 'ephemeral' })
+    expect(params.messages.at(-1)).toEqual({ role: 'user', content: 'What does it mean?' })
   })
 })

@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
+import { cachedSystem, getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { getLanguageInstructions, type TargetIpaDialect } from '../language-instructions'
 
@@ -157,7 +157,7 @@ Submit the form's data via the tool.`
     model: MODEL_OPUS,
     ...reasoningParams(MODEL_OPUS, 'low'),
     max_tokens: 4000,
-    system,
+    system: cachedSystem(system),
     tools: [buildTool()],
     tool_choice: TOOL_CHOICE_AUTO,
     messages: [{ role: 'user', content: userMessage }],

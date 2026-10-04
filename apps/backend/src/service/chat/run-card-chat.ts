@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { MODEL_OPUS, reasoningParams } from '../../transport/third-party/anthropic/anthropic-client'
+import { AUTO_CACHE, MODEL_OPUS, reasoningParams } from '../../transport/third-party/anthropic/anthropic-client'
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/log-cache-usage'
 import { buildPromptContext } from '../processing/build-prompt-context'
@@ -364,10 +364,18 @@ export const runCardChat = async (
     ? session.target_language
     : (languagePrefs.nativeLanguage ?? session.target_language)
   const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs, allowCardEdits, replyLanguage)
-  const seedWithSummary = summary ? `${seedTurn}\n\n${summary}` : seedTurn
+  // The seed (card + surrounding segments) is the bulk of the conversation and
+  // stays fixed while the card does, so it carries its own breakpoint; the
+  // summary rewrites itself every turn once the verbatim window slides, so it
+  // sits in a separate block after it. With the two system breakpoints and the
+  // top-level one below, this uses all four.
+  const seedContent: Anthropic.TextBlockParam[] = [
+    { type: 'text', text: seedTurn, cache_control: { type: 'ephemeral' } },
+    ...(summary ? [{ type: 'text' as const, text: summary }] : []),
+  ]
 
   const messages: Anthropic.MessageParam[] = [
-    { role: 'user', content: seedWithSummary },
+    { role: 'user', content: seedContent },
     ...recent.map((m): Anthropic.MessageParam => ({
       role: m.role === 'user' ? 'user' : 'assistant',
       content: m.content,
@@ -383,7 +391,10 @@ export const runCardChat = async (
     // Withhold the editing tool for non-editable (auto-seeded) turns.
     ...(allowCardEdits ? { tools: [updateCardFieldsTool] } : {}),
   }
-  const response = await deps.anthropicPasses.createChatCompletion({ ...request, messages })
+  // Caches the conversation, seed turn included, for the next turn to read. The
+  // follow-up below goes without: its tool_choice change invalidates the
+  // messages cache, so nothing would ever read what it wrote.
+  const response = await deps.anthropicPasses.createChatCompletion({ ...request, cache_control: AUTO_CACHE, messages })
   logAnthropicCacheUsage('card-chat', response)
 
   const firstText = extractText(response.content)

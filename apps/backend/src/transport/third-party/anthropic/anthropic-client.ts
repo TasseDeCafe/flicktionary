@@ -30,6 +30,19 @@ const THINKING_DISABLED = { type: 'disabled' } as const
 
 export const TOOL_CHOICE_AUTO = { type: 'auto' } as const
 
+// Top-level automatic caching for multi-turn requests: the API puts the
+// breakpoint on the last cacheable block, so each request reads the prefix the
+// previous one (an earlier tool round, or the previous chat turn) wrote.
+// Pointless on a `tool_choice` change: that invalidates the messages cache.
+export const AUTO_CACHE = { type: 'ephemeral' } as const
+
+// A single-block system prompt carrying a breakpoint, for passes whose system
+// text is stable across calls (it may vary per language pair, never per call),
+// so the tools + system prefix is read from cache on repeat calls.
+export const cachedSystem = (text: string): Anthropic.TextBlockParam[] => [
+  { type: 'text', text, cache_control: { type: 'ephemeral' } },
+]
+
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 
 // Sonnet 5.5 only turns thinking off through `between_tools`; low effort is the
