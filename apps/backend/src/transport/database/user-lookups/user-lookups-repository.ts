@@ -1204,8 +1204,8 @@ const findByIdForUserIncludingDeleted = async (id: string, userId: string): Prom
 }
 
 // Representative-card deep-link pointer for one chunk, resolved through the
-// first_card_id back-pointer (same representative the vocabulary list and the
-// practice-text annotations use). Both fields null when the back-pointer is
+// first_card_id back-pointer (same representative the vocabulary list uses).
+// Both fields null when the back-pointer is
 // null or stale. Powers the practice "Edit term" action's focus-view link
 // (`/sessions/$sessionId/review/$cardId`).
 const getFirstCardPointerForChunk = async (params: {
@@ -1479,57 +1479,6 @@ const listEligibleNewCitationFacets = async (params: {
     ORDER BY ${newTermOrderSql()}
   `) as Array<{ id: string }>
   return rows.map((row) => row.id)
-}
-
-// Lightweight "vocabulary" view used by the practice-text generator's prompt
-// builder. After the content refactor, content fields live on user_lookups
-// directly — no card join required.
-export type VocabularyRow = {
-  headword: string
-  sense: string
-  translation: string | null
-  definition: string | null
-  targetExample: string | null
-  nativeExample: string | null
-  srsState: SrsState | null
-  srsDue: string | null
-  srsReps: number
-}
-
-const listVocabularyForLanguage = async (params: {
-  userId: string
-  targetLanguage: string
-}): Promise<VocabularyRow[]> => {
-  const result = await sql`
-    SELECT
-      ul.headword,
-      ul.sense,
-      ul.translation,
-      ul.definition,
-      ul.target_example,
-      ul.native_example,
-      rf.srs_state,
-      rf.srs_due,
-      rf.srs_reps
-    FROM public.user_lookups ul
-    LEFT JOIN public.study_facets rf
-      ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
-    WHERE ul.user_id = ${params.userId}
-      AND ul.target_language = ${params.targetLanguage}
-      AND ul.count > 0
-      AND ul.deleted_at IS NULL
-  `
-  return result.map((row) => ({
-    headword: row.headword as string,
-    sense: (row.sense as string) ?? '',
-    translation: (row.translation as string | null) ?? null,
-    definition: (row.definition as string | null) ?? null,
-    targetExample: (row.target_example as string | null) ?? null,
-    nativeExample: (row.native_example as string | null) ?? null,
-    srsState: (row.srs_state as SrsState | null) ?? null,
-    srsDue: (row.srs_due as string | null) ?? null,
-    srsReps: (row.srs_reps as number) ?? 0,
-  }))
 }
 
 // Row shape for the cross-session vocabulary CSV export. Pulls representative
@@ -2427,7 +2376,6 @@ export interface UserLookupsRepositoryInterface {
     pool: PracticePool
     bookRemaining?: number
   }) => Promise<string[]>
-  listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
     userId: string
@@ -2481,7 +2429,6 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     deleteFacet,
     listParkedTerms,
     listEligibleNewCitationFacets,
-    listVocabularyForLanguage,
     listKeptChunksForExport,
     listChunksForLanguage,
     softDeleteChunk,
