@@ -22,8 +22,9 @@ export type EnrichHighlightOutcome = 'enriched' | 'cancelled'
 // Enrich exactly one user highlight into a card + user_lookups row, in the
 // background, the moment it is committed during reading. The card is inserted
 // `needs_data` and auto-keeps once basic data lands. Independent of every other
-// highlight: user highlights bypass the discovery-only exclusion prefilter and
-// sense-disambiguation tiebreaker, so no cross-highlight coordination is needed.
+// highlight, so no cross-highlight coordination is needed; a re-save of a word
+// already saved under another sense label lands on the saved row
+// (materializeBasicDataChunks' sense dedup).
 //
 // Returns 'cancelled' (a non-retryable terminal outcome) when the session or
 // highlight no longer exists — the highlight was deleted mid-flight. The
@@ -133,7 +134,6 @@ export const enrichHighlight = async (
   // are never trusted for attribution (an omitted id used to orphan the data
   // on a highlight-less card and leave the highlight a data-less stub).
   const highlightChunks = bindChunksToSingleHighlight(chunks, highlightInput)
-  const segmentIdSet = new Set(window.map((s) => s.id))
 
   const { touchedLookups, insertedCards } = await materializeBasicDataChunks({
     sessionId,
@@ -142,10 +142,11 @@ export const enrichHighlight = async (
     chunks: highlightChunks,
     newHighlights: [highlightInput],
     processedHighlightIds: new Set<string>(),
-    segmentIdSet,
+    segments: window,
     hideTranslationFields: languagePrefs.hideTranslationFields,
     cardsRepository,
     userLookupsRepository,
+    anthropicPasses,
   })
 
   // Saving a highlight is a user-intent encounter with the term: bump the

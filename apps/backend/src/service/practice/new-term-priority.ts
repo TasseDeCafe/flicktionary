@@ -52,13 +52,15 @@ export const newTermNotDecayedSql = () => sql`
   ul.last_encountered_at > NOW() - make_interval(days => ${NEW_TERM_DECAY_DAYS})
 `
 
-// Full new-bucket ordering: tier, then most-frequent-first within the tier
-// (NULL zipf = not yet estimated, sorts last), then the pre-tier FIFO order as
-// the stable tiebreak. `ul.id` closes the ordering as a strictly-unique final
-// key so the Vocabulary tab's up_next cursor can resume the scan with a row
-// comparison — every consumer shares this exact ordering, so the list a user
-// inspects IS the order the queue introduces.
+// Full new-bucket ordering: tier, then strongest demand first (only tier 1
+// varies — tiers 2/3 hold single-encounter terms by construction, so a word
+// saved three times and looked up twice precedes one met twice), then
+// most-frequent-first (NULL zipf = not yet estimated, sorts last), then the
+// pre-tier FIFO order as the stable tiebreak. `ul.id` closes the ordering as a
+// strictly-unique final key so the Vocabulary tab's up_next cursor can resume
+// the scan with a row comparison — every consumer shares this exact ordering,
+// so the list a user inspects IS the order the queue introduces.
 export const newTermOrderSql = () => sql`
-  ${newTermTierSql()} ASC, ul.zipf_estimate DESC NULLS LAST,
+  ${newTermTierSql()} ASC, ul.encounter_count DESC, ul.zipf_estimate DESC NULLS LAST,
   ul.created_at ASC, ul.headword ASC, ul.sense ASC, ul.id ASC
 `

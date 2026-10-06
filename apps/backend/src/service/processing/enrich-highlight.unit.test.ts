@@ -102,6 +102,7 @@ const createDeps = () => {
     },
     cardsRepository: { insertCardForHighlightIdempotent, insertCard },
     userLookupsRepository: {
+      findLiveSensesForHeadword: vi.fn().mockResolvedValue([]),
       findOrCreate: vi.fn().mockResolvedValue({
         id: lookupId,
         headword: 'palabra',

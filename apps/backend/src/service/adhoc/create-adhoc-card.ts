@@ -177,10 +177,11 @@ export const createAdhocCard = async (params: {
     chunks: bindChunksToSingleHighlight(chunks, highlightInput),
     newHighlights: [highlightInput],
     processedHighlightIds: new Set<string>(),
-    segmentIdSet: new Set([segment.id]),
+    segments: [segment],
     hideTranslationFields: languagePrefs.hideTranslationFields,
     cardsRepository: deps.cardsRepository,
     userLookupsRepository: deps.userLookupsRepository,
+    anthropicPasses: deps.anthropicPasses,
   })
 
   if (KAIKKI_LANGUAGES.has(targetLanguage)) {
