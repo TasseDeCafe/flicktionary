@@ -338,6 +338,20 @@ The enrichment path uses these shared steps:
    - The LLM **normalizes the chunk**: it produces a `headword` that may
      differ from `selection_text`. Example: user highlights `out` inside
      `ran out of milk` → `headword = "run out of"`.
+   - **Sense dedup at save** (`materializeBasicDataChunks`, highlight enrichment
+     and adhoc). `user_lookups` dedupes on the exact `(headword, sense)` key, and
+     the pass labels the sense afresh each save, so before the upsert the row's
+     headword is checked against the user's live saved senses
+     (`findLiveSensesForHeadword`: case-insensitive, `sense <> ''`). An exact
+     sense hit adopts the saved headword spelling. Otherwise `senseMatchPass`
+     (Haiku, biased toward "new") compares the new sense + translation +
+     definition + sentence with the saved ones; a match rewrites the chunk's
+     headword/sense to the saved row's, so the re-save lands on it (and its
+     demand signals count there — docs/SRS.md §4). Fails open: a pass error keeps
+     the new label. Not serialized — two concurrent saves of a new headword can
+     still split; `pnpm --filter @flicktionary/backend db:merge-duplicate-senses`
+     (`--plan` → review JSON → `--apply`) folds split rows together with the
+     same pass.
 3. **Wiktionary grounding (post-basic-data, per-language).** For target
    languages loaded from the raw Kaikki/Wiktextract dump into our
    `wiktionary_entries` / `wiktionary_forms` tables (currently `ru`, `en`,

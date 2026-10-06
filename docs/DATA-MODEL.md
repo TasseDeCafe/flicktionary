@@ -376,6 +376,9 @@ user_lookup                          -- cross-source dedup + canonical user voca
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)
   unique (user_id, target_language, headword, sense)
+                                    -- exact key; save-time sense dedup
+                                    -- (senseMatchPass, docs/READER-SPEC.md) maps a
+                                    -- reworded sense onto the saved row first
 
 practice_rating_events               -- append-only audit log of EVERY rating event:
                                      -- flashcard ratings, checkpoint credits and

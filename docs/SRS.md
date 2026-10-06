@@ -279,7 +279,9 @@ Citation-new terms never come through either selector: they enter via warm-up ga
 (`listEligibleNewCitationFacets` → the composed queue's planned introductions, §4b).
 
 **New-term priority tiers** (`new-term-priority.ts` — the single home of the constants and
-SQL fragments). Warm-up discovery, `Up next`, and the opt-in selector order by a computed tier, then `zipf_estimate DESC NULLS
+SQL fragments). Warm-up discovery, `Up next`, and the opt-in selector order by a computed tier, then
+`encounter_count DESC` (strongest demand first — only tier 1 varies, since tiers 2/3 hold
+single-encounter terms), then `zipf_estimate DESC NULLS
 LAST` (most-frequent first; NULL = not yet estimated), then the old `created_at ASC` FIFO as
 the stable tiebreak, closed by `headword ASC, sense ASC, id ASC` so the ordering is strictly
 unique. With a pinned book, the recognition order interleaves the book stream on top of
@@ -289,6 +291,8 @@ The tier, from three signal columns on `user_lookups`:
 
 1. **revealed demand** — `encounter_count >= 2`: the term was encountered again at a
    user-intent boundary (a re-save, or a lesson import confirming it as a duplicate).
+   A re-save under a reworded sense label lands on the same row (save-time sense dedup,
+   docs/READER-SPEC.md), so its demand isn't split across duplicates.
 2. **fresh saves** — `last_encountered_at` within the 14-day freshness window, **and**
    `zipf_estimate >= FRESH_SAVE_MIN_ZIPF` (3.5) or not yet estimated. A rarer fresh save
    gets no boost: it waits in the backlog (at its zipf position, so near the tail) until
