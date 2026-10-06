@@ -138,10 +138,12 @@ describe('listChunksForLanguage: stage filters', () => {
     const sameCreatedAt = daysAgo(10)
 
     // Expected newTermOrderSql order:
-    //   tier 1 (encounter_count >= 2, any zipf): zipf DESC, NULLS LAST
+    //   tier 1 (encounter_count >= 2, any zipf): encounter_count DESC, then
+    //     zipf DESC, NULLS LAST — the most-demanded rare word leads
     //   tier 2 (fresh single save, zipf >= FRESH_SAVE_MIN_ZIPF or NULL):
     //     tie on (zipf, created_at) -> headword ASC; NULL zipf last
     //   tier 3 (older, or fresh but rarer than the floor): zipf DESC
+    const mostDemanded = await makeTerm({ userId, headword: 'zzz', encounterCount: 4, zipf: 1 })
     const a = await makeTerm({ userId, headword: 'aaa', encounterCount: 3, zipf: 5 })
     const rareResaved = await makeTerm({ userId, headword: 'abb', encounterCount: 2, zipf: 2 })
     const b = await makeTerm({ userId, headword: 'bbb', encounterCount: 2, zipf: null })
@@ -151,15 +153,26 @@ describe('listChunksForLanguage: stage filters', () => {
     const unestimated = await makeTerm({ userId, headword: 'eff', zipf: null })
     const f = await makeTerm({ userId, headword: 'fff', lastEncounteredAt: daysAgo(30), zipf: 7 })
     const rareFresh = await makeTerm({ userId, headword: 'ggg', zipf: 3 })
-    const expectedOrder = [a.id, rareResaved.id, b.id, c.id, d.id, e.id, unestimated.id, f.id, rareFresh.id]
-    for (const term of [a, rareResaved, b, c, d, e, unestimated, f, rareFresh]) {
+    const expectedOrder = [
+      mostDemanded.id,
+      a.id,
+      rareResaved.id,
+      b.id,
+      c.id,
+      d.id,
+      e.id,
+      unestimated.id,
+      f.id,
+      rareFresh.id,
+    ]
+    for (const term of [mostDemanded, a, rareResaved, b, c, d, e, unestimated, f, rareFresh]) {
       await insertRecognitionFacet({ userLookupId: term.id, userId, srsState: null })
     }
 
     const singleShot = await listStage(userId, 'up_next')
     expect(singleShot.map((r) => r.id)).toEqual(expectedOrder)
 
-    // Page size 4 puts a page boundary exactly between the tied rows c and d:
+    // Page size 5 puts a page boundary exactly between the tied rows c and d:
     // the cursor must resume INTO the tie, not skip or repeat it.
     const paged: string[] = []
     let cursor: ChunksCursor | null = null
@@ -170,7 +183,7 @@ describe('listChunksForLanguage: stage filters', () => {
         targetLanguage: 'es',
         sort: 'recent',
         cursor,
-        limit: 4,
+        limit: 5,
         q: null,
         status: 'up_next',
       })
@@ -180,6 +193,6 @@ describe('listChunksForLanguage: stage filters', () => {
     } while (cursor !== null && pages < 10)
 
     expect(paged).toEqual(expectedOrder)
-    expect(pages).toBe(3)
+    expect(pages).toBe(2)
   })
 })
