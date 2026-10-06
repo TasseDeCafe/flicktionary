@@ -6,7 +6,7 @@ import {
   type ComposePracticeQueueDependencies,
   type ComposeQueueFilter,
 } from './compose-practice-queue'
-import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
+import { MAX_GATES_PER_COMPOSE, MAX_OPT_IN_NEW_PER_SESSION, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const lang = 'es'
@@ -330,18 +330,37 @@ describe('composePracticeQueue', () => {
     expect(result.items.map(itemKey)).toEqual([`ex:recognition:${id(1)}`])
   })
 
-  it('opt-in-new pass uses the hard ceiling for opt-in facets', async () => {
+  it('the Learn-new scope (new_only) takes the hard ceiling for opt-in facets per pool', async () => {
     const { deps, listOptInNewFacets } = createDeps({ optInByPool: { recognition: [termRow(id(1))] } })
     await composePracticeQueue({
       userId,
       targetLanguage: lang,
-      filter: filter({ includeOptInNew: true, render: 'flashcards_only' }),
+      filter: filter({ includeOptInNew: true, scope: 'new_only', render: 'flashcards_only' }),
       deps,
     })
     expect(listOptInNewFacets).toHaveBeenCalledTimes(2) // one per pool
     for (const call of listOptInNewFacets.mock.calls) {
       expect(call[0].limit).toBe(HARD_MAX_PRACTICE_NEW_TERMS)
     }
+  })
+
+  it('the everyday queue paces opt-in facets under one cross-pool budget, production first', async () => {
+    const productionRows = [termRow(id(1), 'production'), termRow(id(2), 'production')]
+    const recognitionRows = [termRow(id(3)), termRow(id(4)), termRow(id(5))]
+    const { deps, listOptInNewFacets } = createDeps({
+      optInByPool: { production: productionRows, recognition: recognitionRows },
+    })
+    const result = await composePracticeQueue({
+      userId,
+      targetLanguage: lang,
+      filter: filter({ includeOptInNew: true }),
+      deps,
+    })
+    expect(listOptInNewFacets.mock.calls.map((call) => [call[0].pool, call[0].limit])).toEqual([
+      ['production', MAX_OPT_IN_NEW_PER_SESSION],
+      ['recognition', MAX_OPT_IN_NEW_PER_SESSION - productionRows.length],
+    ])
+    expect(result.items.map(itemKey)).toEqual([...productionRows, ...recognitionRows].map((row) => `flash:${row.id}`))
   })
 
   it('pool subset: pools=[production] touches only the production pool', async () => {

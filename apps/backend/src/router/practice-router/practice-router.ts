@@ -121,7 +121,9 @@ export const toPreviewDto = (plan: PracticeQueuePlan) => {
     plan.perPool.reduce((n, pool) => n + pick(pool), 0)
   return {
     counts: {
-      new: sum((pool) => pool.plannedIntroductionCount),
+      // Same bucket as the session's New chip: planned onboarding gates plus
+      // never-reviewed opt-in flashcards.
+      new: sum((pool) => pool.plannedIntroductionCount + pool.optInNewRows.length),
       warmup: sum((pool) => pool.backlogServedOnboardingCount),
       learning: sum(
         (pool) =>

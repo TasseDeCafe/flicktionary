@@ -1,7 +1,6 @@
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { BookPinsRepositoryInterface } from '../../transport/database/book-pins/book-pins-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
-import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
 import { getIntroductionExercises, getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
 import { planPracticeQueue } from './plan-practice-queue'
@@ -30,9 +29,9 @@ export type ComposeQueueFilter = {
   autoWarmup: boolean
   // Serve never-reviewed opt-in (non-citation) facets — pronunciation and
   // form cards — as flashcards. They never park (the exercise bank has no
-  // facet identity), so this pass is their ONLY introduction path; it is
-  // reserved for the explicit Learn-new preset — the everyday Practice button
-  // never floods a session with every enabled-but-unseen facet.
+  // facet identity), so this pass is their ONLY introduction path. The
+  // everyday queue paces them (MAX_OPT_IN_NEW_PER_SESSION) so an enabled
+  // backlog can't flood a session; the Learn-new preset takes more.
   includeOptInNew: boolean
   // Explicit "learn extra" request: plan up to this many more recognition
   // terms past the daily-new cap. They still stamp introduced_at when reached.
@@ -140,18 +139,10 @@ export const composePracticeQueue = async (params: {
   }
 
   // Opt-in-new pass: never-reviewed pronunciation/form facets, served as
-  // flashcards. Citation-new terms never come through here — they enter via
-  // warm-up gates.
-  if (wantFlashcards && filter.includeOptInNew && filter.scope !== 'due_only') {
-    for (const poolPlan of plan.perPool) {
-      const optInNew = await deps.userLookupsRepository.listOptInNewFacets({
-        userId,
-        targetLanguage,
-        pool: poolPlan.pool,
-        limit: HARD_MAX_PRACTICE_NEW_TERMS,
-      })
-      items.push(...optInNew.map((card) => ({ type: 'flashcard' as const, card })))
-    }
+  // flashcards after everything else. Citation-new terms never come through
+  // here — they enter via warm-up gates.
+  for (const poolPlan of plan.perPool) {
+    items.push(...poolPlan.optInNewRows.map((card) => ({ type: 'flashcard' as const, card })))
   }
 
   if (params.warmFlashcardCaches) {

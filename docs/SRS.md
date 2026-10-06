@@ -273,7 +273,7 @@ filtered to enabled (`disabled_at IS NULL`), ready (`data_status='ready'`), non-
 |---|---|---|---|
 | `listDueReviewTerms` review-state | `srs_state IN ('new','review')`, due | remaining **review budget** (`resolveReviewCaps`) | due ASC |
 | `listDueReviewTerms` learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
-| `listOptInNewFacets` | `srs_state IS NULL`, **NOT** primary citation, not decayed | hard ceiling, `includeOptInNew` only | tier ASC, zipf DESC |
+| `listOptInNewFacets` | `srs_state IS NULL`, **NOT** primary citation, not decayed | `includeOptInNew` only; `MAX_OPT_IN_NEW_PER_SESSION` across pools, hard ceiling per pool under `new_only` | tier ASC, zipf DESC |
 
 Citation-new terms never come through either selector: they enter via warm-up gates
 (`listEligibleNewCitationFacets` → the composed queue's planned introductions, §4b).
@@ -405,9 +405,9 @@ warm-up discovery, `new_count`, AND the introduction write gates — when the
 term's enabled production citation facet is **live** (scheduled or parked): such terms get
 their recognition schedule from the production→recognition bridge instead (§7). **Opt-in
 new** facets
-(pronunciation/forms) bypass the daily-new cap but are served **only** by the composed
-queue's `includeOptInNew` pass (the Learn-new preset) — otherwise the primary Practice
-button would flood a session with every enabled-but-unseen facet.
+(pronunciation/forms) bypass the daily-new cap and are served **only** by the composed
+queue's `includeOptInNew` pass — on by default, so the primary Practice button introduces
+them, paced per compose so an enabled backlog can't flood a session (§4b).
 
 **Sibling spacing** (`listDueReviewTerms`): a term's facets ("siblings") must not be adjacent. Each selected facet is
 ranked within its term by priority (due-review > intraday-learning) via `ROW_NUMBER()
@@ -438,7 +438,7 @@ practice presets are just named filter specs.
 **Plan/compose/claim split.** All selection and budget arithmetic lives in `planPracticeQueue`
 (`plan-practice-queue.ts`): the daily-budget numbers, the introduction budget, the
 sequential production-first introduction allocation, the cross-pool gate head-slice, the
-exact due-row fetch, the learn-extra slice, and the predicted `dailyLimitReached` /
+exact due-row fetch, the paced opt-in-new slice, the learn-extra slice, and the predicted `dailyLimitReached` /
 `canLearnExtra` flags. `composePracticeQueue` materializes it (exercise fetch and optional
 bank warming) without changing SRS state; the read-only `previewPracticeQueue` endpoint (GET
 `/practice/queue/preview`, input `{targetLanguage}` only — always the default filter)
@@ -481,10 +481,14 @@ additionally requires `autoWarmup && scope !== 'due_only'` client-side.
 - **Scopes.** `due_only` skips planned introductions and opt-in-new but
   serves gates of both origins; `new_only` skips due flashcards and restricts gates to
   onboarding-parked terms.
-- **Opt-in-new pass** (`includeOptInNew`, the Learn-new preset): never-reviewed
-  pronunciation/form facets served as flashcards — they never park (the exercise bank
-  has no facet identity), so this is their ONLY introduction path, reserved for the
-  explicit Learn-new entry.
+- **Opt-in-new pass** (`includeOptInNew`, default on): never-reviewed pronunciation/form
+  facets served as flashcards — they never park (the exercise bank has no facet
+  identity), so this is their ONLY introduction path. The planner selects them
+  (`PoolQueuePlan.optInNewRows`), so the preview's `new` count includes them. Pacing:
+  `MAX_OPT_IN_NEW_PER_SESSION` (5) across both pools, production first; under
+  `new_only` (the Learn-new preset) each pool takes up to `HARD_MAX_PRACTICE_NEW_TERMS`.
+  Every preset except the due-only and exercises-only ones (where the pass is inert)
+  includes them.
 - **Learn extra** (`learnExtraCount`, 1–20): an explicit batch past the daily-new cap —
   those planned items carry `bypassDailyCap`, applied by the same display-time claim
   (skips only the count predicate; `introduced_at` still stamps, so extras count toward

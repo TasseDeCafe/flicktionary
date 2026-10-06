@@ -30,6 +30,13 @@ export const MAX_GEN_ATTEMPTS = 3
 export const MAX_WARMUP_INTRO_PER_SESSION = 10
 export const MAX_GATES_PER_COMPOSE = 20
 
+// How many never-reviewed opt-in facets (pronunciation / specific forms) one
+// everyday compose serves across both pools. They bypass the daily-new cap
+// (each was individually enabled), so this pacing is the only thing keeping a
+// large enabled backlog from flooding a session; the explicit Learn-new preset
+// (scope 'new_only') serves up to HARD_MAX_PRACTICE_NEW_TERMS per pool instead.
+export const MAX_OPT_IN_NEW_PER_SESSION = 5
+
 // How many hint-exercise generations one compose may kick off for flashcard
 // terms whose bank has no hint-type row (see warmHintExerciseBanksForFlashcards).
 // Terms past the cap get warmed by a later compose or by the serve-miss backstop.
