@@ -15,6 +15,7 @@ import { languageDetectionPass } from './passes/language-detection-pass'
 import { moderationPass } from './passes/moderation-pass'
 import { nominateCandidatesPass } from './passes/nominate-candidates-pass'
 import { prelearnGlossPass } from './passes/prelearn-gloss-pass'
+import { senseMatchPass } from './passes/sense-match-pass'
 import { translateForCapturePass } from './passes/translate-for-capture-pass'
 import { verifyExercisePass } from './passes/verify-exercise-pass'
 import { vocabChatTitlePass } from './passes/vocab-chat-title-pass'
@@ -42,6 +43,7 @@ export type AnthropicPassesInterface = {
   moderationPass: typeof moderationPass
   nominateCandidatesPass: typeof nominateCandidatesPass
   prelearnGlossPass: typeof prelearnGlossPass
+  senseMatchPass: typeof senseMatchPass
   translateForCapturePass: typeof translateForCapturePass
   verifyExercisePass: typeof verifyExercisePass
   vocabChatTitlePass: typeof vocabChatTitlePass
@@ -68,6 +70,7 @@ export const AnthropicPasses = (): AnthropicPassesInterface => ({
   moderationPass,
   nominateCandidatesPass,
   prelearnGlossPass,
+  senseMatchPass,
   translateForCapturePass,
   verifyExercisePass,
   vocabChatTitlePass,
@@ -97,6 +100,7 @@ export const MockAnthropicPasses = (overrides: Partial<AnthropicPassesInterface>
   moderationPass: notScripted('moderationPass'),
   nominateCandidatesPass: notScripted('nominateCandidatesPass'),
   prelearnGlossPass: notScripted('prelearnGlossPass'),
+  senseMatchPass: notScripted('senseMatchPass'),
   translateForCapturePass: notScripted('translateForCapturePass'),
   verifyExercisePass: notScripted('verifyExercisePass'),
   vocabChatTitlePass: notScripted('vocabChatTitlePass'),

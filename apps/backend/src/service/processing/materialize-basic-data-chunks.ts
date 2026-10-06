@@ -5,6 +5,8 @@ import {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { BasicDataChunk, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
+import { logError } from '../../transport/error-monitoring/error-monitoring'
 
 // The single definition of an "empty card": the canonical user_lookup (deduped
 // per (user, target_language, headword='selectionText', sense='')) plus the
@@ -94,6 +96,58 @@ export const buildBasicDataGrammarPatch = (
   return Object.keys(patch).length > 0 ? patch : null
 }
 
+// Save-time sense dedup. The basic-data pass labels the sense afresh on every
+// save, and rows dedupe only on the exact (headword, sense) key, so a re-save
+// of a known word under a reworded label would split into a second row — and
+// split its demand signal with it. When the headword already has other saved
+// senses, senseMatchPass decides whether this one means the same; a match
+// returns the saved row's headword + sense so findOrCreate lands on it. Fails
+// open: a pass error keeps the new label (a possible duplicate, never a lost
+// save).
+const resolveSavedSense = async (
+  params: { userId: string; targetLanguage: string; chunk: BasicDataChunk; sentence: string | null },
+  deps: {
+    userLookupsRepository: UserLookupsRepositoryInterface
+    anthropicPasses: Pick<AnthropicPassesInterface, 'senseMatchPass'>
+  }
+): Promise<{ headword: string; sense: string }> => {
+  const { chunk } = params
+  const unchanged = { headword: chunk.headword, sense: chunk.sense }
+  const saved = await deps.userLookupsRepository.findLiveSensesForHeadword({
+    userId: params.userId,
+    targetLanguage: params.targetLanguage,
+    headword: chunk.headword,
+  })
+  if (saved.length === 0) return unchanged
+  // The unique key is case-sensitive on the headword, so an exact-sense hit
+  // still adopts the saved spelling (`House` must not split from `house`).
+  const sameSense = saved.find((row) => row.sense === chunk.sense)
+  if (sameSense) return { headword: sameSense.headword, sense: sameSense.sense }
+  try {
+    const matchedId = await deps.anthropicPasses.senseMatchPass({
+      targetLanguage: params.targetLanguage,
+      headword: chunk.headword,
+      candidate: {
+        sense: chunk.sense,
+        definition: chunk.definition,
+        translation: chunk.translation,
+        sentence: params.sentence,
+      },
+      existing: saved.map((row) => ({
+        userLookupId: row.id,
+        sense: row.sense,
+        definition: row.definition,
+        translation: row.translation,
+      })),
+    })
+    const matched = saved.find((row) => row.id === matchedId)
+    return matched ? { headword: matched.headword, sense: matched.sense } : unchanged
+  } catch (error) {
+    logError({ message: 'senseMatchPass failed; keeping the new sense', params: { headword: chunk.headword }, error })
+    return unchanged
+  }
+}
+
 // Writes basic-data-pass output to the DB: upserts user_lookups, fills first-time
 // content, and inserts cards in 'needs_data' status (they auto-keep once basic
 // data lands). Also covers the fallback path where the model dropped a highlight
@@ -112,10 +166,11 @@ export const materializeBasicDataChunks = async (params: {
   chunks: BasicDataChunk[]
   newHighlights: HighlightInput[]
   processedHighlightIds: Set<string>
-  segmentIdSet: Set<string>
+  segments: Array<{ id: string; text: string }>
   hideTranslationFields?: boolean
   cardsRepository: CardsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  anthropicPasses: Pick<AnthropicPassesInterface, 'senseMatchPass'>
 }): Promise<{ touchedLookups: Map<string, TouchedLookupInfo>; insertedCards: DbCard[] }> => {
   const {
     sessionId,
@@ -124,30 +179,32 @@ export const materializeBasicDataChunks = async (params: {
     chunks,
     newHighlights,
     processedHighlightIds,
-    segmentIdSet,
+    segments,
     hideTranslationFields = false,
     cardsRepository,
     userLookupsRepository,
+    anthropicPasses,
   } = params
+  const segmentTextById = new Map(segments.map((segment) => [segment.id, segment.text]))
 
   const coveredHighlightIds = new Set<string>()
   const touchedLookups = new Map<string, TouchedLookupInfo>()
   const insertedCards: DbCard[] = []
 
   for (const chunk of chunks) {
-    if (!segmentIdSet.has(chunk.segmentId)) continue
+    const sentence = segmentTextById.get(chunk.segmentId)
+    if (sentence === undefined) continue
 
     if (chunk.source === 'highlight' && chunk.highlightId) {
       if (processedHighlightIds.has(chunk.highlightId)) continue
       coveredHighlightIds.add(chunk.highlightId)
     }
 
-    const lookup = await userLookupsRepository.findOrCreate({
-      userId,
-      targetLanguage,
-      headword: chunk.headword,
-      sense: chunk.sense,
-    })
+    const { headword, sense } = await resolveSavedSense(
+      { userId, targetLanguage, chunk, sentence },
+      { userLookupsRepository, anthropicPasses }
+    )
+    const lookup = await userLookupsRepository.findOrCreate({ userId, targetLanguage, headword, sense })
     const alreadyGrounded = lookup.grounded_at !== null
     const grammarUserEdited = lookup.grammar_user_edited_at !== null
     const grammarPatch = buildBasicDataGrammarPatch(chunk.grammar, alreadyGrounded, grammarUserEdited)

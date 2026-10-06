@@ -248,58 +248,33 @@ const listHeadwordSensesRelevantToTrack = async (params: {
   }
 }
 
-// Broad lookup of existing senses that may collide with each candidate
-// headword. Powers the Haiku tiebreaker — this deliberately overmatches:
-// exact lowercase equality OR shared FTS lexemes under the target language
-// regconfig. False positives are cheap because Haiku makes the final
-// duplicate/distinct decision; false negatives silently create duplicate
-// vocabulary rows.
-//
-// Result is keyed by the lowercased candidate headword so the caller can attach
-// the right existing-sense set to each LLM-emitted candidate.
-const findPotentialExistingSensesByHeadwords = async (params: {
+export type LiveSense = {
+  id: string
+  headword: string
+  sense: string
+  definition: string | null
+  translation: string | null
+}
+
+// The saved senses a new save of `headword` could duplicate (save-time sense
+// dedup, materializeBasicDataChunks). Case-insensitive on the headword; stub,
+// note-only and legacy rows (sense '') carry no meaning to compare, so they
+// never match.
+const findLiveSensesForHeadword = async (params: {
   userId: string
   targetLanguage: string
-  headwords: string[]
-}): Promise<Map<string, Array<{ headword: string; sense: string; definition: string | null }>>> => {
-  if (params.headwords.length === 0) return new Map()
-  const cfg = resolveRegconfig(params.targetLanguage)
-  const result = (await sql`
-    WITH candidate_inputs AS (
-      SELECT DISTINCT candidate_headword
-      FROM unnest(${params.headwords}::text[]) AS input(candidate_headword)
-    )
-    SELECT
-      ci.candidate_headword,
-      ul.headword,
-      ul.sense,
-      ul.definition
-    FROM candidate_inputs ci
-    JOIN public.user_lookups ul
-      ON ul.user_id = ${params.userId}
-      AND ul.target_language = ${params.targetLanguage}
-      AND ul.deleted_at IS NULL
-      AND (
-        LOWER(ul.headword) = LOWER(ci.candidate_headword)
-        OR tsvector_to_array(to_tsvector(${cfg}::regconfig, ul.headword))
-          && tsvector_to_array(to_tsvector(${cfg}::regconfig, ci.candidate_headword))
-      )
-    ORDER BY ci.candidate_headword ASC, ul.headword ASC, ul.sense ASC
-  `) as Array<{
-    candidate_headword: string
-    headword: string
-    sense: string | null
-    definition: string | null
-  }>
-
-  const grouped = new Map<string, Array<{ headword: string; sense: string; definition: string | null }>>()
-  for (const row of result) {
-    const key = row.candidate_headword.toLowerCase()
-    const senses = grouped.get(key) ?? []
-    senses.push({ headword: row.headword, sense: row.sense ?? '', definition: row.definition })
-    grouped.set(key, senses)
-  }
-  return grouped
+  headword: string
+}): Promise<LiveSense[]> => {
+  return (await sql`
+    SELECT id, headword, sense, definition, translation
+    FROM public.user_lookups
+    WHERE user_id = ${params.userId}
+      AND target_language = ${params.targetLanguage}
+      AND LOWER(headword) = LOWER(${params.headword})
+      AND sense <> ''
+      AND deleted_at IS NULL
+    ORDER BY created_at ASC, id ASC
+  `) as LiveSense[]
 }
 
 // One row of the lesson-import duplicate resolution: an existing vocabulary
@@ -2046,9 +2021,8 @@ const listChunksForLanguage = async (params: {
   // status='up_next' overrides `sort`: the stage IS the introduction queue, so
   // it pages in newTermOrderSql order — the list a user inspects here is
   // exactly the order the composed queue will introduce these terms. The
-  // cursor keys (tier/zipf) are selected alongside the row columns; the row
-  // comparison negates zipf on both sides so every key ascends (zipf is never
-  // negative, so COALESCE(zipf, -1) reproduces DESC NULLS LAST).
+  // cursor keys are the computed queue position (intro_pos/lane/seq) selected
+  // alongside the row columns, so the ordering's own keys never reach it.
   if (params.status === 'up_next') {
     const cursor = params.cursor && params.cursor.sort === 'queue' ? params.cursor : null
     // The stage population IS introductionOrderCtesSql's population, so every
@@ -2253,11 +2227,11 @@ export interface UserLookupsRepositoryInterface {
     targetLanguage: string
     textTrackId: string
   }) => Promise<{ headwordSenses: HeadwordSense[]; totalVocabSize: number }>
-  findPotentialExistingSensesByHeadwords: (params: {
+  findLiveSensesForHeadword: (params: {
     userId: string
     targetLanguage: string
-    headwords: string[]
-  }) => Promise<Map<string, Array<{ headword: string; sense: string; definition: string | null }>>>
+    headword: string
+  }) => Promise<LiveSense[]>
   findOrCreate: (
     params: {
       userId: string
@@ -2398,7 +2372,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
   return {
     listHeadwordSensesForLanguage,
     listHeadwordSensesRelevantToTrack,
-    findPotentialExistingSensesByHeadwords,
+    findLiveSensesForHeadword,
     findOrCreate,
     recordEncounter,
     findLiveIdsByLemmaKeys,

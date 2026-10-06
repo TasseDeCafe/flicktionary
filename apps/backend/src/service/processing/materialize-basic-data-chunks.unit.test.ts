@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildBasicDataGrammarPatch, materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import type { BasicDataChunk } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
-import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  LiveSense,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  type AnthropicPassesInterface,
+  MockAnthropicPasses,
+} from '../../transport/third-party/anthropic/anthropic-passes'
 
 const sessionId = '00000000-0000-0000-0000-000000000001'
 const userId = '00000000-0000-0000-0000-000000000002'
@@ -25,9 +32,10 @@ const llmChunk = (overrides: Partial<BasicDataChunk> = {}): BasicDataChunk => ({
   ...overrides,
 })
 
-const createRepos = (lookup: Record<string, unknown>) => {
+const createRepos = (lookup: Record<string, unknown>, savedSenses: LiveSense[] = []) => {
   const updateContent = vi.fn().mockResolvedValue(undefined)
   const userLookupsRepository = {
+    findLiveSensesForHeadword: vi.fn().mockResolvedValue(savedSenses),
     findOrCreate: vi.fn().mockResolvedValue({
       id: lookupId,
       headword: 'palabra',
@@ -52,6 +60,7 @@ const run = (params: {
   lookup?: Record<string, unknown>
   hideTranslationFields: boolean
   repos: ReturnType<typeof createRepos>
+  senseMatchPass?: AnthropicPassesInterface['senseMatchPass']
 }) =>
   materializeBasicDataChunks({
     sessionId,
@@ -60,10 +69,11 @@ const run = (params: {
     chunks: [params.chunk],
     newHighlights: [],
     processedHighlightIds: new Set(),
-    segmentIdSet: new Set([segmentId]),
+    segments: [{ id: segmentId, text: 'Una palabra basta.' }],
     hideTranslationFields: params.hideTranslationFields,
     cardsRepository: params.repos.cardsRepository,
     userLookupsRepository: params.repos.userLookupsRepository,
+    anthropicPasses: MockAnthropicPasses({ ...(params.senseMatchPass && { senseMatchPass: params.senseMatchPass }) }),
   })
 
 describe('materializeBasicDataChunks — translations-off is a generation pref, never a scrub', () => {
@@ -155,6 +165,84 @@ describe('materializeBasicDataChunks — grammar patch', () => {
 
     const args = repos.updateContent.mock.calls[0]![0]
     expect(args.grammarPatch).toEqual({ pos: 'noun' })
+  })
+})
+
+describe('materializeBasicDataChunks — save-time sense dedup', () => {
+  const savedSense = (overrides: Partial<LiveSense> = {}): LiveSense => ({
+    id: 'saved-1',
+    headword: 'palabra',
+    sense: 'unit of language',
+    definition: 'una unidad léxica',
+    translation: 'word',
+    ...overrides,
+  })
+  const upsertedKey = (repos: ReturnType<typeof createRepos>) => {
+    const args = vi.mocked(repos.userLookupsRepository.findOrCreate).mock.calls[0]![0]
+    return { headword: args.headword, sense: args.sense }
+  }
+
+  it('skips the pass when the headword has no saved sense', async () => {
+    const repos = createRepos({})
+    const senseMatchPass = vi.fn()
+
+    await run({ chunk: llmChunk(), hideTranslationFields: false, repos, senseMatchPass })
+
+    expect(senseMatchPass).not.toHaveBeenCalled()
+    expect(upsertedKey(repos)).toEqual({ headword: 'palabra', sense: 'word' })
+  })
+
+  it('skips the pass on an exact-sense hit and adopts the saved headword spelling', async () => {
+    const repos = createRepos({}, [savedSense({ headword: 'Palabra', sense: 'word' })])
+    const senseMatchPass = vi.fn()
+
+    await run({ chunk: llmChunk(), hideTranslationFields: false, repos, senseMatchPass })
+
+    expect(senseMatchPass).not.toHaveBeenCalled()
+    expect(upsertedKey(repos)).toEqual({ headword: 'Palabra', sense: 'word' })
+  })
+
+  it('lands a reworded re-save on the saved row', async () => {
+    const repos = createRepos({}, [savedSense({ headword: 'Palabra' })])
+    const senseMatchPass = vi.fn().mockResolvedValue('saved-1')
+
+    await run({ chunk: llmChunk(), hideTranslationFields: false, repos, senseMatchPass })
+
+    expect(senseMatchPass).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headword: 'palabra',
+        candidate: expect.objectContaining({ sense: 'word', sentence: 'Una palabra basta.' }),
+        existing: [expect.objectContaining({ userLookupId: 'saved-1', sense: 'unit of language' })],
+      })
+    )
+    expect(upsertedKey(repos)).toEqual({ headword: 'Palabra', sense: 'unit of language' })
+  })
+
+  it('keeps the new sense when the pass says it is different', async () => {
+    const repos = createRepos({}, [savedSense()])
+
+    await run({
+      chunk: llmChunk(),
+      hideTranslationFields: false,
+      repos,
+      senseMatchPass: vi.fn().mockResolvedValue(null),
+    })
+
+    expect(upsertedKey(repos)).toEqual({ headword: 'palabra', sense: 'word' })
+  })
+
+  it('fails open when the pass throws', async () => {
+    const repos = createRepos({}, [savedSense()])
+
+    await run({
+      chunk: llmChunk(),
+      hideTranslationFields: false,
+      repos,
+      senseMatchPass: vi.fn().mockRejectedValue(new Error('overloaded')),
+    })
+
+    expect(upsertedKey(repos)).toEqual({ headword: 'palabra', sense: 'word' })
+    expect(repos.cardsRepository.insertCard).toHaveBeenCalledTimes(1)
   })
 })
 
