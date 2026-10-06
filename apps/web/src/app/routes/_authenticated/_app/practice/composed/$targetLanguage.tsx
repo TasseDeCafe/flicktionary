@@ -17,7 +17,7 @@ const composedSearchSchema = z.object({
   scope: z.enum(['due_only', 'new_only', 'both']).catch('both'),
   render: z.enum(['flashcards_only', 'exercises_only', 'both']).catch('both'),
   autoWarmup: z.boolean().catch(true),
-  includeOptInNew: z.boolean().catch(false),
+  includeOptInNew: z.boolean().catch(true),
   // Daily Mix: the FULL ordered language chain (done + current + upcoming) —
   // position derives from the route's language param, so the value is stable
   // across the whole run and survives a refresh. Never part of the compose

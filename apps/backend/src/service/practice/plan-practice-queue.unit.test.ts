@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { ComposeQueueFilter } from './compose-practice-queue'
-import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
+import { MAX_GATES_PER_COMPOSE, MAX_OPT_IN_NEW_PER_SESSION, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
 import { planPracticeQueue, type PlanPracticeQueueDependencies } from './plan-practice-queue'
 
 const userId = '00000000-0000-0000-0000-000000000001'
@@ -41,6 +41,8 @@ const createDeps = (params: {
   backlogByPool?: Partial<Record<PracticePool, DbUserLookupWithFacet[]>>
   eligibleNewByPool?: Partial<Record<PracticePool, string[]>>
   dueByPool?: Partial<Record<PracticePool, DbUserLookupWithFacet[]>>
+  // Never-reviewed opt-in facet rows per pool; the mock honors `limit`.
+  optInByPool?: Partial<Record<PracticePool, DbUserLookupWithFacet[]>>
   maxNewTerms?: number
   introducedToday?: number
 }) => {
@@ -53,6 +55,11 @@ const createDeps = (params: {
   const listDueReviewTerms = vi
     .fn()
     .mockImplementation(async (p: { pool: PracticePool }) => params.dueByPool?.[p.pool] ?? [])
+  const listOptInNewFacets = vi
+    .fn()
+    .mockImplementation(async (p: { pool: PracticePool; limit: number }) =>
+      (params.optInByPool?.[p.pool] ?? []).slice(0, p.limit)
+    )
   const listDueSummary = vi
     .fn()
     .mockResolvedValue([{ targetLanguage: lang, newIntroducedTodayCount: params.introducedToday ?? 0 }])
@@ -62,7 +69,13 @@ const createDeps = (params: {
   const countReviewBudgetConsumedToday = vi.fn().mockResolvedValue(0)
 
   const deps = {
-    userLookupsRepository: { listParkedTerms, listEligibleNewCitationFacets, listDueReviewTerms, listDueSummary },
+    userLookupsRepository: {
+      listParkedTerms,
+      listEligibleNewCitationFacets,
+      listDueReviewTerms,
+      listOptInNewFacets,
+      listDueSummary,
+    },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
     bookPinsRepository: {
       getPin: vi.fn().mockResolvedValue(null),
@@ -71,7 +84,7 @@ const createDeps = (params: {
     practiceRatingEventsRepository: { countReviewBudgetConsumedToday },
   } as unknown as PlanPracticeQueueDependencies
 
-  return { deps, listParkedTerms, listEligibleNewCitationFacets, listDueReviewTerms }
+  return { deps, listParkedTerms, listEligibleNewCitationFacets, listDueReviewTerms, listOptInNewFacets }
 }
 
 describe('planPracticeQueue', () => {
@@ -271,5 +284,35 @@ describe('planPracticeQueue', () => {
     })
     expect(exercisesOnly.listDueReviewTerms).not.toHaveBeenCalled()
     expect(plan.perPool.every((p) => p.dueRows.length === 0)).toBe(true)
+  })
+
+  it('paces opt-in-new facets under one cross-pool budget, production first', async () => {
+    const { deps } = createDeps({
+      optInByPool: {
+        production: [termRow(id(1), 'production'), termRow(id(2), 'production')],
+        recognition: ids(10, 8).map((lookupId) => termRow(lookupId)),
+      },
+    })
+    const plan = await planPracticeQueue({
+      userId,
+      targetLanguage: lang,
+      filter: filter({ includeOptInNew: true }),
+      deps,
+    })
+    const served = Object.fromEntries(plan.perPool.map((p) => [p.pool, p.optInNewRows.length]))
+    expect(served).toEqual({ production: 2, recognition: MAX_OPT_IN_NEW_PER_SESSION - 2 })
+  })
+
+  it('serves no opt-in-new facets when excluded, under due_only, or under exercises_only', async () => {
+    for (const f of [
+      filter({ includeOptInNew: false }),
+      filter({ includeOptInNew: true, scope: 'due_only' }),
+      filter({ includeOptInNew: true, render: 'exercises_only' }),
+    ]) {
+      const { deps, listOptInNewFacets } = createDeps({ optInByPool: { recognition: [termRow(id(1))] } })
+      const plan = await planPracticeQueue({ userId, targetLanguage: lang, filter: f, deps })
+      expect(listOptInNewFacets).not.toHaveBeenCalled()
+      expect(plan.perPool.every((p) => p.optInNewRows.length === 0)).toBe(true)
+    }
   })
 })

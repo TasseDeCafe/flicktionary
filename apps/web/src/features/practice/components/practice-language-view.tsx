@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronLeft, CircleAlert, CircleCheck, Flame, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
-import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { DEFAULT_PRACTICE_QUEUE_FILTER } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useDueSummary, usePreviewPracticeQueue } from '../api/practice-hooks'
 import { CustomPracticeOverlay } from './custom-practice-overlay'
@@ -59,13 +59,9 @@ export const PracticeLanguageView = () => {
     void navigate({
       to: '/practice/composed/$targetLanguage',
       params: { targetLanguage },
-      search: {
-        pools: ['production', 'recognition'] as PracticePool[],
-        scope: 'both' as const,
-        render: 'both' as const,
-        autoWarmup: true,
-        includeOptInNew: false,
-      },
+      // The preview endpoint plans this exact filter, so the session-plan card
+      // and the session agree.
+      search: DEFAULT_PRACTICE_QUEUE_FILTER,
     })
 
   return (
