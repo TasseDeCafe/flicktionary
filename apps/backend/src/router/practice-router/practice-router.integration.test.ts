@@ -9,6 +9,7 @@ import {
 import { MockAnthropicPasses } from '../../transport/third-party/anthropic/anthropic-passes'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { sql } from '../../transport/database/postgres-client'
 
 // Minimal scripted basicDataPass row for the adhoc save that seeds the term
 // under practice (see cards-router.integration.test.ts for the convention).
@@ -131,5 +132,35 @@ describe('practice-router', () => {
       .send({ rating: 'good', pool: 'production', skill: 'pronunciation', targetForm: '' })
 
     expect(response.status).toBe(400)
+  })
+
+  test('everyday Practice introduces an enabled, never-reviewed pronunciation facet and previews it as new', async () => {
+    const { token, userLookupId } = await userWithKeptTerm()
+    const preview = async () => {
+      const response = await request(testApp)
+        .get('/api/v1/practice/queue/preview')
+        .query({ targetLanguage: 'es' })
+        .set(buildAuthorizationHeaders(token))
+      expect(response.status).toBe(200)
+      return response.body.data.counts.new as number
+    }
+    const newBefore = await preview()
+
+    // An opted-in, ready pronunciation facet that has never been rated.
+    const [{ user_id: userId }] = await sql`SELECT user_id FROM public.user_lookups WHERE id = ${userLookupId}`
+    await sql`
+      INSERT INTO public.study_facets (user_lookup_id, user_id, target_language, skill, target_form, data_status)
+      VALUES (${userLookupId}, ${userId}, 'es', 'pronunciation', '', 'ready')
+    `
+    expect(await preview()).toBe(newBefore + 1)
+
+    // The default filter (no Learn-new preset) serves it as a flashcard.
+    const composed = await request(testApp)
+      .post('/api/v1/practice/queue/compose')
+      .set(buildAuthorizationHeaders(token))
+      .send({ targetLanguage: 'es', filter: { render: 'flashcards_only' } })
+    expect(composed.status).toBe(200)
+    const flashcards = composed.body.data.items.filter((item: { type: string }) => item.type === 'flashcard')
+    expect(flashcards.map((item: { card: { skill: string } }) => item.card.skill)).toEqual(['pronunciation'])
   })
 })

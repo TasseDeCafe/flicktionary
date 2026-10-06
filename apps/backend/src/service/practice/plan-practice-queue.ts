@@ -1,7 +1,8 @@
 import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import { resolveBookQuota, type BookQuotaDependencies } from './book-quota'
 import type { ComposeQueueFilter } from './compose-practice-queue'
-import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
+import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { MAX_GATES_PER_COMPOSE, MAX_OPT_IN_NEW_PER_SESSION, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
 import { listDueReviewTerms, type ListDueReviewTermsDependencies } from './list-due-review-terms'
 import { clampPracticeSessionLimits } from './review-caps'
 
@@ -19,6 +20,9 @@ export type PoolQueuePlan = {
   // the citation-only due summary cannot see). Empty when the filter excludes
   // flashcards.
   dueRows: DbUserLookupWithFacet[]
+  // Never-reviewed opt-in facets (pronunciation / specific forms) this compose
+  // serves as flashcards. Empty unless the filter includes them.
+  optInNewRows: DbUserLookupWithFacet[]
   // Uncredited parked backlog in serve order (oldest-parked first), and the
   // slice of it that fits this compose's cross-pool gate budget.
   backlogIds: string[]
@@ -166,6 +170,13 @@ export const planPracticeQueue = async (params: {
     pools.includes('recognition') &&
     recognitionCandidates.length > plannedRecognition + plannedExtraIntroductionIds.length
 
+  // Opt-in-new facets: the everyday queue paces them under one cross-pool
+  // MAX_OPT_IN_NEW_PER_SESSION budget (production first); the Learn-new preset
+  // (new_only) is an explicit request for new work and takes the hard ceiling
+  // per pool.
+  const runOptInNew = filter.includeOptInNew && wantFlashcards && filter.scope !== 'due_only'
+  let optInSlotsLeft = MAX_OPT_IN_NEW_PER_SESSION
+
   // Cross-pool backlog head-slice: MAX_GATES_PER_COMPOSE serve slots,
   // production first, oldest-parked kept. Planned introductions are served on
   // top and remain uncommitted until reached.
@@ -177,9 +188,16 @@ export const planPracticeQueue = async (params: {
     backlogSlotsLeft -= servedRows.length
     const dueRows =
       wantFlashcards && filter.scope !== 'new_only' ? await listDueReviewTerms(userId, targetLanguage, pool, deps) : []
+    const optInNewLimit = filter.scope === 'new_only' ? HARD_MAX_PRACTICE_NEW_TERMS : optInSlotsLeft
+    const optInNewRows =
+      runOptInNew && optInNewLimit > 0
+        ? await deps.userLookupsRepository.listOptInNewFacets({ userId, targetLanguage, pool, limit: optInNewLimit })
+        : []
+    optInSlotsLeft -= optInNewRows.length
     perPool.push({
       pool,
       dueRows,
+      optInNewRows,
       backlogIds: backlogRows.map((row) => row.id),
       backlogServedIds: servedRows.map((row) => row.id),
       backlogServedOnboardingCount: servedRows.filter((row) => row.srs_state == null).length,

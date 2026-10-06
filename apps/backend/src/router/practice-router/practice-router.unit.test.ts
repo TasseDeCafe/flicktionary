@@ -141,6 +141,7 @@ describe('toPreviewDto', () => {
         {
           pool: 'production',
           dueRows: [dueRow('review'), dueRow('learning')],
+          optInNewRows: [],
           backlogIds: [],
           backlogServedIds: [],
           backlogServedOnboardingCount: 0,
@@ -152,6 +153,7 @@ describe('toPreviewDto', () => {
         {
           pool: 'recognition',
           dueRows: [dueRow('review'), dueRow('review'), dueRow('new'), dueRow('relearning')],
+          optInNewRows: [dueRow(null), dueRow(null)],
           backlogIds: ['p1', 'p2', 'p3'],
           backlogServedIds: ['p1', 'p2', 'p3'],
           backlogServedOnboardingCount: 2,
@@ -163,8 +165,9 @@ describe('toPreviewDto', () => {
       ],
     })
     expect(dto).toEqual({
-      // new = planned introductions across pools, NOT per-pool min() sums.
-      counts: { new: 3, warmup: 2, learning: 1 + 1 + 2, review: 1 + 2 },
+      // new = planned introductions across pools (NOT per-pool min() sums)
+      // plus the opt-in-new flashcards — the session's New chip bucket.
+      counts: { new: 3 + 2, warmup: 2, learning: 1 + 1 + 2, review: 1 + 2 },
       dailyLimitReached: false,
       canLearnExtra: true,
       dailyBudget: { max: 15, introducedToday: 3, remaining: 12 },

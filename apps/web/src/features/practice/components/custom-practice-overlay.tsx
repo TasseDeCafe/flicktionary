@@ -73,7 +73,7 @@ export const CustomPracticeOverlay = ({
     scope: 'both',
     render: 'both',
     autoWarmup: true,
-    includeOptInNew: false,
+    includeOptInNew: true,
   })
 
   const startComposed = (search: ComposedSearch) => {
@@ -126,7 +126,7 @@ export const CustomPracticeOverlay = ({
       icon: <Star />,
       title: t`Production focus`,
       description: t`Only production practice — flashcards and exercises.`,
-      search: { pools: ['production'], scope: 'both', render: 'both', autoWarmup: true, includeOptInNew: false },
+      search: { pools: ['production'], scope: 'both', render: 'both', autoWarmup: true, includeOptInNew: true },
     },
   ]
 

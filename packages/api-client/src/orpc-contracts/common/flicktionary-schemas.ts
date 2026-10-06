@@ -515,9 +515,8 @@ export const PracticeDueSummaryEntrySchema = z.object({
   reviewCount: z.number().int(),
   unseenCount: z.number().int(),
   // Unseen opt-in facets (pronunciation / specific forms), enabled+ready, per
-  // pool. Served only when the composed queue's includeOptInNew is set —
-  // newCount/productionNewCount stay citation-only because the everyday
-  // Practice queue never serves opt-ins.
+  // pool — the waiting population, not a session promise (a compose serves a
+  // paced slice of it). newCount/productionNewCount stay citation-only.
   optInNewCount: z.number().int(),
   productionOptInNewCount: z.number().int(),
   // Review-state cards rated today (the spent daily review budget, counted
@@ -692,8 +691,9 @@ export const PracticeQueueFilterSchema = z.object({
   // when it reaches the item, so composition and refresh are SRS-read-only.
   autoWarmup: z.boolean().default(true),
   // Serve never-reviewed opt-in (pronunciation/form) facets as flashcards —
-  // their only introduction path, reserved for the Learn-new preset.
-  includeOptInNew: z.boolean().default(false),
+  // their only introduction path. Paced per compose, except under new_only
+  // (the Learn-new preset), which takes the hard ceiling.
+  includeOptInNew: z.boolean().default(true),
   // Explicit learn-extra batch: plan up to this many recognition terms past
   // the daily-new cap.
   learnExtraCount: z.number().int().min(1).max(20).optional(),
@@ -708,7 +708,7 @@ export const DEFAULT_PRACTICE_QUEUE_FILTER: PracticeQueueFilter = {
   scope: 'both',
   render: 'both',
   autoWarmup: true,
-  includeOptInNew: false,
+  includeOptInNew: true,
 }
 
 // One composed-queue item. Reuses the flashcard and exercise wire shapes
