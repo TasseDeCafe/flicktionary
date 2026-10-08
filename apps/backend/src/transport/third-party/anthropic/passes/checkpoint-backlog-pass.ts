@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 // Checkpoint-review backlog confirmation: a backlog candidate matched only
@@ -71,7 +71,8 @@ const runChunk = async (
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 40 * items.length + 50,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 52 * items.length + 65,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })

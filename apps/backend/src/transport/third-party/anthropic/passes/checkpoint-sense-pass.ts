@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 // Checkpoint-review sense disambiguation: when the user's vocabulary holds 2+
@@ -63,7 +63,8 @@ export const checkpointSensePass = async (params: {
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 20 * params.items.length + 50,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 26 * params.items.length + 65,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })

@@ -4,7 +4,8 @@ import { getConfig } from '../../../config/environment-config'
 // Pinned model versions. Opus handles the accuracy-first passes (full
 // exploration, exercise generation, card chat). Sonnet 5
 // handles the passes where near-Opus quality at 60% of the price is the better
-// trade. Haiku handles the latency-sensitive tap-to-translate fast-gloss path.
+// trade. Haiku handles the latency-sensitive tap-to-translate fast-gloss path
+// and the short classification/gloss passes.
 //
 // Sonnet 5 notes: it runs ADAPTIVE THINKING by default when the `thinking`
 // param is omitted (Sonnet 4.6 ran thinking-off), so every Sonnet call site
@@ -20,11 +21,18 @@ import { getConfig } from '../../../config/environment-config'
 // thinking tokens count toward max_tokens, so caps leave room for them. The
 // OPUS_MODEL env var rolls every Opus pass back in one line (e.g.
 // `claude-opus-4-8`, which runs the same code with thinking disabled).
+//
+// Haiku 5.5 notes: like Sonnet 5 it thinks by default and uses the newer
+// tokenizer, so every Haiku call site goes through reasoningParams (thinking
+// off — accepted up to effort `high`) and its max_tokens caps are sized for the
+// ~30% larger token counts. It rejects non-default temperature/top_p/top_k and
+// assistant prefill, so neither is ever sent. The HAIKU_MODEL env var rolls
+// every Haiku pass back in one line (e.g. `claude-haiku-4-5`).
 export const MODEL_OPUS = process.env.OPUS_MODEL ?? 'claude-opus-5-5'
 export const MODEL_SONNET = 'claude-sonnet-5'
-export const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
+export const MODEL_HAIKU = process.env.HAIKU_MODEL ?? 'claude-haiku-5-5'
 
-// Accepted on Sonnet 5 and Opus 4.8 alike, not on Opus 5.5 or Sonnet 5.5 — only sent via
+// Accepted on Sonnet 5, Haiku 5.5 and Opus 4.8 alike, not on Opus 5.5 or Sonnet 5.5 — only sent via
 // reasoningParams.
 const THINKING_DISABLED = { type: 'disabled' } as const
 

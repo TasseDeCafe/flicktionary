@@ -197,7 +197,7 @@ export const wordFamilyInsightPass = async (
   const { system, userMessage } = buildWordFamilyInsightPrompt(input)
   const response = await getAnthropicClient().messages.create({
     model: MODEL_WORD_FAMILY,
-    ...(MODEL_WORD_FAMILY === MODEL_HAIKU ? {} : reasoningParams(MODEL_WORD_FAMILY, 'low')),
+    ...reasoningParams(MODEL_WORD_FAMILY, 'low'),
     max_tokens: 2000,
     system: cachedSystem(system),
     tools: [buildTool()],

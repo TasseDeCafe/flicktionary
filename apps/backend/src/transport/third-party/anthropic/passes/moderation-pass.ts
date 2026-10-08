@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 export const MODERATION_CATEGORIES = [
@@ -66,7 +66,8 @@ export const moderationPass = async (chunk: string): Promise<ModerationVerdict |
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 16,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 21,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: trimmed }],
   })
