@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 
@@ -40,7 +40,8 @@ ${outputLanguageInstruction} Optionally a single POS tag and a single register t
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 200,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 260,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })

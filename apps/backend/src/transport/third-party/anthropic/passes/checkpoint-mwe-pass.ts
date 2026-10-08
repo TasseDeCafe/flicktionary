@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 // Checkpoint-review MWE confirmation: the recall filter (findMweCandidates)
@@ -56,7 +56,8 @@ export const checkpointMwePass = async (params: {
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 10 * params.items.length + 50,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 13 * params.items.length + 65,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })

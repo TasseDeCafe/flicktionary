@@ -3,7 +3,7 @@ import {
   isSupportedLanguageCode,
   type SupportedLanguageCode,
 } from '@flicktionary/core/constants/supported-languages'
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const MAX_INPUT_CHARS = 1_000
@@ -19,7 +19,8 @@ export const languageDetectionPass = async (text: string): Promise<SupportedLang
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 16,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 21,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: trimmed.slice(0, MAX_INPUT_CHARS) }],
   })

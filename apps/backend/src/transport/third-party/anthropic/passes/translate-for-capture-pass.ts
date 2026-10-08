@@ -110,9 +110,8 @@ Rules:
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_TRANSLATE,
-    // Haiku 4.5 takes no reasoning params; other models run at their lowest
-    // reasoning setting (see reasoningParams).
-    ...(MODEL_TRANSLATE === MODEL_HAIKU ? {} : reasoningParams(MODEL_TRANSLATE, 'low')),
+    // Every model runs at its lowest reasoning setting (see reasoningParams).
+    ...reasoningParams(MODEL_TRANSLATE, 'low'),
     max_tokens: 1000,
     system: cachedSystem(system),
     tools: [buildTool()],

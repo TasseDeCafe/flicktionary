@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const MAX_TITLE_CHARS = 60
@@ -13,7 +13,8 @@ export const vocabChatTitlePass = async (args: {
 }): Promise<string | null> => {
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 40,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 52,
     system: `You name a language learner's vocabulary chat. Reply with a short title (2-5 words) in ${args.titleLanguage} naming the topic, e.g. "Gym vocabulary" or "Falling asleep". No quotes, no trailing punctuation, nothing else.`,
     messages: [
       {

@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 // Batched short glosses for the book page's "Learn before you read" list: each
@@ -60,7 +60,8 @@ ${outputLanguageInstruction}`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
-    max_tokens: 30 * params.items.length + 50,
+    ...reasoningParams(MODEL_HAIKU, 'low'),
+    max_tokens: 40 * params.items.length + 65,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })
