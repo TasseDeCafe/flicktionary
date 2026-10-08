@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { cachedSystem, getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -140,7 +141,7 @@ export const generateFormData = async (args: GenerateFormDataArgs): Promise<Form
   const languageInstructions = getLanguageInstructions(args.targetLanguage, {
     ipaDialect: args.ipaDialect,
   })
-  const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, its stress-marked display form where the language uses one, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${
+  const system = `You are a meticulous ${getLanguageName(args.targetLanguage)} lexicographer preparing a single flashcard for a learner whose native language is ${getLanguageName(args.nativeLanguage)}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, its stress-marked display form where the language uses one, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${
     languageInstructions ? `\n\n${languageInstructions}` : ''
   }\n\nOutput only the tool call, no commentary.`
 
@@ -148,8 +149,8 @@ export const generateFormData = async (args: GenerateFormDataArgs): Promise<Form
     args.headwordTranslation ? ` — ${args.headwordTranslation}` : ''
   }
 Encountered inflected form: ${args.surfaceForm}
-${args.encounteredSentence ? `Encountered sentence (context for the form's sense and register — do NOT copy it; write a fresh, short standalone target_example): ${args.encounteredSentence}\n` : ''}Target language: ${args.targetLanguage}
-Native language: ${args.nativeLanguage}
+${args.encounteredSentence ? `Encountered sentence (context for the form's sense and register — do NOT copy it; write a fresh, short standalone target_example): ${args.encounteredSentence}\n` : ''}Target language: ${getLanguageName(args.targetLanguage)}
+Native language: ${getLanguageName(args.nativeLanguage)}
 
 Submit the form's data via the tool.`
 

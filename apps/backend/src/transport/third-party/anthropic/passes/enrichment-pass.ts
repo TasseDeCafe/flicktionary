@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -197,7 +198,7 @@ export const enrichmentPass = async ({
   ipaDialect,
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
   const translationModeBlock = hideTranslationFields
-    ? `\nTranslation fields are disabled for this target language. Set translation="", surface_translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
+    ? `\nTranslation fields are disabled for this target language. Set translation="", surface_translation="" and native_example="". Keep definition, target_example, and general explanations in ${getLanguageName(targetLanguage)}.`
     : ''
   const l1NotesBlock = allowL1Notes
     ? `\nYou may include extras.l1_notes for contrastive traps involving the learner's native language.`

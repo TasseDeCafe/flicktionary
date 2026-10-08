@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
@@ -67,7 +68,7 @@ const runChunk = async (
       return `${index + 1}. Word: ${item.headword} — ${item.sense}\n${excerpts}`
     })
     .join('\n')
-  const userMessage = `Language: ${targetLanguage}\n\n${itemsBlock}`
+  const userMessage = `Language: ${getLanguageName(targetLanguage)}\n\n${itemsBlock}`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,

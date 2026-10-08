@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_GRADE_SENTENCE, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -64,8 +65,8 @@ export const gradeUseInSentencePass = async (args: {
   hideTranslationFields: boolean
   allowL1Notes: boolean
 }): Promise<GradeUseInSentenceResult> => {
-  const feedbackLanguage = args.hideTranslationFields ? args.targetLanguage : args.nativeLanguage
-  const userMessage = `The learner was asked to write one ${args.targetLanguage} sentence using this term in its stored sense:
+  const feedbackLanguage = getLanguageName(args.hideTranslationFields ? args.targetLanguage : args.nativeLanguage)
+  const userMessage = `The learner was asked to write one ${getLanguageName(args.targetLanguage)} sentence using this term in its stored sense:
 
 headword="${args.headword}" sense="${args.sense}"
 

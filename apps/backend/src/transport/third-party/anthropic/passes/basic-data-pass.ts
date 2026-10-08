@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -211,7 +212,7 @@ ${highlightLines}\n`
     : ''
 
   const translationModeNote = shouldHideTranslationFields
-    ? `\n- Translation fields are disabled for this target language. Set translation=null, surface_translation=null and native_example=null on every row. Keep definition and target_example in ${targetLanguage}.`
+    ? `\n- Translation fields are disabled for this target language. Set translation=null, surface_translation=null and native_example=null on every row. Keep definition and target_example in ${getLanguageName(targetLanguage)}.`
     : ''
 
   const userMessage = `Emit one row per user highlight only. DO NOT discover any new chunks
@@ -224,8 +225,8 @@ segment_id, translation, surface_translation, definition, target_example,
 native_example. Populate
 the optional \`grammar\` object per chunk when relevant for the target
 language (see the system prompt for per-language guidance).
-The learner is at ${cefrLevel}, native language ${nativeLanguage}, target
-${targetLanguage}. Headwords must be in dictionary citation form (lemmatized),
+The learner is at ${cefrLevel}, native language ${getLanguageName(nativeLanguage)}, target
+${getLanguageName(targetLanguage)}. Headwords must be in dictionary citation form (lemmatized),
 and translation must render that citation form (infinitive for verbs, singular
 for nouns) — never the inflected selection as it appears in the segment. Each
 headword must cover the SAME word(s) the user selected, only normalized — do NOT

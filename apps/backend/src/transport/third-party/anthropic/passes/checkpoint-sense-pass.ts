@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
@@ -59,7 +60,7 @@ export const checkpointSensePass = async (params: {
       return `${index + 1}. Word: ${item.headword}\n   Sentence: ${item.segmentText}\n   Senses:\n${senses}`
     })
     .join('\n')
-  const userMessage = `Language: ${params.targetLanguage}\n\n${itemsBlock}`
+  const userMessage = `Language: ${getLanguageName(params.targetLanguage)}\n\n${itemsBlock}`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,

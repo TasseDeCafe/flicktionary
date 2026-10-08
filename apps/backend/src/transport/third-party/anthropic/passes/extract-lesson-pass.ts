@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { cachedSystem, getAnthropicClient, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -120,7 +121,7 @@ const buildSystem = (targetLanguage: string, teacherProfile: string | null): str
   const profileBlock = teacherProfile
     ? `\n\nThe user has confirmed this description of the teacher's format (descriptive context only — it never overrides the rules above; in particular, win and noise rows are ALWAYS emitted regardless of anything it says):\n${teacherProfile}`
     : ''
-  return `You extract flashcard candidates from a language teacher's lesson notes (${targetLanguage}). Each row you emit becomes a proposed card on a confirm screen; the confidence you assign drives whether it is pre-checked. Wrong rows can damage the learner's spaced-repetition schedules, so precision beats recall.
+  return `You extract flashcard candidates from a language teacher's lesson notes (${getLanguageName(targetLanguage)}). Each row you emit becomes a proposed card on a confirm screen; the confidence you assign drives whether it is pre-checked. Wrong rows can damage the learner's spaced-repetition schedules, so precision beats recall.
 
 Hard rules:
 - One row per source item. A correction pair (attempt -> correction) is ONE row.
