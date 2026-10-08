@@ -40,9 +40,40 @@ const normalizeToken = (value: string): string =>
 
 const isPos = (value: string): boolean => FAST_GLOSS_POS_ALIASES.has(normalizeToken(value))
 
+// Opening → closing marks across the scripts we gloss (English, German „…“ and
+// „…”, Russian/French «…», reversed »…«, CJK 「…」).
+const QUOTE_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ['"', '"'],
+  ['“', '”'],
+  ['„', '“'],
+  ['„', '”'],
+  ['«', '»'],
+  ['»', '«'],
+  ['‘', '’'],
+  ['‚', '‘'],
+  ["'", "'"],
+  ['「', '」'],
+]
+
+// When the selection itself is quoted («…» in a subtitle line), the model
+// echoes the quotes around the whole gloss. Only a single wrapping pair is
+// removed: an inner occurrence of either mark (`"yes" or "no"`, `'til` …) means
+// the quotes belong to the content, so the gloss is left as is.
+const stripWrappingQuotes = (gloss: string): string => {
+  const trimmed = gloss.trim()
+  for (const [open, close] of QUOTE_PAIRS) {
+    if (trimmed.length < open.length + close.length + 1) continue
+    if (!trimmed.startsWith(open) || !trimmed.endsWith(close)) continue
+    const inner = trimmed.slice(open.length, trimmed.length - close.length)
+    if (inner.includes(open) || inner.includes(close)) continue
+    return inner.trim()
+  }
+  return trimmed
+}
+
 export const parseFastGloss = (raw: string): { gloss: string; pos: string | null; register: string | null } => {
   const lines = raw.trim().split(/\r?\n/)
-  const gloss = lines[0] ?? ''
+  const gloss = stripWrappingQuotes(lines[0] ?? '')
   const metadata = lines
     .slice(1)
     .map((line) => line.trim())
