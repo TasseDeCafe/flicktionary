@@ -1,5 +1,6 @@
 import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 
 // Batched short glosses for the book page's "Learn before you read" list: each
 // word glossed in the book sentence it comes up in next, so a word the book
@@ -45,14 +46,18 @@ export const prelearnGlossPass = async (params: {
 }): Promise<Array<string | null>> => {
   if (params.items.length === 0) return []
 
+  // Language names, not ISO codes — see fastGlossPass: with a bare code next to
+  // Cyrillic passages Haiku 5.5 drifts into transliterating the gloss.
+  const target = getLanguageName(params.targetLanguage)
+  const native = getLanguageName(params.nativeLanguage)
   const outputLanguageInstruction = params.hideTranslationFields
-    ? `Write each gloss as a short definition in ${params.targetLanguage}.`
-    : `Write each gloss in ${params.nativeLanguage} (or as a short definition in ${params.targetLanguage} if the languages match).`
+    ? `Write each gloss as a short definition in ${target}.`
+    : `Write each gloss in ${native} (or as a short definition in ${target} if the languages match).`
   const itemsBlock = params.items
     .map((item, index) => `${index + 1}. Word: ${item.headword}\n   Passage: ${item.context}`)
     .join('\n')
-  const userMessage = `Target: ${params.targetLanguage}
-Native: ${params.nativeLanguage}
+  const userMessage = `Target: ${target}
+Native: ${native}
 
 ${itemsBlock}
 

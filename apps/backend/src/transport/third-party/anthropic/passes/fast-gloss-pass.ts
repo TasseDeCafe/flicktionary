@@ -1,6 +1,7 @@
 import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 
 type FastGlossPassArgs = {
   targetLanguage: string
@@ -29,11 +30,16 @@ export const fastGlossPass = async ({
   contextLine,
   selectionText,
 }: FastGlossPassArgs): Promise<FastGloss> => {
+  // Language names, not ISO codes: told to gloss "in fr" next to a long
+  // Cyrillic context, Haiku 5.5 wrote French in Cyrillic letters (мондаин,
+  // лécha) in ~35% of replays; "in French" brought that under 1%.
+  const target = getLanguageName(targetLanguage)
+  const native = getLanguageName(nativeLanguage)
   const outputLanguageInstruction = hideTranslationFields
-    ? `Return a one-line definition/gloss in ${targetLanguage}.`
-    : `Return a one-line gloss in ${nativeLanguage} (or a one-line definition in ${targetLanguage} if the languages match).`
-  const userMessage = `Target: ${targetLanguage}
-Native: ${nativeLanguage}
+    ? `Return a one-line definition/gloss in ${target}.`
+    : `Return a one-line gloss in ${native} (or a one-line definition in ${target} if the languages match).`
+  const userMessage = `Target: ${target}
+Native: ${native}
 Context line: ${contextLine}
 Selection: ${selectionText}
 
