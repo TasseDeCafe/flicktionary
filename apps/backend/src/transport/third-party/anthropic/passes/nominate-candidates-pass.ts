@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_NOMINATE, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -119,7 +120,7 @@ export const nominateCandidatesPass = async ({
   const segmentLines = segments.map((s) => `[${s.id}] ${s.text}`).join('\n')
 
   const userMessage = `Identify the spans in the reading window below that a learner
-at ${cefrLevel} (native ${nativeLanguage}, target ${targetLanguage}) would benefit
+at ${cefrLevel} (native ${getLanguageName(nativeLanguage)}, target ${getLanguageName(targetLanguage)}) would benefit
 from studying. Aim for about ${target}, but be guided by the content, not the
 number: a dense passage can hold more than ${target} worthwhile spans, a sparse one
 fewer. Capture everything that genuinely meets the bar — don't artificially limit

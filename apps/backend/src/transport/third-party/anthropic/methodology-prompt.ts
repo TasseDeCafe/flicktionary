@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getLanguageInstructions, type TargetIpaDialect } from './language-instructions'
 
@@ -80,8 +81,8 @@ export const buildMethodologySystem = ({
   ipaDialect,
 }: BuildMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
-- Native language: ${nativeLanguage}
-- Target language: ${targetLanguage}
+- Native language: ${getLanguageName(nativeLanguage)}
+- Target language: ${getLanguageName(targetLanguage)}
 - CEFR level: ${cefrLevel}`
 
   const contextBlock = `Source context for this session:
@@ -131,8 +132,8 @@ export const buildPracticeMethodologySystem = ({
   extraStableBlocks = [],
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
-- Native language: ${nativeLanguage}
-- Target language: ${targetLanguage}
+- Native language: ${getLanguageName(nativeLanguage)}
+- Target language: ${getLanguageName(targetLanguage)}
 - CEFR level: ${cefrLevel}`
 
   const languageInstructions = getLanguageInstructions(targetLanguage, { ipaDialect })

@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS, reasoningParams, TOOL_CHOICE_AUTO } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
@@ -192,11 +193,12 @@ Write a substantially different exercise (different sentence, different distract
 
 const buildUserMessage = (args: GenerateExerciseArgs): string => {
   const termBlock = describeTerm(args.term, args.hideTranslationFields)
-  const promptLanguage = args.hideTranslationFields ? args.targetLanguage : args.nativeLanguage
+  const target = getLanguageName(args.targetLanguage)
+  const promptLanguage = getLanguageName(args.hideTranslationFields ? args.targetLanguage : args.nativeLanguage)
   const rejectionBlock = buildRejectionFeedbackBlock(args.previousRejections)
 
   if (args.type === 'mc_cloze') {
-    return `Create ONE multiple-choice cloze exercise in ${args.targetLanguage} for the term below.
+    return `Create ONE multiple-choice cloze exercise in ${target} for the term below.
 
 Hard rules:
 - Write one natural sentence (10–25 words) using the term in its stored sense. Inflect to fit. Surrounding language stays at B1–B2 grammar; no rare vocabulary outside the term.
@@ -206,7 +208,7 @@ Hard rules:
 - surface_form is the EXACT substring of sentence realizing the term (matching casing/punctuation). The server computes the blank position from it.
 - Write the sentence in FULL, with the term present — never blank it out yourself (no underscores); the server does the blanking.
 
-Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
+Learner profile: CEFR ${args.cefrLevel}, target language ${target}.
 
 Term:
 
@@ -216,7 +218,7 @@ Call ${TOOL_NAME}. Stop after the tool call.`
   }
 
   if (args.type === 'mc_comprehension') {
-    return `Create ONE multiple-choice comprehension exercise in ${args.targetLanguage} for the term below.
+    return `Create ONE multiple-choice comprehension exercise in ${target} for the term below.
 
 Hard rules:
 - Write one natural sentence (10–25 words) using the term in its stored sense. Inflect to fit. Surrounding language stays at B1–B2 grammar.
@@ -225,7 +227,7 @@ Hard rules:
 - surface_form is the EXACT substring of sentence realizing the term (matching casing/punctuation). The server computes the term's position from it.
 - The 3 distractors must be plausible but clearly wrong; none may be defensibly correct. Match the correct option's length and register so form gives nothing away.
 
-Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
+Learner profile: CEFR ${args.cefrLevel}, target language ${target}.
 
 Term:
 
@@ -234,7 +236,7 @@ ${termBlock}${rejectionBlock}
 Call ${TOOL_NAME}. Stop after the tool call.`
   }
 
-  return `Create ONE production-cloze exercise in ${args.targetLanguage} for the term below. The learner sees the sentence with the term blanked out (plus the term's meaning as a hint) and must TYPE the missing form.
+  return `Create ONE production-cloze exercise in ${target} for the term below. The learner sees the sentence with the term blanked out (plus the term's meaning as a hint) and must TYPE the missing form.
 
 Hard rules:
 - Write one natural sentence (10–25 words) using the term in its stored sense. Inflect to fit. Surrounding language stays at B1–B2 grammar.
@@ -244,7 +246,7 @@ Hard rules:
 - Write the sentence in FULL, with the term present — never blank it out yourself (no underscores); the server does the blanking.
 - accepted_forms lists every string acceptable as a typed answer: the surface form plus legitimate orthographic variants only. Do NOT include inflections that would be wrong in this sentence.
 
-Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
+Learner profile: CEFR ${args.cefrLevel}, target language ${target}.
 
 Term:
 

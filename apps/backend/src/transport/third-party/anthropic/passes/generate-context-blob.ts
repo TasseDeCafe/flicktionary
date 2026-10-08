@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { getAnthropicClient, MODEL_OPUS, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
@@ -34,7 +35,7 @@ export const generateContextBlob = async ({
   segmentSample,
 }: GenerateContextBlobArgs): Promise<string> => {
   const userMessage = `Title: ${contentTitle}
-Language: ${contentLanguage}
+Language: ${getLanguageName(contentLanguage)}
 Source type: ${contentType}
 
 ${labelForContentType(contentType)}:

@@ -1,3 +1,4 @@
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { getAnthropicClient, MODEL_HAIKU, reasoningParams } from '../anthropic-client'
 import { logAnthropicCacheUsage } from '../log-cache-usage'
 
@@ -56,7 +57,7 @@ export const senseMatchPass = async (params: {
 
   const savedBlock = params.existing.map((s, i) => `${i + 1}. ${describeSense(s)}`).join('\n')
   const sentenceLine = params.candidate.sentence ? `\nSentence: ${params.candidate.sentence}` : ''
-  const userMessage = `Language: ${params.targetLanguage}
+  const userMessage = `Language: ${getLanguageName(params.targetLanguage)}
 Word: ${params.headword}
 
 Saved senses:
