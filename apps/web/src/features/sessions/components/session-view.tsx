@@ -1143,7 +1143,11 @@ export const SessionView = () => {
   // text. They stay put whenever they carry the task at hand — search,
   // bookmark placement, a sweep's Undo — and at the end of the text, where the
   // close-out flow needs the footer.
-  const { hidden: scrolledChromeHidden, reveal: revealChrome } = useAutoHideChrome(scrollEl, programmaticScrollUntilRef)
+  const { hidden: scrolledChromeHidden, reveal: revealChrome } = useAutoHideChrome(
+    scrollEl,
+    programmaticScrollUntilRef,
+    glossOpen
+  )
   const chromeHidden = scrolledChromeHidden && !searchOpen && !isPlacingBookmark && !sweepConfirmation && !reachedEnd
   // Desktop's explicit way back (mobile taps the top strip, see ReadingProgressBar).
   useHotkeys([{ key: 'escape', onPress: revealChrome }], chromeHidden)
