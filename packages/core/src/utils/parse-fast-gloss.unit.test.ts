@@ -45,4 +45,23 @@ describe('parseFastGloss', () => {
       register: 'formal',
     })
   })
+
+  it('strips a single pair of quotes wrapping the whole gloss', () => {
+    expect(parseFastGloss('"I can\'t live like this anymore"\nclause\ncolloquial').gloss).toBe(
+      "I can't live like this anymore"
+    )
+    expect(parseFastGloss('«не могу»').gloss).toBe('не могу')
+    expect(parseFastGloss('„Ich komme gleich.“').gloss).toBe('Ich komme gleich.')
+    expect(parseFastGloss("“we'll see”").gloss).toBe("we'll see")
+  })
+
+  it('keeps quotes that belong to the gloss content', () => {
+    expect(parseFastGloss('"yes" or "no"').gloss).toBe('"yes" or "no"')
+    expect(parseFastGloss('"Horns and Hooves" (a sham company)').gloss).toBe('"Horns and Hooves" (a sham company)')
+    expect(parseFastGloss('I couldn\'t care less (lit. "I care about a cucumber")').gloss).toBe(
+      'I couldn\'t care less (lit. "I care about a cucumber")'
+    )
+    expect(parseFastGloss("'til dawn").gloss).toBe("'til dawn")
+    expect(parseFastGloss('""').gloss).toBe('""')
+  })
 })

@@ -18,6 +18,7 @@ export type FastGloss = {
 
 const SYSTEM_PROMPT = `You return a single-line gloss for a chunk in its sentence context.
 No examples, no etymology, no formatting, no extra commentary.
+Never wrap the gloss in quotation marks, even when the selection is quoted.
 Format: <gloss>\\n[POS]\\n[register]
 Where POS and register are single words and may be omitted (one or two trailing newlines).`
 
