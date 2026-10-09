@@ -109,6 +109,7 @@ export const useSetFacetEnabled = () => {
           orpcQuery.cards.get.key(),
           orpcQuery.cards.listBySession.key(),
           orpcQuery.chunks.getStudyTargets.key(),
+          orpcQuery.vocabChat.captureMatches.key(),
         ],
         errorMessage: t`Failed to update study targets`,
         showErrorModal: true,

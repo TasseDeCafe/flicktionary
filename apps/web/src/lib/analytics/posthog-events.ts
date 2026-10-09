@@ -74,6 +74,12 @@ export const POSTHOG_EVENTS = {
   paywallDismissed: () => {
     capture('paywall_dismissed')
   },
+  // "Review tomorrow" on a capture search row: how far the card's next review
+  // moved forward tells whether the button rescues forgotten words or just
+  // gets tapped.
+  captureReviewBoosted: (props: { skill: string; days_pulled_forward: number }) => {
+    capture('capture_review_boost', props)
+  },
   // Captured before posthog.reset() so it still carries the identified user.
   signOut: () => {
     capture('sign_out')

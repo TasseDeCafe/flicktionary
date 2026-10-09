@@ -38,6 +38,7 @@ const card = (over: Partial<ReviewTerm>): ReviewTerm =>
     targetForm: '',
     facetPayload: null,
     ipaSource: null,
+    boostActive: false,
     ...over,
   }) as ReviewTerm
 
