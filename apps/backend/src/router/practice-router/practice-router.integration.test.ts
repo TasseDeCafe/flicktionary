@@ -163,4 +163,55 @@ describe('practice-router', () => {
     const flashcards = composed.body.data.items.filter((item: { type: string }) => item.type === 'flashcard')
     expect(flashcards.map((item: { card: { skill: string } }) => item.card.skill)).toEqual(['pronunciation'])
   })
+
+  describe('review boost', () => {
+    const boost = (token: string, userLookupId: string, action: 'boost' | 'unboost') =>
+      request(testApp)
+        .post(`/api/v1/practice/review-terms/${userLookupId}/${action}`)
+        .set(buildAuthorizationHeaders(token))
+        .send({ skill: 'meaning_recognition' })
+
+    test('returns 401 when unauthenticated', async () => {
+      const response = await boost('wrong-token', '00000000-0000-0000-0000-000000000000', 'boost')
+      expect(response.status).toBe(401)
+    })
+
+    test('golden path: boosts a far-due card to tomorrow, flags it on the flashcard, and undoes it', async () => {
+      const { token, userLookupId } = await userWithKeptTerm()
+      // Never reviewed: nothing to pull forward.
+      expect((await boost(token, userLookupId, 'boost')).body.data).toEqual({ boosted: false })
+
+      await sql`
+        UPDATE public.study_facets
+        SET srs_state = 'review', srs_due = NOW() + INTERVAL '23 days', srs_stability = 20, srs_difficulty = 5,
+            srs_reps = 3, srs_last_review = NOW() - INTERVAL '5 days', introduced_at = NOW() - INTERVAL '30 days'
+        WHERE user_lookup_id = ${userLookupId} AND skill = 'meaning_recognition'
+      `
+      const boosted = await boost(token, userLookupId, 'boost')
+      expect(boosted.status).toBe(200)
+      expect(boosted.body.data).toEqual({ boosted: true })
+
+      // Make the boosted card due now (the boost's day, one day early).
+      await sql`
+        UPDATE public.study_facets
+        SET srs_due = srs_due - INTERVAL '1 day', boosted_at = boosted_at - INTERVAL '1 day'
+        WHERE user_lookup_id = ${userLookupId} AND skill = 'meaning_recognition'
+      `
+      const composed = await request(testApp)
+        .post('/api/v1/practice/queue/compose')
+        .set(buildAuthorizationHeaders(token))
+        .send({ targetLanguage: 'es', filter: { scope: 'due_only' } })
+      expect(composed.status).toBe(200)
+      const cards = composed.body.data.items.filter((item: { type: string }) => item.type === 'flashcard')
+      expect(cards.map((item: { card: { boostActive: boolean } }) => item.card.boostActive)).toEqual([true])
+
+      await sql`
+        UPDATE public.study_facets
+        SET srs_due = srs_due + INTERVAL '1 day', boosted_at = boosted_at + INTERVAL '1 day'
+        WHERE user_lookup_id = ${userLookupId} AND skill = 'meaning_recognition'
+      `
+      expect((await boost(token, userLookupId, 'unboost')).body.data).toEqual({ restored: true })
+      expect((await boost(token, userLookupId, 'unboost')).body.data).toEqual({ restored: false })
+    })
+  })
 })

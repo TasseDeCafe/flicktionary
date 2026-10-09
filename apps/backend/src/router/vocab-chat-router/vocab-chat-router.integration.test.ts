@@ -128,7 +128,7 @@ describe('vocab-chat-router', () => {
       candidates: translated.body.data.candidates,
     })
     expect(matched.status).toBe(200)
-    expect(matched.body.data.matches).toEqual([{ existingCard: null, otherSenses: [] }])
+    expect(matched.body.data.matches).toEqual([{ existingCard: null, otherSenses: [], status: null }])
     expect(senseMatchPass).not.toHaveBeenCalled()
 
     createChatCompletion.mockResolvedValueOnce(proposeTurn).mockResolvedValueOnce(replyTurn)
@@ -247,7 +247,7 @@ describe('vocab-chat-router', () => {
 
       const response = await matchesFor(token)
       expect(response.status).toBe(200)
-      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: ['to sniff'] }])
+      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: ['to sniff'], status: null }])
       expect(senseMatchPass).toHaveBeenLastCalledWith(
         expect.objectContaining({
           headword: 'нюхать',
@@ -257,16 +257,69 @@ describe('vocab-chat-router', () => {
       )
     })
 
-    test('the same meaning points at the saved card', async () => {
+    test('the same meaning points at the saved card, with its status', async () => {
       const { token } = await onboardedUser()
       const { cardId, sessionId } = await addSniff(token)
       senseMatchPass.mockImplementationOnce(async ({ existing }) => existing[0].userLookupId)
 
       const response = await matchesFor(token)
       expect(response.status).toBe(200)
+      // An English query tests coming up with the Russian word.
+      expect(response.body.data.testedSkill).toBe('meaning_production')
       expect(response.body.data.matches).toEqual([
-        { existingCard: { userLookupId: expect.any(String), cardId, sessionId }, otherSenses: [] },
+        {
+          existingCard: { userLookupId: expect.any(String), cardId, sessionId },
+          otherSenses: [],
+          status: {
+            notStarted: true,
+            facets: [expect.objectContaining({ skill: 'meaning_recognition', srsState: null, enabled: true })],
+            demand: null,
+          },
+        },
       ])
+    })
+
+    test('capture demand moves a not-started term up, visibly, and undoes', async () => {
+      const { token } = await onboardedUser()
+      await addSniff(token)
+      senseMatchPass.mockImplementation(async ({ existing }) => existing[0].userLookupId)
+      const userLookupId = (await matchesFor(token)).body.data.matches[0].existingCard.userLookupId
+      // Saved just now: step its demand clock out of the one-hour collapse window.
+      await sql`UPDATE public.user_lookups SET last_demand_at = NOW() - INTERVAL '2 hours' WHERE id = ${userLookupId}`
+      const demand = (path: string, body: object) =>
+        request(testApp).post(`/api/v1/vocab-chat/${path}`).set(buildAuthorizationHeaders(token)).send(body)
+
+      const recorded = await demand('capture-demand', { userLookupId, source: 'search' })
+      expect(recorded.status).toBe(200)
+      expect(recorded.body.data).toEqual({ outcome: 'counted' })
+      expect((await matchesFor(token)).body.data.matches[0].status.demand).toEqual({
+        counted: true,
+        reverted: false,
+        undoable: true,
+      })
+
+      expect((await demand('capture-demand/undo', { userLookupId })).body.data).toEqual({ reverted: true })
+      expect((await matchesFor(token)).body.data.matches[0].status.demand.reverted).toBe(true)
+      senseMatchPass.mockReset()
+    })
+
+    test("capture demand returns 401 when unauthenticated, and ignores another user's term", async () => {
+      const unauthenticated = await request(testApp)
+        .post('/api/v1/vocab-chat/capture-demand')
+        .set({ Authorization: 'Bearer wrong-token' })
+        .send({ userLookupId: '00000000-0000-0000-0000-000000000000', source: 'search' })
+      expect(unauthenticated.status).toBe(401)
+
+      const { token: owner } = await onboardedUser()
+      await addSniff(owner)
+      senseMatchPass.mockImplementationOnce(async ({ existing }) => existing[0].userLookupId)
+      const userLookupId = (await matchesFor(owner)).body.data.matches[0].existingCard.userLookupId
+      const { token: other } = await onboardedUser()
+      const response = await request(testApp)
+        .post('/api/v1/vocab-chat/capture-demand')
+        .set(buildAuthorizationHeaders(other))
+        .send({ userLookupId, source: 'search' })
+      expect(response.body.data).toEqual({ outcome: 'not_eligible' })
     })
 
     test('an unkept term is not in the vocabulary', async () => {
@@ -280,7 +333,7 @@ describe('vocab-chat-router', () => {
       senseMatchPass.mockClear()
 
       const response = await matchesFor(token)
-      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: [] }])
+      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: [], status: null }])
       expect(senseMatchPass).not.toHaveBeenCalled()
     })
   })

@@ -94,6 +94,7 @@ const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   targetForm: row.target_form,
   facetPayload: (row.payload as Record<string, unknown> | null) ?? null,
   ipaSource: computeIpaSource(row),
+  boostActive: row.boost_active,
 })
 
 // Shapes a composed-queue service item into its wire DTO: flashcards through
@@ -574,6 +575,26 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         deps: { studyFacetsRepository: deps.studyFacetsRepository },
       })
       return { data: { unparked } }
+    }),
+
+    // Ownership is part of the boost SQL (the user_lookups join), so a foreign
+    // or missing term is just "not boostable".
+    boostFacet: implementer.boostFacet.handler(async ({ input, context }) => {
+      const result = await deps.studyFacetsRepository.boostFacet({
+        userId: context.res.locals.userId,
+        userLookupId: input.userLookupId,
+        skill: input.skill,
+      })
+      return { data: { boosted: result !== null } }
+    }),
+
+    unboostFacet: implementer.unboostFacet.handler(async ({ input, context }) => {
+      const restored = await deps.studyFacetsRepository.unboostFacet({
+        userId: context.res.locals.userId,
+        userLookupId: input.userLookupId,
+        skill: input.skill,
+      })
+      return { data: { restored } }
     }),
   })
 

@@ -12,6 +12,8 @@ const thereIs: KeptSenseWithCard = {
   sessionId: '00000000-0000-0000-0000-0000000000s1',
 }
 
+const status = { notStarted: true, facets: [], demand: null }
+
 const eat = { headword: 'есть', note: 'to eat (impf)', example: 'Я хочу есть.' }
 const sleep = { headword: 'спать', note: 'to sleep', example: 'Я сплю.' }
 
@@ -22,6 +24,9 @@ const run = (senseMatchPass: ReturnType<typeof vi.fn>, inputLanguage: string | n
       anthropicPasses: { senseMatchPass: senseMatchPass as never },
       userLookupsRepository: {
         listKeptSensesByHeadwords: vi.fn().mockResolvedValue(new Map([['есть', [thereIs]]])),
+      },
+      captureDemandRepository: {
+        listCaptureStatus: vi.fn().mockResolvedValue(new Map([[thereIs.id, status]])),
       },
     }
   )
@@ -40,12 +45,12 @@ describe('matchCaptureCandidates', () => {
 
   test('another meaning of the headword keeps Add and names the saved one', async () => {
     const matches = await run(vi.fn().mockResolvedValue(null))
-    expect(matches[0]).toEqual({ existingCard: null, otherSenses: ['there is'] })
+    expect(matches[0]).toEqual({ existingCard: null, otherSenses: ['there is'], status: null })
   })
 
   test('a pass error is treated as a new meaning', async () => {
     const matches = await run(vi.fn().mockRejectedValue(new Error('boom')))
-    expect(matches[0]).toEqual({ existingCard: null, otherSenses: ['there is'] })
+    expect(matches[0]).toEqual({ existingCard: null, otherSenses: ['there is'], status: null })
   })
 
   test('only headword hits run the pass, with the native-language query as the meaning', async () => {

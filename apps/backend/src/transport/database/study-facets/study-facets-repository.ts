@@ -2,6 +2,7 @@ import postgres from 'postgres'
 import { bookStreamSourceForTermSql } from '../../../service/practice/book-priority'
 import { beginTx, sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import { boostableSql, boostActiveSql, boostDueSql, boostedDueSql } from './review-boost-sql'
 
 // One independently-scheduled card on a term. Identity is
 // (user_lookup_id, skill, target_form); it owns its own FSRS + leech state.
@@ -691,6 +692,71 @@ const restoreSrsSnapshotForFacet = async (
       AND skill = ${params.skill}
       AND target_form = ${params.targetForm}
   `
+  // A "Review tomorrow" boost made after the undone write survives it: rebase
+  // the boost on the restored schedule (so a later boost undo can't resurrect
+  // part of the undone write) and keep the restored due no later than the
+  // boost's day. A restore back to never-introduced drops the boost.
+  await executor`
+    UPDATE public.study_facets f
+    SET boost_prev_due = CASE WHEN f.srs_state IS NOT NULL THEN f.srs_due END,
+        srs_due = CASE WHEN f.srs_state IS NOT NULL THEN LEAST(f.srs_due, ${boostedDueSql()}) ELSE f.srs_due END,
+        boosted_at = CASE WHEN f.srs_state IS NOT NULL THEN f.boosted_at END
+    WHERE f.user_lookup_id = ${params.userLookupId}
+      AND f.skill = ${params.skill}
+      AND f.target_form = ${params.targetForm}
+      AND ${boostActiveSql()}
+  `
+}
+
+// "Review tomorrow" on a term's citation facet: due at the start of the next
+// server day, remembering the replaced due date for the undo. Returns the new
+// due date, or null when the facet isn't boostable (already due by tomorrow,
+// not in review, parked, disabled, …) — repeats are no-ops.
+const boostFacet = async (params: {
+  userId: string
+  userLookupId: string
+  skill: FacetSkill
+}): Promise<{ srsDue: string } | null> => {
+  const rows = (await sql`
+    UPDATE public.study_facets f
+    SET srs_due = ${boostDueSql()},
+        boosted_at = NOW(),
+        boost_prev_due = f.srs_due,
+        updated_at = NOW()
+    FROM public.user_lookups ul
+    WHERE f.user_lookup_id = ul.id
+      AND ul.user_id = ${params.userId}
+      AND f.user_lookup_id = ${params.userLookupId}
+      AND f.skill = ${params.skill}
+      AND f.target_form = ${CITATION_FORM}
+      AND ${boostableSql()}
+    RETURNING f.srs_due
+  `) as Array<{ srs_due: string }>
+  return rows[0] ? { srsDue: rows[0].srs_due } : null
+}
+
+// Undo of a boost: back to the replaced due date, only while the boost is
+// active and untouched (no review since, still on its day). Returns whether
+// anything changed.
+const unboostFacet = async (params: { userId: string; userLookupId: string; skill: FacetSkill }): Promise<boolean> => {
+  const rows = await sql`
+    UPDATE public.study_facets f
+    SET srs_due = f.boost_prev_due,
+        boosted_at = NULL,
+        boost_prev_due = NULL,
+        updated_at = NOW()
+    FROM public.user_lookups ul
+    WHERE f.user_lookup_id = ul.id
+      AND ul.user_id = ${params.userId}
+      AND f.user_lookup_id = ${params.userLookupId}
+      AND f.skill = ${params.skill}
+      AND f.target_form = ${CITATION_FORM}
+      AND ${boostActiveSql()}
+      AND f.boost_prev_due IS NOT NULL
+      AND f.srs_due = ${boostedDueSql()}
+    RETURNING f.id
+  `
+  return rows.length > 0
 }
 
 // Park a facet out of its review rotation. The parked_at IS NULL guard makes a
@@ -853,6 +919,12 @@ export interface StudyFacetsRepositoryInterface {
       lastReview: Date
     }
   ) => Promise<void>
+  boostFacet: (params: {
+    userId: string
+    userLookupId: string
+    skill: FacetSkill
+  }) => Promise<{ srsDue: string } | null>
+  unboostFacet: (params: { userId: string; userLookupId: string; skill: FacetSkill }) => Promise<boolean>
 }
 
 // Module-level functions importable directly (e.g. user-lookups-repository's
@@ -874,6 +946,8 @@ export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   seedKnownAssertParkedFacet,
   applyFsrsResultForFacet,
   restoreSrsSnapshotForFacet,
+  boostFacet,
+  unboostFacet,
   applyStudyIntentFacets,
   parkLeechFacet,
   advanceRehabDayFacet,

@@ -26,6 +26,7 @@ const newRow: DbUserLookupWithFacet = {
   zipf_estimate: null,
   last_encountered_at: '2026-01-01T00:00:00Z',
   last_demand_at: '2026-01-01T00:00:00Z',
+  last_demand_attempt_at: '2026-01-01T00:00:00Z',
   encounter_count: 1,
   content_encounter_count: 0,
   last_content_encounter_at: null,
@@ -46,6 +47,7 @@ const newRow: DbUserLookupWithFacet = {
   introduced_at: null,
   payload: {},
   is_production_enabled: false,
+  boost_active: false,
 }
 
 const reviewRow: DbUserLookupWithFacet = {

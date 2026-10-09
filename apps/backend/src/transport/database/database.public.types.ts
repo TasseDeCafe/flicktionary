@@ -128,6 +128,50 @@ export type Database = {
           },
         ]
       }
+      capture_demand_events: {
+        Row: {
+          counted: boolean
+          created_at: string
+          id: string
+          prev_last_demand_at: string
+          prev_last_encountered_at: string
+          reverted_at: string | null
+          source: string
+          user_id: string
+          user_lookup_id: string
+        }
+        Insert: {
+          counted: boolean
+          created_at?: string
+          id?: string
+          prev_last_demand_at: string
+          prev_last_encountered_at: string
+          reverted_at?: string | null
+          source: string
+          user_id: string
+          user_lookup_id: string
+        }
+        Update: {
+          counted?: boolean
+          created_at?: string
+          id?: string
+          prev_last_demand_at?: string
+          prev_last_encountered_at?: string
+          reverted_at?: string | null
+          source?: string
+          user_id?: string
+          user_lookup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'capture_demand_events_user_lookup_id_fkey'
+            columns: ['user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       card_chat_messages: {
         Row: {
           card_id: string
@@ -1300,6 +1344,8 @@ export type Database = {
       study_facets: {
         Row: {
           book_quota_source_id: string | null
+          boost_prev_due: string | null
+          boosted_at: string | null
           created_at: string
           data_status: string
           disabled_at: string | null
@@ -1328,6 +1374,8 @@ export type Database = {
         }
         Insert: {
           book_quota_source_id?: string | null
+          boost_prev_due?: string | null
+          boosted_at?: string | null
           created_at?: string
           data_status?: string
           disabled_at?: string | null
@@ -1356,6 +1404,8 @@ export type Database = {
         }
         Update: {
           book_quota_source_id?: string | null
+          boost_prev_due?: string | null
+          boosted_at?: string | null
           created_at?: string
           data_status?: string
           disabled_at?: string | null
@@ -1781,6 +1831,7 @@ export type Database = {
           id: string
           last_content_encounter_at: string | null
           last_demand_at: string
+          last_demand_attempt_at: string
           last_encountered_at: string
           native_example: string | null
           sense: string
@@ -1808,6 +1859,7 @@ export type Database = {
           id?: string
           last_content_encounter_at?: string | null
           last_demand_at?: string
+          last_demand_attempt_at?: string
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
@@ -1835,6 +1887,7 @@ export type Database = {
           id?: string
           last_content_encounter_at?: string | null
           last_demand_at?: string
+          last_demand_attempt_at?: string
           last_encountered_at?: string
           native_example?: string | null
           sense?: string
