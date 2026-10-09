@@ -501,7 +501,7 @@ msgid "Activity, streak, and coverage"
 msgstr "Activité, série et couverture"
 
 #: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
-#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+#: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
 msgid "Add"
 msgstr "Ajouter"
 
@@ -578,7 +578,7 @@ msgstr "Ajouter une traduction"
 
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 #: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
-#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
+#: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
 msgid "Added"
 msgstr "Ajouté"
 
@@ -588,6 +588,7 @@ msgstr "Ajout en cours..."
 
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
+#: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
 msgid "Adding…"
 msgstr "Ajout…"
 
@@ -1541,6 +1542,10 @@ msgstr "Impossible de mettre à jour le partage de ce contenu"
 msgid "Could not update the featured flag"
 msgstr "Impossible de mettre à jour l'indicateur de mise en avant"
 
+#: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
+msgid "Couldn't add this word"
+msgstr "Impossible d'ajouter ce mot"
+
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't generate the form's data"
 msgstr "Impossible de générer les données de la forme"
@@ -2392,6 +2397,10 @@ msgstr "Échec de la demande de suggestions"
 msgid "Failed to resume your Telegram import"
 msgstr "Échec de la reprise de votre importation Telegram"
 
+#: apps/web/src/features/vocab-chat/api/vocab-chat-hooks.ts
+msgid "Failed to retry"
+msgstr "Échec de la nouvelle tentative"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to retry enrichment"
 msgstr "Échec de la nouvelle tentative d'enrichissement"
@@ -3047,7 +3056,6 @@ msgid "In short-term learning — follow-ups come back within days."
 msgstr "En apprentissage à court terme — les révisions reviennent sous quelques jours."
 
 #: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
-#: apps/web/src/features/vocab-chat/components/vocab-chat-view.tsx
 msgid "In your vocabulary"
 msgstr "Dans votre vocabulaire"
 
@@ -4698,6 +4706,7 @@ msgstr "Repris ici"
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
+#: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -4747,6 +4756,14 @@ msgstr "Termes à réviser"
 #: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
 msgid "Review tomorrow"
 msgstr "Réviser demain"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Review tomorrow brings it forward if you'd forgotten it."
+msgstr "Réviser demain la rapproche si vous l'aviez oubliée."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Review tomorrow brings it forward if you'd forgotten what it means."
+msgstr "Réviser demain l'avance si vous aviez oublié ce que cela signifie."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Review your saved vocabulary with spaced-repetition flashcards and quick exercises."
@@ -6707,6 +6724,10 @@ msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez p
 msgid "You are now subscribed to Premium!"
 msgstr "Vous êtes maintenant abonné à Premium !"
 
+#: apps/web/src/features/vocab-chat/utils/use-tested-because.ts
+msgid "You asked for the {targetLanguage} word, so this is about coming up with it: your production card."
+msgstr "Vous avez demandé le mot en {targetLanguage}, il s'agit donc de le produire : votre carte de production."
+
 #: apps/web/src/features/practice/components/flashcard-face.tsx
 msgid "You asked to review this"
 msgstr "Vous avez demandé à réviser ceci"
@@ -6727,12 +6748,20 @@ msgstr "Vous pouvez retirer la marque de n'importe quel mot plus tard."
 msgid "You can watch videos with subtitles without signing in — but saving words requires a paired account."
 msgstr "Vous pouvez regarder des vidéos avec sous-titres sans vous connecter — mais enregistrer des mots nécessite un compte associé."
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You don't practice that card for this word. A production card may help."
+msgstr "Vous ne pratiquez pas cette carte pour ce mot. Une carte de production pourrait aider."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You don't practice that card for this word. A recognition card may help."
+msgstr "Vous ne pratiquez pas cette carte pour ce mot. Une carte de reconnaissance pourrait aider."
+
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "You have already used your free trial."
 msgstr "Vous avez déjà utilisé votre essai gratuit."
 
-#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+#: apps/web/src/features/vocab-chat/components/term-row.tsx
 msgid "You have it as {savedSenses}"
 msgstr "Vous l'avez comme {savedSenses}"
 
@@ -6752,21 +6781,13 @@ msgstr "Vous connaissez : {knownList}"
 msgid "You paused this card. Resuming picks up its old schedule, so it may be due right away."
 msgstr "Vous avez mis cette carte en pause. La reprendre rétablit son ancien calendrier, elle peut donc être due immédiatement."
 
-#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
-msgid "You searched in {searchLanguage}, so this is about coming up with the word: your production card. Review tomorrow brings it forward if you'd forgotten it."
-msgstr "Vous avez recherché en {searchLanguage}, il s'agit donc de produire le mot : votre carte de production. Réviser demain la fait avancer si vous l'aviez oublié."
+#: apps/web/src/features/vocab-chat/utils/use-tested-because.ts
+msgid "You searched in {searchLanguage}, so this is about coming up with the {targetLanguage} word: your production card."
+msgstr "Vous avez recherché en {searchLanguage}, il s'agit donc de trouver le mot en {targetLanguage} : votre carte de production."
 
-#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
-msgid "You searched in {searchLanguage}, so this is about recognizing the word: your recognition card. Review tomorrow brings it forward if you'd forgotten what it means."
-msgstr "Vous avez recherché en {searchLanguage}, il s'agit donc de reconnaître le mot : votre carte de reconnaissance. Réviser demain la fera avancer si vous aviez oublié ce qu'il signifie."
-
-#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
-msgid "You searched in {searchLanguage}, which means coming up with the {targetLanguage} word, but you don't practice that for this word. A production card may help."
-msgstr "Vous avez recherché en {searchLanguage}, ce qui signifie trouver le mot en {targetLanguage}, mais vous ne pratiquez pas cela pour ce mot. Une carte de production pourrait aider."
-
-#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
-msgid "You searched in {searchLanguage}, which means recognizing the word, but you don't practice that for this word. A recognition card may help."
-msgstr "Vous avez recherché en {searchLanguage}, ce qui signifie reconnaître le mot, mais vous ne pratiquez pas cela pour ce mot. Une carte de reconnaissance pourrait aider."
+#: apps/web/src/features/vocab-chat/utils/use-tested-because.ts
+msgid "You searched in {targetLanguage}, so this is about recognizing the word: your recognition card."
+msgstr "Vous avez recherché en {targetLanguage}, il s'agit donc de reconnaître le mot : votre carte de reconnaissance."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "You used your free trial"
@@ -6849,6 +6870,10 @@ msgstr "votre adresse e-mail"
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "Your level in {languageName}"
 msgstr "Votre niveau en {languageName}"
+
+#: apps/web/src/features/vocab-chat/utils/use-tested-because.ts
+msgid "Your message used this word, so this is about recognizing it: your recognition card."
+msgstr "Votre message utilisait ce mot, donc il s'agit de le reconnaître : votre carte de reconnaissance."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx

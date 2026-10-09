@@ -5,6 +5,7 @@ import type { TextSegmentsRepositoryInterface } from '../../transport/database/t
 import type {
   DbVocabChatMessage,
   VocabChatProposal,
+  VocabChatProposalItem,
   VocabChatRepositoryInterface,
   VocabChatThread,
 } from '../../transport/database/vocab-chat/vocab-chat-repository'
@@ -30,9 +31,25 @@ export class ProposalNotFoundError extends Error {
   }
 }
 
+// Stored proposals predating savedSenses carry an `inVocabulary` flag instead.
 export const parseProposal = (raw: unknown): VocabChatProposal | null => {
   if (!raw || typeof raw !== 'object' || !Array.isArray((raw as { items?: unknown }).items)) return null
-  return raw as VocabChatProposal
+  const items = (raw as { items: Array<VocabChatProposalItem & { inVocabulary?: boolean }> }).items
+  return {
+    items: items.map(({ inVocabulary, ...item }) => ({
+      ...item,
+      savedSenses: Array.isArray(item.savedSenses) ? item.savedSenses : inVocabulary ? [] : null,
+    })),
+  }
+}
+
+// How the model sees an item's saved senses: nothing when the headword isn't
+// saved, the senses otherwise, so it can tell a saved word from a homograph
+// the learner doesn't have yet.
+export const describeSavedSenses = (item: VocabChatProposalItem): string => {
+  if (item.savedSenses === null) return ''
+  if (item.savedSenses.length === 0) return ' (already in vocabulary)'
+  return ` (saved as: ${item.savedSenses.map((sense) => `"${sense}"`).join(', ')})`
 }
 
 // Adds the selected items of a chat proposal to the thread's session, the
@@ -41,8 +58,10 @@ export const parseProposal = (raw: unknown): VocabChatProposal | null => {
 // a real substring), one highlight on the headword, and one enrich_highlight
 // job per item, all in one transaction. Card creation and every LLM call run
 // afterwards in the background enrichment pipeline, which also keeps the card.
-// Re-adding an already-added item is a no-op, so a double click or a model
-// re-issuing add_proposed_cards can't duplicate cards.
+// Re-adding an already-added item is a no-op while its card is coming or
+// live, so a double click or a model re-issuing add_proposed_cards can't
+// duplicate cards; once its term is gone (deleted or unkept), Add creates a
+// fresh highlight.
 export const addProposedItems = async (
   params: { thread: VocabChatThread; userId: string; messageId: string; itemIndexes: number[] },
   deps: AddProposedItemsDependencies
@@ -56,10 +75,14 @@ export const addProposedItems = async (
     const addedHeadwords: string[] = []
     const alreadyAddedHeadwords: string[] = []
     const items = proposal.items.map((item) => ({ ...item }))
+    const adds = await deps.vocabChatRepository.resolveProposalAdds(
+      { userId, highlightIds: items.flatMap((item) => (item.highlightId ? [item.highlightId] : [])) },
+      tx
+    )
     for (const index of new Set(params.itemIndexes)) {
       const item = items[index]
       if (!item) continue
-      if (item.highlightId) {
+      if (item.highlightId && adds.has(item.highlightId)) {
         alreadyAddedHeadwords.push(item.headword)
         continue
       }

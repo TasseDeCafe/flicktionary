@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import { Check } from 'lucide-react'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 
@@ -43,6 +44,15 @@ export const TermRowStatus = ({ children, tone }: { children: ReactNode; tone: '
   ) : (
     <span className='text-muted-foreground truncate'>{children}</span>
   )
+
+// The same headword saved with another meaning: says why the row still
+// offers Add. Nothing when there's no such sense.
+export const OtherSensesStatus = ({ senses }: { senses: string[] }) => {
+  const { t } = useLingui()
+  if (senses.length === 0) return null
+  const savedSenses = senses.map((sense) => `"${sense}"`).join(', ')
+  return <TermRowStatus tone='muted'>{t`You have it as ${savedSenses}`}</TermRowStatus>
+}
 
 export const TermRowSkeleton = () => (
   <div className='flex flex-col gap-2 rounded-xl border px-4 py-3'>

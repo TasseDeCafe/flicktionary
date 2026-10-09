@@ -14,9 +14,11 @@ export type VocabChatProposalItem = {
   headword: string
   note: string
   example: string
-  // Whether the learner already had the headword in their vocabulary when it
-  // was proposed (the checklist leaves those unchecked).
-  inVocabulary: boolean
+  // The learner's saved senses of the headword when it was proposed, so the
+  // model can tell a saved word from a homograph they don't have yet: null =
+  // not saved, [] = saved without a sense label. Model-facing only; the rows
+  // ask captureMatches fresh.
+  savedSenses: string[] | null
   highlightId: string | null
 }
 export type VocabChatProposal = { items: VocabChatProposalItem[] }
@@ -157,6 +159,62 @@ const setProposal = async (messageId: string, proposal: VocabChatProposal, tx: p
   await tx`UPDATE public.vocab_chat_messages SET proposal = ${tx.json(proposal as unknown as postgres.JSONValue)} WHERE id = ${messageId}`
 }
 
+// Where an added proposal item stands: its enrichment job still running or
+// failed, or done with a live, kept term (and the card the row opens). A
+// highlight missing from the map is gone: its term was deleted or unkept, or
+// the job finished without a card.
+export type ProposalAdd = {
+  state: 'pending' | 'failed' | 'added'
+  card: { userLookupId: string; cardId: string; sessionId: string } | null
+}
+
+const resolveProposalAdds = async (
+  params: { userId: string; highlightIds: string[] },
+  executor: postgres.Sql = sql
+): Promise<Map<string, ProposalAdd>> => {
+  if (params.highlightIds.length === 0) return new Map()
+  const rows = (await executor`
+    SELECT h.id AS highlight_id, card.card_id, card.study_session_id, card.user_lookup_id, job.status AS job_status
+    FROM public.highlights h
+    JOIN public.study_sessions s ON s.id = h.study_session_id AND s.user_id = ${params.userId}
+    LEFT JOIN LATERAL (
+      SELECT c.id AS card_id, c.study_session_id, ul.id AS user_lookup_id
+      FROM public.cards c
+      JOIN public.user_lookups ul ON ul.id = c.user_lookup_id
+      WHERE c.highlight_id = h.id AND ul.count > 0 AND ul.deleted_at IS NULL AND c.status = 'kept'
+      ORDER BY c.created_at ASC
+      LIMIT 1
+    ) card ON true
+    LEFT JOIN LATERAL (
+      SELECT j.status FROM public.processing_jobs j
+      WHERE j.highlight_id = h.id AND j.kind = 'enrich_highlight'
+      ORDER BY j.created_at DESC
+      LIMIT 1
+    ) job ON true
+    WHERE h.id = ANY(${params.highlightIds}::uuid[])
+  `) as Array<{
+    highlight_id: string
+    card_id: string | null
+    study_session_id: string | null
+    user_lookup_id: string | null
+    job_status: string | null
+  }>
+  const adds = new Map<string, ProposalAdd>()
+  for (const row of rows) {
+    if (row.card_id && row.study_session_id && row.user_lookup_id) {
+      adds.set(row.highlight_id, {
+        state: 'added',
+        card: { userLookupId: row.user_lookup_id, cardId: row.card_id, sessionId: row.study_session_id },
+      })
+    } else if (row.job_status === 'failed') {
+      adds.set(row.highlight_id, { state: 'failed', card: null })
+    } else if (row.job_status !== null && row.job_status !== 'done') {
+      adds.set(row.highlight_id, { state: 'pending', card: null })
+    }
+  }
+  return adds
+}
+
 export type VocabChatRepositoryInterface = {
   createThread: typeof createThread
   deleteEmptyThread: typeof deleteEmptyThread
@@ -166,6 +224,7 @@ export type VocabChatRepositoryInterface = {
   listMessages: typeof listMessages
   lockMessageForUpdate: typeof lockMessageForUpdate
   setProposal: typeof setProposal
+  resolveProposalAdds: typeof resolveProposalAdds
 }
 
 export const VocabChatRepository = (): VocabChatRepositoryInterface => ({
@@ -177,4 +236,5 @@ export const VocabChatRepository = (): VocabChatRepositoryInterface => ({
   listMessages,
   lockMessageForUpdate,
   setProposal,
+  resolveProposalAdds,
 })

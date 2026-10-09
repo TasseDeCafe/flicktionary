@@ -2,17 +2,10 @@ import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ArrowUp, CalendarClock, Loader2, Plus, RotateCcw } from 'lucide-react'
 import type { CaptureMatch, CaptureTermStatus } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { useSetFacetEnabled } from '@/features/vocabulary/api/vocabulary-hooks'
-import {
-  useBoostFacet,
-  useRecordCaptureDemand,
-  useUnboostFacet,
-  useUndoCaptureDemand,
-  type CaptureSearch,
-} from '../api/vocab-chat-hooks'
+import { useBoostFacet, useRecordCaptureDemand, useUnboostFacet, useUndoCaptureDemand } from '../api/vocab-chat-hooks'
 import { deriveCaptureRowState, testedFacet, type TestedSkill } from '../utils/capture-row-state'
 import { CaptureFacetList, CaptureInfoButton } from './capture-info-sheet'
 import { EditCardButton } from './edit-card-button'
@@ -20,24 +13,27 @@ import { TermRow, TermRowStatus } from './term-row'
 
 type ExistingCard = NonNullable<CaptureMatch['existingCard']>
 
-// A candidate the learner already has. The status speaks about the one card
-// this search tested and says what a tap will do; every change to practice
-// (demand, a boost, an added or resumed card) shows on the row and can be
-// undone from it (docs/READER-SPEC.md → Translate & add).
+// A candidate the learner already has (a search result or a chat proposal).
+// The status speaks about the one card the candidate tests and says what a
+// tap will do; every change to practice (demand, a boost, an added or resumed
+// card) shows on the row and can be undone from it (docs/READER-SPEC.md →
+// Translate & add). `testedBecause` is the sentence saying why that card;
+// `offerMoveUp` offers Move up on a never-started term the row didn't move
+// up on its own (chat rows record no automatic demand).
 export const CaptureMatchRow = ({
   rowText,
   card,
   status,
   testedSkill,
-  search,
-  inputLanguage,
+  testedBecause,
+  offerMoveUp = false,
 }: {
   rowText: { headword: string; note: string; example: string }
   card: ExistingCard
   status: CaptureTermStatus
   testedSkill: TestedSkill
-  search: CaptureSearch
-  inputLanguage: string | null
+  testedBecause: string
+  offerMoveUp?: boolean
 }) => {
   const { t, i18n } = useLingui()
   const { mutate: recordDemand, isPending: isRecordingDemand } = useRecordCaptureDemand()
@@ -53,8 +49,6 @@ export const CaptureMatchRow = ({
   const state = deriveCaptureRowState(status, testedSkill)
   const tested = testedFacet(status, testedSkill)
   const isProduction = testedSkill === 'meaning_production'
-  const searchLanguage = getLanguageName(inputLanguage ?? search.targetLanguage)
-  const targetLanguage = getLanguageName(search.targetLanguage)
   const facetList = <CaptureFacetList facets={status.facets} testedSkill={testedSkill} />
   const info = (children: ReactNode) => <CaptureInfoButton headword={rowText.headword}>{children}</CaptureInfoButton>
 
@@ -152,7 +146,7 @@ export const CaptureMatchRow = ({
           )
         } else {
           statusNode = <TermRowStatus tone='muted'>{t`Not started`}</TermRowStatus>
-          if (state.demand === 'undone') {
+          if (state.demand === 'undone' || (offerMoveUp && state.demand === 'none')) {
             action = (
               <Button
                 variant='secondary'
@@ -175,9 +169,10 @@ export const CaptureMatchRow = ({
             {info(
               <>
                 <p>
+                  {testedBecause}{' '}
                   {isProduction
-                    ? t`You searched in ${searchLanguage}, which means coming up with the ${targetLanguage} word, but you don't practice that for this word. A production card may help.`
-                    : t`You searched in ${searchLanguage}, which means recognizing the word, but you don't practice that for this word. A recognition card may help.`}
+                    ? t`You don't practice that card for this word. A production card may help.`
+                    : t`You don't practice that card for this word. A recognition card may help.`}
                 </p>
                 {facetList}
               </>
@@ -257,9 +252,10 @@ export const CaptureMatchRow = ({
             {info(
               <>
                 <p>
+                  {testedBecause}{' '}
                   {isProduction
-                    ? t`You searched in ${searchLanguage}, so this is about coming up with the word: your production card. Review tomorrow brings it forward if you'd forgotten it.`
-                    : t`You searched in ${searchLanguage}, so this is about recognizing the word: your recognition card. Review tomorrow brings it forward if you'd forgotten what it means.`}
+                    ? t`Review tomorrow brings it forward if you'd forgotten it.`
+                    : t`Review tomorrow brings it forward if you'd forgotten what it means.`}
                 </p>
                 {facetList}
               </>

@@ -6,7 +6,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { vocabChatContract, type VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { getConfig } from '../../config/environment-config'
-import type { DbVocabChatMessage } from '../../transport/database/vocab-chat/vocab-chat-repository'
+import type { DbVocabChatMessage, ProposalAdd } from '../../transport/database/vocab-chat/vocab-chat-repository'
 import { blockedContentMessage } from '../../service/moderation/moderate-ingest-text'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { addProposedItems, parseProposal, ProposalNotFoundError } from '../../service/vocab-chat/add-proposed-items'
@@ -18,7 +18,7 @@ import {
 } from '../../service/vocab-chat/run-vocab-chat'
 import { startVocabChat, StartVocabChatPrefsError } from '../../service/vocab-chat/start-vocab-chat'
 import { translateForCapture } from '../../service/vocab-chat/translate-for-capture'
-import { matchCaptureCandidates } from '../../service/vocab-chat/match-capture-candidates'
+import { matchCaptureCandidates, type SenseMatchCache } from '../../service/vocab-chat/match-capture-candidates'
 import { toIsoString } from '../router-utils'
 import type { CaptureDemandRepositoryInterface } from '../../transport/database/capture-demand/capture-demand-repository'
 import { incrementFixedWindowCount } from '../fixed-window-counter'
@@ -34,8 +34,16 @@ const MAX_TRANSLATIONS_PER_HOUR = 300
 // more than translate.
 const captureMatchesByUser = new NodeCache({ stdTTL: 60 * 60 })
 const MAX_CAPTURE_MATCHES_PER_HOUR = 600
+// senseMatchPass answers for captureMatches (keyed by every input, so a
+// vocabulary change misses): reopening a thread with many proposals or a
+// search doesn't re-ask Haiku.
+const senseMatchAnswers = new NodeCache({ stdTTL: 24 * 60 * 60, maxKeys: 50_000 })
+const senseMatchCache: SenseMatchCache = {
+  get: (key) => senseMatchAnswers.get<string | null>(key),
+  set: (key, matchedId) => void senseMatchAnswers.set(key, matchedId),
+}
 
-const toMessageDto = (row: DbVocabChatMessage): VocabChatMessage => {
+const toMessageDto = (row: DbVocabChatMessage, adds: Map<string, ProposalAdd>): VocabChatMessage => {
   const proposal = parseProposal(row.proposal)
   const suggestion = row.new_thread_suggestion as { language: string; message: string } | null
   return {
@@ -44,13 +52,17 @@ const toMessageDto = (row: DbVocabChatMessage): VocabChatMessage => {
     content: row.content,
     proposal: proposal
       ? {
-          items: proposal.items.map((item) => ({
-            headword: item.headword,
-            note: item.note,
-            example: item.example,
-            inVocabulary: item.inVocabulary,
-            added: item.highlightId !== null,
-          })),
+          items: proposal.items.map((item) => {
+            const add = item.highlightId ? adds.get(item.highlightId) : undefined
+            return {
+              headword: item.headword,
+              note: item.note,
+              example: item.example,
+              highlightId: item.highlightId,
+              addState: add?.state ?? null,
+              addedCard: add?.card ?? null,
+            }
+          }),
         }
       : null,
     newThreadSuggestion: suggestion ? { language: suggestion.language, message: suggestion.message } : null,
@@ -81,6 +93,15 @@ export const VocabChatRouter = (
       throw errors.TOO_MANY_REQUESTS({ data: { errors: [{ message: 'Too many requests — try again later' }] } })
     }
     incrementFixedWindowCount(cache, userId)
+  }
+
+  // Message DTOs with each added proposal item resolved to where it stands.
+  const toMessageDtos = async (rows: DbVocabChatMessage[], userId: string): Promise<VocabChatMessage[]> => {
+    const highlightIds = rows.flatMap(
+      (row) => parseProposal(row.proposal)?.items.flatMap((item) => (item.highlightId ? [item.highlightId] : [])) ?? []
+    )
+    const adds = await deps.vocabChatRepository.resolveProposalAdds({ userId, highlightIds })
+    return rows.map((row) => toMessageDto(row, adds))
   }
 
   // Maps the chat services' domain errors to contract errors.
@@ -134,20 +155,10 @@ export const VocabChatRouter = (
       const userId = context.res.locals.userId
       assertWithinLimit(captureMatchesByUser, MAX_CAPTURE_MATCHES_PER_HOUR, userId, errors)
       const matches = await matchCaptureCandidates(
-        {
-          userId,
-          targetLanguage: input.targetLanguage,
-          query: input.text,
-          inputLanguage: input.inputLanguage,
-          candidates: input.candidates,
-        },
-        deps
+        { userId, targetLanguage: input.targetLanguage, context: input.context, candidates: input.candidates },
+        { ...deps, senseMatchCache }
       )
-      const testedSkill =
-        input.inputLanguage !== input.targetLanguage
-          ? ('meaning_production' as const)
-          : ('meaning_recognition' as const)
-      return { data: { testedSkill, matches } }
+      return { data: { matches } }
     }),
 
     recordCaptureDemand: implementer.recordCaptureDemand.handler(async ({ input, context, errors }) => {
@@ -182,7 +193,7 @@ export const VocabChatRouter = (
           data: {
             sessionId: result.thread.session.id,
             title: result.thread.title,
-            messages: result.messages.map(toMessageDto),
+            messages: await toMessageDtos(result.messages, userId),
           },
         }
       } catch (e) {
@@ -200,7 +211,7 @@ export const VocabChatRouter = (
           sessionId: thread.session.id,
           title: thread.title,
           targetLanguage: thread.session.target_language,
-          messages: messages.map(toMessageDto),
+          messages: await toMessageDtos(messages, context.res.locals.userId),
         },
       }
     }),
@@ -216,8 +227,9 @@ export const VocabChatRouter = (
         const result = await runVocabChat({ thread, userId, content: input.content }, deps)
         return {
           data: {
-            userMessage: toMessageDto(result.userMessage),
-            assistantMessage: toMessageDto(result.assistantMessage),
+            ...(await toMessageDtos([result.userMessage, result.assistantMessage], userId).then(
+              ([userMessage, assistantMessage]) => ({ userMessage: userMessage!, assistantMessage: assistantMessage! })
+            )),
             title: result.title,
           },
         }
@@ -236,7 +248,8 @@ export const VocabChatRouter = (
           { thread, userId, messageId: input.messageId, itemIndexes: input.itemIndexes },
           deps
         )
-        return { data: { message: toMessageDto(result.message) } }
+        const [message] = await toMessageDtos([result.message], userId)
+        return { data: { message: message! } }
       } catch (e) {
         return rethrowChatError(e, errors)
       }

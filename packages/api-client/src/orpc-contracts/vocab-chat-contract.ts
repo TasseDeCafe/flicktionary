@@ -48,6 +48,8 @@ export type CaptureTermStatus = z.infer<typeof CaptureTermStatusSchema>
 // Whether the learner already has a candidate, by meaning (a saved homograph
 // with another meaning doesn't count).
 export const CaptureMatchSchema = z.object({
+  // The card this candidate tests (see captureMatches).
+  testedSkill: z.enum(['meaning_recognition', 'meaning_production']),
   // The saved term with this candidate's meaning, else null.
   existingCard: z
     .object({ userLookupId: z.string().uuid(), cardId: z.string().uuid(), sessionId: z.string().uuid() })
@@ -63,10 +65,16 @@ export const VocabChatProposalItemSchema = z.object({
   headword: z.string(),
   note: z.string(),
   example: z.string(),
-  // Already in the learner's vocabulary when proposed.
-  inVocabulary: z.boolean(),
-  // Added to the thread; the card is created by background enrichment.
-  added: z.boolean(),
+  // Set once the item was added; the card is created by background
+  // enrichment from this highlight (its retry handle when it failed).
+  highlightId: z.string().uuid().nullable(),
+  // Where an added item stands: enrichment running, failed, or done with a
+  // live term (addedCard). Null when not added, or when its term is gone
+  // (deleted or unkept), so Add is offered again.
+  addState: z.enum(['pending', 'failed', 'added']).nullable(),
+  addedCard: z
+    .object({ userLookupId: z.string().uuid(), cardId: z.string().uuid(), sessionId: z.string().uuid() })
+    .nullable(),
 })
 export type VocabChatProposalItem = z.infer<typeof VocabChatProposalItemSchema>
 
@@ -134,42 +142,47 @@ export const vocabChatContract = {
       })
     ),
 
-  // Which translate candidates are already in the learner's vocabulary, one
-  // match per candidate, in order. Separate from translate so it can be asked
-  // fresh while the LLM candidates stay cached: vocabulary changes made
-  // anywhere show up when the learner comes back to a search.
+  // Which candidates (a search's, or a chat proposal's) are already in the
+  // learner's vocabulary, one match per candidate, in order. Separate from
+  // translate and the thread so it can be asked fresh while the LLM answers
+  // stay cached: vocabulary changes made anywhere show up when the learner
+  // comes back.
   captureMatches: oc
     .route({ method: 'POST', path: '/vocab-chat/capture-matches', successStatus: 200 })
     .errors(errorsWithPrefs)
     .input(
       z.object({
         targetLanguage: z.string().min(2).max(10),
-        // The search text and translate's detected input language.
-        text: z.string().trim().min(1).max(500),
-        inputLanguage: z.string().nullable(),
+        // Where the candidates came from, which decides the card each one
+        // tests. A search tests one card for all: production for a
+        // native-language query (it also names the meaning the sense match
+        // looks for), recognition for a target-language one. A chat proposal
+        // tests recognition when the learner's message contains the
+        // headword ("what does ждать mean?"), production otherwise.
+        context: z.discriminatedUnion('kind', [
+          z.object({
+            kind: z.literal('search'),
+            text: z.string().trim().min(1).max(500),
+            inputLanguage: z.string().nullable(),
+          }),
+          z.object({ kind: z.literal('chat'), userMessage: z.string().max(4000) }),
+        ]),
         candidates: z
           .array(
             z.object({
               headword: z.string().trim().min(1).max(200),
               note: z.string().max(500),
               example: z.string().max(1000),
+              // Already known to be this term (an added chat item): no sense
+              // match, just its card and status.
+              userLookupId: z.string().uuid().optional(),
             })
           )
           .min(1)
-          .max(10),
+          .max(20),
       })
     )
-    .output(
-      z.object({
-        data: z.object({
-          // The card the search tested: a native-language query means coming
-          // up with the word (production), a target-language one recognizing
-          // it.
-          testedSkill: z.enum(['meaning_recognition', 'meaning_production']),
-          matches: z.array(CaptureMatchSchema),
-        }),
-      })
-    ),
+    .output(z.object({ data: z.object({ matches: z.array(CaptureMatchSchema) }) })),
 
   // Demand from a capture search for a saved, never-started term: moves it up
   // the new words. `search` (the top result) and `edit_card` count at most

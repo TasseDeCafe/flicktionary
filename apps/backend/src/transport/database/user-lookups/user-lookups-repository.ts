@@ -412,6 +412,25 @@ const listKeptSensesByHeadwords = async (params: {
   return grouped
 }
 
+// The cards of kept, live terms by id (same population as
+// listKeptSensesByHeadwords), for candidates already known to be a term.
+const listKeptTermCards = async (params: {
+  userId: string
+  userLookupIds: string[]
+}): Promise<Map<string, { cardId: string; sessionId: string }>> => {
+  if (params.userLookupIds.length === 0) return new Map()
+  const rows = (await sql`
+    SELECT ul.id, c.id AS card_id, c.study_session_id
+    FROM public.user_lookups ul
+    JOIN public.cards c ON c.id = ul.first_card_id
+    WHERE ul.id = ANY(${params.userLookupIds}::uuid[])
+      AND ul.user_id = ${params.userId}
+      AND ul.deleted_at IS NULL
+      AND ul.count > 0
+  `) as Array<{ id: string; card_id: string; study_session_id: string }>
+  return new Map(rows.map((row) => [row.id, { cardId: row.card_id, sessionId: row.study_session_id }]))
+}
+
 // Idempotent get-or-insert keyed by (user_id, target_language, headword, sense).
 // Called at card-creation time so the user_lookups row always exists by the
 // time the card row references it. The no-op DO UPDATE clause exists solely so
@@ -2330,6 +2349,10 @@ export interface UserLookupsRepositoryInterface {
     targetLanguage: string
     headwords: string[]
   }) => Promise<Map<string, KeptSenseWithCard[]>>
+  listKeptTermCards: (params: {
+    userId: string
+    userLookupIds: string[]
+  }) => Promise<Map<string, { cardId: string; sessionId: string }>>
   updateContent: (params: {
     id: string
     translation?: string | null
@@ -2449,6 +2472,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listCoverageVocab,
     listByHeadwords,
     listKeptSensesByHeadwords,
+    listKeptTermCards,
     updateContent,
     applyGroundingPatch,
     renameKey,

@@ -23,8 +23,10 @@ describe('buildHistoryMessages', () => {
         content: 'Here are a few.',
         proposal: {
           items: [
-            { headword: 'штанга', note: 'barbell', example: '', inVocabulary: false, highlightId: 'h1' },
-            { headword: 'гантель', note: 'dumbbell', example: '', inVocabulary: true, highlightId: null },
+            { headword: 'штанга', note: 'barbell', example: '', savedSenses: null, highlightId: 'h1' },
+            { headword: 'гантель', note: 'dumbbell', example: '', savedSenses: [], highlightId: null },
+            { headword: 'жим', note: 'press', example: '', savedSenses: ['squeeze', 'grip'], highlightId: null },
+            { headword: 'гиря', note: 'kettlebell', example: '', savedSenses: null, highlightId: null },
           ],
         },
       }),
@@ -32,9 +34,36 @@ describe('buildHistoryMessages', () => {
     const history = buildHistoryMessages(prior, 'add the rest')
     expect(history.map((m) => m.role)).toEqual(['user', 'assistant', 'user'])
     expect(history[1]!.content).toBe(
-      'Here are a few.\n\n[Proposed cards, proposal_id=a1]\n0. штанга — barbell (added)\n1. гантель — dumbbell (already in vocabulary)'
+      [
+        'Here are a few.',
+        '',
+        '[Proposed cards, proposal_id=a1]',
+        '0. штанга — barbell (added)',
+        '1. гантель — dumbbell (already in vocabulary)',
+        '2. жим — press (saved as: "squeeze", "grip")',
+        '3. гиря — kettlebell',
+      ].join('\n')
     )
     expect(history[2]!.content).toBe('add the rest')
+  })
+
+  test('reads stored proposals that still carry an inVocabulary flag', () => {
+    const prior = [
+      message({
+        id: 'a1',
+        role: 'assistant',
+        content: 'Old.',
+        proposal: {
+          items: [
+            { headword: 'гантель', note: 'dumbbell', example: '', inVocabulary: true, highlightId: null },
+            { headword: 'гиря', note: 'kettlebell', example: '', inVocabulary: false, highlightId: null },
+          ],
+        },
+      }),
+    ]
+    expect(buildHistoryMessages(prior, 'next')[0]!.content).toContain(
+      '0. гантель — dumbbell (already in vocabulary)\n1. гиря — kettlebell'
+    )
   })
 
   test('folds older turns into a summary on the first verbatim user message', () => {

@@ -112,7 +112,7 @@ const insertSeed = async (
     proposal: {
       items: items.map((item) => ({
         ...item,
-        inVocabulary: existing.has(item.headword.toLowerCase()),
+        savedSenses: existing.get(item.headword.toLowerCase()) ?? null,
         highlightId: null,
       })),
     },

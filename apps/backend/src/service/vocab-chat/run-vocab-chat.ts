@@ -18,7 +18,12 @@ import { logCustomErrorMessageAndError } from '../../transport/error-monitoring/
 import { moderateIngestText } from '../moderation/moderate-ingest-text'
 import { getIpaDialectForTargetLanguage } from '../user-prefs/ipa-dialect'
 import { getLanguageMode } from '../user-prefs/language-mode'
-import { addProposedItems, parseProposal, type AddProposedItemsDependencies } from './add-proposed-items'
+import {
+  addProposedItems,
+  describeSavedSenses,
+  parseProposal,
+  type AddProposedItemsDependencies,
+} from './add-proposed-items'
 
 export type RunVocabChatDependencies = AddProposedItemsDependencies & {
   anthropicPasses: AnthropicPassesInterface
@@ -142,7 +147,7 @@ You are chatting with the learner inside their vocabulary app. The learner studi
 - Reply in ${replyLanguage}, except for the ${target} itself. Keep answers short and skimmable.
 - When the learner asks how to say something, give the natural ${target} way to say it, with the nuance that matters (register, aspect, collocation, L1 traps).
 - Whenever your answer contains ${target} terms worth studying, call ${PROPOSE_TOOL} with them instead of listing them in prose. Prefer 3-8 high-value items over long lists. Headwords follow the citation-form conventions above.
-- The ${PROPOSE_TOOL} result says which items the learner already has. You may call ${SEARCH_TOOL} first to avoid proposing those.
+- The ${PROPOSE_TOOL} result says which items the learner already has, with the meanings they saved ("saved as: …"). A saved spelling with a different meaning is a new term worth proposing. You may call ${SEARCH_TOOL} first to avoid proposing ones they have.
 - When the learner asks to add proposed terms ("add them", "add the first three"), call ${ADD_TOOL} with the proposal_id and the item indexes. You can only add proposed items: to add a new term, propose it first, then add it.
 - This chat is only for ${target}. If the learner asks for vocabulary in another target language, call ${NEW_THREAD_TOOL} and do not propose cards in that language. Questions about ${target} written in another language, and comparisons with other languages, belong here.
 - You cannot edit or delete existing cards. If asked, tell the learner to open the card and use its own chat.
@@ -152,7 +157,7 @@ const renderProposalForModel = (message: DbVocabChatMessage): string => {
   const proposal = parseProposal(message.proposal)
   if (!proposal || proposal.items.length === 0) return ''
   const lines = proposal.items.map((item, index) => {
-    const state = item.highlightId ? ' (added)' : item.inVocabulary ? ' (already in vocabulary)' : ''
+    const state = item.highlightId ? ' (added)' : describeSavedSenses(item)
     return `${index}. ${item.headword} — ${item.note}${state}`
   })
   return `\n\n[Proposed cards, proposal_id=${message.id}]\n${lines.join('\n')}`
@@ -266,13 +271,13 @@ const runTool = async (
     for (const item of items.slice(0, room)) {
       state.proposalItems.push({
         ...item,
-        inVocabulary: existing.has(item.headword.toLowerCase()),
+        savedSenses: existing.get(item.headword.toLowerCase()) ?? null,
         highlightId: null,
       })
     }
     const lines = state.proposalItems
       .slice(start)
-      .map((item, i) => `${start + i}. ${item.headword}${item.inVocabulary ? ' (already in vocabulary)' : ''}`)
+      .map((item, i) => `${start + i}. ${item.headword}${describeSavedSenses(item)}`)
     return {
       content: `Shown to the learner as a checklist. proposal_id=${state.assistantMessageId}\n${lines.join('\n')}`,
     }
