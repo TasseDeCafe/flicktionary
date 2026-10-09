@@ -243,7 +243,10 @@ vocab_chat_message                   -- vocabulary-chat turns, one thread per 'c
   role                'user' | 'assistant'
   content             text
   proposal            jsonb        -- assistant only: {items: [{headword, note, example,
-                                   -- inVocabulary, highlightId}]} from propose_cards;
+                                   -- savedSenses, highlightId}]} from propose_cards;
+                                   -- savedSenses: the learner's saved senses of the
+                                   -- headword at proposal time (null = not saved),
+                                   -- model-facing only;
                                    -- highlightId is set once the item was added
                                    -- (segment + highlight + enrich_highlight job)
   new_thread_suggestion jsonb      -- assistant only: {language, message} when the
