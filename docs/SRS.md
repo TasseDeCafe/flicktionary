@@ -271,7 +271,7 @@ filtered to enabled (`disabled_at IS NULL`), ready (`data_status='ready'`), non-
 
 | selector | predicate | cap | order |
 |---|---|---|---|
-| `listDueReviewTerms` review-state | `srs_state IN ('new','review')`, due | remaining **review budget** (`resolveReviewCaps`) | due ASC |
+| `listDueReviewTerms` review-state | `srs_state IN ('new','review')`, due | remaining **review budget** (`resolveReviewCaps`) | active boost first (§5 Review tomorrow), then due ASC |
 | `listDueReviewTerms` learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
 | `listOptInNewFacets` | `srs_state IS NULL`, **NOT** primary citation, not decayed | `includeOptInNew` only; `MAX_OPT_IN_NEW_PER_SESSION` across pools, hard ceiling per pool under `new_only` | tier ASC, zipf DESC |
 
@@ -310,7 +310,24 @@ multi-chunk runs can never inflate a single save into tier 1. The window runs on
 `last_demand_at`, a clock only these demand writes stamp (creation defaults it to NOW()):
 checkpoint content encounters bump `last_encountered_at` but must not swallow a re-save or
 lookup made within the hour. `findOrCreate` never bumps them (it fires from background
-materialization).
+materialization). Every call, collapsed or not, also stamps `last_demand_attempt_at`, the
+"later demand arrived" clock that capture-demand undo checks (below).
+
+**Capture searches as demand** (`capture-demand-repository.ts`, `vocabChat.recordCaptureDemand`).
+A "Translate & add" search that finds a saved, kept, never-started term (no facet with a
+schedule or an `introduced_at`) is the same evidence as a re-save. The client fires it for
+the top result, or a result spelled exactly like a target-language query (not related
+suggestions), once per row per mount; opening such a term's card from the search
+(`edit_card`) counts too. Each write is a `capture_demand_events` row (docs/DATA-MODEL.md):
+the encounter bump uses the same one-hour collapse (`counted = false` when other demand
+already covered the hour), and `search`/`edit_card` are skipped when the term had any capture
+event, live or undone, in the last hour, so remounts don't refire and an undo sticks. Undo
+(`undoCaptureDemand`) reverts the latest live counted event: `encounter_count - 1`, and
+`last_demand_at` / `last_encountered_at` back to their snapshot only while they still hold the
+event's own stamp. It is refused once `last_demand_attempt_at` is past the event: a lookup or
+re-save in the collapse window left no trace in `encounter_count`, so undoing would erase it.
+`move_up` (the row's button after an undo) bypasses the collapse window, but not while a
+counted move is still live.
 
 **Lookups as demand** (`glosses.recordLookup`, `service/lemma-lookups/record-lookup.ts`).
 An explicit lookup is a tap that opens a gloss sheet (web reader preview, practice
@@ -567,6 +584,32 @@ No FSRS recompute and no exercise-bank warming: the only caller (flashcard re-ra
 immediately follows a successful undo with a fresh `rateTerm`, which re-runs all of that.
 **Re-rate = undo + fresh rate** (Anki semantics), so the new rating goes through the full
 cap/introduction/leech machinery.
+
+### Review tomorrow (capture boost)
+
+`practice.boostFacet({ userLookupId, skill })`, offered on a "Translate & add" row
+(docs/READER-SPEC.md): the learner looked up a word they already study, usually because they
+forgot it. It pulls the tested citation card's `srs_due` to the start of the next server day,
+`(CURRENT_DATE + 1)::timestamptz`, never today (they just saw the answer; a same-day review
+would credit short-term memory). No rating is logged; FSRS's own early-review math handles
+the next review.
+
+- **Eligibility** (`boostableSql`, `review-boost-sql.ts`, shared by the boost write and the
+  capture row's status): kept, live, enabled, ready, not parked, `srs_state = 'review'`, due
+  after tomorrow. Anything else is a no-op `{ boosted: false }`, so an overdue card never
+  gets the boost's queue priority for free.
+- **Active is derived, not maintained**: `study_facets.boosted_at` (set only by the boost)
+  is active while `boosted_at > srs_last_review`. Every review or credit (ratings, checkpoint
+  credits, the recognition bridge, known-assertions) stamps `srs_last_review`, so the next
+  review ends the boost with no extra write. While active, the card takes a review-budget
+  slot ahead of other due reviews (§4) and its flashcard shows "You asked to review this"
+  (`ReviewTerm.boostActive`).
+- **Undo** (`practice.unboostFacet`): restores `boost_prev_due` and clears the boost, only
+  while it is active and untouched (`srs_due` still the boost's day).
+- **Rating undo after a boost**: `restoreSrsSnapshotForFacet` (undoRating, checkpoint undo,
+  known-assert undo) keeps an active boost: `boost_prev_due` is rebased onto the restored due
+  date and `srs_due = LEAST(restored, the boost's day)`. A restore back to never-introduced
+  drops it.
 
 ## 6b. Checkpoint reviews (real sessions)
 

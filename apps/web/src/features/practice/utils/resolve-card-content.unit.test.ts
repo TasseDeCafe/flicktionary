@@ -19,6 +19,7 @@ const baseLemma: ReviewTerm = {
   targetForm: '',
   facetPayload: null,
   ipaSource: null,
+  boostActive: false,
 }
 
 describe('resolveCardContent', () => {

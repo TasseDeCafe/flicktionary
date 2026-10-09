@@ -404,6 +404,14 @@ msgstr "3 examples"
 msgid "A natural translation of the target example."
 msgstr "A natural translation of the target example."
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "A new production card, introduced with your next new words."
+msgstr "A new production card, introduced with your next new words."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "A new recognition card, introduced with your next new words."
+msgstr "A new recognition card, introduced with your next new words."
+
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
 msgstr "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
@@ -543,6 +551,14 @@ msgstr "Add New Profile..."
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Add note"
 msgstr "Add note"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Add production"
+msgstr "Add production"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Add recognition"
+msgstr "Add recognition"
 
 #: apps/extension/src/entrypoints/background.ts
 msgid "Add selection to Flicktionary"
@@ -967,6 +983,10 @@ msgstr "Beginner — basic phrases and immediate needs."
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Being introduced through warm-up exercises before their first flashcard."
 msgstr "Being introduced through warm-up exercises before their first flashcard."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Being prepared"
+msgstr "Being prepared"
 
 #: apps/web/src/features/coverage/utils/coverage-language-names.ts
 msgid "Bengali"
@@ -1802,6 +1822,10 @@ msgstr "Due flashcards and due exercises. Introduces nothing new."
 msgid "Due flashcards, no exercises."
 msgstr "Due flashcards, no exercises."
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Due in {dayCount} days"
+msgstr "Due in {dayCount} days"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Due only"
 msgstr "Due only"
@@ -1809,6 +1833,14 @@ msgstr "Due only"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Due soonest"
 msgstr "Due soonest"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Due today"
+msgstr "Due today"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Due tomorrow"
+msgstr "Due tomorrow"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "e.g. /ˈkæt/"
@@ -1850,7 +1882,7 @@ msgstr "Each column is 100 words; the filled share is how many of them you know.
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+#: apps/web/src/features/vocab-chat/components/edit-card-button.tsx
 msgid "Edit card"
 msgstr "Edit card"
 
@@ -2288,6 +2320,10 @@ msgstr "Failed to mark the words as known"
 msgid "Failed to mark words. Try again."
 msgstr "Failed to mark words. Try again."
 
+#: apps/web/src/features/vocab-chat/api/vocab-chat-hooks.ts
+msgid "Failed to move the review"
+msgstr "Failed to move the review"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to move the term to flashcards"
 msgstr "Failed to move the term to flashcards"
@@ -2437,6 +2473,7 @@ msgid "Failed to trigger the backend test error"
 msgstr "Failed to trigger the backend test error"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
+#: apps/web/src/features/vocab-chat/api/vocab-chat-hooks.ts
 msgid "Failed to undo"
 msgstr "Failed to undo"
 
@@ -2597,6 +2634,10 @@ msgstr "Forms"
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Forms you've encountered"
 msgstr "Forms you've encountered"
+
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "Forms: {formCount} cards"
+msgstr "Forms: {formCount} cards"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Forward"
@@ -2986,9 +3027,21 @@ msgstr "Importing articles"
 msgid "Importing…"
 msgstr "Importing…"
 
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "in {dayCount} days"
+msgstr "in {dayCount} days"
+
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 msgid "In introduction exercises before their first flashcard"
 msgstr "In introduction exercises before their first flashcard"
+
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "in rehab"
+msgstr "in rehab"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "In rehab"
+msgstr "In rehab"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "In short-term learning — follow-ups come back within days."
@@ -3076,6 +3129,10 @@ msgstr "IPA"
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "IPA dialect"
 msgstr "IPA dialect"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "It was due {prevDue}."
+msgstr "It was due {prevDue}."
 
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Item types"
@@ -3194,6 +3251,18 @@ msgstr "Learn new"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Learning"
 msgstr "Learning"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Learning · due in {dayCount} days"
+msgstr "Learning · due in {dayCount} days"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Learning · due today"
+msgstr "Learning · due today"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Learning · due tomorrow"
+msgstr "Learning · due tomorrow"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Leave empty for no limit."
@@ -3413,6 +3482,14 @@ msgstr "Move top subtitles down"
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Move up"
+msgstr "Move up"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Moved up"
+msgstr "Moved up"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Movie"
 msgstr "Movie"
@@ -3573,9 +3650,17 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "No production card"
+msgstr "No production card"
+
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "No pronunciation data yet"
 msgstr "No pronunciation data yet"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "No recognition card"
+msgstr "No recognition card"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "No reviews are due right now."
@@ -3657,12 +3742,24 @@ msgstr "not available"
 msgid "Not now"
 msgstr "Not now"
 
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "not practiced"
+msgstr "not practiced"
+
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/recap-mc-exercise.tsx
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Not quite."
 msgstr "Not quite."
+
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "not started"
+msgstr "not started"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Not started"
+msgstr "Not started"
 
 #: apps/web/src/features/coverage/components/coverage-legend.tsx
 #: apps/web/src/features/sessions/components/welcome-back-card.tsx
@@ -3969,6 +4066,10 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "paused"
+msgstr "paused"
+
 #: apps/web/src/features/stats/components/daily-activity-charts.tsx
 msgid "peak {peakLabel}/day"
 msgstr "peak {peakLabel}/day"
@@ -4251,14 +4352,23 @@ msgstr "Processing warnings"
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Production"
 msgstr "Production"
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Production added"
+msgstr "Production added"
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Production focus"
 msgstr "Production focus"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Production paused"
+msgstr "Production paused"
 
 #: apps/extension/common/components/SettingsProfileSelectMenu.tsx
 #: apps/native/src/features/navigation/components/tabs-layout.tsx
@@ -4289,6 +4399,7 @@ msgstr "Pronoun"
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Pronunciation"
@@ -4390,10 +4501,19 @@ msgstr "Recently added"
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Recognition"
 msgstr "Recognition"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Recognition added"
+msgstr "Recognition added"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Recognition paused"
+msgstr "Recognition paused"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Recording"
@@ -4563,6 +4683,14 @@ msgstr "Restore generated value"
 msgid "Restore Wiktionary value"
 msgstr "Restore Wiktionary value"
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Resume production"
+msgstr "Resume production"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Resume recognition"
+msgstr "Resume recognition"
+
 #: apps/web/src/features/sessions/components/segment-list.tsx
 msgid "Resumed here"
 msgstr "Resumed here"
@@ -4616,6 +4744,10 @@ msgstr "Review it any time from the Vocabulary tab — newest terms are listed f
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Review terms"
 msgstr "Review terms"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Review tomorrow"
+msgstr "Review tomorrow"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "Review your saved vocabulary with spaced-repetition flashcards and quick exercises."
@@ -5733,6 +5865,10 @@ msgstr "This removes the book and its reading progress from your library. Your k
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
 
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "this search"
+msgstr "this search"
+
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "This selection is too long to import ({textLength} characters — the limit is {maxLength})."
 msgstr "This selection is too long to import ({textLength} characters — the limit is {maxLength})."
@@ -5782,6 +5918,10 @@ msgstr "TMDB search failed"
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "To change your current plan type, please click on \"Manage Subscription\"."
 msgstr "To change your current plan type, please click on \"Manage Subscription\"."
+
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "today"
+msgstr "today"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 #: apps/web/src/features/sessions/hooks/use-relative-date-label.ts
@@ -5840,6 +5980,10 @@ msgstr "Toggle subtitle track 3 in video"
 #: apps/extension/common/components/VideoOverlay.tsx
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
+
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "tomorrow"
+msgstr "tomorrow"
 
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Too many attempts — please wait a moment before trying again."
@@ -6030,6 +6174,7 @@ msgstr "Understand it when you read or hear it"
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
 msgid "Undo"
 msgstr "Undo"
 
@@ -6436,6 +6581,10 @@ msgstr "What does the highlighted term mean?"
 msgid "What does this button do?"
 msgstr "What does this button do?"
 
+#: apps/web/src/features/vocab-chat/components/capture-info-sheet.tsx
+msgid "What does this mean?"
+msgstr "What does this mean?"
+
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "What is Flicktionary?"
 msgstr "What is Flicktionary?"
@@ -6559,6 +6708,10 @@ msgstr "You are a special user with free access. You have no active subscription
 msgid "You are now subscribed to Premium!"
 msgstr "You are now subscribed to Premium!"
 
+#: apps/web/src/features/practice/components/flashcard-face.tsx
+msgid "You asked to review this"
+msgstr "You asked to review this"
+
 #: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 msgid "You can study it as a regular flashcard instead — or open the menu above to edit the term if something looks off (exercises get another try after a fix)."
 msgstr "You can study it as a regular flashcard instead — or open the menu above to edit the term if something looks off (exercises get another try after a fix)."
@@ -6588,9 +6741,33 @@ msgstr "You have it as {savedSenses}"
 msgid "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 msgstr "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You haven't started this word yet. Because you looked for it again, it moves up in your new words."
+msgstr "You haven't started this word yet. Because you looked for it again, it moves up in your new words."
+
 #: packages/ui/src/components/word-family-line.tsx
 msgid "You know: {knownList}"
 msgstr "You know: {knownList}"
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You paused this card. Resuming picks up its old schedule, so it may be due right away."
+msgstr "You paused this card. Resuming picks up its old schedule, so it may be due right away."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You searched in {searchLanguage}, so this is about coming up with the word: your production card. Review tomorrow brings it forward if you'd forgotten it."
+msgstr "You searched in {searchLanguage}, so this is about coming up with the word: your production card. Review tomorrow brings it forward if you'd forgotten it."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You searched in {searchLanguage}, so this is about recognizing the word: your recognition card. Review tomorrow brings it forward if you'd forgotten what it means."
+msgstr "You searched in {searchLanguage}, so this is about recognizing the word: your recognition card. Review tomorrow brings it forward if you'd forgotten what it means."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You searched in {searchLanguage}, which means coming up with the {targetLanguage} word, but you don't practice that for this word. A production card may help."
+msgstr "You searched in {searchLanguage}, which means coming up with the {targetLanguage} word, but you don't practice that for this word. A production card may help."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You searched in {searchLanguage}, which means recognizing the word, but you don't practice that for this word. A recognition card may help."
+msgstr "You searched in {searchLanguage}, which means recognizing the word, but you don't practice that for this word. A recognition card may help."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "You used your free trial"
@@ -6619,6 +6796,10 @@ msgstr "You're browsing as a guest, and connecting Telegram needs an account."
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "You're browsing as a guest, and pairing the extension needs an account."
 msgstr "You're browsing as a guest, and pairing the extension needs an account."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "You've also looked it up since, so this stays."
+msgstr "You've also looked it up since, so this stays."
 
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
 msgid "You've filled your guest library"
@@ -6685,6 +6866,10 @@ msgstr "Your next exercise is still being prepared — it'll appear here automat
 msgid "Your next session"
 msgstr "Your next session"
 
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Your production card will be in tomorrow's practice, ahead of other reviews."
+msgstr "Your production card will be in tomorrow's practice, ahead of other reviews."
+
 #: apps/web/src/features/auth/components/save-progress-view.tsx
 msgid "Your progress is saved"
 msgstr "Your progress is saved"
@@ -6697,6 +6882,10 @@ msgstr "Your reading position changed — try again"
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Your reading position changed — try again."
 msgstr "Your reading position changed — try again."
+
+#: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
+msgid "Your recognition card will be in tomorrow's practice, ahead of other reviews."
+msgstr "Your recognition card will be in tomorrow's practice, ahead of other reviews."
 
 #: apps/web/src/features/practice/components/practice-funnel.tsx
 msgid "Your vocabulary"

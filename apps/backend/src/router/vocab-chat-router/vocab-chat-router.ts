@@ -20,6 +20,7 @@ import { startVocabChat, StartVocabChatPrefsError } from '../../service/vocab-ch
 import { translateForCapture } from '../../service/vocab-chat/translate-for-capture'
 import { matchCaptureCandidates } from '../../service/vocab-chat/match-capture-candidates'
 import { toIsoString } from '../router-utils'
+import type { CaptureDemandRepositoryInterface } from '../../transport/database/capture-demand/capture-demand-repository'
 import { incrementFixedWindowCount } from '../fixed-window-counter'
 
 // Per-user fixed windows (see incrementFixedWindowCount). Generous for real
@@ -57,7 +58,9 @@ const toMessageDto = (row: DbVocabChatMessage): VocabChatMessage => {
   }
 }
 
-export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
+export const VocabChatRouter = (
+  deps: RunVocabChatDependencies & { captureDemandRepository: CaptureDemandRepositoryInterface }
+): Router => {
   const implementer = implement(vocabChatContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   type Errors = Parameters<Parameters<typeof implementer.translate.handler>[0]>[0]['errors']
@@ -140,7 +143,30 @@ export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
         },
         deps
       )
-      return { data: { matches } }
+      const testedSkill =
+        input.inputLanguage !== input.targetLanguage
+          ? ('meaning_production' as const)
+          : ('meaning_recognition' as const)
+      return { data: { testedSkill, matches } }
+    }),
+
+    recordCaptureDemand: implementer.recordCaptureDemand.handler(async ({ input, context, errors }) => {
+      assertSignedIn(context, errors)
+      const outcome = await deps.captureDemandRepository.recordCaptureDemand({
+        userId: context.res.locals.userId,
+        userLookupId: input.userLookupId,
+        source: input.source,
+      })
+      return { data: { outcome } }
+    }),
+
+    undoCaptureDemand: implementer.undoCaptureDemand.handler(async ({ input, context, errors }) => {
+      assertSignedIn(context, errors)
+      const reverted = await deps.captureDemandRepository.undoCaptureDemand({
+        userId: context.res.locals.userId,
+        userLookupId: input.userLookupId,
+      })
+      return { data: { reverted } }
     }),
 
     start: implementer.start.handler(async ({ input, context, errors }) => {

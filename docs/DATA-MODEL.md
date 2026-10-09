@@ -361,6 +361,9 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- first episode). Kept apart from
                                     -- last_encountered_at so a checkpoint can't
                                     -- swallow a re-save or lookup within the hour.
+  last_demand_attempt_at timestamptz default now() -- stamped by EVERY recordEncounter
+                                    -- call, collapsed or not; a capture demand event
+                                    -- can be undone only while nothing came after it.
   encounter_count     int default 1 -- bumped by the same boundaries, 1-hour collapse
                                     -- window on last_demand_at (retries can't inflate
                                     -- it), plus lookup episodes credited at save
@@ -823,6 +826,29 @@ lang)`, the SQL twin of `foldUserHeadwordCandidates` (en `to `, de `sich `,
 fr `se `, es/pt reflexive strips on top of `checkpoint_fold`), pinned by a
 SQL-vs-TS parity test. The watermark is what makes save-time crediting
 idempotent: an enrichment retry or a re-save finds nothing uncredited.
+
+### Capture demand events
+
+Demand recorded from a "Translate & add" search (docs/SRS.md §4 "Capture
+searches as demand"). One row per write, so each is visible and undoable.
+Backend reads/writes only; RLS enabled with no policies.
+
+```
+capture_demand_events
+  id                       uuid pk
+  user_id                  uuid -> auth.users.id (ON DELETE CASCADE)
+  user_lookup_id           uuid -> user_lookups.id (ON DELETE CASCADE)
+  source                   'search' | 'edit_card' | 'move_up'
+  counted                  bool         -- the encounter bump happened (false:
+                                        -- collapsed into demand from the last hour)
+  prev_last_demand_at      timestamptz  -- the values the bump replaced, restored
+  prev_last_encountered_at timestamptz  -- by undo while still the event's own
+  created_at               timestamptz  -- = the NOW() the bump wrote
+  reverted_at              timestamptz? -- undone
+```
+
+`study_facets.boosted_at` / `boost_prev_due` (timestamptz?) hold a "Review
+tomorrow" boost and the due date it replaced (docs/SRS.md §5).
 
 ### Book pins
 

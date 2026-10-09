@@ -82,6 +82,7 @@ import { KnownLemmasRepository } from './transport/database/known-lemmas/known-l
 import { TextTrackLemmaProfilesRepository } from './transport/database/text-track-lemma-profiles/text-track-lemma-profiles-repository'
 import { LemmaRanksRepository } from './transport/database/lemma-ranks/lemma-ranks-repository'
 import { BookPinsRepository } from './transport/database/book-pins/book-pins-repository'
+import { CaptureDemandRepository } from './transport/database/capture-demand/capture-demand-repository'
 import { LemmaLookupsRepository } from './transport/database/lemma-lookups/lemma-lookups-repository'
 import { StudySessionCheckpointsRepository } from './transport/database/study-sessions/study-session-checkpoints-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
@@ -695,6 +696,7 @@ export const buildApp = ({
       userLookupsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
+      captureDemandRepository: CaptureDemandRepository(),
     })
   )
   app.use(

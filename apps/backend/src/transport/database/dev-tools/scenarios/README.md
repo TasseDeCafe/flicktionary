@@ -29,6 +29,7 @@ data.
 | `ru-warmup-day2` | The day after a warm-up: five onboarding-parked gates (скучный graduates on a correct answer), two planned introductions, three review cards. |
 | `ru-production-hints` | Six production cards due. Five have a banked production hint (`mc_cloze`); сравнивать has none. |
 | `ru-production-family` | The `ru-family-due` words as 8 production cards due, same anchors and curated insights. Five offer the meaning-only production Clue (#517), the three opaque ones don't; писатель, водопад and дюжина have a banked hint. |
+| `ru-capture-states` | One saved word per "Translate & add" row state, each found by searching its English meaning: собака ("dog", due in 23 days → Review tomorrow), окно (due tomorrow), водопад (learning), читать (no production card), перевод (production paused), писатель (never started → Moved up). Searching дюжина in Russian tests recognition (due in 23 days). |
 
 ## Safety
 

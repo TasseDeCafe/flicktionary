@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Loader2, Pencil, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import type { CaptureCandidate, CaptureMatch } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
-import { useCaptureMatches, type CaptureSearch } from '../api/vocab-chat-hooks'
+import { useCaptureMatches, useRecordCaptureDemand, type CaptureSearch } from '../api/vocab-chat-hooks'
+import type { TestedSkill } from '../utils/capture-row-state'
+import { CaptureMatchRow } from './capture-match-row'
+import { EditCardButton } from './edit-card-button'
 import { TermRow, TermRowStatus } from './term-row'
 
 type CaptureCard = { cardId: string; sessionId: string }
@@ -26,14 +28,16 @@ export const CaptureCandidateList = ({
   translation: { inputLanguage: string | null; candidates: CaptureCandidate[] }
   className?: string
 }) => {
-  const { data: matches, isLoading: isMatching } = useCaptureMatches(search, translation)
+  const { data, isLoading: isMatching } = useCaptureMatches(search, translation)
+  useAutomaticCaptureDemand(search, translation.candidates, data?.matches)
   return (
     <ul className={cn('flex flex-col divide-y rounded-xl border', className)}>
       {translation.candidates.map((candidate, index) => (
         <CaptureCandidateRow
           key={`${search.text}-${search.context}-${index}`}
           candidate={candidate}
-          match={matches?.[index]}
+          match={data?.matches[index]}
+          testedSkill={data?.testedSkill ?? 'meaning_recognition'}
           isMatching={isMatching}
           search={search}
           inputLanguage={translation.inputLanguage}
@@ -43,18 +47,49 @@ export const CaptureCandidateList = ({
   )
 }
 
+// Searching again for a saved word you never started is demand, like
+// re-saving it: the result moves it up the new words, shown on its row with an
+// Undo. Only the result the search was really for counts — the top one, or
+// one spelled exactly like a target-language query — not related suggestions.
+// Fired once per row per mount; the server also skips a term that had a
+// capture event in the last hour, so remounts and refetches don't refire.
+const useAutomaticCaptureDemand = (
+  search: CaptureSearch,
+  candidates: CaptureCandidate[],
+  matches: CaptureMatch[] | undefined
+) => {
+  const { mutate: recordDemand } = useRecordCaptureDemand()
+  const fired = useRef(new Set<string>())
+  useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- the trigger is the match QUERY resolving (async server data), not a user event: the learner never taps anything for the top result */
+    if (!matches) return
+    const query = search.text.trim().toLowerCase()
+    matches.forEach((match, index) => {
+      const candidate = candidates[index]
+      if (!candidate || !match.existingCard || !match.status?.notStarted || match.status.demand) return
+      if (index !== 0 && candidate.headword.toLowerCase() !== query) return
+      const key = `${search.targetLanguage}|${search.text}|${search.context}|${index}`
+      if (fired.current.has(key)) return
+      fired.current.add(key)
+      recordDemand({ userLookupId: match.existingCard.userLookupId, source: 'search' })
+    })
+  }, [matches, candidates, search.targetLanguage, search.text, search.context, recordDemand])
+}
+
 // Each row owns its mutation so several adds run in parallel (mutate-level
 // callbacks only fire for a hook's latest call). Add runs the regular ad-hoc
 // card creation; once the card exists the row offers Edit instead.
 const CaptureCandidateRow = ({
   candidate,
   match,
+  testedSkill,
   isMatching,
   search,
   inputLanguage,
 }: {
   candidate: CaptureCandidate
   match: CaptureMatch | undefined
+  testedSkill: TestedSkill
   isMatching: boolean
   search: CaptureSearch
   inputLanguage: string | null
@@ -95,6 +130,19 @@ const CaptureCandidateRow = ({
     )
   }
 
+  if (!addedCard && match?.existingCard && match.status) {
+    return (
+      <CaptureMatchRow
+        rowText={rowText}
+        card={match.existingCard}
+        status={match.status}
+        testedSkill={testedSkill}
+        search={search}
+        inputLanguage={inputLanguage}
+      />
+    )
+  }
+
   if (card) {
     return (
       <TermRow
@@ -119,23 +167,5 @@ const CaptureCandidateRow = ({
         </Button>
       }
     />
-  )
-}
-
-// Icon-only on phones, labeled from sm up.
-const EditCardButton = ({ card }: { card: CaptureCard }) => {
-  const { t } = useLingui()
-  return (
-    <Button variant='outline' size='sm' asChild>
-      <Link
-        to='/sessions/$sessionId/review/$cardId'
-        params={{ sessionId: card.sessionId, cardId: card.cardId }}
-        search={{ scope: 'language' as const }}
-        aria-label={t`Edit card`}
-      >
-        <Pencil className='size-3.5' />
-        <span className='hidden sm:inline'>{t`Edit card`}</span>
-      </Link>
-    </Button>
   )
 }

@@ -367,4 +367,23 @@ export const practiceContract = {
       })
     )
     .output(z.object({ data: z.object({ unparked: z.boolean() }) })),
+
+  // "Review tomorrow" from a capture search: pulls a reviewed citation card's
+  // next review to the start of the next server day (never today), ahead of
+  // other reviews within the daily budget. `boosted: false` when the card
+  // isn't boostable (already due by tomorrow, not in review, parked,
+  // disabled); the client re-reads the status instead of erroring.
+  boostFacet: oc
+    .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/boost', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ userLookupId: z.string().uuid(), skill: z.enum(['meaning_recognition', 'meaning_production']) }))
+    .output(z.object({ data: z.object({ boosted: z.boolean() }) })),
+
+  // Undo of boostFacet: restores the replaced due date while the boost is
+  // untouched; `restored: false` once a review consumed it.
+  unboostFacet: oc
+    .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/unboost', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ userLookupId: z.string().uuid(), skill: z.enum(['meaning_recognition', 'meaning_production']) }))
+    .output(z.object({ data: z.object({ restored: z.boolean() }) })),
 } as const

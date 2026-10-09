@@ -1,5 +1,6 @@
 import postgres from 'postgres'
 import { beginTx, sql } from '../postgres-client'
+import { boostActiveSql } from '../study-facets/review-boost-sql'
 import { newTermNotDecayedSql, newTermOrderSql } from '../../../service/practice/new-term-priority'
 import { introductionOrderCtesSql } from '../../../service/practice/book-priority'
 import { Tables, Database } from '../database.public.types'
@@ -52,6 +53,9 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   // to enabled production facets, so it is always true there. Service-layer
   // guards read this instead of learning_mode.
   is_production_enabled: boolean
+  // The learner asked to review this card ("Review tomorrow") and it hasn't
+  // been reviewed since (review-boost-sql.ts).
+  boost_active: boolean
 }
 
 // Flatten a (lookup, facet) pair into the combined row the rating/leech
@@ -82,6 +86,11 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
   // resolves false.
   is_production_enabled:
     facet.skill === 'meaning_production' && facet.target_form === CITATION_FORM && facet.disabled_at === null,
+  // Postgres.js returns timestamptz as Date at runtime, so compare instants.
+  boost_active:
+    facet.boosted_at !== null &&
+    (facet.srs_last_review === null ||
+      new Date(facet.boosted_at).getTime() > new Date(facet.srs_last_review).getTime()),
 })
 
 // One study facet projected for the Study-targets control (listFacetsForChunk).
@@ -444,16 +453,18 @@ const findOrCreate = async (
 // Rows created moments ago (last_demand_at defaults to NOW()) are skipped for
 // the same reason — their creation IS the encounter. The window runs on
 // last_demand_at, not last_encountered_at: checkpoint content encounters bump
-// the latter, and must not swallow a deliberate re-save or lookup.
+// the latter, and must not swallow a deliberate re-save or lookup. Every call,
+// collapsed or not, stamps last_demand_attempt_at: a capture demand event can
+// only be undone while no later demand arrived (capture-demand-repository.ts).
 const recordEncounter = async (userLookupIds: string[], executor: postgres.Sql = sql): Promise<void> => {
   if (userLookupIds.length === 0) return
   await executor`
     UPDATE public.user_lookups
-    SET encounter_count = encounter_count + 1,
-        last_encountered_at = NOW(),
-        last_demand_at = NOW()
+    SET encounter_count = encounter_count + CASE WHEN last_demand_at < NOW() - INTERVAL '1 hour' THEN 1 ELSE 0 END,
+        last_encountered_at = CASE WHEN last_demand_at < NOW() - INTERVAL '1 hour' THEN NOW() ELSE last_encountered_at END,
+        last_demand_at = CASE WHEN last_demand_at < NOW() - INTERVAL '1 hour' THEN NOW() ELSE last_demand_at END,
+        last_demand_attempt_at = NOW()
     WHERE id = ANY(${userLookupIds}::uuid[])
-      AND last_demand_at < NOW() - INTERVAL '1 hour'
   `
 }
 
@@ -1081,7 +1092,8 @@ const flashcardFacetCols = sql`
   f.srs_last_review, f.srs_reps, f.srs_lapses, f.srs_learning_steps, f.leech_parked_at,
   f.leech_rehab_correct_days, f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
   (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
-    AS is_production_enabled
+    AS is_production_enabled,
+  ${boostActiveSql()} AS boost_active
 `
 const flashcardFacetJoinSql = (pool: PracticePool) =>
   sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skillsForPool(pool)})`
@@ -1099,7 +1111,10 @@ const flashcardEligibleSql = (params: { userId: string; targetLanguage: string }
 // independently-capped buckets: review-state {'new','review'} consume the daily
 // review budget (maxReviewTerms); learning follow-ups {'learning','relearning'}
 // are exempt under maxLearningTerms, a hard ceiling, so a spent budget can't
-// strand a failed card's relearning step.
+// strand a failed card's relearning step. Within the review budget, cards the
+// learner asked to review ("Review tomorrow", review-boost-sql.ts) come first:
+// due at 00:00 they'd otherwise sort behind any overdue backlog and could be
+// cut by the cap day after day.
 //
 // SIBLING SPACING (Trap 5/16): a term's facets ("siblings") must not be
 // adjacent. Each selected facet is ranked within its term by priority
@@ -1127,7 +1142,7 @@ const listDueReviewTerms = async (params: {
         WHERE ${eligible}
           AND f.srs_due IS NOT NULL AND f.srs_due <= NOW()
           AND f.srs_state IN ('new', 'review')
-        ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+        ORDER BY ${boostActiveSql()} DESC, f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
         LIMIT ${params.maxReviewTerms}
       )
       UNION ALL

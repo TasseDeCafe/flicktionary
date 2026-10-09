@@ -34,7 +34,8 @@ export const useTranslateForCapture = (search: CaptureSearch | null) =>
 // Which candidates the learner already has, by meaning. Unlike the cached
 // translate answer this follows the vocabulary: it's asked again whenever the
 // results mount (coming back from a card, another surface's add or delete)
-// and after every add. One match per candidate, in order.
+// and after every add. One match per candidate, in order, plus the card the
+// search tested.
 export const useCaptureMatches = (
   search: CaptureSearch | null,
   translation: { inputLanguage: string | null; candidates: CaptureCandidate[] } | undefined
@@ -48,12 +49,59 @@ export const useCaptureMatches = (
         candidates: (translation?.candidates ?? []).map(({ headword, note, example }) => ({ headword, note, example })),
       },
       enabled: !!search && !!translation && translation.candidates.length > 0,
-      select: (response) => response.data.matches,
+      select: (response) => response.data,
       retry: false,
       // Rows fall back to Add, which dedups on save.
       meta: { showErrorToast: false },
     })
   )
+
+// What a capture search changes in practice (demand, boosts, added cards)
+// shows on its rows and in the practice counts.
+const captureChangeInvalidates = () => [
+  orpcQuery.vocabChat.captureMatches.key(),
+  orpcQuery.chunks.listChunks.key(),
+  ...practiceSummaryKeys(),
+]
+
+// Demand for a saved, never-started term (the top result, an opened card, or
+// Move up). Fired without the learner's tap for the top result, so failures
+// stay silent; the row keeps showing the server's status.
+export const useRecordCaptureDemand = () =>
+  useMutation(
+    orpcQuery.vocabChat.recordCaptureDemand.mutationOptions({
+      meta: { invalidates: captureChangeInvalidates(), showErrorToast: false },
+    })
+  )
+
+export const useUndoCaptureDemand = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.vocabChat.undoCaptureDemand.mutationOptions({
+      meta: { invalidates: captureChangeInvalidates(), errorMessage: t`Failed to undo` },
+    })
+  )
+}
+
+// "Review tomorrow" and its undo. A refused boost (already due by tomorrow)
+// just re-reads the row's status.
+export const useBoostFacet = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.boostFacet.mutationOptions({
+      meta: { invalidates: captureChangeInvalidates(), errorMessage: t`Failed to move the review` },
+    })
+  )
+}
+
+export const useUnboostFacet = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.unboostFacet.mutationOptions({
+      meta: { invalidates: captureChangeInvalidates(), errorMessage: t`Failed to undo` },
+    })
+  )
+}
 
 export const useVocabChatThread = (sessionId: string) => {
   const { t } = useLingui()

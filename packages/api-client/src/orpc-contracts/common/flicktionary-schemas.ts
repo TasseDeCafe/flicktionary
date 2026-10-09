@@ -670,6 +670,9 @@ export const ReviewTermSchema = z.object({
   // verified badge on flashcards. Computed server-side; always null for form
   // cards (form IPA is generated, never grounded).
   ipaSource: z.enum(['wiktionary']).nullable(),
+  // The learner asked to review this card ("Review tomorrow" from a capture
+  // search) and hasn't reviewed it since.
+  boostActive: z.boolean(),
 })
 export type ReviewTerm = z.infer<typeof ReviewTermSchema>
 

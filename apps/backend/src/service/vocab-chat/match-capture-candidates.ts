@@ -3,6 +3,10 @@ import type {
   KeptSenseWithCard,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  CaptureDemandRepositoryInterface,
+  CaptureTermStatus,
+} from '../../transport/database/capture-demand/capture-demand-repository'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
 import { normalizeHeadword } from './run-vocab-chat'
 
@@ -12,9 +16,11 @@ export type CaptureMatch = {
   // When there's no match: how the learner saved the headword's other
   // meanings, so the row can say why it still offers Add.
   otherSenses: string[]
+  // The matched term's cards and today's capture demand.
+  status: CaptureTermStatus | null
 }
 
-const NO_MATCH: CaptureMatch = { existingCard: null, otherSenses: [] }
+const NO_MATCH: CaptureMatch = { existingCard: null, otherSenses: [], status: null }
 
 const senseLabel = (row: KeptSenseWithCard): string => row.sense || row.translation || row.definition || ''
 
@@ -23,7 +29,9 @@ const senseLabel = (row: KeptSenseWithCard): string => row.sense || row.translat
 // doesn't make есть = "to eat" a duplicate. senseMatchPass (biased toward
 // "new") decides among the headword's kept senses. A wrong "new" is harmless,
 // since Add runs the save path's own sense dedup; a pass error is treated as
-// "new" for the same reason. Results are in candidate order.
+// "new" for the same reason. Matched terms carry their practice status (every
+// card's schedule, boost state, today's capture demand), read fresh with the
+// match. Results are in candidate order.
 export const matchCaptureCandidates = async (
   params: {
     userId: string
@@ -38,6 +46,7 @@ export const matchCaptureCandidates = async (
   deps: {
     anthropicPasses: Pick<AnthropicPassesInterface, 'senseMatchPass'>
     userLookupsRepository: Pick<UserLookupsRepositoryInterface, 'listKeptSensesByHeadwords'>
+    captureDemandRepository: Pick<CaptureDemandRepositoryInterface, 'listCaptureStatus'>
   }
 ): Promise<CaptureMatch[]> => {
   const headwords = params.candidates.map((c) => normalizeHeadword(c.headword))
@@ -48,7 +57,7 @@ export const matchCaptureCandidates = async (
   })
   const queryMeaning = params.inputLanguage !== params.targetLanguage ? params.query : null
 
-  return Promise.all(
+  const matches = await Promise.all(
     params.candidates.map(async (candidate, index): Promise<CaptureMatch> => {
       const headword = headwords[index]!
       const rows = saved.get(headword.toLowerCase()) ?? []
@@ -81,9 +90,16 @@ export const matchCaptureCandidates = async (
         return {
           existingCard: { userLookupId: matched.id, cardId: matched.cardId, sessionId: matched.sessionId },
           otherSenses: [],
+          status: null,
         }
       }
-      return { existingCard: null, otherSenses: [...new Set(rows.map(senseLabel).filter(Boolean))] }
+      return { ...NO_MATCH, otherSenses: [...new Set(rows.map(senseLabel).filter(Boolean))] }
     })
   )
+
+  const statuses = await deps.captureDemandRepository.listCaptureStatus({
+    userId: params.userId,
+    userLookupIds: [...new Set(matches.flatMap((m) => (m.existingCard ? [m.existingCard.userLookupId] : [])))],
+  })
+  return matches.map((m) => (m.existingCard ? { ...m, status: statuses.get(m.existingCard.userLookupId) ?? null } : m))
 }

@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { BadgeCheck, Volume2 } from 'lucide-react'
+import { BadgeCheck, CalendarClock, Volume2 } from 'lucide-react'
 import { IpaDialectFlag } from '@/components/ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
@@ -243,6 +243,14 @@ export const FlashcardFace = ({
 
   return (
     <>
+      {/* The learner pulled this review forward from a search ("Review
+          tomorrow"), usually because they'd forgotten the word. */}
+      {card.boostActive && (
+        <p className='text-muted-foreground flex items-center gap-1 text-xs'>
+          <CalendarClock className='size-3.5' />
+          {t`You asked to review this`}
+        </p>
+      )}
       {frontSlots.map((slot) => renderSlot(slot, 'front'))}
       {frontClue && !showBack && (
         <div className='w-full text-center'>

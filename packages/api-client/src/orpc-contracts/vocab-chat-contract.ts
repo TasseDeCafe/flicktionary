@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
+import { FacetSkillSchema } from './common/flicktionary-schemas'
 
 // "Translate & add" (fast lane) and the vocabulary chat (slow lane). Both are
 // signed-in only: guests are rejected with FORBIDDEN / code GUEST_NOT_ALLOWED.
@@ -12,6 +13,38 @@ export const CaptureCandidateSchema = z.object({
 })
 export type CaptureCandidate = z.infer<typeof CaptureCandidateSchema>
 
+// One card of a matched term, as a capture search row and its info sheet show
+// it. `dueInDays` counts from the server's today (0 or less: due today).
+export const CaptureFacetStatusSchema = z.object({
+  skill: FacetSkillSchema,
+  targetForm: z.string(),
+  srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  dueInDays: z.number().int().nullable(),
+  enabled: z.boolean(),
+  // Has its own schedule: re-enabling it resumes that schedule.
+  hasHistory: z.boolean(),
+  parked: z.boolean(),
+  dataReady: z.boolean(),
+  // "Review tomorrow": active until the card's next review; boostable when it
+  // is in review and due after tomorrow; undoable while the boost is untouched.
+  boostActive: z.boolean(),
+  boostable: z.boolean(),
+  boostUndoable: z.boolean(),
+  // The due date an active boost replaced.
+  boostPrevDue: z.string().nullable(),
+})
+export type CaptureFacetStatus = z.infer<typeof CaptureFacetStatusSchema>
+
+export const CaptureTermStatusSchema = z.object({
+  // Never introduced in any card.
+  notStarted: z.boolean(),
+  facets: z.array(CaptureFacetStatusSchema),
+  // Today's latest capture demand for the term: whether it moved the term up
+  // (counted), was undone (reverted), and can still be undone.
+  demand: z.object({ counted: z.boolean(), reverted: z.boolean(), undoable: z.boolean() }).nullable(),
+})
+export type CaptureTermStatus = z.infer<typeof CaptureTermStatusSchema>
+
 // Whether the learner already has a candidate, by meaning (a saved homograph
 // with another meaning doesn't count).
 export const CaptureMatchSchema = z.object({
@@ -21,6 +54,8 @@ export const CaptureMatchSchema = z.object({
     .nullable(),
   // When there's no match: the saved meanings of the same headword, if any.
   otherSenses: z.array(z.string()),
+  // The matched term's cards and today's capture demand, else null.
+  status: CaptureTermStatusSchema.nullable(),
 })
 export type CaptureMatch = z.infer<typeof CaptureMatchSchema>
 
@@ -124,7 +159,40 @@ export const vocabChatContract = {
           .max(10),
       })
     )
-    .output(z.object({ data: z.object({ matches: z.array(CaptureMatchSchema) }) })),
+    .output(
+      z.object({
+        data: z.object({
+          // The card the search tested: a native-language query means coming
+          // up with the word (production), a target-language one recognizing
+          // it.
+          testedSkill: z.enum(['meaning_recognition', 'meaning_production']),
+          matches: z.array(CaptureMatchSchema),
+        }),
+      })
+    ),
+
+  // Demand from a capture search for a saved, never-started term: moves it up
+  // the new words. `search` (the top result) and `edit_card` count at most
+  // once an hour per term; `move_up` is the explicit re-do after an undo.
+  // `not_counted` when other demand in the last hour already covered it;
+  // `skipped` when this term already had a capture event in the window.
+  recordCaptureDemand: oc
+    .route({ method: 'POST', path: '/vocab-chat/capture-demand', successStatus: 200 })
+    .errors(errorsWithPrefs)
+    .input(z.object({ userLookupId: z.string().uuid(), source: z.enum(['search', 'edit_card', 'move_up']) }))
+    .output(
+      z.object({
+        data: z.object({ outcome: z.enum(['counted', 'not_counted', 'skipped', 'not_eligible']) }),
+      })
+    ),
+
+  // Undo of the term's latest counted capture demand. `reverted: false` when
+  // other demand arrived since (undoing would erase it too).
+  undoCaptureDemand: oc
+    .route({ method: 'POST', path: '/vocab-chat/capture-demand/undo', successStatus: 200 })
+    .errors(errorsWithPrefs)
+    .input(z.object({ userLookupId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ reverted: z.boolean() }) })),
 
   // Creates a thread (a 'chat' content source + study session) together with
   // its first message. BAD_REQUEST carries `cefr_not_set` /

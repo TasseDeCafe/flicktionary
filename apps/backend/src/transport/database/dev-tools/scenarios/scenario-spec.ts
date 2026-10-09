@@ -64,6 +64,10 @@ export type FacetSeed =
       // Skip the rating-event trail: the schedule came from a silent write
       // (the production→recognition bridge logs no events).
       silent?: boolean
+      // Still in learning steps (srs_state 'learning') instead of review.
+      phase?: 'learning'
+      // Disabled with its schedule kept (the learner paused this card).
+      paused?: boolean
     }
   // Onboarding-parked (warm-up): introduced and parked, never reviewed, with
   // `rehabCorrectDays` gate credits — the last one `lastCorrectDaysAgo` days ago.
