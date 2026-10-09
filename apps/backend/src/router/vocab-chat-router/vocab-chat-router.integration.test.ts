@@ -121,14 +121,18 @@ describe('vocab-chat-router', () => {
     // Not in the learner's vocabulary yet: no match, and no headword hit to
     // run the sense pass on.
     senseMatchPass.mockClear()
-    const matched = await request(testApp).post('/api/v1/vocab-chat/capture-matches').set(headers).send({
-      targetLanguage: 'ru',
-      text: 'to fall asleep',
-      inputLanguage: 'en',
-      candidates: translated.body.data.candidates,
-    })
+    const matched = await request(testApp)
+      .post('/api/v1/vocab-chat/capture-matches')
+      .set(headers)
+      .send({
+        targetLanguage: 'ru',
+        context: { kind: 'search', text: 'to fall asleep', inputLanguage: 'en' },
+        candidates: translated.body.data.candidates,
+      })
     expect(matched.status).toBe(200)
-    expect(matched.body.data.matches).toEqual([{ existingCard: null, otherSenses: [], status: null }])
+    expect(matched.body.data.matches).toEqual([
+      { testedSkill: 'meaning_production', existingCard: null, otherSenses: [], status: null },
+    ])
     expect(senseMatchPass).not.toHaveBeenCalled()
 
     createChatCompletion.mockResolvedValueOnce(proposeTurn).mockResolvedValueOnce(replyTurn)
@@ -153,14 +157,18 @@ describe('vocab-chat-router', () => {
       'засыпать',
       'заснуть',
     ])
-    expect(assistantMessage.proposal.items.every((i: { added: boolean }) => !i.added)).toBe(true)
+    expect(assistantMessage.proposal.items.every((i: { addState: string | null }) => i.addState === null)).toBe(true)
 
     const added = await request(testApp)
       .post(`/api/v1/vocab-chat/threads/${sessionId}/messages/${assistantMessage.id}/add`)
       .set(headers)
       .send({ itemIndexes: [1] })
     expect(added.status).toBe(200)
-    expect(added.body.data.message.proposal.items.map((i: { added: boolean }) => i.added)).toEqual([false, true])
+    // The card comes from background enrichment: pending until the job runs.
+    expect(added.body.data.message.proposal.items.map((i: { addState: string | null }) => i.addState)).toEqual([
+      null,
+      'pending',
+    ])
 
     // The added item becomes a highlight + enrich job on the thread's session.
     const jobs = await sql`
@@ -215,7 +223,7 @@ describe('vocab-chat-router', () => {
 
     const thread = await request(testApp).get(`/api/v1/vocab-chat/threads/${sessionId}`).set(headers)
     const proposal = thread.body.data.messages[1].proposal
-    expect(proposal.items.map((i: { added: boolean }) => i.added)).toEqual([true, true])
+    expect(proposal.items.map((i: { addState: string | null }) => i.addState)).toEqual(['pending', 'pending'])
   })
 
   describe('capture matches', () => {
@@ -224,7 +232,11 @@ describe('vocab-chat-router', () => {
       request(testApp)
         .post('/api/v1/vocab-chat/capture-matches')
         .set(buildAuthorizationHeaders(token))
-        .send({ targetLanguage: 'ru', text: 'to smell', inputLanguage: 'en', candidates: [sniff] })
+        .send({
+          targetLanguage: 'ru',
+          context: { kind: 'search', text: 'to smell', inputLanguage: 'en' },
+          candidates: [sniff],
+        })
     // Saves нюхать = "to sniff" (basicDataPass above).
     const addSniff = async (token: string) => {
       const adhoc = await request(testApp)
@@ -247,7 +259,9 @@ describe('vocab-chat-router', () => {
 
       const response = await matchesFor(token)
       expect(response.status).toBe(200)
-      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: ['to sniff'], status: null }])
+      expect(response.body.data.matches).toEqual([
+        { testedSkill: 'meaning_production', existingCard: null, otherSenses: ['to sniff'], status: null },
+      ])
       expect(senseMatchPass).toHaveBeenLastCalledWith(
         expect.objectContaining({
           headword: 'нюхать',
@@ -264,10 +278,10 @@ describe('vocab-chat-router', () => {
 
       const response = await matchesFor(token)
       expect(response.status).toBe(200)
-      // An English query tests coming up with the Russian word.
-      expect(response.body.data.testedSkill).toBe('meaning_production')
       expect(response.body.data.matches).toEqual([
         {
+          // An English query tests coming up with the Russian word.
+          testedSkill: 'meaning_production',
           existingCard: { userLookupId: expect.any(String), cardId, sessionId },
           otherSenses: [],
           status: {
@@ -333,9 +347,72 @@ describe('vocab-chat-router', () => {
       senseMatchPass.mockClear()
 
       const response = await matchesFor(token)
-      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: [], status: null }])
+      expect(response.body.data.matches).toEqual([
+        { testedSkill: 'meaning_production', existingCard: null, otherSenses: [], status: null },
+      ])
       expect(senseMatchPass).not.toHaveBeenCalled()
     })
+  })
+
+  test('a failed add can be retried, and a gone one is offered again and re-adds', async () => {
+    const { token } = await onboardedUser()
+    const headers = buildAuthorizationHeaders(token)
+    createChatCompletion.mockResolvedValueOnce(proposeTurn).mockResolvedValueOnce(replyTurn)
+    const started = await request(testApp)
+      .post('/api/v1/vocab-chat/threads')
+      .set(headers)
+      .send({ targetLanguage: 'ru', content: 'to fall asleep?' })
+    const { sessionId } = started.body.data
+    const messageId = started.body.data.messages[1].id
+    const add = () =>
+      request(testApp)
+        .post(`/api/v1/vocab-chat/threads/${sessionId}/messages/${messageId}/add`)
+        .set(headers)
+        .send({ itemIndexes: [0] })
+    const itemState = async () =>
+      (await request(testApp).get(`/api/v1/vocab-chat/threads/${sessionId}`).set(headers)).body.data.messages[1]
+        .proposal.items[0]
+    const jobCount = async () =>
+      (
+        await sql`
+          SELECT COUNT(*)::int AS count FROM public.processing_jobs
+          WHERE study_session_id = ${sessionId} AND kind = 'enrich_highlight'
+        `
+      )[0]!.count
+
+    await add()
+    await sql`UPDATE public.processing_jobs SET status = 'failed' WHERE study_session_id = ${sessionId}`
+    expect((await itemState()).addState).toBe('failed')
+    // A failed item isn't re-added (its job is retried instead).
+    await add()
+    expect(await jobCount()).toBe(1)
+
+    // The job finished without a live term (deleted or unkept since): Add again.
+    await sql`UPDATE public.processing_jobs SET status = 'done' WHERE study_session_id = ${sessionId}`
+    expect((await itemState()).addState).toBeNull()
+    const readded = await add()
+    expect(readded.body.data.message.proposal.items[0].addState).toBe('pending')
+    expect(await jobCount()).toBe(2)
+  })
+
+  test('a chat proposal tests recognition when the message names the word', async () => {
+    const { token } = await onboardedUser()
+    const response = await request(testApp)
+      .post('/api/v1/vocab-chat/capture-matches')
+      .set(buildAuthorizationHeaders(token))
+      .send({
+        targetLanguage: 'ru',
+        context: { kind: 'chat', userMessage: 'what does засыпать mean?' },
+        candidates: [
+          { headword: 'засыпать', note: 'to fall asleep', example: '' },
+          { headword: 'заснуть', note: 'to fall asleep (pf)', example: '' },
+        ],
+      })
+    expect(response.status).toBe(200)
+    expect(response.body.data.matches.map((m: { testedSkill: string }) => m.testedSkill)).toEqual([
+      'meaning_recognition',
+      'meaning_production',
+    ])
   })
 
   test('translate forwards the learner context to the pass', async () => {
@@ -416,10 +493,18 @@ describe('vocab-chat-router', () => {
         headword: 'пахнуть',
         note: 'to give off a smell',
         example: 'Здесь пахнет кофе.',
-        inVocabulary: false,
-        added: true,
+        highlightId: expect.any(String),
+        addState: 'pending',
+        addedCard: null,
       },
-      { headword: 'нюхать', note: 'to sniff', example: 'Собака нюхает траву.', inVocabulary: true, added: false },
+      {
+        headword: 'нюхать',
+        note: 'to sniff',
+        example: 'Собака нюхает траву.',
+        highlightId: null,
+        addState: null,
+        addedCard: null,
+      },
     ])
     const jobs = await sql`
       SELECT h.selection_text
