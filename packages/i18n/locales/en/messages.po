@@ -6580,6 +6580,10 @@ msgstr "You can watch videos with subtitles without signing in — but saving wo
 msgid "You have already used your free trial."
 msgstr "You have already used your free trial."
 
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+msgid "You have it as {savedSenses}"
+msgstr "You have it as {savedSenses}"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 msgstr "You haven't finished onboarding yet. Complete it to start adding movies and texts."
