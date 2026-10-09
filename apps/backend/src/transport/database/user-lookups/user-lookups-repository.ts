@@ -357,6 +357,52 @@ const listByHeadwords = async (params: {
   return grouped
 }
 
+// A kept term matching a "Translate & add" candidate's headword, with what
+// senseMatchPass needs to tell its meaning apart from the candidate's, and the
+// card the row's Edit opens.
+export type KeptSenseWithCard = LiveSense & { cardId: string; sessionId: string }
+
+// Case-insensitive exact-headword matches against the user's kept, live
+// vocabulary, keyed by the lowercased headword. Kept only (`count > 0`): an
+// unkept term keeps its schedule but never reaches the practice queue, so it
+// doesn't count as "in your vocabulary" (adding it again re-keeps it).
+const listKeptSensesByHeadwords = async (params: {
+  userId: string
+  targetLanguage: string
+  headwords: string[]
+}): Promise<Map<string, KeptSenseWithCard[]>> => {
+  if (params.headwords.length === 0) return new Map()
+  const rows = (await sql`
+    SELECT ul.id, ul.headword, COALESCE(ul.sense, '') AS sense, ul.definition, ul.translation, c.id AS card_id, c.study_session_id
+    FROM public.user_lookups ul
+    JOIN public.cards c ON c.id = ul.first_card_id
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.deleted_at IS NULL
+      AND ul.count > 0
+      AND LOWER(ul.headword) = ANY(SELECT LOWER(h) FROM unnest(${params.headwords}::text[]) AS h)
+    ORDER BY ul.created_at ASC, ul.id ASC
+  `) as Array<LiveSense & { card_id: string; study_session_id: string }>
+
+  const grouped = new Map<string, KeptSenseWithCard[]>()
+  for (const row of rows) {
+    const key = row.headword.toLowerCase()
+    grouped.set(key, [
+      ...(grouped.get(key) ?? []),
+      {
+        id: row.id,
+        headword: row.headword,
+        sense: row.sense,
+        definition: row.definition,
+        translation: row.translation,
+        cardId: row.card_id,
+        sessionId: row.study_session_id,
+      },
+    ])
+  }
+  return grouped
+}
+
 // Idempotent get-or-insert keyed by (user_id, target_language, headword, sense).
 // Called at card-creation time so the user_lookups row always exists by the
 // time the card row references it. The no-op DO UPDATE clause exists solely so
@@ -2264,6 +2310,11 @@ export interface UserLookupsRepositoryInterface {
     targetLanguage: string
     headwords: string[]
   }) => Promise<Map<string, HeadwordMatch[]>>
+  listKeptSensesByHeadwords: (params: {
+    userId: string
+    targetLanguage: string
+    headwords: string[]
+  }) => Promise<Map<string, KeptSenseWithCard[]>>
   updateContent: (params: {
     id: string
     translation?: string | null
@@ -2382,6 +2433,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listDifficultyVocab,
     listCoverageVocab,
     listByHeadwords,
+    listKeptSensesByHeadwords,
     updateContent,
     applyGroundingPatch,
     renameKey,

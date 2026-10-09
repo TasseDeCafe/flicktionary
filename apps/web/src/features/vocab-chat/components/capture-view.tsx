@@ -15,7 +15,7 @@ import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { useTranslateForCapture, type CaptureSearch } from '../api/vocab-chat-hooks'
-import { CaptureCandidateRow } from './capture-candidate-row'
+import { CaptureCandidateList } from './capture-candidate-row'
 import { TermRowSkeleton } from './term-row'
 
 const QUERY_MAX = 500
@@ -236,17 +236,8 @@ export const CaptureView = ({ q, lang, ctx }: { q?: string; lang?: string; ctx?:
               {!isTranslating && translation && candidates.length === 0 && (
                 <p className='text-muted-foreground text-sm'>{t`No suggestions for this one. Try asking in the chat.`}</p>
               )}
-              {!isTranslating && submittedSearch && candidates.length > 0 && (
-                <ul className='flex flex-col divide-y rounded-xl border'>
-                  {candidates.map((candidate) => (
-                    <CaptureCandidateRow
-                      key={`${submittedSearch.text}-${submittedSearch.context}-${candidate.headword}`}
-                      candidate={candidate}
-                      search={submittedSearch}
-                      inputLanguage={translation?.inputLanguage ?? null}
-                    />
-                  ))}
-                </ul>
+              {!isTranslating && submittedSearch && translation && candidates.length > 0 && (
+                <CaptureCandidateList search={submittedSearch} translation={translation} />
               )}
             </>
           )}

@@ -6579,6 +6579,10 @@ msgstr "Vous pouvez regarder des vidéos avec sous-titres sans vous connecter �
 msgid "You have already used your free trial."
 msgstr "Vous avez déjà utilisé votre essai gratuit."
 
+#: apps/web/src/features/vocab-chat/components/capture-candidate-row.tsx
+msgid "You have it as {savedSenses}"
+msgstr "Vous l'avez comme {savedSenses}"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "You haven't finished onboarding yet. Complete it to start adding movies and texts."
 msgstr "Vous n'avez pas terminé l'intégration. Finalisez-la pour commencer à ajouter des films et des textes."
