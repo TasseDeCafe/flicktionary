@@ -23,6 +23,8 @@ export const useCreateAdhocCard = () => {
           orpcQuery.chunks.listLanguages.key(),
           ...practiceSummaryKeys(),
           ...difficultyInvalidates(),
+          // Translate & add rows resolve to the card the save landed on.
+          orpcQuery.vocabChat.captureMatches.key(),
         ],
         showErrorToast: false,
       },

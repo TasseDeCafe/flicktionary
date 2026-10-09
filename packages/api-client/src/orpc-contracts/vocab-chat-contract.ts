@@ -9,11 +9,20 @@ export const CaptureCandidateSchema = z.object({
   headword: z.string(),
   note: z.string(),
   example: z.string(),
-  // The learner's existing card for this headword (already in vocabulary, or
-  // added from this search), else null.
-  existingCard: z.object({ cardId: z.string().uuid(), sessionId: z.string().uuid() }).nullable(),
 })
 export type CaptureCandidate = z.infer<typeof CaptureCandidateSchema>
+
+// Whether the learner already has a candidate, by meaning (a saved homograph
+// with another meaning doesn't count).
+export const CaptureMatchSchema = z.object({
+  // The saved term with this candidate's meaning, else null.
+  existingCard: z
+    .object({ userLookupId: z.string().uuid(), cardId: z.string().uuid(), sessionId: z.string().uuid() })
+    .nullable(),
+  // When there's no match: the saved meanings of the same headword, if any.
+  otherSenses: z.array(z.string()),
+})
+export type CaptureMatch = z.infer<typeof CaptureMatchSchema>
 
 export const VocabChatProposalItemSchema = z.object({
   headword: z.string(),
@@ -89,6 +98,33 @@ export const vocabChatContract = {
         }),
       })
     ),
+
+  // Which translate candidates are already in the learner's vocabulary, one
+  // match per candidate, in order. Separate from translate so it can be asked
+  // fresh while the LLM candidates stay cached: vocabulary changes made
+  // anywhere show up when the learner comes back to a search.
+  captureMatches: oc
+    .route({ method: 'POST', path: '/vocab-chat/capture-matches', successStatus: 200 })
+    .errors(errorsWithPrefs)
+    .input(
+      z.object({
+        targetLanguage: z.string().min(2).max(10),
+        // The search text and translate's detected input language.
+        text: z.string().trim().min(1).max(500),
+        inputLanguage: z.string().nullable(),
+        candidates: z
+          .array(
+            z.object({
+              headword: z.string().trim().min(1).max(200),
+              note: z.string().max(500),
+              example: z.string().max(1000),
+            })
+          )
+          .min(1)
+          .max(10),
+      })
+    )
+    .output(z.object({ data: z.object({ matches: z.array(CaptureMatchSchema) }) })),
 
   // Creates a thread (a 'chat' content source + study session) together with
   // its first message. BAD_REQUEST carries `cefr_not_set` /

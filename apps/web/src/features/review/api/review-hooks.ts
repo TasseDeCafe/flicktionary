@@ -80,6 +80,7 @@ export const useRemoveCardFromSession = (sessionId: string) => {
         // Removing a kept card changes downstream counts; invalidate vocabulary
         // list + practice due summary so chips and counts refresh.
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+        queryClient.invalidateQueries({ queryKey: orpcQuery.vocabChat.captureMatches.key() })
         for (const key of [...practiceSummaryKeys(), ...difficultyInvalidates()]) {
           queryClient.invalidateQueries({ queryKey: key })
         }

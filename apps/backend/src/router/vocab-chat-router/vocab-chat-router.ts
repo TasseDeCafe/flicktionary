@@ -18,6 +18,7 @@ import {
 } from '../../service/vocab-chat/run-vocab-chat'
 import { startVocabChat, StartVocabChatPrefsError } from '../../service/vocab-chat/start-vocab-chat'
 import { translateForCapture } from '../../service/vocab-chat/translate-for-capture'
+import { matchCaptureCandidates } from '../../service/vocab-chat/match-capture-candidates'
 import { toIsoString } from '../router-utils'
 import { incrementFixedWindowCount } from '../fixed-window-counter'
 
@@ -28,6 +29,10 @@ const chatTurnsByUser = new NodeCache({ stdTTL: 60 * 60 })
 const MAX_CHAT_TURNS_PER_HOUR = 60
 const translationsByUser = new NodeCache({ stdTTL: 60 * 60 })
 const MAX_TRANSLATIONS_PER_HOUR = 300
+// Asked again on every visit to a search and after each add, so it allows
+// more than translate.
+const captureMatchesByUser = new NodeCache({ stdTTL: 60 * 60 })
+const MAX_CAPTURE_MATCHES_PER_HOUR = 600
 
 const toMessageDto = (row: DbVocabChatMessage): VocabChatMessage => {
   const proposal = parseProposal(row.proposal)
@@ -110,7 +115,6 @@ export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
       }
       const result = await translateForCapture(
         {
-          userId,
           text: input.text,
           context: input.context,
           targetLanguage: input.targetLanguage,
@@ -120,6 +124,23 @@ export const VocabChatRouter = (deps: RunVocabChatDependencies): Router => {
         deps
       )
       return { data: { inputLanguage: result.inputLanguage, candidates: result.candidates } }
+    }),
+
+    captureMatches: implementer.captureMatches.handler(async ({ input, context, errors }) => {
+      assertSignedIn(context, errors)
+      const userId = context.res.locals.userId
+      assertWithinLimit(captureMatchesByUser, MAX_CAPTURE_MATCHES_PER_HOUR, userId, errors)
+      const matches = await matchCaptureCandidates(
+        {
+          userId,
+          targetLanguage: input.targetLanguage,
+          query: input.text,
+          inputLanguage: input.inputLanguage,
+          candidates: input.candidates,
+        },
+        deps
+      )
+      return { data: { matches } }
     }),
 
     start: implementer.start.handler(async ({ input, context, errors }) => {

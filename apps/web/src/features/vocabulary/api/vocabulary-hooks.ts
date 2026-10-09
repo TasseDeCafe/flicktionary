@@ -254,7 +254,12 @@ export const useDeleteChunk = () => {
         dropTermFromExerciseSession(id)
       },
       meta: {
-        invalidates: [orpcQuery.chunks.listChunks.key(), ...practiceSummaryKeys(), ...difficultyInvalidates()],
+        invalidates: [
+          orpcQuery.chunks.listChunks.key(),
+          ...practiceSummaryKeys(),
+          ...difficultyInvalidates(),
+          orpcQuery.vocabChat.captureMatches.key(),
+        ],
         errorMessage: t`Failed to delete term`,
         showErrorModal: true,
       },

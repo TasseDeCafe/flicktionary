@@ -43,6 +43,7 @@ describe('vocab-chat-router', () => {
     candidates: [{ headword: 'засыпать', note: 'to fall asleep', example: 'Я быстро засыпаю.' }],
   })
   const vocabChatTitlePass = vi.fn().mockResolvedValue('Falling asleep')
+  const senseMatchPass = vi.fn()
   // The ad-hoc card behind "added from the search before escalating"; the
   // highlight/segment ids are re-pointed to the synthetic highlight.
   const basicDataPass = vi.fn().mockResolvedValue([
@@ -68,6 +69,7 @@ describe('vocab-chat-router', () => {
     moderationPass: moderationPass as never,
     translateForCapturePass: translateForCapturePass as never,
     vocabChatTitlePass: vocabChatTitlePass as never,
+    senseMatchPass: senseMatchPass as never,
   })
   const testApp = buildTestApp({ anthropicPasses: passes })
 
@@ -115,8 +117,19 @@ describe('vocab-chat-router', () => {
       .send({ text: 'to fall asleep', targetLanguage: 'ru' })
     expect(translated.status).toBe(200)
     expect(translated.body.data.candidates).toHaveLength(1)
-    // Not in the learner's vocabulary yet, so no card to point at.
-    expect(translated.body.data.candidates[0].existingCard).toBeNull()
+
+    // Not in the learner's vocabulary yet: no match, and no headword hit to
+    // run the sense pass on.
+    senseMatchPass.mockClear()
+    const matched = await request(testApp).post('/api/v1/vocab-chat/capture-matches').set(headers).send({
+      targetLanguage: 'ru',
+      text: 'to fall asleep',
+      inputLanguage: 'en',
+      candidates: translated.body.data.candidates,
+    })
+    expect(matched.status).toBe(200)
+    expect(matched.body.data.matches).toEqual([{ existingCard: null, otherSenses: [] }])
+    expect(senseMatchPass).not.toHaveBeenCalled()
 
     createChatCompletion.mockResolvedValueOnce(proposeTurn).mockResolvedValueOnce(replyTurn)
     const started = await request(testApp)
@@ -203,6 +216,73 @@ describe('vocab-chat-router', () => {
     const thread = await request(testApp).get(`/api/v1/vocab-chat/threads/${sessionId}`).set(headers)
     const proposal = thread.body.data.messages[1].proposal
     expect(proposal.items.map((i: { added: boolean }) => i.added)).toEqual([true, true])
+  })
+
+  describe('capture matches', () => {
+    const sniff = { headword: 'нюхать', note: 'to smell (give off a smell)', example: 'Цветы нюхают.' }
+    const matchesFor = (token: string) =>
+      request(testApp)
+        .post('/api/v1/vocab-chat/capture-matches')
+        .set(buildAuthorizationHeaders(token))
+        .send({ targetLanguage: 'ru', text: 'to smell', inputLanguage: 'en', candidates: [sniff] })
+    // Saves нюхать = "to sniff" (basicDataPass above).
+    const addSniff = async (token: string) => {
+      const adhoc = await request(testApp)
+        .post('/api/v1/cards/adhoc')
+        .set(buildAuthorizationHeaders(token))
+        .send({ targetLanguage: 'ru', headword: 'нюхать', context: null })
+      expect(adhoc.status).toBe(200)
+      return adhoc.body.data as { cardId: string; sessionId: string }
+    }
+
+    test('returns 401 when unauthenticated', async () => {
+      const response = await matchesFor('wrong-token')
+      expect(response.status).toBe(401)
+    })
+
+    test('a saved homograph with another meaning keeps Add and names the saved meaning', async () => {
+      const { token } = await onboardedUser()
+      await addSniff(token)
+      senseMatchPass.mockResolvedValueOnce(null)
+
+      const response = await matchesFor(token)
+      expect(response.status).toBe(200)
+      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: ['to sniff'] }])
+      expect(senseMatchPass).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          headword: 'нюхать',
+          candidate: expect.objectContaining({ sense: sniff.note, translation: 'to smell' }),
+          existing: [expect.objectContaining({ sense: 'to sniff' })],
+        })
+      )
+    })
+
+    test('the same meaning points at the saved card', async () => {
+      const { token } = await onboardedUser()
+      const { cardId, sessionId } = await addSniff(token)
+      senseMatchPass.mockImplementationOnce(async ({ existing }) => existing[0].userLookupId)
+
+      const response = await matchesFor(token)
+      expect(response.status).toBe(200)
+      expect(response.body.data.matches).toEqual([
+        { existingCard: { userLookupId: expect.any(String), cardId, sessionId }, otherSenses: [] },
+      ])
+    })
+
+    test('an unkept term is not in the vocabulary', async () => {
+      const { token } = await onboardedUser()
+      const { cardId } = await addSniff(token)
+      const removed = await request(testApp)
+        .patch(`/api/v1/cards/${cardId}/remove-from-session`)
+        .set(buildAuthorizationHeaders(token))
+        .send({})
+      expect(removed.status).toBe(200)
+      senseMatchPass.mockClear()
+
+      const response = await matchesFor(token)
+      expect(response.body.data.matches).toEqual([{ existingCard: null, otherSenses: [] }])
+      expect(senseMatchPass).not.toHaveBeenCalled()
+    })
   })
 
   test('translate forwards the learner context to the pass', async () => {

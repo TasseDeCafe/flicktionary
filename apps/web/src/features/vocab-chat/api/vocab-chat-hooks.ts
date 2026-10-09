@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
+import type { CaptureCandidate, VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
-
-type CaptureCard = { cardId: string; sessionId: string }
 
 // A "Translate & add" search: the query, its target language, and the
 // optional context the learner met the term in.
@@ -33,27 +31,29 @@ export const useTranslateForCapture = (search: CaptureSearch | null) =>
     })
   )
 
-// After Add, the candidate points at its new card, so the row (and the
-// restored results after a detour into the card) offer Edit instead of Add.
-export const useMarkCandidateAdded = () => {
-  const queryClient = useQueryClient()
-  return (params: { search: CaptureSearch; headword: string; card: CaptureCard }) =>
-    queryClient.setQueryData<{
-      data: { inputLanguage: string | null; candidates: Array<{ headword: string; existingCard: CaptureCard | null }> }
-    }>(
-      orpcQuery.vocabChat.translate.queryKey({ input: translateInput(params.search) }),
-      (old) =>
-        old && {
-          ...old,
-          data: {
-            ...old.data,
-            candidates: old.data.candidates.map((c) =>
-              c.headword === params.headword ? { ...c, existingCard: params.card } : c
-            ),
-          },
-        }
-    )
-}
+// Which candidates the learner already has, by meaning. Unlike the cached
+// translate answer this follows the vocabulary: it's asked again whenever the
+// results mount (coming back from a card, another surface's add or delete)
+// and after every add. One match per candidate, in order.
+export const useCaptureMatches = (
+  search: CaptureSearch | null,
+  translation: { inputLanguage: string | null; candidates: CaptureCandidate[] } | undefined
+) =>
+  useQuery(
+    orpcQuery.vocabChat.captureMatches.queryOptions({
+      input: {
+        targetLanguage: search?.targetLanguage ?? '',
+        text: search?.text ?? '',
+        inputLanguage: translation?.inputLanguage ?? null,
+        candidates: (translation?.candidates ?? []).map(({ headword, note, example }) => ({ headword, note, example })),
+      },
+      enabled: !!search && !!translation && translation.candidates.length > 0,
+      select: (response) => response.data.matches,
+      retry: false,
+      // Rows fall back to Add, which dedups on save.
+      meta: { showErrorToast: false },
+    })
+  )
 
 export const useVocabChatThread = (sessionId: string) => {
   const { t } = useLingui()

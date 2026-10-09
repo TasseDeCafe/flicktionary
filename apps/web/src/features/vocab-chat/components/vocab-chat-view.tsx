@@ -27,7 +27,7 @@ import {
   useVocabChatThread,
   type CaptureSearch,
 } from '../api/vocab-chat-hooks'
-import { CaptureCandidateRow } from './capture-candidate-row'
+import { CaptureCandidateList } from './capture-candidate-row'
 import { TermRow, TermRowSkeleton, TermRowStatus } from './term-row'
 
 const MESSAGE_MAX = 4000
@@ -212,17 +212,8 @@ export const NewVocabChatView = ({
                 <>
                   <UserBubble content={seedUserMessage} />
                   {isSeedLoading && <SkeletonList count={2} renderItem={() => <TermRowSkeleton />} />}
-                  {seedCandidates.length > 0 && (
-                    <ul className='bg-card flex flex-col divide-y rounded-xl border'>
-                      {seedCandidates.map((candidate) => (
-                        <CaptureCandidateRow
-                          key={candidate.headword}
-                          candidate={candidate}
-                          search={seedSearch}
-                          inputLanguage={seedTranslation?.inputLanguage ?? null}
-                        />
-                      ))}
-                    </ul>
+                  {seedTranslation && seedCandidates.length > 0 && (
+                    <CaptureCandidateList search={seedSearch} translation={seedTranslation} className='bg-card' />
                   )}
                 </>
               )
@@ -395,22 +386,24 @@ const ProposalRow = ({
       headword={item.headword}
       note={item.note}
       example={item.example}
-      action={
+      status={
         item.added ? (
           <TermRowStatus tone='added'>{t`Added`}</TermRowStatus>
         ) : (
-          <>
-            {item.inVocabulary && <TermRowStatus tone='muted'>{t`In your vocabulary`}</TermRowStatus>}
-            <Button
-              variant='secondary'
-              size='sm'
-              disabled={isPending}
-              onClick={() => addItems({ sessionId, messageId, itemIndexes: [index] })}
-            >
-              {isPending ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}
-              {t`Add`}
-            </Button>
-          </>
+          item.inVocabulary && <TermRowStatus tone='muted'>{t`In your vocabulary`}</TermRowStatus>
+        )
+      }
+      actions={
+        !item.added && (
+          <Button
+            variant='secondary'
+            size='sm'
+            disabled={isPending}
+            onClick={() => addItems({ sessionId, messageId, itemIndexes: [index] })}
+          >
+            {isPending ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}
+            {t`Add`}
+          </Button>
         )
       }
     />
