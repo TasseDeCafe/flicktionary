@@ -207,13 +207,14 @@ const insertFacet = async (
   await tx`
     INSERT INTO public.study_facets
       (user_lookup_id, user_id, target_language, skill, target_form, srs_state, srs_due, srs_stability,
-       srs_difficulty, srs_last_review, srs_reps, srs_lapses, introduced_at)
+       srs_difficulty, srs_last_review, srs_reps, srs_lapses, introduced_at, disabled_at)
     VALUES (
       ${params.userLookupId}, ${params.userId}, ${params.targetLanguage}, ${params.skill}, '',
-      'review', NOW() + make_interval(secs => ${seed.dueInHours * 3600}), ${seed.stability},
+      ${seed.phase ?? 'review'}, NOW() + make_interval(secs => ${seed.dueInHours * 3600}), ${seed.stability},
       ${seed.difficulty}, NOW() - make_interval(secs => ${seed.lastReviewDaysAgo * DAY_SECONDS}),
       ${seed.reps}, ${seed.lapses},
-      NOW() - make_interval(secs => ${seed.introducedDaysAgo * DAY_SECONDS})
+      NOW() - make_interval(secs => ${seed.introducedDaysAgo * DAY_SECONDS}),
+      ${seed.paused ? tx`NOW()` : null}
     )
   `
 }

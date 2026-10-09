@@ -301,12 +301,64 @@ const ruProductionFamily: ScenarioSpec = {
   ],
 }
 
+// The "Translate & add" row states: each word is found by searching its
+// English meaning (production tested) unless noted, and shows one state.
+const ruCaptureStates: ScenarioSpec = {
+  name: 'ru-capture-states',
+  description:
+    'Saved Russian words in every "Translate & add" row state: a far-due card to pull forward, due tomorrow, learning, no production card, production paused, and a never-started word.',
+  targetLanguage: 'ru',
+  nativeLanguage: 'en',
+  cefr: 'B1',
+  terms: [
+    // "dog": due in 23 days → Review tomorrow.
+    { term: собака, production: review(24 * 23), recognition: notDue, savedDaysAgo: 40 },
+    // "window": due tomorrow, nothing to pull forward.
+    { term: окно, production: review(24), recognition: notDue, savedDaysAgo: 40 },
+    // "waterfall": still in learning steps, due today.
+    {
+      term: водопад,
+      production: review(-1, { phase: 'learning', stability: 1, reps: 1, lastReviewDaysAgo: 0, introducedDaysAgo: 0 }),
+      recognition: notDue,
+      bank: productionHint('failed'),
+      insight: 'fill',
+      savedDaysAgo: 40,
+    },
+    // "to read": recognition only → Add production.
+    { term: читать, recognition: notDue, savedDaysAgo: 45 },
+    // "translation": production paused with its schedule → Resume production.
+    {
+      term: перевод,
+      recognition: notDue,
+      production: review(24 * 12, { paused: true }),
+      savedDaysAgo: 45,
+    },
+    // "writer": never started → the search moves it up (Undo, then Move up).
+    { term: писатель, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    // Search "дюжина" (Russian, so recognition is tested): due in 23 days.
+    { term: дюжина, recognition: review(24 * 23), savedDaysAgo: 40 },
+  ],
+  knownLemmas: [],
+  expectations: {
+    preview: { new: 1, warmup: 0, learning: 1, review: 0 },
+  },
+  tryIt: [
+    'Add a word (Russian) → "dog": Due in 23 days · Review tomorrow → ✓ Due tomorrow · Undo.',
+    '"window": Due tomorrow. "waterfall": Learning · due today.',
+    '"to read": No production card · Add production → ✓ Production added · Undo.',
+    '"translation": Production paused · Resume production → its schedule · Undo.',
+    '"writer": ✓ Moved up · Undo → Not started · Move up.',
+    '"дюжина": a Russian search tests recognition — Due in 23 days · Review tomorrow.',
+  ],
+}
+
 export const SCENARIOS: readonly ScenarioSpec[] = [
   ruFamilyDue,
   ruLeechEdge,
   ruWarmupDay2,
   ruProductionHints,
   ruProductionFamily,
+  ruCaptureStates,
 ]
 
 export const findScenario = (name: string): ScenarioSpec | undefined =>
