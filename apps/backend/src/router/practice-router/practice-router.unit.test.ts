@@ -11,6 +11,7 @@ const row = (overrides: Partial<DbUserLookupWithFacet>): DbUserLookupWithFacet =
     grounded_at: '2026-06-01T00:00:00Z',
     grounding_patch: { ipa: { untagged: '[stɐˈla]' } },
     grammar: { pos: 'noun', ipa: { untagged: '[stɐˈla]' } },
+    boost_active: false,
     ...overrides,
   }) as DbUserLookupWithFacet
 
@@ -58,6 +59,7 @@ describe('toQueueItemDto', () => {
     payload: null,
     grounded_at: null,
     grounding_patch: null,
+    boost_active: false,
   } as unknown as DbUserLookupWithFacet
 
   const exerciseEntry: StrengthenExerciseEntry = {

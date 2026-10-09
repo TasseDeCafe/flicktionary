@@ -38,8 +38,9 @@ describe('matchCaptureCandidates', () => {
       {
         existingCard: { userLookupId: thereIs.id, cardId: thereIs.cardId, sessionId: thereIs.sessionId },
         otherSenses: [],
+        status,
       },
-      { existingCard: null, otherSenses: [] },
+      { existingCard: null, otherSenses: [], status: null },
     ])
   })
 
