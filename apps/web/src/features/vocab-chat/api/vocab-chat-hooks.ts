@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { CaptureCandidate, VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
+import type { VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { difficultyInvalidates, practiceSummaryKeys } from '@/features/practice/api/practice-hooks'
 
@@ -31,25 +31,32 @@ export const useTranslateForCapture = (search: CaptureSearch | null) =>
     })
   )
 
-// Which candidates the learner already has, by meaning. Unlike the cached
-// translate answer this follows the vocabulary: it's asked again whenever the
-// results mount (coming back from a card, another surface's add or delete)
-// and after every add. One match per candidate, in order, plus the card the
-// search tested.
-export const useCaptureMatches = (
-  search: CaptureSearch | null,
-  translation: { inputLanguage: string | null; candidates: CaptureCandidate[] } | undefined
-) =>
+// Asks which candidates the learner already has: a search's (see
+// useTranslateForCapture) or a chat proposal's.
+export type CaptureMatchesRequest = {
+  targetLanguage: string
+  context: { kind: 'search'; text: string; inputLanguage: string | null } | { kind: 'chat'; userMessage: string }
+  candidates: Array<{ headword: string; note: string; example: string; userLookupId?: string }>
+}
+
+// Which candidates the learner already has, by meaning, with each one's
+// practice status. Unlike the cached LLM answers this follows the
+// vocabulary: it's asked again whenever the rows mount (coming back from a
+// card, another surface's add or delete) and after every change made from a
+// row. One match per candidate, in order. `keepPrevious` holds the last
+// answer while a changed request loads, for a list whose candidates stay put
+// (a chat proposal whose item just resolved to its term).
+export const useCaptureMatches = (request: CaptureMatchesRequest | null, { keepPrevious = false } = {}) =>
   useQuery(
     orpcQuery.vocabChat.captureMatches.queryOptions({
-      input: {
-        targetLanguage: search?.targetLanguage ?? '',
-        text: search?.text ?? '',
-        inputLanguage: translation?.inputLanguage ?? null,
-        candidates: (translation?.candidates ?? []).map(({ headword, note, example }) => ({ headword, note, example })),
+      input: request ?? {
+        targetLanguage: '',
+        context: { kind: 'chat', userMessage: '' },
+        candidates: [],
       },
-      enabled: !!search && !!translation && translation.candidates.length > 0,
-      select: (response) => response.data,
+      enabled: !!request && request.candidates.length > 0,
+      select: (response) => response.data.matches,
+      placeholderData: keepPrevious ? keepPreviousData : undefined,
       retry: false,
       // Rows fall back to Add, which dedups on save.
       meta: { showErrorToast: false },
@@ -103,12 +110,18 @@ export const useUnboostFacet = () => {
   )
 }
 
+// Polls while an added proposal item is still being enriched, so its row
+// turns into the card (or a retry) on its own.
 export const useVocabChatThread = (sessionId: string) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.vocabChat.getThread.queryOptions({
       input: { sessionId },
       select: (response) => response.data,
+      refetchInterval: (query) =>
+        query.state.data?.data.messages.some((m) => m.proposal?.items.some((item) => item.addState === 'pending'))
+          ? 2500
+          : false,
       meta: { errorMessage: t`Failed to load chat` },
     })
   )
@@ -145,8 +158,8 @@ export const useSendVocabChatMessage = (sessionId: string) =>
   )
 
 // A proposal row's Add. The response carries the updated message, written
-// into the thread cache so the row flips to "Added" without waiting for a
-// refetch. Rows add independently: `added` flags are merged rather than
+// into the thread cache so the row flips to its pending state without waiting
+// for a refetch. Rows add independently: add states are merged rather than
 // replaced, so a response that overtakes a later one can't un-add a row.
 export const useAddProposedItems = (sessionId: string) => {
   const { t } = useLingui()
@@ -186,10 +199,26 @@ const mergeAddedFlags = (cached: VocabChatMessage, updated: VocabChatMessage): V
     ? {
         ...updated,
         proposal: {
-          items: updated.proposal.items.map((item, i) => ({
-            ...item,
-            added: item.added || (cached.proposal?.items[i]?.added ?? false),
-          })),
+          items: updated.proposal.items.map((item, i) => {
+            const previous = cached.proposal?.items[i]
+            return item.addState === null && previous?.addState ? previous : item
+          }),
         },
       }
     : updated
+
+// Retries a proposal item whose enrichment failed (the session's own retry).
+export const useRetryProposalItem = (sessionId: string) => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.studySessions.retryEnrichment.mutationOptions({
+      meta: {
+        invalidates: [
+          orpcQuery.vocabChat.getThread.key({ input: { sessionId } }),
+          orpcQuery.studySessions.getProcessingStatus.key({ input: { sessionId } }),
+        ],
+        errorMessage: t`Failed to retry`,
+      },
+    })
+  )
+}

@@ -8,10 +8,10 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
 import { useCaptureMatches, useRecordCaptureDemand, type CaptureSearch } from '../api/vocab-chat-hooks'
-import type { TestedSkill } from '../utils/capture-row-state'
+import { useTestedBecause } from '../utils/use-tested-because'
 import { CaptureMatchRow } from './capture-match-row'
 import { EditCardButton } from './edit-card-button'
-import { TermRow, TermRowStatus } from './term-row'
+import { OtherSensesStatus, TermRow, TermRowStatus } from './term-row'
 
 type CaptureCard = { cardId: string; sessionId: string }
 
@@ -28,16 +28,19 @@ export const CaptureCandidateList = ({
   translation: { inputLanguage: string | null; candidates: CaptureCandidate[] }
   className?: string
 }) => {
-  const { data, isLoading: isMatching } = useCaptureMatches(search, translation)
-  useAutomaticCaptureDemand(search, translation.candidates, data?.matches)
+  const { data: matches, isLoading: isMatching } = useCaptureMatches({
+    targetLanguage: search.targetLanguage,
+    context: { kind: 'search', text: search.text, inputLanguage: translation.inputLanguage },
+    candidates: translation.candidates.map(({ headword, note, example }) => ({ headword, note, example })),
+  })
+  useAutomaticCaptureDemand(search, translation.candidates, matches)
   return (
     <ul className={cn('flex flex-col divide-y rounded-xl border', className)}>
       {translation.candidates.map((candidate, index) => (
         <CaptureCandidateRow
           key={`${search.text}-${search.context}-${index}`}
           candidate={candidate}
-          match={data?.matches[index]}
-          testedSkill={data?.testedSkill ?? 'meaning_recognition'}
+          match={matches?.[index]}
           isMatching={isMatching}
           search={search}
           inputLanguage={translation.inputLanguage}
@@ -82,19 +85,18 @@ const useAutomaticCaptureDemand = (
 const CaptureCandidateRow = ({
   candidate,
   match,
-  testedSkill,
   isMatching,
   search,
   inputLanguage,
 }: {
   candidate: CaptureCandidate
   match: CaptureMatch | undefined
-  testedSkill: TestedSkill
   isMatching: boolean
   search: CaptureSearch
   inputLanguage: string | null
 }) => {
   const { t } = useLingui()
+  const testedBecause = useTestedBecause()
   const { mutate: createAdhoc, isPending } = useCreateAdhocCard()
   // Added from this screen: labeled "Added", and pointing at the new card even
   // if the refreshed match doesn't resolve to it.
@@ -136,9 +138,11 @@ const CaptureCandidateRow = ({
         rowText={rowText}
         card={match.existingCard}
         status={match.status}
-        testedSkill={testedSkill}
-        search={search}
-        inputLanguage={inputLanguage}
+        testedSkill={match.testedSkill}
+        testedBecause={testedBecause.search(match.testedSkill, {
+          inputLanguage,
+          targetLanguage: search.targetLanguage,
+        })}
       />
     )
   }
@@ -153,13 +157,10 @@ const CaptureCandidateRow = ({
     )
   }
 
-  // Same headword saved with another meaning: say so, since Add is still
-  // offered for this one.
-  const savedSenses = (match?.otherSenses ?? []).map((sense) => `"${sense}"`).join(', ')
   return (
     <TermRow
       {...rowText}
-      status={savedSenses && <TermRowStatus tone='muted'>{t`You have it as ${savedSenses}`}</TermRowStatus>}
+      status={<OtherSensesStatus senses={match?.otherSenses ?? []} />}
       actions={
         <Button variant='secondary' size='sm' onClick={handleAdd} disabled={isPending}>
           {isPending ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}

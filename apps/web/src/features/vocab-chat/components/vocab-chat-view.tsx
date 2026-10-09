@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowRight, Layers, Loader2, Plus, Send } from 'lucide-react'
+import { ArrowRight, Layers, Loader2, Send } from 'lucide-react'
 import type { VocabChatMessage } from '@flicktionary/api-client/orpc-contracts/vocab-chat-contract'
 import { getBackendErrorCodeFromError } from '@flicktionary/api-client/utils/backend-error-utils'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
@@ -20,7 +20,6 @@ import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import {
-  useAddProposedItems,
   useSendVocabChatMessage,
   useStartVocabChat,
   useTranslateForCapture,
@@ -28,7 +27,8 @@ import {
   type CaptureSearch,
 } from '../api/vocab-chat-hooks'
 import { CaptureCandidateList } from './capture-candidate-row'
-import { TermRow, TermRowSkeleton, TermRowStatus } from './term-row'
+import { ChatProposalList } from './chat-proposal-list'
+import { TermRowSkeleton } from './term-row'
 
 const MESSAGE_MAX = 4000
 
@@ -82,6 +82,7 @@ export const VocabChatThreadView = ({ sessionId }: { sessionId: string }) => {
     <ModalScreen onClose={close} title={thread?.title ?? (isLoading ? '' : t`Chat`)} rightSlot={cardsLink}>
       <ChatBody
         sessionId={sessionId}
+        targetLanguage={thread?.targetLanguage ?? null}
         messages={thread?.messages ?? null}
         isLoading={isLoading}
         pendingContent={pendingContent}
@@ -203,6 +204,7 @@ export const NewVocabChatView = ({
         <>
           <ChatBody
             sessionId={null}
+            targetLanguage={null}
             messages={[]}
             isLoading={false}
             pendingContent={pendingContent}
@@ -248,6 +250,7 @@ export const NewVocabChatView = ({
 
 const ChatBody = ({
   sessionId,
+  targetLanguage,
   messages,
   isLoading,
   pendingContent,
@@ -256,6 +259,7 @@ const ChatBody = ({
   emptyHint,
 }: {
   sessionId: string | null
+  targetLanguage: string | null
   messages: VocabChatMessage[] | null
   isLoading: boolean
   pendingContent: string | null
@@ -310,8 +314,14 @@ const ChatBody = ({
               className='flex scroll-mt-4 flex-col gap-2'
             >
               {m.content && <MarkdownMessage content={m.content} className='text-sm' />}
-              {m.proposal && sessionId && (
-                <ProposalList sessionId={sessionId} messageId={m.id} items={m.proposal.items} />
+              {m.proposal && sessionId && targetLanguage && (
+                <ChatProposalList
+                  sessionId={sessionId}
+                  messageId={m.id}
+                  items={m.proposal.items}
+                  targetLanguage={targetLanguage}
+                  userMessage={precedingUserMessage(messages, m.id)}
+                />
               )}
               {m.newThreadSuggestion && <NewThreadNotice suggestion={m.newThreadSuggestion} />}
             </div>
@@ -329,6 +339,12 @@ const ChatBody = ({
   )
 }
 
+// The learner message a reply answers: the latest user message before it.
+const precedingUserMessage = (messages: VocabChatMessage[], messageId: string): string => {
+  const index = messages.findIndex((m) => m.id === messageId)
+  return [...messages.slice(0, index)].reverse().find((m) => m.role === 'user')?.content ?? ''
+}
+
 const UserBubble = ({ content, pending = false }: { content: string; pending?: boolean }) => (
   <div
     className={cn(
@@ -339,76 +355,6 @@ const UserBubble = ({ content, pending = false }: { content: string; pending?: b
     {content}
   </div>
 )
-
-type ProposalItem = NonNullable<VocabChatMessage['proposal']>['items'][number]
-
-// The model's propose_cards output. Each term is added on its own, like a
-// "Translate & add" result; adding several at once goes through the chat
-// ("add these").
-const ProposalList = ({
-  sessionId,
-  messageId,
-  items,
-}: {
-  sessionId: string
-  messageId: string
-  items: ProposalItem[]
-}) => (
-  <ul className='bg-card flex flex-col divide-y rounded-xl border'>
-    {items.map((item, index) => (
-      <ProposalRow
-        key={`${index}-${item.headword}`}
-        sessionId={sessionId}
-        messageId={messageId}
-        index={index}
-        item={item}
-      />
-    ))}
-  </ul>
-)
-
-// Each row owns its mutation so several adds run in parallel.
-const ProposalRow = ({
-  sessionId,
-  messageId,
-  index,
-  item,
-}: {
-  sessionId: string
-  messageId: string
-  index: number
-  item: ProposalItem
-}) => {
-  const { t } = useLingui()
-  const { mutate: addItems, isPending } = useAddProposedItems(sessionId)
-  return (
-    <TermRow
-      headword={item.headword}
-      note={item.note}
-      example={item.example}
-      status={
-        item.added ? (
-          <TermRowStatus tone='added'>{t`Added`}</TermRowStatus>
-        ) : (
-          item.inVocabulary && <TermRowStatus tone='muted'>{t`In your vocabulary`}</TermRowStatus>
-        )
-      }
-      actions={
-        !item.added && (
-          <Button
-            variant='secondary'
-            size='sm'
-            disabled={isPending}
-            onClick={() => addItems({ sessionId, messageId, itemIndexes: [index] })}
-          >
-            {isPending ? <Loader2 className='size-4 animate-spin' /> : <Plus className='size-4' />}
-            {t`Add`}
-          </Button>
-        )
-      }
-    />
-  )
-}
 
 // The learner asked about another target language: a thread keeps one
 // language, so offer a new thread with their message carried over.
