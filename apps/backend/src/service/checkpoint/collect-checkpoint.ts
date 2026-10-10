@@ -72,6 +72,11 @@ export type CollectCheckpointResult =
       backlogCandidates: BacklogCandidate[]
     }
 
+// One due saved term a collect would credit, with the same evidence shape as
+// a backlog candidate so the declaration sheet renders both lists alike.
+export type CheckpointCandidatesResult =
+  { ok: false; reason: 'not_found' } | { ok: true; candidates: BacklogCandidate[] }
+
 export type CheckpointPreviewResult =
   { ok: false; reason: 'not_found' } | { ok: true; pendingCount: number; backlogCount: number; supported: boolean }
 
@@ -366,6 +371,46 @@ export const previewCheckpoint = async (
   }
 }
 
+const toEvidence = (m: MatchedVocabRow): { surface: string | null; context: string | null } => ({
+  surface: m.occurrences[0]?.surface ?? null,
+  context: m.occurrences[0]?.context ?? null,
+})
+
+const toCandidate = (m: MatchedVocabRow): BacklogCandidate => {
+  const evidence = toEvidence(m)
+  return {
+    userLookupId: m.row.lookup.id,
+    headword: m.row.lookup.headword,
+    sense: m.row.lookup.sense,
+    matchedSurface: evidence.surface,
+    context: evidence.context,
+  }
+}
+
+// The reviews a collect up to `toSegmentIndex` would credit, listed for the
+// declaration sheet so the reader can deselect any before confirming. Sees
+// the client's previewed-gloss spans (unlike the count preview) but, like it,
+// skips every LLM pass: a headword saved with several senses lists each one
+// and an unconfirmed multi-word expression may appear, while the collect
+// credits only what the passes confirm — the list can overstate, never
+// understate, what gets credited.
+export const listCheckpointCandidates = async (
+  params: { sessionId: string; userId: string; toSegmentIndex: number; previewedSpans: readonly PreviewedSpan[] },
+  deps: CheckpointDependencies
+): Promise<CheckpointCandidatesResult> => {
+  const session = await deps.studySessionsRepository.findByIdForUser(params.sessionId, params.userId)
+  if (!session) return { ok: false, reason: 'not_found' }
+  if (!KAIKKI_LANGUAGES.has(session.target_language)) return { ok: true, candidates: [] }
+  const span = await computeSpanMatch(session, params.userId, params.toSegmentIndex, params.previewedSpans, deps)
+  if (span.empty) return { ok: true, candidates: [] }
+  const partition = partitionMatches([...span.matched, ...span.mweCandidates], new Date())
+  const { creditable } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
+  // In reading order, so the list retraces the text the reader just finished.
+  const firstSeenAt = (m: MatchedVocabRow): number => m.occurrences[0]?.segmentIndex ?? Number.MAX_SAFE_INTEGER
+  const ordered = [...creditable].sort((a, b) => firstSeenAt(a) - firstSeenAt(b))
+  return { ok: true, candidates: ordered.map(toCandidate) }
+}
+
 // The checkpoint press. Matching and the sense pass run OUTSIDE the write
 // transaction; the transaction re-locks the session pointer (CONFLICT if a
 // concurrent press advanced it), reloads the creditable facets and re-validates
@@ -378,6 +423,9 @@ export const collectCheckpoint = async (
     userId: string
     toSegmentIndex: number
     previewedSpans: readonly PreviewedSpan[]
+    // Due terms the reader deselected in the declaration sheet: no credit, no
+    // penalty — they simply stay due.
+    excludedUserLookupIds: readonly string[]
   },
   deps: CheckpointDependencies
 ): Promise<CollectCheckpointResult> => {
@@ -403,10 +451,12 @@ export const collectCheckpoint = async (
   const resolved = await resolveMultiSenseMatches([...span.matched, ...confirmedMwes], session.target_language, deps)
   const partition = partitionMatches(resolved, new Date())
   const {
-    creditable,
+    creditable: creditableUnfiltered,
     suppressedCount,
     backlog: backlogUncapped,
   } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
+  const excluded = new Set(params.excludedUserLookupIds)
+  const creditable = creditableUnfiltered.filter((m) => !excluded.has(m.row.lookup.id))
   // Cap BEFORE the confirm pass so LLM cost is bounded by the cap; a
   // pass-rejected candidate does not free a slot for one past the cap
   // (realistic counts sit far below 200 — same loss semantics as before).
@@ -420,10 +470,6 @@ export const collectCheckpoint = async (
   // getCheckpointClaims rehydration can re-offer it. For MWEs the surface is
   // the anchor content word findMweAnchorOccurrence picked, not the whole
   // (possibly inflected/reordered) expression.
-  const toEvidence = (m: MatchedVocabRow): { surface: string | null; context: string | null } => ({
-    surface: m.occurrences[0]?.surface ?? null,
-    context: m.occurrences[0]?.context ?? null,
-  })
   const backlogEvidence = Object.fromEntries(backlog.map((m) => [m.row.lookup.id, toEvidence(m)]))
 
   const allMatchedIds = [...new Set(resolved.map((m) => m.row.lookup.id))]
@@ -505,15 +551,6 @@ export const collectCheckpoint = async (
     toSegmentIndex: span.clampedTo,
     creditedCount: txResult.creditedCount,
     suppressedCount,
-    backlogCandidates: backlog.map((m) => {
-      const evidence = toEvidence(m)
-      return {
-        userLookupId: m.row.lookup.id,
-        headword: m.row.lookup.headword,
-        sense: m.row.lookup.sense,
-        matchedSurface: evidence.surface,
-        context: evidence.context,
-      }
-    }),
+    backlogCandidates: backlog.map(toCandidate),
   }
 }

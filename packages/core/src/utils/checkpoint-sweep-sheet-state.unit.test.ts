@@ -18,6 +18,40 @@ describe('initialDeclarationSheetState', () => {
   })
 })
 
+describe('the claims step', () => {
+  it('follows the collect when it returned candidates, then continues to the sweep', () => {
+    const collected = reduceDeclarationSheet(fullRun, {
+      type: 'collected',
+      checkpointId: 'cp-1',
+      creditedCount: 2,
+      claimsCount: 4,
+    })
+    expect(collected.phase).toBe('claims')
+    const asserted = reduceDeclarationSheet(collected, { type: 'claimsAsserted', assertedCount: 3 })
+    expect(asserted.phase).toBe('sweep')
+    expect(asserted.claims).toEqual({ assertedCount: 3 })
+  })
+
+  it('is skippable, and ends a run with no sweep', () => {
+    const checkpointOnly = initialDeclarationSheetState({ checkpointIncluded: true, sweepIncluded: false })
+    const collected = reduceDeclarationSheet(checkpointOnly, {
+      type: 'collected',
+      checkpointId: 'cp-1',
+      creditedCount: 0,
+      claimsCount: 1,
+    })
+    const skipped = reduceDeclarationSheet(collected, { type: 'skipClaims' })
+    expect(skipped.phase).toBe('done')
+    expect(skipped.claims).toBeNull()
+  })
+
+  it('opens a re-entry run that only carries leftover candidates', () => {
+    const reentry = initialDeclarationSheetState({ checkpointIncluded: false, sweepIncluded: false, claimsCount: 5 })
+    expect(reentry.phase).toBe('claims')
+    expect(reduceDeclarationSheet(reentry, { type: 'claimsAsserted', assertedCount: 5 }).phase).toBe('done')
+  })
+})
+
 describe('reduceDeclarationSheet', () => {
   it('advances checkpoint → sweep → done through the full run', () => {
     const collected = reduceDeclarationSheet(fullRun, {

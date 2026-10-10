@@ -1,10 +1,11 @@
-// State machine for the merged declaration sheet (checkpoint → sweep → done).
+// State machine for the merged declaration sheet
+// (checkpoint → claims → sweep → done).
 // Kept pure so the step-inclusion matrix, the transition rules, and the
 // combined-undo outcome handling are unit-testable without mounting the
 // overlay. The component dispatches events; async work (mutations, the exact
 // span preview) stays in the component.
 
-export type DeclarationSheetPhase = 'checkpoint' | 'sweep' | 'done' | 'undoError'
+export type DeclarationSheetPhase = 'checkpoint' | 'claims' | 'sweep' | 'done' | 'undoError'
 
 export type DeclarationSheetState = {
   phase: DeclarationSheetPhase
@@ -16,12 +17,19 @@ export type DeclarationSheetState = {
   // shows an inline retry instead of a toast.
   collectConflict: boolean
   checkpoint: { checkpointId: string | null; creditedCount: number } | null
+  // The claims step ("saved but never practiced"): `claimsCount` is how many
+  // candidates the run has to offer — known at open for a claims re-entry,
+  // otherwise only once the collect returns them. 0 means no claims step.
+  claimsCount: number
+  claims: { assertedCount: number } | null
   sweep: { markedCount: number; sweepBatchId: string | null } | null
   undo: { checkpointFailed: boolean; sweepFailed: boolean; checkpointStale: boolean } | null
 }
 
 export type DeclarationSheetEvent =
-  | { type: 'collected'; checkpointId: string | null; creditedCount: number }
+  | { type: 'collected'; checkpointId: string | null; creditedCount: number; claimsCount?: number }
+  | { type: 'claimsAsserted'; assertedCount: number }
+  | { type: 'skipClaims' }
   | { type: 'collectConflict' }
   | { type: 'collectRetry' }
   | { type: 'swept'; markedCount: number; sweepBatchId: string | null }
@@ -32,20 +40,27 @@ export type DeclarationSheetEvent =
 export const initialDeclarationSheetState = ({
   checkpointIncluded,
   sweepIncluded,
+  claimsCount = 0,
 }: {
   checkpointIncluded: boolean
   sweepIncluded: boolean
+  claimsCount?: number
 }): DeclarationSheetState => ({
   // Callers only open the sheet when at least one step applies; a
-  // checkpoint-less run starts directly on the sweep step.
-  phase: checkpointIncluded ? 'checkpoint' : 'sweep',
+  // checkpoint-less run starts on the claims step when it carries leftover
+  // candidates, else directly on the sweep step.
+  phase: checkpointIncluded ? 'checkpoint' : claimsCount > 0 ? 'claims' : 'sweep',
   checkpointIncluded,
   sweepIncluded,
   collectConflict: false,
   checkpoint: null,
+  claimsCount,
+  claims: null,
   sweep: null,
   undo: null,
 })
+
+const afterClaims = (state: DeclarationSheetState): DeclarationSheetPhase => (state.sweepIncluded ? 'sweep' : 'done')
 
 export const reduceDeclarationSheet = (
   state: DeclarationSheetState,
@@ -57,8 +72,13 @@ export const reduceDeclarationSheet = (
         ...state,
         collectConflict: false,
         checkpoint: { checkpointId: event.checkpointId, creditedCount: event.creditedCount },
-        phase: state.sweepIncluded ? 'sweep' : 'done',
+        claimsCount: event.claimsCount ?? 0,
+        phase: (event.claimsCount ?? 0) > 0 ? 'claims' : afterClaims(state),
       }
+    case 'claimsAsserted':
+      return { ...state, claims: { assertedCount: event.assertedCount }, phase: afterClaims(state) }
+    case 'skipClaims':
+      return { ...state, phase: afterClaims(state) }
     case 'collectConflict':
       return { ...state, collectConflict: true }
     case 'collectRetry':
