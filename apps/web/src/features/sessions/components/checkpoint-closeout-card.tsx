@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
-import { BookmarkCheck, CheckCircle2, Loader2 } from 'lucide-react'
+import { BookmarkCheck, CheckCircle2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { CheckpointInfoPopover } from './checkpoint-info-popover'
 
@@ -8,10 +8,11 @@ type Props = {
   pendingCount: number
   // The reviewed-until pointer already sits at the end of the track.
   isCollected: boolean
-  isCollecting: boolean
+  // Opens the declaration sheet: the reviews list, then the saved words never
+  // practiced, then the mark-known sweep.
   onCollect: () => void
-  // Backlog candidates from the LAST collect (this mount) — the claims
-  // re-entry after the toast is gone. 0 hides the affordance.
+  // Never-practiced candidates the latest checkpoint left unasserted — the
+  // re-entry to the sheet's claims step. 0 hides the affordance.
   claimsCount: number
   onOpenClaims: () => void
   // Mark-known sweep rider (docs/READER-SPEC.md): the whole-text sweep offered
@@ -23,14 +24,14 @@ type Props = {
 }
 
 // End-of-content close-out (docs/READER-SPEC.md): the common case is finishing
-// the text/episode, so the checkpoint press gets a fuller presentation here —
+// the text/episode, so the declaration sheet gets a fuller entry point here —
 // available whenever the end is reached, even at zero pending reviews (a
-// zero-review close-out can still surface backlog claims; this is the
-// discovery path the footer's count-gated button can't provide).
+// zero-review close-out can still surface never-practiced words; this is the
+// discovery path the footer's count-gated pill can't provide). The mark-known
+// rider stays a one-tap sweep.
 export const CheckpointCloseoutCard = ({
   pendingCount,
   isCollected,
-  isCollecting,
   onCollect,
   claimsCount,
   onOpenClaims,
@@ -61,15 +62,8 @@ export const CheckpointCloseoutCard = ({
                 })
               : t`Confirm you understood what you read — words you already know may be waiting.`}
           </p>
-          <Button size='xl' className='mt-3 w-full' disabled={isCollecting} onClick={onCollect}>
-            {isCollecting ? (
-              <>
-                <Loader2 className='size-4 animate-spin' />
-                {t`Collecting…`}
-              </>
-            ) : (
-              t`I understood everything`
-            )}
+          <Button size='xl' className='mt-3 w-full' onClick={onCollect}>
+            {t`I understood everything`}
           </Button>
         </>
       )}

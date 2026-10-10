@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { Link } from '@tanstack/react-router'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -12,28 +13,49 @@ import {
   OverlayDescription,
   OverlayFooter,
 } from '@/components/ui/responsive-overlay'
-import { useMarkKnownPreview } from '../api/sessions-hooks'
+import { useCheckpointCandidates, useMarkKnownPreview } from '../api/sessions-hooks'
 import {
-  declarationSheetStepIndicator,
   initialDeclarationSheetState,
   reduceDeclarationSheet,
-  reduceUndoOutcome,
   type DeclarationSheetEvent,
+  type DeclarationSheetState,
 } from '@flicktionary/core/utils/checkpoint-sweep-sheet-state'
+import { CandidateChecklist, type CheckpointCandidate } from './candidate-checklist'
 
-// One frontier per run: captured by session-view when the pill is pressed, so
-// the collect and the sweep commit exactly the range the sheet displays — the
-// footer's debounced count can lag the live pointer.
+export type PreviewedSpan = { segmentIndex: number; selectionText: string }
+
+// A checkpoint's "saved but never practiced" candidates.
+export type ClaimsBatch = { checkpointId: string; candidates: CheckpointCandidate[] }
+
+// One frontier per run: captured by session-view when the sheet opens, so the
+// reviews list, the collect and the sweep all cover exactly the same range —
+// the footer's debounced count can lag the live pointer.
 export type DeclarationRun = {
   toSegmentIndex: number
   checkpointIncluded: boolean
   sweepIncluded: boolean
+  // The preview-gloss selections at open: the reviews list and the collect
+  // must suppress the same words.
+  previewedSpans: PreviewedSpan[]
+  // Leftover candidates from an earlier checkpoint — a run that re-enters on
+  // the claims step instead of collecting.
+  claims: ClaimsBatch | null
 }
 
 export type CollectOutcome =
-  { ok: true; checkpointId: string | null; creditedCount: number } | { ok: false; reason: 'conflict' | 'error' }
+  | { ok: true; checkpointId: string | null; creditedCount: number; backlogCandidates: CheckpointCandidate[] }
+  | { ok: false; reason: 'conflict' | 'error' }
+
+export type AssertOutcome = { ok: true; assertedCount: number } | { ok: false }
 
 export type SweepOutcome = { ok: true; markedCount: number; sweepBatchId: string | null } | { ok: false }
+
+// What a finished run wrote. A null part was skipped or not included.
+export type DeclarationResult = {
+  checkpoint: { checkpointId: string | null; creditedCount: number } | null
+  claims: (ClaimsBatch & { assertedCount: number }) | null
+  sweep: { markedCount: number; sweepBatchId: string | null } | null
+}
 
 type Props = {
   open: boolean
@@ -41,49 +63,92 @@ type Props = {
   sessionId: string
   // Kept non-null through the closing animation; only a new open replaces it.
   run: DeclarationRun | null
-  checkpointPendingCount: number
-  // Async operations owned by session-view (they carry the previewedSpans /
-  // claims bookkeeping). All of them read the run snapshot through a ref, so
-  // a conflict re-snapshot is visible without waiting for a re-render.
-  onCollect: () => Promise<CollectOutcome>
+  // Async operations owned by session-view (they carry the claims
+  // bookkeeping). All of them read the run snapshot through a ref, so a
+  // conflict re-snapshot is visible without waiting for a re-render.
+  onCollect: (excludedUserLookupIds: string[]) => Promise<CollectOutcome>
   // A collect CONFLICT means the pointer moved under us — re-snapshot the run
-  // to the fresh pointer before retrying.
+  // to the fresh pointer so the list reloads for the new span.
   onRefreshSnapshot: () => void
+  onAssertClaims: (checkpointId: string, userLookupIds: string[]) => Promise<AssertOutcome>
   onSweep: () => Promise<SweepOutcome>
-  onUndoSweep: (sweepBatchId: string) => Promise<boolean>
-  onUndoCheckpoint: (checkpointId: string) => Promise<{ ok: boolean; undone: boolean }>
+  // Fired once when the run ends with something written, just before the
+  // sheet closes — the parent owns the confirmation toast and its combined
+  // Undo.
+  onFinished: (result: DeclarationResult) => void
 }
 
-const DONE_AUTO_CLOSE_MS = 4000
+const toggled = (ids: ReadonlySet<string>, id: string): Set<string> => {
+  const next = new Set(ids)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  return next
+}
 
-// The merged declaration flow (docs/READER-SPEC.md): checkpoint → optional
-// mark-known sweep → done, in one overlay (mobile drawer / desktop dialog) so
-// the reading surface never moves. Step state lives in the pure reducer in
-// checkpoint-sweep-sheet-state.ts. The parent remounts this component (a
-// fresh `key`) on every open, so all run state initializes here — a conflict
-// re-snapshot only swaps the `run` prop and never restarts the machine.
+// The declaration flow (docs/READER-SPEC.md), one overlay (mobile drawer /
+// desktop dialog) so the reading surface never moves: the reviews this
+// checkpoint collects → the saved words never practiced → the mark-known
+// sweep. Each step only appears when it has something to offer. Step state
+// lives in the pure reducer in checkpoint-sweep-sheet-state.ts. The parent
+// remounts this component (a fresh `key`) on every open, so all run state
+// initializes here — a conflict re-snapshot only swaps the `run` prop and
+// never restarts the machine.
 export const CheckpointSweepSheet = ({
   open,
   onOpenChange,
   sessionId,
   run,
-  checkpointPendingCount,
   onCollect,
   onRefreshSnapshot,
+  onAssertClaims,
   onSweep,
-  onUndoSweep,
-  onUndoCheckpoint,
+  onFinished,
 }: Props) => {
   const { t } = useLingui()
   const [state, setState] = useState(() =>
-    initialDeclarationSheetState(run ?? { checkpointIncluded: true, sweepIncluded: true })
+    initialDeclarationSheetState({
+      checkpointIncluded: run?.checkpointIncluded ?? true,
+      sweepIncluded: run?.sweepIncluded ?? true,
+      claimsCount: run?.claims?.candidates.length ?? 0,
+    })
   )
-  const dispatch = (event: DeclarationSheetEvent) => setState((prev) => reduceDeclarationSheet(prev, event))
+  // The claims step's batch: a re-entry run brings it, a collect returns it.
+  const [claimsBatch, setClaimsBatch] = useState<ClaimsBatch | null>(run?.claims ?? null)
+  const [deselectedReviews, setDeselectedReviews] = useState<ReadonlySet<string>>(new Set())
+  const [deselectedClaims, setDeselectedClaims] = useState<ReadonlySet<string>>(new Set())
   // True while a mutation is in flight — dismissal is blocked so the overlay
   // can't vanish mid-write.
   const [busy, setBusy] = useState(false)
-  // A non-conflict collect failure: inline, retryable by pressing Confirm again.
-  const [collectFailed, setCollectFailed] = useState(false)
+  const [collectProblem, setCollectProblem] = useState<'conflict' | 'error' | null>(null)
+
+  const resultOf = (from: DeclarationSheetState, batch: ClaimsBatch | null): DeclarationResult => ({
+    checkpoint: from.checkpoint,
+    claims: from.claims && batch ? { ...batch, assertedCount: from.claims.assertedCount } : null,
+    sweep: from.sweep,
+  })
+  // The reducer's `done` phase has no screen here: the run closes and the
+  // parent confirms it in a toast.
+  const dispatch = (event: DeclarationSheetEvent, batch: ClaimsBatch | null = claimsBatch) => {
+    const next = reduceDeclarationSheet(state, event)
+    if (next.phase === 'done') {
+      onFinished(resultOf(next, batch))
+      onOpenChange(false)
+    } else {
+      setState(next)
+    }
+  }
+
+  const candidatesQuery = useCheckpointCandidates(
+    sessionId,
+    open && run?.checkpointIncluded && state.phase === 'checkpoint'
+      ? { toSegmentIndex: run.toSegmentIndex, previewedSpans: run.previewedSpans }
+      : null
+  )
+  const reviewCandidates = candidatesQuery.data ?? []
+  const selectedReviewCount = reviewCandidates.filter((c) => !deselectedReviews.has(c.userLookupId)).length
+
+  const claimCandidates = claimsBatch?.candidates ?? []
+  const selectedClaims = claimCandidates.filter((c) => !deselectedClaims.has(c.userLookupId))
 
   // The authoritative count for THIS run's span — the footer pill shows a
   // debounced approximation; the sweep step must promise exactly what the
@@ -92,53 +157,77 @@ export const CheckpointSweepSheet = ({
   const exactCount = previewQuery.data?.status === 'ready' ? previewQuery.data.markableLemmaCount : null
 
   // The sweep step evaporates when its exact count resolves to 0 (the pill's
-  // debounced count over-promised): a run that already checkpointed jumps to
-  // done; a sweep-only run has nothing left to show and closes.
+  // debounced count over-promised): the run ends there, confirming whatever
+  // the earlier steps wrote.
   useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- the trigger is the span preview QUERY resolving to 0 (async server data), not a user event; there is no handler this could live in */
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-live-state-to-parent, react-you-might-not-need-an-effect/no-pass-data-to-parent -- the trigger is the span preview QUERY resolving to 0 (async server data), not a user event; there is no handler this could live in */
     if (!open || busy || state.phase !== 'sweep' || exactCount !== 0) return
-    if (state.checkpoint) {
-      dispatch({ type: 'skipSweep' })
-    } else {
-      onOpenChange(false)
+    if (state.checkpoint || state.claims) {
+      onFinished({
+        checkpoint: state.checkpoint,
+        claims: state.claims && claimsBatch ? { ...claimsBatch, assertedCount: state.claims.assertedCount } : null,
+        sweep: null,
+      })
     }
-    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
-  }, [open, busy, state.phase, state.checkpoint, exactCount, onOpenChange])
+    onOpenChange(false)
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-live-state-to-parent, react-you-might-not-need-an-effect/no-pass-data-to-parent */
+  }, [open, busy, state.phase, state.checkpoint, state.claims, claimsBatch, exactCount, onOpenChange, onFinished])
 
-  // Auto-close the done screen — cancelled while an undo is running.
-  useEffect(() => {
-    if (!open || busy || state.phase !== 'done') return
-    const timer = setTimeout(() => onOpenChange(false), DONE_AUTO_CLOSE_MS)
-    return () => clearTimeout(timer)
-  }, [open, busy, state.phase, onOpenChange])
-
+  // Dismissing after something was written means "skip the rest": the writes
+  // stay, so the run still finishes with its confirmation.
   const handleOpenChange = (next: boolean) => {
     if (!next && busy) return
+    if (!next && (state.checkpoint || state.claims)) onFinished(resultOf(state, claimsBatch))
     onOpenChange(next)
   }
 
   const handleConfirm = async () => {
     if (busy) return
     setBusy(true)
-    setCollectFailed(false)
+    setCollectProblem(null)
     try {
-      const outcome = await onCollect()
+      const excluded = reviewCandidates.filter((c) => deselectedReviews.has(c.userLookupId)).map((c) => c.userLookupId)
+      const outcome = await onCollect(excluded)
       if (outcome.ok) {
-        dispatch({ type: 'collected', checkpointId: outcome.checkpointId, creditedCount: outcome.creditedCount })
-      } else if (outcome.reason === 'conflict') {
-        dispatch({ type: 'collectConflict' })
+        const batch =
+          outcome.checkpointId && outcome.backlogCandidates.length > 0
+            ? { checkpointId: outcome.checkpointId, candidates: outcome.backlogCandidates }
+            : null
+        setClaimsBatch(batch)
+        dispatch(
+          {
+            type: 'collected',
+            checkpointId: outcome.checkpointId,
+            creditedCount: outcome.creditedCount,
+            claimsCount: batch?.candidates.length ?? 0,
+          },
+          batch
+        )
       } else {
-        setCollectFailed(true)
+        // On a conflict the span itself changed: reload the list for the new
+        // frontier and let the reader confirm against what it shows now.
+        if (outcome.reason === 'conflict') onRefreshSnapshot()
+        setCollectProblem(outcome.reason)
       }
     } finally {
       setBusy(false)
     }
   }
 
-  const handleConflictRetry = () => {
-    onRefreshSnapshot()
-    dispatch({ type: 'collectRetry' })
-    void handleConfirm()
+  const handleAssert = async () => {
+    if (busy || !claimsBatch || selectedClaims.length === 0) return
+    setBusy(true)
+    try {
+      const outcome = await onAssertClaims(
+        claimsBatch.checkpointId,
+        selectedClaims.map((c) => c.userLookupId)
+      )
+      // Failure already toasted by the mutation's meta — stay on the step so
+      // the reader can retry or skip.
+      if (outcome.ok) dispatch({ type: 'claimsAsserted', assertedCount: outcome.assertedCount })
+    } finally {
+      setBusy(false)
+    }
   }
 
   const handleSweep = async () => {
@@ -146,85 +235,45 @@ export const CheckpointSweepSheet = ({
     setBusy(true)
     try {
       const outcome = await onSweep()
-      // Failure already toasted by the mutation's meta — stay on the step so
-      // the reader can retry or skip.
       if (outcome.ok) dispatch({ type: 'swept', markedCount: outcome.markedCount, sweepBatchId: outcome.sweepBatchId })
     } finally {
       setBusy(false)
     }
   }
 
-  // The combined Undo: two independent endpoints, attempted sequentially and
-  // both reported — a partial failure keeps the sheet open and says what was
-  // NOT reverted. On a retry from the undoError screen only the failed parts
-  // re-run (a stale checkpoint is not retryable — a newer checkpoint exists).
-  const handleUndo = async () => {
-    if (busy) return
-    const retrying = state.phase === 'undoError'
-    const sweepBatchId = state.sweep?.sweepBatchId ?? null
-    const checkpointId = state.checkpoint?.checkpointId ?? null
-    const doSweep = sweepBatchId != null && (!retrying || state.undo?.sweepFailed === true)
-    const doCheckpoint = checkpointId != null && (!retrying || state.undo?.checkpointFailed === true)
-    setBusy(true)
-    try {
-      let sweepOk = true
-      if (doSweep && sweepBatchId) sweepOk = await onUndoSweep(sweepBatchId)
-      let checkpointOk = true
-      let checkpointUndone = true
-      if (doCheckpoint && checkpointId) {
-        const result = await onUndoCheckpoint(checkpointId)
-        checkpointOk = result.ok
-        checkpointUndone = result.undone
-      }
-      const { fullSuccess, event } = reduceUndoOutcome({
-        sweepAttempted: doSweep,
-        sweepOk,
-        checkpointAttempted: doCheckpoint,
-        checkpointOk,
-        checkpointUndone,
-      })
-      if (fullSuccess) {
-        onOpenChange(false)
-      } else if (event) {
-        dispatch(event)
-      }
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const stepIndicator = declarationSheetStepIndicator(state)
-  const stepCurrent = stepIndicator?.current ?? 0
-  const stepTotal = stepIndicator?.total ?? 0
-  const kicker = stepIndicator ? (
-    <div className='text-muted-foreground px-4 pt-2 text-[11px] font-bold tracking-[0.08em] uppercase sm:px-0 sm:pt-0'>
-      {t`Step ${stepCurrent} of ${stepTotal}`}
-    </div>
-  ) : null
-
-  const canUndo = state.checkpoint?.checkpointId != null || state.sweep?.sweepBatchId != null
-  const canRetryUndo = state.undo?.sweepFailed === true || state.undo?.checkpointFailed === true
-
   return (
     <ResponsiveOverlay open={open} onOpenChange={handleOpenChange}>
-      <OverlayContent className='sm:max-w-md'>
+      {/* Desktop (Dialog): the centered dialog has no intrinsic height cap, so
+          a long word list would overflow the viewport with no way to scroll —
+          cap at 80vh and let the dialog itself scroll. The mobile Drawer
+          already scrolls its own body. */}
+      <OverlayContent className='sm:max-h-[80vh] sm:max-w-md sm:overflow-y-auto'>
         {state.phase === 'checkpoint' && (
           <>
-            {kicker}
             <OverlayHeader>
               <OverlayTitle>{t`I understood up to here`}</OverlayTitle>
               <OverlayDescription>
-                {t`Saves a checkpoint at your current reading position. Saved words that appeared in what you read and were due for review count as successful reviews — words you looked up along the way are never penalized.`}
+                {t`Saved words that were due for review and appeared in what you read. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out.`}
               </OverlayDescription>
             </OverlayHeader>
-            <div className='space-y-2 px-4 text-sm sm:px-0'>
-              {checkpointPendingCount > 0 && (
-                <p className='font-medium'>
-                  {plural(checkpointPendingCount, {
-                    one: '# review ready to collect.',
-                    other: '# reviews ready to collect.',
-                  })}
-                </p>
+            <div className='space-y-2 px-4 pb-2 text-sm sm:px-0'>
+              {candidatesQuery.isPending ? (
+                <div className='space-y-3 py-2'>
+                  <Skeleton className='h-9 w-full' />
+                  <Skeleton className='h-9 w-full' />
+                  <Skeleton className='h-9 w-full' />
+                </div>
+              ) : candidatesQuery.isError ? (
+                <p className='text-muted-foreground'>{t`Couldn't load the list of words. You can still save the checkpoint — every due word that appeared will count as reviewed.`}</p>
+              ) : reviewCandidates.length === 0 ? (
+                <p className='text-muted-foreground'>{t`No saved words were due for review in what you read. Saving the checkpoint still marks this part as read.`}</p>
+              ) : (
+                <CandidateChecklist
+                  candidates={reviewCandidates}
+                  deselectedIds={deselectedReviews}
+                  onToggle={(id) => setDeselectedReviews((prev) => toggled(prev, id))}
+                  disabled={busy}
+                />
               )}
               <p>
                 <Link
@@ -235,43 +284,77 @@ export const CheckpointSweepSheet = ({
                   {t`Learn more in the user guide`}
                 </Link>
               </p>
-              {state.collectConflict && (
-                <p className='text-amber-700 dark:text-amber-300'>{t`Your reading position changed — try again.`}</p>
+              {collectProblem === 'conflict' && (
+                <p className='text-amber-700 dark:text-amber-300'>{t`Your reading position changed — check the list and confirm again.`}</p>
               )}
-              {collectFailed && <p className='text-destructive'>{t`Failed to save the checkpoint. Try again.`}</p>}
+              {collectProblem === 'error' && (
+                <p className='text-destructive'>{t`Failed to save the checkpoint. Try again.`}</p>
+              )}
             </div>
             <OverlayFooter>
               <Button variant='outline' size='xl' disabled={busy} onClick={() => handleOpenChange(false)}>
                 {t`Cancel`}
               </Button>
-              {state.collectConflict ? (
-                <Button size='xl' disabled={busy} onClick={handleConflictRetry}>
-                  {busy ? <Loader2 className='size-4 animate-spin' /> : null}
-                  {t`Try again`}
-                </Button>
-              ) : (
-                <Button size='xl' disabled={busy} onClick={() => void handleConfirm()}>
-                  {busy ? <Loader2 className='size-4 animate-spin' /> : null}
-                  {busy ? t`Saving…` : t`Confirm`}
-                </Button>
-              )}
+              <Button size='xl' disabled={busy || candidatesQuery.isPending} onClick={() => void handleConfirm()}>
+                {busy ? <Loader2 className='size-4 animate-spin' /> : null}
+                {busy
+                  ? t`Saving…`
+                  : selectedReviewCount > 0
+                    ? plural(selectedReviewCount, { one: 'Collect # review', other: 'Collect # reviews' })
+                    : t`Save checkpoint`}
+              </Button>
+            </OverlayFooter>
+          </>
+        )}
+
+        {state.phase === 'claims' && (
+          <>
+            <OverlayHeader>
+              <OverlayTitle>
+                {plural(claimCandidates.length, {
+                  one: '# word you saved but never practiced',
+                  other: '# words you saved but never practiced',
+                })}
+              </OverlayTitle>
+              <OverlayDescription>
+                {t`These saved words appeared in what you just read. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after.`}
+              </OverlayDescription>
+            </OverlayHeader>
+            <div className='px-4 pb-2 sm:px-0'>
+              <CandidateChecklist
+                candidates={claimCandidates}
+                deselectedIds={deselectedClaims}
+                onToggle={(id) => setDeselectedClaims((prev) => toggled(prev, id))}
+                disabled={busy}
+              />
+            </div>
+            <OverlayFooter>
+              <Button variant='outline' size='xl' disabled={busy} onClick={() => dispatch({ type: 'skipClaims' })}>
+                {t`Skip`}
+              </Button>
+              <Button size='xl' disabled={busy || selectedClaims.length === 0} onClick={() => void handleAssert()}>
+                {busy ? <Loader2 className='size-4 animate-spin' /> : null}
+                {busy
+                  ? t`Marking…`
+                  : plural(selectedClaims.length, { one: 'Mark # word as known', other: 'Mark # words as known' })}
+              </Button>
             </OverlayFooter>
           </>
         )}
 
         {state.phase === 'sweep' && (
           <>
-            {kicker}
             <OverlayHeader>
               <OverlayTitle>
                 {exactCount != null
-                  ? plural(exactCount, { one: 'Mark # word as known?', other: 'Mark # words as known?' })
+                  ? plural(exactCount, {
+                      one: 'Mark the # remaining word as known?',
+                      other: 'Mark the # remaining words as known?',
+                    })
                   : t`Counting words…`}
               </OverlayTitle>
               <OverlayDescription>
-                {state.checkpointIncluded
-                  ? t`Everything you've read up to the checkpoint. You can un-mark any word later.`
-                  : t`Everything you've read so far. You can un-mark any word later.`}
+                {t`Every word in what you've read that isn't saved or marked yet. You can un-mark any word later.`}
               </OverlayDescription>
             </OverlayHeader>
             <OverlayFooter>
@@ -282,74 +365,6 @@ export const CheckpointSweepSheet = ({
                 {busy ? <Loader2 className='size-4 animate-spin' /> : null}
                 {busy ? t`Marking…` : t`Mark as known`}
               </Button>
-            </OverlayFooter>
-          </>
-        )}
-
-        {state.phase === 'done' && (
-          <div className='flex flex-col items-center px-4 pt-4 pb-2 text-center sm:px-0 sm:pt-2'>
-            <span className='bg-muted flex size-11 items-center justify-center rounded-full'>
-              <CheckCircle2 className='size-5' />
-            </span>
-            <OverlayHeader className='px-0 pt-3 pb-0 sm:text-center'>
-              <OverlayTitle>
-                {state.checkpoint
-                  ? t`Checkpoint saved`
-                  : plural(state.sweep?.markedCount ?? 0, {
-                      one: '# word marked as known',
-                      other: '# words marked as known',
-                    })}
-              </OverlayTitle>
-              <OverlayDescription className='sm:text-center'>
-                {[
-                  state.checkpoint && state.checkpoint.creditedCount > 0
-                    ? plural(state.checkpoint.creditedCount, {
-                        one: '# review collected',
-                        other: '# reviews collected',
-                      })
-                    : null,
-                  state.checkpoint && state.sweep
-                    ? plural(state.sweep.markedCount, {
-                        one: '# word marked as known',
-                        other: '# words marked as known',
-                      })
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </OverlayDescription>
-            </OverlayHeader>
-            {canUndo && (
-              <Button variant='outline' className='mt-4' disabled={busy} onClick={() => void handleUndo()}>
-                {busy ? <Loader2 className='size-4 animate-spin' /> : null}
-                {busy ? t`Undoing…` : t`Undo`}
-              </Button>
-            )}
-            <p className='text-muted-foreground mt-3 pb-2 text-xs'>{t`Closes automatically`}</p>
-          </div>
-        )}
-
-        {state.phase === 'undoError' && (
-          <>
-            <OverlayHeader>
-              <OverlayTitle>{t`Undo didn't finish`}</OverlayTitle>
-              <OverlayDescription />
-            </OverlayHeader>
-            <div className='space-y-2 px-4 text-sm sm:px-0'>
-              {state.undo?.checkpointStale && <p>{t`The collected reviews were kept — a newer checkpoint exists.`}</p>}
-              {state.undo?.checkpointFailed && <p>{t`The collected reviews weren't reverted.`}</p>}
-              {state.undo?.sweepFailed && <p>{t`The known-word marks weren't removed.`}</p>}
-            </div>
-            <OverlayFooter>
-              <Button variant='outline' size='xl' disabled={busy} onClick={() => handleOpenChange(false)}>
-                {t`Close`}
-              </Button>
-              {canRetryUndo && (
-                <Button size='xl' disabled={busy} onClick={() => void handleUndo()}>
-                  {busy ? <Loader2 className='size-4 animate-spin' /> : null}
-                  {t`Try again`}
-                </Button>
-              )}
             </OverlayFooter>
           </>
         )}

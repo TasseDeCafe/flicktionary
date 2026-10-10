@@ -18,6 +18,7 @@ import { useAutoHideChrome } from '../hooks/use-auto-hide-chrome'
 import { useHotkeys } from '@/hooks/use-hotkeys'
 import {
   isOptimisticHighlightId,
+  useAssertKnownBacklog,
   useCheckpointClaims,
   useCheckpointPreview,
   useCollectCheckpoint,
@@ -34,6 +35,7 @@ import {
   useSessionDifficulties,
   useSetReadingPosition,
   useUndoCheckpoint,
+  useUndoKnownAssertions,
   useUnmarkKnownBySession,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
@@ -56,11 +58,13 @@ import { SessionVocabularyFooter } from './session-vocabulary-footer'
 import { deriveDeclarationPillState } from './declaration-pill-state'
 import {
   CheckpointSweepSheet,
+  type AssertOutcome,
+  type ClaimsBatch,
   type CollectOutcome,
+  type DeclarationResult,
   type DeclarationRun,
   type SweepOutcome,
 } from './checkpoint-sweep-sheet'
-import { CheckpointClaimsSheet, type CheckpointBacklogCandidate } from './checkpoint-claims-sheet'
 import { CheckpointCloseoutCard } from './checkpoint-closeout-card'
 import { SessionActionsOverlay } from './session-actions-overlay'
 import { SessionDifficultySheet } from './session-difficulty-sheet'
@@ -540,23 +544,19 @@ export const SessionView = () => {
   const checkpointPendingCount = checkpointPreview?.pendingCount ?? 0
   const checkpointBacklogCount = checkpointPreview?.backlogCount ?? 0
 
-  const {
-    mutate: collectCheckpoint,
-    mutateAsync: collectCheckpointAsync,
-    isPending: isCollectingCheckpoint,
-  } = useCollectCheckpoint(sessionId)
-  const { mutate: undoCheckpoint, mutateAsync: undoCheckpointAsync } = useUndoCheckpoint(sessionId)
-  // The claims sheet's data (backlog candidates) has two sources. Local state
-  // holds the batch from this mount's collect/assert/undo actions; while it is
-  // null (no local action yet), the server-rehydrated copy below fills in so a
-  // reload or navigation can't strand the re-entry — the candidates persist on
-  // the checkpoint row. `{ value: null }` is distinct from null: a locally
-  // exhausted batch (asserted, or its checkpoint undone) must suppress the
-  // server copy until the invalidated query catches up.
-  const [localClaims, setLocalClaims] = useState<{
-    value: { checkpointId: string; candidates: CheckpointBacklogCandidate[] } | null
-  } | null>(null)
-  const [claimsOpen, setClaimsOpen] = useState(false)
+  const { mutateAsync: collectCheckpointAsync } = useCollectCheckpoint(sessionId)
+  const { mutateAsync: undoCheckpointAsync } = useUndoCheckpoint(sessionId)
+  const { mutateAsync: assertKnownAsync } = useAssertKnownBacklog(sessionId)
+  const { mutateAsync: undoAssertionsAsync } = useUndoKnownAssertions(sessionId)
+  // The never-practiced candidates (the declaration sheet's claims step) have
+  // two sources. Local state holds the batch from this mount's
+  // collect/assert/undo actions; while it is null (no local action yet), the
+  // server-rehydrated copy below fills in so a reload or navigation can't
+  // strand the re-entry — the candidates persist on the checkpoint row.
+  // `{ value: null }` is distinct from null: a locally exhausted batch
+  // (asserted, or its checkpoint undone) must suppress the server copy until
+  // the invalidated query catches up.
+  const [localClaims, setLocalClaims] = useState<{ value: ClaimsBatch | null } | null>(null)
   const { data: serverClaims } = useCheckpointClaims(sessionId, checkpointSupported)
   // The header's difficulty stat + its detail sheet (breakdown, mark-known CTA).
   const [difficultyOpen, setDifficultyOpen] = useState(false)
@@ -570,7 +570,7 @@ export const SessionView = () => {
   // server-rehydrated claims may still name it until the refetch lands.
   const revertedCheckpointIdsRef = useRef<Set<string>>(new Set())
 
-  // --- Mark-known sweep surfaces (dock line + close-out rider) -----------------
+  // --- Mark-known sweep surfaces (welcome-back card + close-out rider) ----------
   // Counts only ever cover words actually read: the read span mid-text, the
   // whole text once the reader reached the end, nothing on a never-scrolled
   // session. Keyed on the checkpoint preview's debounced pointer (a raw index
@@ -671,43 +671,7 @@ export const SessionView = () => {
     mutateAsync: markRemainingKnownAsync,
     isPending: isMarkingKnown,
   } = useMarkRemainingKnown(sessionId)
-  const { mutate: unmarkKnownBySession, mutateAsync: unmarkKnownBySessionAsync } = useUnmarkKnownBySession(sessionId)
-  // Post-sweep feedback lives in the footer slot (not a toast): the count plus
-  // a sweep-scoped Undo, cleared after a few seconds. The difficulty sheet
-  // keeps its own toast — this strip only serves the reader-surface sweeps.
-  const [sweepConfirmation, setSweepConfirmation] = useState<{ count: number; sweepBatchId: string | null } | null>(
-    null
-  )
-  const sweepConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(
-    () => () => (sweepConfirmationTimerRef.current ? clearTimeout(sweepConfirmationTimerRef.current) : undefined),
-    []
-  )
-  const handleMarkKnown = (toSegmentIndex: number | null) => {
-    if (isMarkingKnown) return
-    markRemainingKnown(
-      { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
-      {
-        onSuccess: (response) => {
-          setSweepConfirmation({ count: response.data.markedCount, sweepBatchId: response.data.sweepBatchId })
-          if (sweepConfirmationTimerRef.current) clearTimeout(sweepConfirmationTimerRef.current)
-          sweepConfirmationTimerRef.current = setTimeout(() => {
-            sweepConfirmationTimerRef.current = null
-            setSweepConfirmation(null)
-          }, 8000)
-        },
-      }
-    )
-  }
-  const handleUndoSweep = () => {
-    // Sweep-exact: the batch id scopes the delete to exactly the confirmed
-    // press, so undoing sweep 2 never takes sweep 1's marks with it.
-    const sweepBatchId = sweepConfirmation?.sweepBatchId
-    if (sweepBatchId) unmarkKnownBySession({ sessionId, sweepBatchId })
-    if (sweepConfirmationTimerRef.current) clearTimeout(sweepConfirmationTimerRef.current)
-    sweepConfirmationTimerRef.current = null
-    setSweepConfirmation(null)
-  }
+  const { mutateAsync: unmarkKnownBySessionAsync } = useUnmarkKnownBySession(sessionId)
 
   const claims = localClaims
     ? localClaims.value
@@ -717,64 +681,7 @@ export const SessionView = () => {
       ? { checkpointId: serverClaims.checkpointId, candidates: serverClaims.candidates }
       : null
 
-  // The close-out card's checkpoint press keeps its original presentation:
-  // success toast with Undo, claims sheet opening immediately. The footer
-  // pill's flow lives in the declaration sheet below, which shares the same
-  // mutations but presents success in-sheet and queues the claims.
-  const handleCollectCheckpoint = () => {
-    const toIndex = session?.furthestReadSegmentIndex
-    if (toIndex == null || isCollectingCheckpoint) return
-    collectCheckpoint(
-      { sessionId, toSegmentIndex: toIndex, previewedSpans: previewedSpansRef.current.slice(-500) },
-      {
-        onSuccess: ({ data }) => {
-          if (data.checkpointId && data.creditedCount > 0) {
-            const checkpointId = data.checkpointId
-            const collectedCount = data.creditedCount
-            toast.success(plural(collectedCount, { one: '# review collected', other: '# reviews collected' }), {
-              action: {
-                label: t`Undo`,
-                // A reverted checkpoint can't accept assertions anymore, so a
-                // successful undo must also drop this checkpoint's claims
-                // re-entry (close-out card + sheet) — confirming from it
-                // would 404 against the dead checkpoint.
-                onClick: () =>
-                  undoCheckpoint(
-                    { sessionId, checkpointId },
-                    {
-                      onSuccess: ({ data }) => {
-                        if (!data.undone) return
-                        revertedCheckpointIdsRef.current.add(checkpointId)
-                        setClaimsOpen(false)
-                        setLocalClaims((prev) => (prev?.value?.checkpointId === checkpointId ? { value: null } : prev))
-                      },
-                    }
-                  ),
-              },
-            })
-          }
-          if (data.checkpointId && data.backlogCandidates.length > 0) {
-            setLocalClaims({ value: { checkpointId: data.checkpointId, candidates: data.backlogCandidates } })
-            setClaimsOpen(true)
-          }
-        },
-        onError: (error) => {
-          // A concurrent press (another tab / the extension) advanced the
-          // pointer first. meta.invalidates already refetched the session and
-          // preview on settle, so a retry presses against fresh state.
-          if (error instanceof ORPCError && error.code === 'CONFLICT') {
-            toast.error(t`Your reading position changed — try again`, {
-              action: { label: t`Retry`, onClick: () => handleCollectCheckpoint() },
-            })
-            return
-          }
-          toast.error(t`Failed to collect reviews`)
-        },
-      }
-    )
-  }
-
-  // --- Declaration sheet (footer pill → checkpoint + sweep) --------------------
+  // --- Declaration sheet (footer pill + close-out card) ------------------------
   // One frontier snapshot per run, mirrored in a ref so the sheet's async
   // callbacks (and a conflict re-snapshot) read the latest value without
   // waiting for a re-render. `declarationRun` stays set through the closing
@@ -785,24 +692,25 @@ export const SessionView = () => {
   // (no reset-on-open effect needed). Stable through the closing animation.
   const [declarationRunKey, setDeclarationRunKey] = useState(0)
   const declarationRunRef = useRef<DeclarationRun | null>(null)
-  // Backlog claims produced by a sheet collect wait until the sheet closes —
-  // opening the claims sheet mid-flow would stack the two overlays. A
-  // successful in-sheet checkpoint undo clears the queue.
-  const claimsQueuedRef = useRef(false)
 
-  const openDeclarationSheet = () => {
+  // `claimsOnly` re-enters on the never-practiced step with the candidates a
+  // previous checkpoint left behind (the close-out card's re-entry).
+  const openDeclarationSheet = ({ claimsOnly = false }: { claimsOnly?: boolean } = {}) => {
     const toIndex = session?.furthestReadSegmentIndex
     if (toIndex == null) return
-    const run: DeclarationRun = {
-      toSegmentIndex: toIndex,
-      checkpointIncluded: checkpointSupported && toIndex > (reviewedUntilIndex ?? -1),
-      sweepIncluded: markKnownSupported,
-    }
-    if (!run.checkpointIncluded && !run.sweepIncluded) return
+    const run: DeclarationRun = claimsOnly
+      ? { toSegmentIndex: toIndex, checkpointIncluded: false, sweepIncluded: false, previewedSpans: [], claims }
+      : {
+          toSegmentIndex: toIndex,
+          checkpointIncluded: checkpointSupported && toIndex > (reviewedUntilIndex ?? -1),
+          sweepIncluded: markKnownSupported,
+          previewedSpans: previewedSpansRef.current.slice(-500),
+          claims: null,
+        }
+    if (!run.checkpointIncluded && !run.sweepIncluded && !run.claims) return
     declarationRunRef.current = run
     setDeclarationRun(run)
     setDeclarationRunKey((key) => key + 1)
-    claimsQueuedRef.current = false
     setDeclarationOpen(true)
   }
 
@@ -818,39 +726,55 @@ export const SessionView = () => {
     setDeclarationRun(next)
   }
 
-  // Stable: it sits in the sheet's auto-close effect deps — a fresh identity
-  // per render would restart the 4s timer on every parent re-render.
+  // Stable: it sits in the deps of the sheet's zero-count effect.
   const handleDeclarationOpenChange = useCallback((next: boolean) => {
-    if (next) return
-    setDeclarationOpen(false)
-    if (claimsQueuedRef.current) {
-      claimsQueuedRef.current = false
-      setClaimsOpen(true)
-    }
+    if (!next) setDeclarationOpen(false)
   }, [])
 
-  const collectForSheet = async (): Promise<CollectOutcome> => {
+  const collectForSheet = async (excludedUserLookupIds: string[]): Promise<CollectOutcome> => {
     const run = declarationRunRef.current
     if (!run) return { ok: false, reason: 'error' }
     try {
       const { data } = await collectCheckpointAsync({
         sessionId,
         toSegmentIndex: run.toSegmentIndex,
-        previewedSpans: previewedSpansRef.current.slice(-500),
+        previewedSpans: run.previewedSpans,
+        excludedUserLookupIds,
       })
-      if (data.checkpointId && data.backlogCandidates.length > 0) {
-        setLocalClaims({ value: { checkpointId: data.checkpointId, candidates: data.backlogCandidates } })
-        claimsQueuedRef.current = true
+      // The batch also feeds the close-out card's re-entry, for candidates
+      // the reader skips in the sheet.
+      if (data.checkpointId) {
+        setLocalClaims({
+          value:
+            data.backlogCandidates.length > 0
+              ? { checkpointId: data.checkpointId, candidates: data.backlogCandidates }
+              : null,
+        })
       }
-      return { ok: true, checkpointId: data.checkpointId, creditedCount: data.creditedCount }
+      return {
+        ok: true,
+        checkpointId: data.checkpointId,
+        creditedCount: data.creditedCount,
+        backlogCandidates: data.backlogCandidates,
+      }
     } catch (error) {
       if (error instanceof ORPCError && error.code === 'CONFLICT') return { ok: false, reason: 'conflict' }
       return { ok: false, reason: 'error' }
     }
   }
 
-  // The sheet's sweep bypasses `sweepConfirmation` — its done step owns the
-  // confirmation and the combined Undo.
+  const assertClaimsForSheet = async (checkpointId: string, userLookupIds: string[]): Promise<AssertOutcome> => {
+    try {
+      const { data } = await assertKnownAsync({ sessionId, checkpointId, userLookupIds })
+      // Asserting the same batch twice would just skip everything, so the
+      // re-entry goes once any of it is asserted.
+      setLocalClaims({ value: null })
+      return { ok: true, assertedCount: data.asserted }
+    } catch {
+      return { ok: false }
+    }
+  }
+
   const sweepForSheet = async (): Promise<SweepOutcome> => {
     const run = declarationRunRef.current
     if (!run) return { ok: false }
@@ -862,29 +786,106 @@ export const SessionView = () => {
     }
   }
 
-  const undoSweepForSheet = async (sweepBatchId: string): Promise<boolean> => {
-    try {
-      await unmarkKnownBySessionAsync({ sessionId, sweepBatchId })
-      return true
-    } catch {
-      return false
+  // Every declaration write confirms in ONE toast — a finished sheet run, or
+  // a direct sweep from the welcome-back card / close-out rider. Its Undo
+  // reverts sweep, then the known-assertions, then the checkpoint: three
+  // independent endpoints, so each part reports separately — a failed part
+  // gets the mutation's own error toast and this toast comes back carrying
+  // only what is still un-reverted, so Undo stays retryable.
+  const showDeclarationToast = ({ checkpoint, claims: asserted, sweep }: DeclarationResult) => {
+    // An empty span collects with a null checkpoint id — nothing was saved.
+    const checkpointId = checkpoint?.checkpointId ?? null
+    const sweepBatchId = sweep?.sweepBatchId ?? null
+    const creditedCount = checkpoint?.creditedCount ?? 0
+    const assertedCount = asserted?.assertedCount ?? 0
+    const parts = [
+      creditedCount > 0 ? plural(creditedCount, { one: '# review collected', other: '# reviews collected' }) : null,
+      assertedCount > 0
+        ? plural(assertedCount, { one: '# saved word marked as known', other: '# saved words marked as known' })
+        : null,
+      sweep ? plural(sweep.markedCount, { one: '# word marked as known', other: '# words marked as known' }) : null,
+    ].filter((part) => part != null)
+    const title = checkpointId ? t`Checkpoint saved` : parts.shift()
+    if (!title) return
+
+    const undo = async () => {
+      let sweepFailed = false
+      if (sweepBatchId) {
+        try {
+          await unmarkKnownBySessionAsync({ sessionId, sweepBatchId })
+        } catch {
+          sweepFailed = true
+        }
+      }
+      let assertionsFailed = false
+      let assertionsReverted = false
+      if (asserted && assertedCount > 0) {
+        try {
+          const { data } = await undoAssertionsAsync({ sessionId, checkpointId: asserted.checkpointId })
+          assertionsReverted = data.reverted > 0
+        } catch {
+          assertionsFailed = true
+        }
+      }
+      let checkpointFailed = false
+      let checkpointGone = false
+      if (checkpointId) {
+        try {
+          const { data } = await undoCheckpointAsync({ sessionId, checkpointId })
+          if (data.undone) {
+            // A reverted checkpoint can't accept assertions anymore, so its
+            // never-practiced re-entry goes with it — including a re-entry
+            // sheet that is open right now.
+            checkpointGone = true
+            revertedCheckpointIdsRef.current.add(checkpointId)
+            if (declarationRunRef.current?.claims?.checkpointId === checkpointId) setDeclarationOpen(false)
+            setLocalClaims((prev) => (prev?.value?.checkpointId === checkpointId ? { value: null } : prev))
+          } else {
+            toast.info(t`The collected reviews were kept — a newer checkpoint exists.`)
+          }
+        } catch {
+          checkpointFailed = true
+        }
+      }
+      // Undo means "let me reconsider": un-asserted words are offered again,
+      // unless their checkpoint is gone or a newer collect replaced the batch.
+      if (asserted && assertionsReverted && !checkpointGone) {
+        const { checkpointId: batchCheckpointId, candidates } = asserted
+        if (!revertedCheckpointIdsRef.current.has(batchCheckpointId)) {
+          setLocalClaims((prev) => (prev?.value ? prev : { value: { checkpointId: batchCheckpointId, candidates } }))
+        }
+      }
+      if (sweepFailed || assertionsFailed || checkpointFailed) {
+        showDeclarationToast({
+          checkpoint: checkpointFailed ? checkpoint : null,
+          claims: assertionsFailed ? asserted : null,
+          sweep: sweepFailed ? sweep : null,
+        })
+      }
     }
+
+    toast.success(title, {
+      description: parts.length > 0 ? parts.join(' · ') : undefined,
+      duration: 8000,
+      action:
+        checkpointId || sweepBatchId || assertedCount > 0 ? { label: t`Undo`, onClick: () => void undo() } : undefined,
+    })
   }
 
-  const undoCheckpointForSheet = async (checkpointId: string): Promise<{ ok: boolean; undone: boolean }> => {
-    try {
-      const { data } = await undoCheckpointAsync({ sessionId, checkpointId })
-      if (data.undone) {
-        // Same bookkeeping as the close-out toast's undo: a reverted
-        // checkpoint can't accept assertions anymore.
-        revertedCheckpointIdsRef.current.add(checkpointId)
-        claimsQueuedRef.current = false
-        setLocalClaims((prev) => (prev?.value?.checkpointId === checkpointId ? { value: null } : prev))
+  // The one-tap sweeps outside the sheet (welcome-back card, close-out rider).
+  const handleMarkKnown = (toSegmentIndex: number | null) => {
+    if (isMarkingKnown) return
+    markRemainingKnown(
+      { sessionId, ...(toSegmentIndex != null ? { toSegmentIndex } : {}) },
+      {
+        onSuccess: ({ data }) =>
+          showDeclarationToast({
+            checkpoint: null,
+            claims: null,
+            sweep: { markedCount: data.markedCount, sweepBatchId: data.sweepBatchId },
+          }),
       }
-      return { ok: true, undone: data.undone }
-    } catch {
-      return { ok: false, undone: false }
-    }
+    )
   }
 
   // Offer a quick return to the resume frame when the reader scrolls back up
@@ -1148,7 +1149,7 @@ export const SessionView = () => {
     programmaticScrollUntilRef,
     glossOpen
   )
-  const chromeHidden = scrolledChromeHidden && !searchOpen && !isPlacingBookmark && !sweepConfirmation && !reachedEnd
+  const chromeHidden = scrolledChromeHidden && !searchOpen && !isPlacingBookmark && !reachedEnd
   // Desktop's explicit way back (mobile taps the top strip, see ReadingProgressBar).
   useHotkeys([{ key: 'escape', onPress: revealChrome }], chromeHidden)
 
@@ -1348,10 +1349,9 @@ export const SessionView = () => {
                   <CheckpointCloseoutCard
                     pendingCount={checkpointPendingCount}
                     isCollected={(reviewedUntilIndex ?? -1) >= maxSegmentIndex}
-                    isCollecting={isCollectingCheckpoint}
-                    onCollect={handleCollectCheckpoint}
+                    onCollect={() => openDeclarationSheet()}
                     claimsCount={claims?.candidates.length ?? 0}
-                    onOpenClaims={() => setClaimsOpen(true)}
+                    onOpenClaims={() => openDeclarationSheet({ claimsOnly: true })}
                     markKnownCount={wholeMarkKnownCount}
                     isMarkingKnown={isMarkingKnown}
                     onMarkKnown={() => handleMarkKnown(null)}
@@ -1410,12 +1410,7 @@ export const SessionView = () => {
               void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
             }}
             pillState={pillState}
-            onOpenDeclarationSheet={openDeclarationSheet}
-            sweepConfirmation={
-              sweepConfirmation
-                ? { count: sweepConfirmation.count, onUndo: sweepConfirmation.sweepBatchId ? handleUndoSweep : null }
-                : null
-            }
+            onOpenDeclarationSheet={() => openDeclarationSheet()}
           />
         )}
       </VerticalCollapse>
@@ -1426,12 +1421,11 @@ export const SessionView = () => {
         onOpenChange={handleDeclarationOpenChange}
         sessionId={sessionId}
         run={declarationRun}
-        checkpointPendingCount={checkpointPendingCount}
         onCollect={collectForSheet}
         onRefreshSnapshot={refreshDeclarationSnapshot}
+        onAssertClaims={assertClaimsForSheet}
         onSweep={sweepForSheet}
-        onUndoSweep={undoSweepForSheet}
-        onUndoCheckpoint={undoCheckpointForSheet}
+        onFinished={showDeclarationToast}
       />
 
       <SessionDifficultySheet
@@ -1441,22 +1435,6 @@ export const SessionView = () => {
         difficulty={sessionDifficulty}
         furthestReadSegmentIndex={furthestReadIndex}
         maxSegmentIndex={maxSegmentIndex}
-      />
-
-      <CheckpointClaimsSheet
-        open={claimsOpen}
-        onOpenChange={setClaimsOpen}
-        sessionId={sessionId}
-        checkpointId={claims?.checkpointId ?? null}
-        candidates={claims?.candidates ?? []}
-        onAsserted={() => setLocalClaims({ value: null })}
-        // Restore the re-entry on assertion undo — but never clobber a newer
-        // collect's batch that replaced it, and never resurrect a batch whose
-        // checkpoint was reverted in the meantime.
-        onAssertUndone={(restored) => {
-          if (revertedCheckpointIdsRef.current.has(restored.checkpointId)) return
-          setLocalClaims((prev) => (prev?.value ? prev : { value: restored }))
-        }}
       />
 
       <SessionGlossSheet

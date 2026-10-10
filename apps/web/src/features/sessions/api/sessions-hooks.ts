@@ -467,6 +467,27 @@ export const useCheckpointPreview = (sessionId: string, toSegmentIndex: number |
   )
 }
 
+// The declaration sheet's reviews list: the due saved words a collect up to
+// `toSegmentIndex` would credit. Fetched per sheet run (pass null while the
+// step isn't on screen) and never served from cache — the list must reflect
+// the facets as they are when the reader confirms.
+export const useCheckpointCandidates = (
+  sessionId: string,
+  input: { toSegmentIndex: number; previewedSpans: Array<{ segmentIndex: number; selectionText: string }> } | null
+) => {
+  return useQuery(
+    orpcQuery.studySessions.getCheckpointCandidates.queryOptions({
+      input: { sessionId, toSegmentIndex: input?.toSegmentIndex ?? 0, previewedSpans: input?.previewedSpans ?? [] },
+      enabled: input != null,
+      select: (response) => response.data.candidates,
+      staleTime: 0,
+      gcTime: 0,
+      // The sheet shows its own inline fallback.
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
 // The latest live checkpoint's still-assertable backlog candidates — the
 // claims sheet's data source across remounts (the collect response only feeds
 // the mount that pressed the button; a reload would otherwise lose the
