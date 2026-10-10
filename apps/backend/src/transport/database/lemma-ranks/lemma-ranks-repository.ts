@@ -120,11 +120,11 @@ const getCoverageData = async (params: {
   }
 }
 
-export type TopLemmasBuild = { version: number; lemmas: string[] }
+export type RankedLemmasBuild = { version: number; lemmas: string[] }
 
 // The manifest version and ordered labels also share one statement snapshot;
 // the returned version therefore always describes the returned lemma order.
-const getTopLemmasBuild = async (params: { targetLanguage: string }): Promise<TopLemmasBuild | null> => {
+const getRankedLemmasBuild = async (params: { targetLanguage: string }): Promise<RankedLemmasBuild | null> => {
   const rows = (await sql`
     SELECT b.version,
       COALESCE(
@@ -166,7 +166,7 @@ export interface LemmaRanksRepositoryInterface {
     lemmas: readonly string[]
     bandUpperBounds: readonly number[]
   }) => Promise<LemmaRankCoverageData | null>
-  getTopLemmasBuild: (params: { targetLanguage: string }) => Promise<TopLemmasBuild | null>
+  getRankedLemmasBuild: (params: { targetLanguage: string }) => Promise<RankedLemmasBuild | null>
 }
 
 export const LemmaRanksRepository = (): LemmaRanksRepositoryInterface => {
@@ -175,6 +175,6 @@ export const LemmaRanksRepository = (): LemmaRanksRepositoryInterface => {
     getRankBuildTime,
     listRanksForLemmas,
     getCoverageData,
-    getTopLemmasBuild,
+    getRankedLemmasBuild,
   }
 }

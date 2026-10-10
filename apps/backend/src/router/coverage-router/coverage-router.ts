@@ -23,8 +23,8 @@ export const CoverageRouter = (dependencies: CoverageDependencies): Router => {
     // and the client caches it per rank build. If this payload ever becomes a
     // problem, cap it here — the tooltip already falls back to rank + state
     // for any rank without a label.
-    getTopLemmas: implementer.getTopLemmas.handler(async ({ input, errors }) => {
-      const build = await dependencies.lemmaRanksRepository.getTopLemmasBuild({
+    getRankedLemmas: implementer.getRankedLemmas.handler(async ({ input, errors }) => {
+      const build = await dependencies.lemmaRanksRepository.getRankedLemmasBuild({
         targetLanguage: input.targetLanguage,
       })
       if (!build) {

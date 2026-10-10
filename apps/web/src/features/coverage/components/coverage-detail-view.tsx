@@ -5,7 +5,7 @@ import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useModalScreenClose } from '@/features/navigation/hooks/use-modal-screen-close'
-import { useCoverage, useCoverageTopLemmas, type LanguageCoverage } from '../api/coverage-hooks'
+import { useCoverage, useCoverageRankedLemmas, type LanguageCoverage } from '../api/coverage-hooks'
 import { buildStateArray, STATE_KNOWN, STATE_STUDIED } from '../utils/coverage-render'
 import { CoverageDotGrid, CoverageSkyline, type DotHover } from './coverage-canvas'
 import { CoverageLegend } from './coverage-legend'
@@ -87,10 +87,10 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
     [denominator, coverage]
   )
 
-  const { data: topLemmas } = useCoverageTopLemmas(coverage.targetLanguage, coverage.buildVersion, true)
+  const { data: rankedLemmas } = useCoverageRankedLemmas(coverage.targetLanguage, coverage.buildVersion, true)
   // Never pair lemma labels with ranks from a different lemma_ranks build —
   // a rebuild reorders ranks, and a mislabeled dot is worse than a bare one.
-  const lemmaLabels = topLemmas?.buildVersion === coverage.buildVersion ? topLemmas.lemmas : undefined
+  const lemmaLabels = rankedLemmas?.buildVersion === coverage.buildVersion ? rankedLemmas.lemmas : undefined
 
   // The tooltip is anchored to a fixed position; scrolling moves the dot away
   // from under it, so it hides rather than drifts.
