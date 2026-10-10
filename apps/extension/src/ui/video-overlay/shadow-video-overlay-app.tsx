@@ -8,8 +8,8 @@ import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
-import { DeclarationSheet, type CollectOutcome, type SweepOutcome } from './declaration-sheet'
-import type { DeclarationState } from './declaration-preview'
+import { DeclarationSheet, type AssertOutcome, type CollectOutcome, type SweepOutcome } from './declaration-sheet'
+import type { DeclarationResult, DeclarationState } from './declaration-preview'
 
 // The in-realm replacement for the iframe model transport. The controller pushes
 // snapshots into the zustand store (formerly the request/update-video-overlay-model
@@ -50,11 +50,11 @@ export interface VideoOverlayCommands {
   onEnableExtension: () => void
   onDisableExtension: () => void
   onCheckpoint: () => void
-  onDeclarationCollect: () => Promise<CollectOutcome>
+  onDeclarationCollect: (excludedUserLookupIds: string[]) => Promise<CollectOutcome>
   onDeclarationRefreshSnapshot: () => void
+  onDeclarationAssertClaims: (checkpointId: string, userLookupIds: string[]) => Promise<AssertOutcome>
   onDeclarationSweep: () => Promise<SweepOutcome>
-  onDeclarationUndoSweep: (sweepBatchId: string) => Promise<boolean>
-  onDeclarationUndoCheckpoint: (checkpointId: string) => Promise<{ ok: boolean; undone: boolean }>
+  onDeclarationFinished: (result: DeclarationResult) => void
   onDeclarationClose: () => void
 }
 
@@ -142,9 +142,9 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
           declaration={declaration}
           onCollect={commands.onDeclarationCollect}
           onRefreshSnapshot={commands.onDeclarationRefreshSnapshot}
+          onAssertClaims={commands.onDeclarationAssertClaims}
           onSweep={commands.onDeclarationSweep}
-          onUndoSweep={commands.onDeclarationUndoSweep}
-          onUndoCheckpoint={commands.onDeclarationUndoCheckpoint}
+          onFinished={commands.onDeclarationFinished}
           onClose={commands.onDeclarationClose}
         />
       )}

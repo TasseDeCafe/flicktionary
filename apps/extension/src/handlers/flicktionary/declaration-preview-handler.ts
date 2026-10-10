@@ -23,10 +23,12 @@ const isNotFound = (result: PromiseSettledResult<unknown>): boolean =>
 
 // The declaration sheet's data lane: resolve the video's session (cache →
 // lookup probe → find-or-create; the tap is an explicit user act, exactly like
-// a collect press) and fetch both preview counts in one round trip. The lanes
-// degrade independently — a failed checkpoint preview only loses the count
-// (collect still works blind), a failed mark-known preview drops the optional
-// sweep step for this run.
+// a collect press) and fetch the checkpoint preview, the reviews list and the
+// sweep count in one round trip. The lanes degrade independently — a failed
+// reviews list only loses the checklist (collect still works, crediting every
+// due word), a failed mark-known preview drops the optional sweep step for
+// this run. The passive read-only probe skips the list: it only feeds a count
+// badge.
 export default class DeclarationPreviewHandler {
   get sender(): string[] {
     return ['asbplayer-video-tab']
@@ -67,7 +69,8 @@ export default class DeclarationPreviewHandler {
           sendResponse({ success: false, code: 'NO_SESSION' })
           return
         }
-        let previews = await this._fetchPreviews(session.sessionId, message.segmentIndex)
+        const withCandidates = !message.readOnly
+        let previews = await this._fetchPreviews(session.sessionId, message.segmentIndex, withCandidates)
         // Stale cache (session deleted in the web app): evict, re-resolve once
         // (the lookup now sees the deletion), and re-preview against the fresh
         // session.
@@ -78,7 +81,7 @@ export default class DeclarationPreviewHandler {
             sendResponse({ success: false, code: 'NO_SESSION' })
             return
           }
-          previews = await this._fetchPreviews(session.sessionId, message.segmentIndex)
+          previews = await this._fetchPreviews(session.sessionId, message.segmentIndex, withCandidates)
         }
         const checkpoint = previews.checkpoint.status === 'fulfilled' ? previews.checkpoint.value.data : undefined
         const markKnown = previews.markKnown.status === 'fulfilled' ? previews.markKnown.value.data : undefined
@@ -87,7 +90,8 @@ export default class DeclarationPreviewHandler {
           sessionId: session.sessionId,
           targetLanguage: session.targetLanguage,
           checkpointSupported: checkpoint?.supported,
-          pendingCount: checkpoint?.pendingCount,
+          reviewCandidates:
+            previews.candidates.status === 'fulfilled' ? previews.candidates.value?.data.candidates : undefined,
           markKnownStatus: markKnown?.status ?? 'failed',
           markableLemmaCount: markKnown?.markableLemmaCount ?? 0,
         })
@@ -104,12 +108,18 @@ export default class DeclarationPreviewHandler {
     return true
   }
 
-  private async _fetchPreviews(sessionId: string, toSegmentIndex: number) {
+  private async _fetchPreviews(sessionId: string, toSegmentIndex: number, withCandidates: boolean) {
     const client = getFlicktionaryApiClient()
-    const [checkpoint, markKnown] = await Promise.allSettled([
+    const [checkpoint, markKnown, candidates] = await Promise.allSettled([
       client.studySessions.getCheckpointPreview({ sessionId, toSegmentIndex }),
       client.studySessions.getMarkKnownPreview({ sessionId, toSegmentIndex }),
+      // Same empty `previewedSpans` as the collect (see
+      // collect-checkpoint-handler.ts), so the list and the collect suppress
+      // the same words.
+      withCandidates
+        ? client.studySessions.getCheckpointCandidates({ sessionId, toSegmentIndex, previewedSpans: [] })
+        : undefined,
     ])
-    return { checkpoint, markKnown }
+    return { checkpoint, markKnown, candidates }
   }
 }

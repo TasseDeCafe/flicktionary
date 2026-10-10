@@ -2,6 +2,8 @@ import { createElement } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   VideoOverlayModel,
+  type FlicktionaryAssertKnownBacklogMessage,
+  type FlicktionaryAssertKnownBacklogResponse,
   type FlicktionaryCheckpointAvailabilityMessage,
   type FlicktionaryCheckpointAvailabilityResponse,
   type FlicktionaryCollectCheckpointMessage,
@@ -12,6 +14,8 @@ import {
   type FlicktionaryMarkKnownResponse,
   type FlicktionaryUndoCheckpointMessage,
   type FlicktionaryUndoCheckpointResponse,
+  type FlicktionaryUndoKnownAssertionsMessage,
+  type FlicktionaryUndoKnownAssertionsResponse,
   type FlicktionaryUnmarkKnownMessage,
   type FlicktionaryUnmarkKnownResponse,
   type SaveWordFlicktionaryVideoContext,
@@ -33,7 +37,9 @@ import {
   type VideoOverlayState,
   type VideoOverlayStore,
 } from '../ui/video-overlay/shadow-video-overlay-app'
-import type { CollectOutcome, SweepOutcome } from '../ui/video-overlay/declaration-sheet'
+import type { AssertOutcome, CollectOutcome, SweepOutcome } from '../ui/video-overlay/declaration-sheet'
+import type { DeclarationResult } from '../ui/video-overlay/declaration-preview'
+import { showDeclarationToast } from '../ui/video-overlay/declaration-toast'
 
 const smallScreenVideoHeightThreshold = 300
 
@@ -201,11 +207,11 @@ export class VideoOverlayController {
       onEnableExtension: () => void setExtensionEnabled(true),
       onDisableExtension: () => void setExtensionEnabled(false),
       onCheckpoint: () => this._openDeclarationSheet(),
-      onDeclarationCollect: () => this._collectCheckpoint(),
+      onDeclarationCollect: (excludedUserLookupIds) => this._collectCheckpoint(excludedUserLookupIds),
       onDeclarationRefreshSnapshot: () => this._refreshDeclarationSnapshot(),
+      onDeclarationAssertClaims: (checkpointId, userLookupIds) => this._assertClaims(checkpointId, userLookupIds),
       onDeclarationSweep: () => this._sweepDeclaration(),
-      onDeclarationUndoSweep: (sweepBatchId) => this._undoSweep(sweepBatchId),
-      onDeclarationUndoCheckpoint: (checkpointId) => this._undoCheckpoint(checkpointId),
+      onDeclarationFinished: (result) => this._finishDeclaration(result),
       onDeclarationClose: () => this._closeDeclarationSheet(),
     }
   }
@@ -248,6 +254,8 @@ export class VideoOverlayController {
     message: TabToExtensionCommand<
       | FlicktionaryDeclarationPreviewMessage
       | FlicktionaryCollectCheckpointMessage
+      | FlicktionaryAssertKnownBacklogMessage
+      | FlicktionaryUndoKnownAssertionsMessage
       | FlicktionaryMarkKnownMessage
       | FlicktionaryUnmarkKnownMessage
       | FlicktionaryUndoCheckpointMessage
@@ -276,6 +284,8 @@ export class VideoOverlayController {
       this._setCheckpointFeedback({ kind: 'info', text: i18n._(msg`Nothing to collect yet.`) })
       return
     }
+    // A new run supersedes the feedback of the previous one.
+    this._setCheckpointFeedback(null)
     const runKey = (this._declaration()?.runKey ?? 0) + 1
     store.setState({ declaration: { runKey, segmentIndex, preview: { status: 'loading' } } })
     void this._fetchDeclarationPreview(runKey, segmentIndex, videoCtx)
@@ -283,10 +293,44 @@ export class VideoOverlayController {
 
   private _closeDeclarationSheet() {
     this._store?.setState({ declaration: null })
-    // A sweep (or its undo) changes the markable count — re-key the paused
-    // controls' badge to fresh numbers.
+    this._refreshMarkKnownBadge()
+  }
+
+  // A sweep (or its undo) changes the markable count — re-key the paused
+  // controls' badge to fresh numbers.
+  private _refreshMarkKnownBadge() {
     this._badgeProbedSegmentIndex = undefined
     void this._probeMarkKnownBadge()
+  }
+
+  // A run ended with something written: close the sheet and confirm in one
+  // toast whose Undo covers sweep, known-assertions and checkpoint. The undo
+  // closures capture the session id — the run state is gone by the time Undo
+  // is pressed.
+  private _finishDeclaration(result: DeclarationResult) {
+    const sessionId = this._declaration()?.sessionId
+    this._closeDeclarationSheet()
+    if (!sessionId) {
+      return
+    }
+    const shown = showDeclarationToast(
+      result,
+      {
+        undoSweep: (sweepBatchId) => this._undoSweep(sessionId, sweepBatchId),
+        undoAssertions: (checkpointId) => this._undoAssertions(sessionId, checkpointId),
+        undoCheckpoint: (checkpointId) => this._undoCheckpoint(sessionId, checkpointId),
+      },
+      () => this._refreshMarkKnownBadge()
+    )
+    // The extension can't know `reviewed_until` client-side, so an empty-span
+    // collect (success, null checkpoint id) is only discovered here — say so
+    // instead of closing silently.
+    if (!shown && result.checkpoint) {
+      this._setCheckpointFeedback({
+        kind: 'info',
+        text: i18n._(msg`You're all caught up — nothing new to collect.`),
+      })
+    }
   }
 
   // The web pill's ambient sweep count, scoped to pause: a READ-ONLY probe
@@ -337,8 +381,8 @@ export class VideoOverlayController {
   }
 
   // After a collect CONFLICT: move the frontier to the current playback
-  // position and re-key both preview counts to it — without this the sheet
-  // would show the old sweep count but sweep the new span. The run itself
+  // position and re-key the reviews list and the sweep count to it — without
+  // this the sheet would show the old span's words but collect the new span. The run itself
   // survives (same runKey, no remount).
   private _refreshDeclarationSnapshot() {
     const store = this._store
@@ -385,7 +429,7 @@ export class VideoOverlayController {
           sessionId: response.sessionId,
           preview: {
             status: 'ready',
-            pendingCount: response.pendingCount ?? null,
+            reviewCandidates: response.reviewCandidates ?? null,
             markKnownStatus: response.markKnownStatus ?? 'failed',
             markableLemmaCount: response.markableLemmaCount ?? 0,
           },
@@ -395,12 +439,12 @@ export class VideoOverlayController {
     }
     if (declaration.sessionId) {
       // A failed conflict re-fetch mustn't tear down a mid-flight run (the
-      // collect may have just succeeded) — degrade to countless-but-usable:
+      // collect may have just succeeded) — degrade to listless-but-usable:
       // collect stays possible, the sweep offer auto-skips.
       store.setState({
         declaration: {
           ...declaration,
-          preview: { status: 'ready', pendingCount: null, markKnownStatus: 'failed', markableLemmaCount: 0 },
+          preview: { status: 'ready', reviewCandidates: null, markKnownStatus: 'failed', markableLemmaCount: 0 },
         },
       })
       return
@@ -411,7 +455,7 @@ export class VideoOverlayController {
     this._showCheckpointErrorChip(response)
   }
 
-  private async _collectCheckpoint(): Promise<CollectOutcome> {
+  private async _collectCheckpoint(excludedUserLookupIds: string[]): Promise<CollectOutcome> {
     const videoCtx = this._context.flicktionaryVideoContext
     const declaration = this._declaration()
     if (!videoCtx || !declaration) {
@@ -422,6 +466,7 @@ export class VideoOverlayController {
       messageId: uuidv4(),
       segmentIndex: declaration.segmentIndex,
       flicktionaryVideo: videoCtx,
+      excludedUserLookupIds,
     })
     if (response?.success) {
       // The collect resolves the session itself, so it can supply the id the
@@ -430,7 +475,12 @@ export class VideoOverlayController {
       if (response.sessionId && current && current.runKey === declaration.runKey && !current.sessionId) {
         this._store?.setState({ declaration: { ...current, sessionId: response.sessionId } })
       }
-      return { ok: true, checkpointId: response.checkpointId ?? null, creditedCount: response.creditedCount ?? 0 }
+      return {
+        ok: true,
+        checkpointId: response.checkpointId ?? null,
+        creditedCount: response.creditedCount ?? 0,
+        backlogCandidates: [...(response.backlogCandidates ?? [])],
+      }
     }
     if (response?.code === 'CONFLICT') {
       return { ok: false, reason: 'conflict' }
@@ -462,29 +512,49 @@ export class VideoOverlayController {
     return { ok: false }
   }
 
-  private async _undoSweep(sweepBatchId: string): Promise<boolean> {
+  private async _assertClaims(checkpointId: string, userLookupIds: string[]): Promise<AssertOutcome> {
     const declaration = this._declaration()
     if (!declaration?.sessionId) {
-      return false
+      return { ok: false }
     }
+    const response = await this._sendDeclarationMessage<FlicktionaryAssertKnownBacklogResponse>({
+      command: 'flicktionary-assert-known-backlog',
+      messageId: uuidv4(),
+      sessionId: declaration.sessionId,
+      checkpointId,
+      userLookupIds,
+    })
+    if (response?.success) {
+      return { ok: true, assertedCount: response.assertedCount ?? 0 }
+    }
+    return { ok: false }
+  }
+
+  private async _undoSweep(sessionId: string, sweepBatchId: string): Promise<boolean> {
     const response = await this._sendDeclarationMessage<FlicktionaryUnmarkKnownResponse>({
       command: 'flicktionary-unmark-known',
       messageId: uuidv4(),
-      sessionId: declaration.sessionId,
+      sessionId,
       sweepBatchId,
     })
     return response?.success === true
   }
 
-  private async _undoCheckpoint(checkpointId: string): Promise<{ ok: boolean; undone: boolean }> {
-    const declaration = this._declaration()
-    if (!declaration?.sessionId) {
-      return { ok: false, undone: false }
-    }
+  private async _undoAssertions(sessionId: string, checkpointId: string): Promise<boolean> {
+    const response = await this._sendDeclarationMessage<FlicktionaryUndoKnownAssertionsResponse>({
+      command: 'flicktionary-undo-known-assertions',
+      messageId: uuidv4(),
+      sessionId,
+      checkpointId,
+    })
+    return response?.success === true
+  }
+
+  private async _undoCheckpoint(sessionId: string, checkpointId: string): Promise<{ ok: boolean; undone: boolean }> {
     const response = await this._sendDeclarationMessage<FlicktionaryUndoCheckpointResponse>({
       command: 'flicktionary-undo-checkpoint',
       messageId: uuidv4(),
-      sessionId: declaration.sessionId,
+      sessionId,
       checkpointId,
     })
     if (!response?.success) {

@@ -6,9 +6,9 @@ interface Props {
   feedback: CheckpointFeedback
 }
 
-// Checkpoint info/error pill ("Nothing to collect yet.", unsupported-language
-// notice, coded errors). The success/undo affordance lives in the declaration
-// sheet's done step instead. Rendered by the controls overlay's shadow app but
+// Checkpoint info/error pill ("Nothing to collect yet.", "all caught up",
+// unsupported-language notice, coded errors). A run that wrote something is
+// confirmed in the declaration toast instead, which carries the Undo. Rendered by the controls overlay's shadow app but
 // OUTSIDE the pause-controls visibility gate: pressing play hides the controls
 // bar, and the feedback must survive that (its own ~8s lifetime is owned by
 // VideoOverlayController). Same white-on-black chrome as the controls bar — it

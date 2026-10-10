@@ -10,7 +10,7 @@ import { extractFlicktionaryApiError } from '../../services/flicktionary/api-err
 
 // Batch-undo of the overlay's last checkpoint press. `undone: false` is the
 // server's stale-safe no-op (not the latest live checkpoint anymore) — the
-// chip reports it as "may have changed since", never as a crash.
+// declaration toast reports the credits as kept, never as a failure.
 export default class UndoCheckpointHandler {
   get sender(): string[] {
     return ['asbplayer-video-tab']

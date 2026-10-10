@@ -195,7 +195,8 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
       reloads the list and asks for a fresh confirm; other failures are an
       inline retry.
     - **Saved but never practiced**: the collect's backlog candidates as the
-      same checklist (`candidate-checklist.tsx`, always rendered in full),
+      same checklist (`candidate-checklist.tsx` in `packages/ui`, shared with
+      the extension; always rendered in full),
       `Mark N words as known` / `Skip`. Asserting clears the client's batch
       (re-asserting it would just skip).
     - **Sweep**: "Mark the N remaining words as known?" with Skip; the count
