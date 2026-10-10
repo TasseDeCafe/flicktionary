@@ -42,7 +42,6 @@ import { PauseOnHoverMode, SettingsProvider, SubtitleListPreference } from '@asb
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
 import { SubtitleReader } from '@asbplayer-fork/common/subtitle-reader'
 import { seekWithNudge } from '@asbplayer-fork/common/util'
-import ControlsController from '../controllers/controls-controller'
 import DragController from '../controllers/drag-controller'
 import { VideoOverlayController } from '../controllers/video-overlay-controller'
 import NativeCaptionsController from '../controllers/native-captions-controller'
@@ -82,7 +81,6 @@ export default class Binding {
   readonly hasPageScript: boolean
   readonly subtitleController: SubtitleController
   readonly videoDataSyncController: VideoDataSyncController
-  readonly controlsController: ControlsController
   readonly dragController: DragController
   readonly notificationController: NotificationController
   readonly videoOverlayController: VideoOverlayController
@@ -151,7 +149,6 @@ export default class Binding {
     this.settings = new SettingsProvider(new ExtensionSettingsStorage())
     this.subtitleController = new SubtitleController(video, this.settings)
     this.videoDataSyncController = new VideoDataSyncController(this, this.settings)
-    this.controlsController = new ControlsController(video)
     this.dragController = new DragController(video)
     this.keyBindings = new KeyBindings()
     this.notificationController = new NotificationController(this)

@@ -912,6 +912,12 @@ internally around seeks, and reacting to the raw `pause` event made the
 controls flash on every subtitle navigation — or stick on screen mid-playback
 when the async model push landed after the play-event hide.
 
+The bar's host (`mountVideoOverlayHost`) covers the part of the video box that
+is inside the viewport, not the raw box: players that crop the video to fill
+the window (Netflix in a window wider than the video) give the `<video>` a box
+larger than the viewport, and anchoring to its edge would put the bar
+off-screen. A video with no visible part hides the host.
+
 While the global switch is off (see "Global on/off switch"), the controller
 stays bound in **disabled mode** — regardless of `streamingEnableOverlay`,
 since the pill is the only on-video way back — and the bar renders as a single

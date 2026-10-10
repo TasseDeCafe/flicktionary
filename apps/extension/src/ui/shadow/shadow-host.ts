@@ -174,11 +174,22 @@ export function mountVideoOverlayHost(options: VideoOverlayHostOptions): ShadowH
       host.style.setProperty('display', 'none')
       return
     }
+    // Cover only the part of the video inside the viewport: players that crop
+    // the video to fill the window (Netflix) give it a box larger than the
+    // viewport, so anchoring to the raw box would put the controls off-screen.
+    const left = Math.max(rect.left, 0)
+    const top = Math.max(rect.top, 0)
+    const width = Math.min(rect.right, window.innerWidth) - left
+    const height = Math.min(rect.bottom, window.innerHeight) - top
+    if (width <= 0 || height <= 0) {
+      host.style.setProperty('display', 'none')
+      return
+    }
     host.style.removeProperty('display')
-    host.style.setProperty('left', `${rect.left}px`)
-    host.style.setProperty('top', `${rect.top}px`)
-    host.style.setProperty('width', `${rect.width}px`)
-    host.style.setProperty('height', `${rect.height}px`)
+    host.style.setProperty('left', `${left}px`)
+    host.style.setProperty('top', `${top}px`)
+    host.style.setProperty('width', `${width}px`)
+    host.style.setProperty('height', `${height}px`)
   }
 
   reposition()
