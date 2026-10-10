@@ -1,11 +1,13 @@
 name: Release extension
 
-# Cut a release by tagging a commit with the extension version, e.g.:
-#   git tag v0.0.2 && git push origin v0.0.2
-# The tag (minus the leading "v") must match apps/extension/package.json's
-# "version" — that same value becomes the manifest version and the version shown
-# in the in-app "asbplayer updated to version X" toast, whose "release notes"
-# link points at this release's page.
+# Cut a release by tagging a commit on main with the version to ship, e.g.:
+#   git tag v0.0.2 origin/main && git push origin v0.0.2
+# (`pnpm release:extension 0.0.2` does this with safety checks.) The tag IS the
+# version: the workflow stamps it (minus the leading "v") into
+# apps/extension/package.json for this build only — the committed value is a
+# 0.0.0 placeholder. That value becomes the manifest version and the version
+# shown in the in-app "asbplayer updated to version X" toast, whose "release
+# notes" link points at this release's page.
 on:
   push:
     tags:
@@ -46,15 +48,24 @@ jobs:
       - name: Compile i18n catalogs
         run: pnpm --filter @flicktionary/i18n lingui:compile
 
-      - name: Verify tag matches package version
+      # WXT takes the manifest version from package.json, and `wxt zip` copies
+      # the same file into the sources archive AMO reviewers rebuild from — so
+      # rewriting it on disk keeps the bundle and the reviewer's rebuild in step.
+      - name: Stamp the tag's version into package.json
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./apps/extension/package.json').version")"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match apps/extension/package.json version $PKG_VERSION"
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME is not a vX.Y.Z release tag"
             exit 1
           fi
-          echo "Releasing extension version $PKG_VERSION"
+          VERSION="$VERSION" node -e "
+            const fs = require('node:fs')
+            const path = 'apps/extension/package.json'
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+            pkg.version = process.env.VERSION
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n')
+          "
+          echo "Releasing extension version $VERSION"
 
       - name: Typecheck
         run: pnpm --filter @flicktionary/extension check:types
