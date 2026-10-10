@@ -61,7 +61,7 @@ export const coverageContract = {
   // dot tooltips. The requested buildVersion is part of the query-cache key;
   // the response carries the build actually read so the client can still
   // refuse labels when a publication landed between the two requests.
-  getTopLemmas: oc
+  getRankedLemmas: oc
     .route({ method: 'GET', path: '/coverage/{targetLanguage}/lemmas', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },

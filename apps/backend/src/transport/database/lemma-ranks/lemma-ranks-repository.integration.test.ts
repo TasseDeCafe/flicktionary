@@ -79,17 +79,17 @@ describe('lemma-ranks coverage reads', () => {
     ).toBeNull()
   })
 
-  test('getTopLemmasBuild returns the manifest version with every lemma in rank order', async () => {
+  test('getRankedLemmasBuild returns the manifest version with every lemma in rank order', async () => {
     const language = await seedLanguage([
       ['third', 3, 0.1],
       ['first', 1, 0.5],
       ['second', 2, 0.3],
       ['fourth', 4, 0.05],
     ])
-    expect(await repo.getTopLemmasBuild({ targetLanguage: language })).toEqual({
+    expect(await repo.getRankedLemmasBuild({ targetLanguage: language })).toEqual({
       version: 7,
       lemmas: ['first', 'second', 'third', 'fourth'],
     })
-    expect(await repo.getTopLemmasBuild({ targetLanguage: __generateUniqueId('zz') })).toBeNull()
+    expect(await repo.getRankedLemmasBuild({ targetLanguage: __generateUniqueId('zz') })).toBeNull()
   })
 })

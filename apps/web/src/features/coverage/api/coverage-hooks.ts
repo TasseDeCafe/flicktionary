@@ -41,23 +41,27 @@ export const useQualifyingCoverage = () => {
   return { qualifying, unsupported, isLoading }
 }
 
-const TOP_LEMMAS_STALE_MS = 24 * 60 * 60 * 1000
+const RANKED_LEMMAS_STALE_MS = 24 * 60 * 60 * 1000
 
-// The top-5k lemma strings behind the detail view's dot tooltips. Static per
+// The ranked lemma strings behind the detail view's dot tooltips. Static per
 // lemma_ranks build, hence the long staleTime; the response carries its
 // buildVersion and the consumer must refuse to pair labels with coverage
 // ranks from a different build (a rank rebuild would otherwise mislabel dots
 // until the cache expires).
-export const useCoverageTopLemmas = (targetLanguage: string | null, buildVersion: number | null, enabled: boolean) => {
+export const useCoverageRankedLemmas = (
+  targetLanguage: string | null,
+  buildVersion: number | null,
+  enabled: boolean
+) => {
   return useQuery(
-    orpcQuery.coverage.getTopLemmas.queryOptions({
+    orpcQuery.coverage.getRankedLemmas.queryOptions({
       // buildVersion belongs in the input so a newly published rank build gets
       // a fresh query key instead of inheriting the previous build's 24-hour
       // cache entry.
       input: { targetLanguage: targetLanguage ?? '', buildVersion: buildVersion ?? 0 },
       enabled: enabled && !!targetLanguage && buildVersion !== null,
       select: (response) => response.data,
-      staleTime: TOP_LEMMAS_STALE_MS,
+      staleTime: RANKED_LEMMAS_STALE_MS,
       meta: { showErrorToast: false },
     })
   )
