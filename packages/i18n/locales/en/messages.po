@@ -54,28 +54,26 @@ msgstr "(unset)"
 msgid "{0, plural, one {# highlight} other {# highlights}}"
 msgstr "{0, plural, one {# highlight} other {# highlights}}"
 
-#. placeholder {0}: state.checkpoint?.creditedCount ?? 0
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "{0, plural, one {# review collected} other {# reviews collected}}"
-msgstr "{0, plural, one {# review collected} other {# reviews collected}}"
-
-#. placeholder {0}: state.sweep.markedCount
+#. placeholder {0}: result.sweep.markedCount
 #. placeholder {0}: sweep.markedCount
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "{0, plural, one {# word marked as known} other {# words marked as known}}"
 msgstr "{0, plural, one {# word marked as known} other {# words marked as known}}"
 
 #. placeholder {0}: claimCandidates.length
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{0, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
 msgstr "{0, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
 
 #. placeholder {0}: selectedClaims.length
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{0, plural, one {Mark # word as known} other {Mark # words as known}}"
 msgstr "{0, plural, one {Mark # word as known} other {Mark # words as known}}"
 
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "{assertedCount, plural, one {# saved word marked as known} other {# saved words marked as known}}"
 msgstr "{assertedCount, plural, one {# saved word marked as known} other {# saved words marked as known}}"
@@ -121,6 +119,7 @@ msgstr "{count, plural, one {# word from last time isn't marked as known yet.} o
 msgid "{count} episodes"
 msgstr "{count} episodes"
 
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "{creditedCount, plural, one {# review collected} other {# reviews collected}}"
 msgstr "{creditedCount, plural, one {# review collected} other {# reviews collected}}"
@@ -154,9 +153,6 @@ msgid "{episodeCount} episodes"
 msgstr "{episodeCount} episodes"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "{exactCount, plural, one {Mark # word as known?} other {Mark # words as known?}}"
-msgstr "{exactCount, plural, one {Mark # word as known?} other {Mark # words as known?}}"
-
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{exactCount, plural, one {Mark the # remaining word as known?} other {Mark the # remaining words as known?}}"
 msgstr "{exactCount, plural, one {Mark the # remaining word as known?} other {Mark the # remaining words as known?}}"
@@ -245,10 +241,6 @@ msgstr "{parkedTotal} parked"
 msgid "{partCount} parts"
 msgstr "{partCount} parts"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "{pendingCount, plural, one {# review ready to collect.} other {# reviews ready to collect.}}"
-msgstr "{pendingCount, plural, one {# review ready to collect.} other {# reviews ready to collect.}}"
-
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "{pendingCount, plural, one {Confirm you understood what you read to collect # review.} other {Confirm you understood what you read to collect # reviews.}}"
 msgstr "{pendingCount, plural, one {Confirm you understood what you read to collect # review.} other {Confirm you understood what you read to collect # reviews.}}"
@@ -277,6 +269,7 @@ msgstr "{savedCount, plural, one {# more word from this book is already in your 
 msgid "{selectedCount} of {chapterCount} chapters selected"
 msgstr "{selectedCount} of {chapterCount} chapters selected"
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{selectedReviewCount, plural, one {Collect # review} other {Collect # reviews}}"
 msgstr "{selectedReviewCount, plural, one {Collect # review} other {Collect # reviews}}"
@@ -1153,7 +1146,7 @@ msgstr "Checking app version..."
 msgid "Checking…"
 msgstr "Checking…"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Checkpoint saved"
 msgstr "Checkpoint saved"
@@ -1233,17 +1226,12 @@ msgstr "Click to unlock font menu"
 
 #: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 #: apps/extension/src/ui/notification/shadow-notification-app.tsx
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/web/src/features/navigation/components/modal-screen.tsx
 #: apps/web/src/features/review/components/chat-panel.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Close"
 msgstr "Close"
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Closes automatically"
-msgstr "Closes automatically"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Clue"
@@ -1297,7 +1285,6 @@ msgstr "Condensed playback: Off"
 msgid "Condensed playback: On"
 msgstr "Condensed playback: On"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx
 msgid "Confirm"
 msgstr "Confirm"
@@ -1548,6 +1535,7 @@ msgstr "Couldn't generate the form's data"
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Couldn't load the list of words. You can still save the checkpoint — every due word that appeared will count as reviewed."
 msgstr "Couldn't load the list of words. You can still save the checkpoint — every due word that appeared will count as reviewed."
@@ -2033,6 +2021,10 @@ msgstr "Even if you get charged you can request an unconditional refund. Just le
 msgid "Every word in what you've read that isn't saved or marked yet. You can un-mark any word later."
 msgstr "Every word in what you've read that isn't saved or marked yet. You can un-mark any word later."
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+msgid "Every word in what you've watched that isn't saved or marked yet. You can un-mark any word later."
+msgstr "Every word in what you've watched that isn't saved or marked yet. You can un-mark any word later."
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Everything"
 msgstr "Everything"
@@ -2040,10 +2032,6 @@ msgstr "Everything"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Everything you save lands in the web app, where you can review your sessions, browse your vocabulary, and practice what you collected."
 msgstr "Everything you save lands in the web app, where you can review your sessions, browse your vocabulary, and practice what you collected."
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Everything you've watched up to the checkpoint. You can un-mark any word later."
-msgstr "Everything you've watched up to the checkpoint. You can un-mark any word later."
 
 #: packages/ui/src/components/study-skill-cards.tsx
 msgid "Exact form"
@@ -3667,6 +3655,10 @@ msgstr "No reviews are due right now."
 msgid "No saved words were due for review in what you read. Saving the checkpoint still marks this part as read."
 msgstr "No saved words were due for review in what you read. Saving the checkpoint still marks this part as read."
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+msgid "No saved words were due for review in what you watched. Saving the checkpoint still marks this part as watched."
+msgstr "No saved words were due for review in what you watched. Saving the checkpoint still marks this part as watched."
+
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "No seasons found."
 msgstr "No seasons found."
@@ -4798,6 +4790,7 @@ msgstr "Save a term while watching or reading in a session. Flicktionary enriche
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Save checkpoint"
 msgstr "Save checkpoint"
@@ -4858,6 +4851,10 @@ msgstr "Saved to this card's chat — delete the highlight to change it."
 msgid "Saved to your vocabulary"
 msgstr "Saved to your vocabulary"
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+msgid "Saved words that were due for review and appeared in the subtitles so far. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out."
+msgstr "Saved words that were due for review and appeared in the subtitles so far. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out."
+
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Saved words that were due for review and appeared in what you read. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out."
 msgstr "Saved words that were due for review and appeared in what you read. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out."
@@ -4865,10 +4862,6 @@ msgstr "Saved words that were due for review and appeared in what you read. Conf
 #: packages/ui/src/components/word-family-line.tsx
 msgid "Saved: {savedList}"
 msgstr "Saved: {savedList}"
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Saves a checkpoint at your current position. Saved words that appeared in the subtitles so far and were due for review count as successful reviews — words you looked up along the way are never penalized."
-msgstr "Saves a checkpoint at your current position. Saved words that appeared in the subtitles so far and were due for review count as successful reviews — words you looked up along the way are never penalized."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
@@ -5394,10 +5387,6 @@ msgstr "Stats"
 msgid "Status"
 msgstr "Status"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Step {stepCurrent} of {stepTotal}"
-msgstr "Step {stepCurrent} of {stepTotal}"
-
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 msgid "Still analyzing some chapters — more words may appear."
 msgstr "Still analyzing some chapters — more words may appear."
@@ -5727,14 +5716,10 @@ msgstr "The answer was:"
 msgid "The book upload failed. Please try again."
 msgstr "The book upload failed. Please try again."
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "The collected reviews were kept — a newer checkpoint exists."
 msgstr "The collected reviews were kept — a newer checkpoint exists."
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "The collected reviews weren't reverted."
-msgstr "The collected reviews weren't reverted."
 
 #: apps/web/src/features/extension-welcome/components/extension-welcome-view.tsx
 msgid "The extension is installed 🎉"
@@ -5752,10 +5737,6 @@ msgstr "The extension popup contains the full settings: subtitle appearance (wit
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx
 msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "The known-word marks weren't removed."
-msgstr "The known-word marks weren't removed."
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
@@ -5778,6 +5759,10 @@ msgstr "There's no way to sign back in to a guest session. If you sign out now, 
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "These saved words appeared in what you just read. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
 msgstr "These saved words appeared in what you just read. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
+
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+msgid "These saved words appeared in what you just watched. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
+msgstr "These saved words appeared in what you just watched. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "These settings have been modified."
@@ -6084,7 +6069,6 @@ msgstr "Troubleshooting"
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 #: apps/web/src/features/explore/components/explore-entry-detail-view.tsx
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
@@ -6171,7 +6155,7 @@ msgstr "Unbound"
 msgid "Understand it when you read or hear it"
 msgstr "Understand it when you read or hear it"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
@@ -6179,13 +6163,13 @@ msgstr "Understand it when you read or hear it"
 msgid "Undo"
 msgstr "Undo"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Undo didn't finish"
-msgstr "Undo didn't finish"
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
+msgid "Undo didn't finish. Try again."
+msgstr "Undo didn't finish. Try again."
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Undoing…"
-msgstr "Undoing…"
+#: apps/extension/src/ui/video-overlay/declaration-toast.ts
+msgid "Undone"
+msgstr "Undone"
 
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Unknown words"
@@ -6776,7 +6760,7 @@ msgstr "You searched in {targetLanguage}, so this is about recognizing the word:
 msgid "You used your free trial"
 msgstr "You used your free trial"
 
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
+#: apps/extension/src/controllers/video-overlay-controller.ts
 msgid "You're all caught up — nothing new to collect."
 msgstr "You're all caught up — nothing new to collect."
 
@@ -6881,13 +6865,10 @@ msgstr "Your production card will be in tomorrow's practice, ahead of other revi
 msgid "Your progress is saved"
 msgstr "Your progress is saved"
 
+#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Your reading position changed — check the list and confirm again."
 msgstr "Your reading position changed — check the list and confirm again."
-
-#: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-msgid "Your reading position changed — try again."
-msgstr "Your reading position changed — try again."
 
 #: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
 msgid "Your recognition card will be in tomorrow's practice, ahead of other reviews."
