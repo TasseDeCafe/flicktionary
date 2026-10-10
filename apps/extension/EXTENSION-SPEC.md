@@ -922,7 +922,10 @@ While the global switch is off (see "Global on/off switch"), the controller
 stays bound in **disabled mode** — regardless of `streamingEnableOverlay`,
 since the pill is the only on-video way back — and the bar renders as a single
 dimmed logo pill (`VideoOverlayDisabled`, same shell and pause/grace behavior)
-whose click writes the global flag back on.
+whose click writes the global flag back on. Flipping the switch on a paused
+video swaps the bar and the pill in place: the subtitle reset that accompanies
+the flip hides the bar, so the controller re-shows itself instead of waiting
+for the next pause.
 
 ### Declaration flow (collect reviews + mark words known)
 
