@@ -118,7 +118,17 @@ export class VideoOverlayController {
 
     this._disabledMode = value
 
-    if (this._bound) {
+    if (!this._bound) {
+      return
+    }
+
+    // Flipping the switch resets the subtitles, which hides the bar
+    // (disposeOverlay) with no pause event coming to bring it back — so a
+    // still-paused video re-shows it here, keeping the pill and the power
+    // button in the same spot across the flip.
+    if (this._context.video.paused && !this._forceHiding) {
+      this._doShow()
+    } else {
       void this._pushModel()
     }
   }
