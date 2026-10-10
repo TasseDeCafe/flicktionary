@@ -25,8 +25,6 @@ const BAND_CELLS = [
   { cell: 3, gap: 1 },
 ]
 
-const TOOLTIP_LEMMA_LIMIT = 5000
-
 // The full coverage view behind the dashboard card: the pixel wall (with a
 // through-B2 / full-denominator toggle and lemma tooltips), the per-level
 // waffles, and the aggregated skyline — all renderings of one cached
@@ -233,7 +231,7 @@ const DotTooltip = ({
   const { t } = useLingui()
   const state = states[hover.rank - 1]
   const stateLabel = state === STATE_STUDIED ? t`studied` : state === STATE_KNOWN ? t`marked known` : t`not yet known`
-  const lemma = hover.rank <= TOOLTIP_LEMMA_LIMIT ? lemmaLabels?.[hover.rank - 1] : undefined
+  const lemma = lemmaLabels?.[hover.rank - 1]
   const rankLabel = hover.rank.toLocaleString()
 
   // Clamp near the right edge so the tooltip never forces horizontal scroll.

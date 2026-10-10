@@ -681,7 +681,7 @@ integration test). A "real lemma" for matching purposes has
 The per-language frequency-ranked lemma list backing the personalized
 difficulty stat and the whole-language coverage read (`coverage.getCoverage`
 aggregates total/per-band mass over it; `coverage.getTopLemmas` serves the
-top-5k head for detail-view tooltips). Built offline by
+whole ranked list for detail-view tooltips). Built offline by
 `apps/backend/scripts/build-lemma-ranks.ts` from a pinned wordfreq export
 (`scripts/export-wordfreq.py`) resolved against the loaded kaikki tables
 through `checkpoint_fold` (byte-for-byte fold parity with the runtime

@@ -7,9 +7,6 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { getUserCoverage, type CoverageDependencies } from '../../service/coverage/get-user-coverage'
 
 // Whole-language vocabulary coverage (the dashboard grid + detail view).
-// TOP_LEMMAS_LIMIT bounds the tooltip payload to the head of the frequency
-// list — the dots people actually hover — at ~40–60KB per language.
-const TOP_LEMMAS_LIMIT = 5000
 
 export const CoverageRouter = (dependencies: CoverageDependencies): Router => {
   const implementer = implement(coverageContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -21,10 +18,14 @@ export const CoverageRouter = (dependencies: CoverageDependencies): Router => {
       return { data: { languages } }
     }),
 
+    // Deliberately uncapped so every dot on the wall can name its lemma: the
+    // largest list (English, ~60k lemmas) is ~0.6MB of JSON before compression
+    // and the client caches it per rank build. If this payload ever becomes a
+    // problem, cap it here — the tooltip already falls back to rank + state
+    // for any rank without a label.
     getTopLemmas: implementer.getTopLemmas.handler(async ({ input, errors }) => {
       const build = await dependencies.lemmaRanksRepository.getTopLemmasBuild({
         targetLanguage: input.targetLanguage,
-        limit: TOP_LEMMAS_LIMIT,
       })
       if (!build) {
         throw errors.NOT_FOUND({

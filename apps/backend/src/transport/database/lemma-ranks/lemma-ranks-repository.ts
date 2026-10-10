@@ -124,7 +124,7 @@ export type TopLemmasBuild = { version: number; lemmas: string[] }
 
 // The manifest version and ordered labels also share one statement snapshot;
 // the returned version therefore always describes the returned lemma order.
-const getTopLemmasBuild = async (params: { targetLanguage: string; limit: number }): Promise<TopLemmasBuild | null> => {
+const getTopLemmasBuild = async (params: { targetLanguage: string }): Promise<TopLemmasBuild | null> => {
   const rows = (await sql`
     SELECT b.version,
       COALESCE(
@@ -137,7 +137,6 @@ const getTopLemmasBuild = async (params: { targetLanguage: string; limit: number
       FROM public.lemma_ranks
       WHERE target_language = b.target_language
       ORDER BY rank ASC
-      LIMIT ${params.limit}
     ) head ON TRUE
     WHERE b.target_language = ${params.targetLanguage}
     GROUP BY b.version
@@ -167,7 +166,7 @@ export interface LemmaRanksRepositoryInterface {
     lemmas: readonly string[]
     bandUpperBounds: readonly number[]
   }) => Promise<LemmaRankCoverageData | null>
-  getTopLemmasBuild: (params: { targetLanguage: string; limit: number }) => Promise<TopLemmasBuild | null>
+  getTopLemmasBuild: (params: { targetLanguage: string }) => Promise<TopLemmasBuild | null>
 }
 
 export const LemmaRanksRepository = (): LemmaRanksRepositoryInterface => {
