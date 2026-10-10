@@ -50,6 +50,19 @@ describe('lemma-ranks coverage reads', () => {
         ['d', { rank: 9000, freqMass: 0.15 }],
       ])
     )
+    // Any number of bounds: a band no lemma falls into reports zero mass.
+    const fineBands = await repo.getCoverageData({
+      targetLanguage: language,
+      lemmas: [],
+      bandUpperBounds: [1, 999, 1000, 9000, 11999],
+    })
+    expect(fineBands!.aggregate.bandMasses).toHaveLength(6)
+    expect(fineBands!.aggregate.bandMasses[0]).toBeCloseTo(0.4)
+    expect(fineBands!.aggregate.bandMasses[1]).toBe(0)
+    expect(fineBands!.aggregate.bandMasses[2]).toBeCloseTo(0.1)
+    expect(fineBands!.aggregate.bandMasses[3]).toBeCloseTo(0.35)
+    expect(fineBands!.aggregate.bandMasses[4]).toBe(0)
+    expect(fineBands!.aggregate.bandMasses[5]).toBeCloseTo(0.05)
     const emptyVocabulary = await repo.getCoverageData({
       targetLanguage: language,
       lemmas: [],

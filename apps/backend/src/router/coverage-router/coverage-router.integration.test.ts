@@ -115,12 +115,14 @@ describe('coverage router', () => {
     expect(entry.coveragePct).toBeCloseTo(90)
     expect(entry.verifiedPct).toBeCloseTo(40)
     expect(entry.mweCount).toBe(0)
-    expect(entry.bands).toHaveLength(4)
-    expect(entry.bands[0]).toMatchObject({ fromRank: 1, toRank: 1000 })
+    expect(entry.bands).toHaveLength(6)
+    expect(entry.bands[0]).toMatchObject({ level: 'A1', fromRank: 1, toRank: 750 })
     expect(entry.bands[0].coveragePct).toBeCloseTo(100)
+    expect(entry.bands[1]).toMatchObject({ level: 'A2', fromRank: 751, toRank: 1500 })
     expect(entry.bands[1].coveragePct).toBeCloseTo(100)
-    expect(entry.bands[2].coveragePct).toBeCloseTo(0)
-    expect(entry.bands[3]).toMatchObject({ fromRank: 10001, toRank: null })
+    expect(entry.bands[3]).toMatchObject({ level: 'B2', fromRank: 2501, toRank: 8000 })
+    expect(entry.bands[3].coveragePct).toBeCloseTo(0)
+    expect(entry.bands[5]).toMatchObject({ level: 'C2', fromRank: 15001, toRank: null })
 
     // The lazy snapshot is fire-and-forget — poll for it.
     await vi.waitFor(async () => {

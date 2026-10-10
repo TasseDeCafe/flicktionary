@@ -154,9 +154,13 @@ claimed". Verified = the lemma has a live successful explicit-or-checkpoint
 meaning review, never a known-assertion (`docs/SRS.md` §6c); known-only
 lemmas stay claimed forever. On the detail view, "+ N expressions" beside
 the legend counts multi-word headwords (they can't be dots). Pressing the card opens
-`/coverage/$lang`: the full wall (top-10k / whole-denominator toggle, hover
-tooltips naming the top-5k lemmas), per-frequency-band waffles with each
-band's own coverage %, and a 100-lemma-bucket skyline strip. Data:
+`/coverage/$lang`: the full wall (A1–B2 / whole-denominator toggle, hover
+tooltips naming the top-5k lemmas), per-level waffles with each level's own
+coverage %, and a 100-lemma-bucket skyline strip. The levels are approximate
+CEFR bands cut from the frequency ranking, the same for every language (A1
+to rank 750, A2 to 1,500, B1 to 2,500, B2 to 8,000, C1 to 15,000, C2 the
+rest) — a frequency proxy, not real CEFR word lists; the default wall here
+and on `/stats` stops at the B2 bound. Data:
 `coverage.getCoverage` (batched, all practiced languages) riding on
 `lemma_ranks` + `known_lemmas` + the user's vocab through the shared
 checkpoint fold; each compute lazily upserts a daily `coverage_snapshots`

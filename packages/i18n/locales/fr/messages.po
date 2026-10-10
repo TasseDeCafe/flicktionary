@@ -79,8 +79,8 @@ msgid "{assertedCount, plural, one {# saved word marked as known} other {# saved
 msgstr "{assertedCount, plural, one {# mot enregistré marqué comme connu} other {# mots enregistrés marqués comme connus}}"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "{bandPct}% of this band's text share"
-msgstr "{bandPct}% de la part de texte de cette bande"
+msgid "{bandPct}% of this level's text share"
+msgstr "{bandPct}% de la part de texte de ce niveau"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
@@ -437,6 +437,10 @@ msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de p
 #: apps/web/src/features/vocab-chat/components/capture-view.tsx
 msgid "A word or phrase, in any language"
 msgstr "Un mot ou une phrase, dans n'importe quelle langue"
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "A1–B2 · {defaultRangeLabel}"
+msgstr "A1–B2 · {defaultRangeLabel}"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "About"
@@ -1037,8 +1041,8 @@ msgid "Build your own"
 msgstr "Créer votre propre session"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "By frequency band"
-msgstr "Par bande de fréquence"
+msgid "By level"
+msgstr "Par niveau"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
@@ -3268,6 +3272,10 @@ msgstr "Notes de cours"
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Lessons"
 msgstr "Leçons"
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "Levels are approximate: each one is a slice of the frequency list about the size of the vocabulary usually expected at that level."
+msgstr "Les niveaux sont approximatifs : chacun est une tranche de la liste de fréquence d'environ la taille du vocabulaire habituellement attendu à ce niveau."
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
@@ -6001,10 +6009,6 @@ msgstr "Haut"
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "Top {toLabel}"
 msgstr "Top {toLabel}"
-
-#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "Top {topRangeLabel}"
-msgstr "Top {topRangeLabel}"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 msgid "Top {wallSizeLabel} words"

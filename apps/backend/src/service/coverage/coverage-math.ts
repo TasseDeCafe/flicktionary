@@ -9,8 +9,15 @@ import type { CoverageVocabRow } from '../../transport/database/user-lookups/use
 // the retrievability-weighted instrument; this one is a progress picture).
 
 // Rank-band upper bounds for the per-band breakdown; the tail beyond the last
-// bound is an implicit fourth band.
-export const COVERAGE_BANDS = [1000, 3000, 10000] as const
+// bound is an implicit final band. The cuts approximate the cumulative lemma
+// counts usually quoted for each CEFR level (exam lexical minimums up to B1,
+// deliberately strict above it), shared by every language — a frequency
+// proxy for the levels, not real CEFR word lists.
+export const COVERAGE_BANDS = [750, 1500, 2500, 8000, 15000] as const
+
+// The level each band stands for, aligned with COVERAGE_BANDS + the tail.
+export const COVERAGE_BAND_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
+export type CoverageBandLevel = (typeof COVERAGE_BAND_LEVELS)[number]
 
 export type CoverageComputation = {
   // Sorted ascending; disjoint (studied wins a shared lemma).
