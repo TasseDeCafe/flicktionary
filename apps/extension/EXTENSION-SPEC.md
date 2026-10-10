@@ -913,12 +913,16 @@ whose click writes the global flag back on.
 
 The controls bar hosts the video counterpart of the web reader's declaration
 pill (web behavior: `docs/READER-SPEC.md`; scheduling semantics: `docs/SRS.md`
-§6b) — one button beside the power button whose tap opens a two-step sheet
-over the video: confirm "I understood up to here" (collect checkpoint
-reviews) → optional "Mark N words as known?" (bulk `known_lemmas` sweep) →
-done step with a combined Undo. It deliberately lives on the pause-state
+§6b/§6c) — one button beside the power button whose tap opens the same
+three-step sheet over the video, each step shown only when it has something
+to offer: the due saved words the checkpoint credits ("I understood up to
+here") → the saved words never practiced → "Mark the N remaining words as
+known?" (bulk `known_lemmas` sweep). A finished run closes and confirms in
+one toast with a combined Undo. It deliberately lives on the pause-state
 controls: the press happens while paused, a deliberate act; the evidence is
-the explicit press, not playback position.
+the explicit press, not playback position. The sheet never touches playback:
+the video is already paused at the tap, and the frontier is snapshotted
+there.
 
 - **Button faces** (`VideoOverlay.tsx`, same priority ladder as the web
   pill): with a markable-word count > 0 the button wears the web pill's sweep
@@ -942,37 +946,70 @@ the explicit press, not playback position.
   OUTSIDE the pause-visibility gate so it survives play/pause; centered dark
   panel + scrim in the controls shadow host, remounted per open via a bumped
   `runKey`): step state lives in the shared pure reducer
-  `@flicktionary/core/utils/checkpoint-sweep-sheet-state` (extracted from the
-  web sheet — both apps share transition/undo semantics). Both steps open
-  included: the tap IS the checkpoint act; the sweep learns its inclusion
-  from the async preview and auto-skips when the exact count resolves to 0 or
-  the profile isn't `ready`. Dismissal is blocked while a mutation is in
-  flight; the done step auto-closes after ~4s. Because the extension can't
-  know `reviewed_until` client-side, an empty-span collect (success with
-  `checkpointId: null`) gets honest "all caught up" done copy keyed on the id,
-  never on the result object.
+  `@flicktionary/core/utils/checkpoint-sweep-sheet-state`, and the word lists
+  are the web's `CandidateChecklist` (`@flicktionary/ui`). The panel is 400px
+  wide and capped to the VIDEO BOX (minus a 12px margin each side), not the
+  viewport; title and buttons stay pinned while the description + list scroll
+  between them (`overscroll-contain`, so a wheel at the list's end doesn't
+  scroll the page).
+  - **Reviews**: the `reviewCandidates` from the preview round trip, each
+    with its sentence, all checked. The CTA reads `Collect N reviews` (or
+    `Save checkpoint` at zero); unchecked words travel as
+    `excludedUserLookupIds` and stay due. A list that failed to load still
+    allows the collect (every due word counts).
+  - **Saved but never practiced**: the collect's `backlogCandidates` as the
+    same checklist, `Mark N words as known` / `Skip`
+    (`assertKnownBacklog`). The overlay has no re-entry surface: skipped (or
+    undone) words are only offered again by the web reader's close-out card.
+  - **Sweep**: learns its inclusion from the async preview and ends the run
+    when the exact count resolves to 0 or the profile isn't `ready`. No word
+    list — the sweep is a count, by design.
+  The first step always opens (the tap IS the checkpoint act). Dismissal is
+  blocked while a mutation is in flight; before the first write it is a plain
+  cancel, after one it means "skip the rest" and still confirms. Failures are
+  inline per step and retryable. There is no done screen.
+- **Declaration toast** (`declaration-toast.ts`, through the page-global
+  sonner toaster — viewport bottom-right, reparented into the fullscreen
+  element): `Checkpoint saved` with the collected / asserted / marked counts
+  as its description, or the first count as the title when no checkpoint was
+  saved; 8s. Its **Undo** (`declaration-undo.ts`, unit-tested) reverts the
+  sweep, then the known-assertions, then the checkpoint — three independent
+  endpoints, each attempted and reported separately. A failed part raises an
+  error toast and the confirmation comes back carrying only what is still
+  un-reverted, so Undo retries just that; a stale checkpoint undo
+  (`undone: false`) reports the credits as kept, never an error. The undo
+  closures capture the session id, so Undo works after the sheet's run state
+  is gone. Because the extension can't know `reviewed_until` client-side, an
+  empty-span collect (success with `checkpointId: null`, nothing else
+  written) gets an "all caught up" feedback chip instead of a toast.
 - **Messages/handlers**: on open, `flicktionary-declaration-preview`
   (`declaration-preview-handler.ts`) resolves the session (find-or-create —
   the tap is an explicit act) and fetches `getCheckpointPreview` +
-  `getMarkKnownPreview` in one round trip; lanes degrade independently
-  (failed checkpoint preview → collect proceeds blind without a count; failed
-  mark-known preview → the optional sweep silently drops for this run). A
-  NOT_FOUND from either preview (session deleted in the web app) evicts the
-  cache entry and re-resolves once. Confirm sends the existing
-  `flicktionary-collect-checkpoint` (empty `previewedSpans`; saved highlights
-  are suppressed server-side); the sweep sends `flicktionary-mark-known`
-  (`markRemainingKnown`), its undo `flicktionary-unmark-known`
-  (`unmarkKnownBySession` with the press's `sweepBatchId`), checkpoint undo
-  the existing `flicktionary-undo-checkpoint`. Every response tolerates
+  `getCheckpointCandidates` + `getMarkKnownPreview` in one round trip (the
+  passive badge probe skips the candidates); lanes degrade independently
+  (failed candidates → collect proceeds without a list; failed mark-known
+  preview → the optional sweep silently drops for this run). A NOT_FOUND from
+  either preview (session deleted in the web app) evicts the cache entry and
+  re-resolves once. Confirm sends `flicktionary-collect-checkpoint` with the
+  unchecked ids; the list and the collect both send an empty `previewedSpans`
+  (the gloss popover tracks no preview lane; saved highlights are suppressed
+  server-side), so they suppress the same words. The never-practiced step
+  sends `flicktionary-assert-known-backlog`, its undo
+  `flicktionary-undo-known-assertions`; the sweep sends
+  `flicktionary-mark-known` (`markRemainingKnown`), its undo
+  `flicktionary-unmark-known` (`unmarkKnownBySession` with the press's
+  `sweepBatchId`), checkpoint undo `flicktionary-undo-checkpoint`. Every
+  response tolerates
   `undefined` AND rejection (background mid-reload; Firefox promise-only
   API) — command callbacks never throw into the sheet.
 - **Conflict**: a concurrent pointer advance (another tab / the web reader)
   rejects the collect with 409; the handler detects it via
   `ORPCError.code === 'CONFLICT'` (the payload carries no domain code) and
-  the sheet shows an inline "reading position changed" retry that re-snapshots
-  the frontier from playback AND re-fires the preview so both counts re-key
-  (request-id-guarded; a failed re-fetch degrades to countless-but-usable
-  rather than tearing down a mid-flight run).
+  the sheet re-snapshots the frontier from playback AND re-fires the preview
+  so the reviews list and the sweep count re-key, then asks for a fresh
+  confirm against the reloaded list (request-id-guarded; a failed re-fetch
+  degrades to listless-but-usable rather than tearing down a mid-flight
+  run).
 - **Visibility**: shown whenever a subtitle track is loaded and a video
   context is prepared. The target language is unknown before first
   registration (the backend detects it), so pre-emptive hiding is impossible —
@@ -984,14 +1021,8 @@ the explicit press, not playback position.
   NEEDS_ONBOARDING / MISSING_CEFR — reported through the feedback chip.
 - **Feedback chip** (`CheckpointFeedbackChip`, also outside the
   pause-visibility gate, ~8s lifetime owned by the controller): info/error
-  only — "Nothing to collect yet.", unsupported notice, coded errors. The
-  success/undo affordance lives in the sheet's done step (combined Undo:
-  sweep then checkpoint, partial failures kept on screen with per-part
-  retry; a stale checkpoint undo (`undone: false`) reports the credits as
-  kept, never an error).
-- **No claims sheet** in the extension (phase-1 scope): backlog
-  known-assertions are web-only; `backlogCandidates` from the collect
-  response are discarded.
+  only — "Nothing to collect yet.", "all caught up", unsupported notice,
+  coded errors. A run that wrote something confirms in the declaration toast.
 
 ### Native caption control (YouTube CC button)
 
@@ -1349,9 +1380,12 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `studySessions.findOrCreateForStreamingVideo` | session registration on a video's first save (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading and the passive badge probe (never creates rows; `data: null` = no session) |
 | `studySessions.importText` | article/selection import |
-| `studySessions.getCheckpointPreview` | declaration preview: pending review count + `supported` flag |
+| `studySessions.getCheckpointPreview` | declaration preview: `supported` flag |
+| `studySessions.getCheckpointCandidates` | declaration preview: the reviews step's word list |
 | `studySessions.getMarkKnownPreview` | declaration preview + paused-bar badge: markable-word count for the span |
-| `studySessions.collectCheckpoint` | declaration sheet confirm (implicit review credits up to the frontier) |
+| `studySessions.collectCheckpoint` | declaration sheet confirm (implicit review credits up to the frontier, minus unchecked words) |
+| `studySessions.assertKnownBacklog` | declaration sheet never-practiced step |
+| `studySessions.undoKnownAssertions` | declaration toast Undo (known-assertions part) |
 | `studySessions.undoCheckpoint` | combined Undo, checkpoint part |
 | `studySessions.markRemainingKnown` | declaration sheet sweep step (bulk `known_lemmas` marks) |
 | `studySessions.unmarkKnownBySession` | combined Undo, sweep part (batch-scoped) |
