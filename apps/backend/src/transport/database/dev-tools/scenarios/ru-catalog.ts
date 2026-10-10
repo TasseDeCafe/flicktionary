@@ -722,3 +722,200 @@ export const сравнивать: CatalogTerm = {
   grammar: { pos: 'verb', display_form: 'сра́внивать', aspect: 'impf', aspect_pair_headword: 'сравнить' },
   zipf: 4.3,
 }
+
+// --- video vocabulary: words spoken, in their dictionary form, in the first
+// five minutes of youtube.com/watch?v=UEwZLOt3HvM (ru-video-declaration) ----
+
+export const церковь: CatalogTerm = {
+  headword: 'церковь',
+  sense: 'religious building',
+  translation: 'church',
+  definition: 'Здание, где проходят христианские богослужения.',
+  targetExample: 'По воскресеньям бабушка ходит в церковь.',
+  nativeExample: 'On Sundays grandma goes to church.',
+  surface: 'церковь',
+  grammar: { pos: 'noun', display_form: 'це́рковь', gender: 'f' },
+  zipf: 4.9,
+  exercises: {
+    cloze: {
+      sentence: 'На холме стоит старая церковь.',
+      answer: 'церковь',
+      distractors: ['площадь', 'кровать', 'тетрадь'],
+    },
+    comprehension: {
+      sentence: 'В деревне построили новую церковь из белого камня.',
+      term: 'церковь',
+      prompt: 'What was built in the village?',
+      options: ['A church', 'A school', 'A bridge', 'A shop'],
+      answerIndex: 0,
+    },
+  },
+}
+
+export const ярмарка: CatalogTerm = {
+  headword: 'ярмарка',
+  sense: 'seasonal market',
+  translation: 'fair',
+  definition: 'Большой рынок, который устраивают в определённое время.',
+  targetExample: 'Осенью в нашем городе проходит ярмарка мёда.',
+  nativeExample: 'In autumn our town holds a honey fair.',
+  surface: 'ярмарка',
+  grammar: { pos: 'noun', display_form: 'я́рмарка', gender: 'f' },
+  zipf: 3.9,
+  exercises: {
+    cloze: {
+      sentence: 'На площади открылась книжная ярмарка.',
+      answer: 'ярмарка',
+      distractors: ['лестница', 'тарелка', 'подушка'],
+    },
+    comprehension: {
+      sentence: 'Каждую субботу у вокзала работает ярмарка, где фермеры продают овощи.',
+      term: 'ярмарка',
+      prompt: 'What happens near the station every Saturday?',
+      options: ['A concert', 'A market where farmers sell vegetables', 'A football match', 'Road repairs'],
+      answerIndex: 1,
+    },
+  },
+}
+
+export const буфет: CatalogTerm = {
+  headword: 'буфет',
+  sense: 'snack counter',
+  translation: 'snack bar',
+  definition: 'Место, где продают закуски и напитки.',
+  targetExample: 'В антракте мы пошли в буфет за чаем.',
+  nativeExample: 'During the interval we went to the snack bar for tea.',
+  surface: 'буфет',
+  grammar: { pos: 'noun', display_form: 'буфе́т', gender: 'm' },
+  zipf: 3.8,
+  exercises: {
+    cloze: {
+      sentence: 'В школе на первом этаже есть буфет.',
+      answer: 'буфет',
+      distractors: ['билет', 'портрет', 'секрет'],
+    },
+    comprehension: {
+      sentence: 'На вокзале был только маленький буфет с бутербродами.',
+      term: 'буфет',
+      prompt: 'Where could you get a sandwich at the station?',
+      options: ['At a large restaurant', 'Nowhere', 'At a small snack bar', 'From a vending machine'],
+      answerIndex: 2,
+    },
+  },
+}
+
+export const учить: CatalogTerm = {
+  headword: 'учить',
+  sense: 'study, learn',
+  translation: 'to learn',
+  definition: 'Получать знания, запоминать что-либо.',
+  targetExample: 'Я начал учить испанский два года назад.',
+  nativeExample: 'I started learning Spanish two years ago.',
+  surface: 'учить',
+  grammar: { pos: 'verb', display_form: 'учи́ть', aspect: 'impf' },
+  zipf: 4.9,
+}
+
+export const формат: CatalogTerm = {
+  headword: 'формат',
+  sense: 'form of presentation',
+  translation: 'format',
+  definition: 'Способ организации или подачи чего-либо.',
+  targetExample: 'Нам нравится такой формат урока.',
+  nativeExample: 'We like this lesson format.',
+  surface: 'формат',
+  grammar: { pos: 'noun', display_form: 'форма́т', gender: 'm' },
+  zipf: 4.4,
+  exercises: {
+    cloze: {
+      sentence: 'У этой передачи необычный формат.',
+      answer: 'формат',
+      distractors: ['гранат', 'халат', 'солдат'],
+    },
+    comprehension: {
+      sentence: 'Организаторы изменили формат встречи: теперь она проходит онлайн.',
+      term: 'формат',
+      prompt: 'What did the organisers change?',
+      options: ['The date of the meeting', 'The way the meeting is held', 'The guest list', 'The ticket price'],
+      answerIndex: 1,
+    },
+  },
+}
+
+export const завтрак: CatalogTerm = {
+  headword: 'завтрак',
+  sense: 'morning meal',
+  translation: 'breakfast',
+  definition: 'Первая еда утром.',
+  targetExample: 'На завтрак я обычно ем кашу.',
+  nativeExample: 'I usually have porridge for breakfast.',
+  surface: 'завтрак',
+  grammar: { pos: 'noun', display_form: 'за́втрак', gender: 'm' },
+  zipf: 4.6,
+  exercises: {
+    cloze: {
+      sentence: 'В гостинице нас ждал горячий завтрак.',
+      answer: 'завтрак',
+      distractors: ['чердак', 'рюкзак', 'пиджак'],
+    },
+    comprehension: {
+      sentence: 'Мама приготовила завтрак, пока дети ещё спали.',
+      term: 'завтрак',
+      prompt: 'What did mum make while the children slept?',
+      options: ['Dinner', 'A cake', 'Breakfast', 'Sandwiches for school'],
+      answerIndex: 2,
+    },
+  },
+}
+
+export const театр: CatalogTerm = {
+  headword: 'театр',
+  sense: 'place for plays',
+  translation: 'theatre',
+  definition: 'Здание, где показывают спектакли.',
+  targetExample: 'В субботу мы идём в театр на новый спектакль.',
+  nativeExample: "On Saturday we're going to the theatre to see a new play.",
+  surface: 'театр',
+  grammar: { pos: 'noun', display_form: 'теа́тр', gender: 'm' },
+  zipf: 5.0,
+  exercises: {
+    cloze: {
+      sentence: 'В центре города открылся новый театр.',
+      answer: 'театр',
+      distractors: ['ветер', 'метр', 'литр'],
+    },
+    comprehension: {
+      sentence: 'Этот театр известен своими детскими спектаклями.',
+      term: 'театр',
+      prompt: 'What is the place known for?',
+      options: ['Its plays for children', 'Its paintings', 'Its food', 'Its football team'],
+      answerIndex: 0,
+    },
+  },
+}
+
+export const парк: CatalogTerm = {
+  headword: 'парк',
+  sense: 'public green space',
+  translation: 'park',
+  definition: 'Большой сад в городе для прогулок и отдыха.',
+  targetExample: 'По вечерам мы гуляем в парке у реки.',
+  nativeExample: 'In the evenings we walk in the park by the river.',
+  surface: 'парке',
+  grammar: { pos: 'noun', display_form: 'парк', gender: 'm' },
+  zipf: 4.9,
+  exercises: {
+    cloze: {
+      sentence: 'Рядом с нашим домом есть большой парк.',
+      answer: 'парк',
+      distractors: ['шкаф', 'мост', 'двор'],
+    },
+    comprehension: {
+      sentence: 'Дети весь день катались на велосипедах в парке.',
+      term: 'парке',
+      prompt: 'Where did the children ride their bikes?',
+      options: ['In the park', 'On the motorway', 'In the yard at school', 'At the stadium'],
+      answerIndex: 0,
+    },
+  },
+}

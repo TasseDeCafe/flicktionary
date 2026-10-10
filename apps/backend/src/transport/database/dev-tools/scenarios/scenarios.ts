@@ -1,11 +1,13 @@
 import type { BankSlot, CatalogTerm, FacetSeed, ScenarioSpec, ScenarioTerm } from './scenario-spec'
 import {
   безопасность,
+  буфет,
   внимательный,
   водопад,
   дорога,
   дюжина,
   забывать,
+  завтрак,
   медленно,
   мрачный,
   объяснять,
@@ -15,6 +17,7 @@ import {
   писатель,
   погода,
   подъехать,
+  парк,
   пригород,
   промахнуться,
   решение,
@@ -22,11 +25,16 @@ import {
   собака,
   сосед,
   сравнивать,
+  театр,
   требовать,
   удобный,
   улица,
+  учить,
+  формат,
+  церковь,
   читатель,
   читать,
+  ярмарка,
 } from './ru-catalog'
 
 // The starter scenarios. Each is a complete account state: running one wipes
@@ -408,6 +416,52 @@ const ruReaderCloseout: ScenarioSpec = {
   ],
 }
 
+// The extension's declaration flow on a real video: saved words that are
+// spoken, in their dictionary form, in the first five minutes of
+// youtube.com/watch?v=UEwZLOt3HvM. No session is seeded — the extension
+// creates it on the first tap, as for any viewer, so the scenario doesn't
+// depend on the hash of the subtitle track YouTube serves.
+const ruVideoDeclaration: ScenarioSpec = {
+  name: 'ru-video-declaration',
+  description:
+    'Saved Russian words for the extension declaration sheet on youtube.com/watch?v=UEwZLOt3HvM: three due words and three never-practiced ones are spoken in its first five minutes, plus one that is not due and one saved too recently.',
+  targetLanguage: 'ru',
+  nativeLanguage: 'en',
+  cefr: 'B1',
+  terms: [
+    // Due and spoken (0:53, 1:02, 3:07) → the reviews list.
+    dueRecognition(церковь, -6, 'failed'),
+    dueRecognition(ярмарка, -4, 'failed'),
+    dueRecognition(буфет, -2, 'failed'),
+    // Spoken (2:34) but not due → listed nowhere.
+    { term: учить, recognition: notDue, savedDaysAgo: 45 },
+    // Never practiced, saved long ago, spoken at 4:12, 4:28, 4:55 → the
+    // "saved but never practiced" step. Each is heard in its dictionary form:
+    // an inflected-only match would go through the LLM confirm pass, whose
+    // verdict varies between runs.
+    { term: формат, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    { term: завтрак, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    { term: театр, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    // Spoken (1:10) but saved two days ago: a recent save is evidence the
+    // word was NOT known, so it is not offered.
+    { term: парк, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 2 },
+  ],
+  knownLemmas: [],
+  expectations: {
+    preview: { new: 4, warmup: 0, learning: 0, review: 3 },
+  },
+  tryIt: [
+    'Needs the backend running (the first tap creates the video session: one language-detection call, then the word profile builds) and the extension dev build signed in as <scenario email>: open the link, press Verify, then pair the extension from the web app.',
+    'Open https://www.youtube.com/watch?v=UEwZLOt3HvM with its Russian subtitles loaded, play past 5:00, pause, and tap the declaration button on the controls bar.',
+    'Reviews list: церковь, ярмарка, буфет, each with its subtitle line. учить is spoken but not due, so it is absent.',
+    'Uncheck ярмарка → "Collect 2 reviews". Practice → Russian then still shows ярмарка due.',
+    'Next step: формат, завтрак, театр (saved but never practiced). парк is missing — it was saved two days ago.',
+    'Last step: "Mark the N remaining words as known?" (give the word profile a few seconds on the first run), then one toast with Undo for the whole run.',
+    'Pause before 3:07 instead: буфет drops out of the reviews list and the never-practiced step is skipped.',
+    'Re-run pnpm dev:scenario ru-video-declaration to start over; the extension notices the deleted session on the next tap.',
+  ],
+}
+
 export const SCENARIOS: readonly ScenarioSpec[] = [
   ruFamilyDue,
   ruLeechEdge,
@@ -416,6 +470,7 @@ export const SCENARIOS: readonly ScenarioSpec[] = [
   ruProductionFamily,
   ruCaptureStates,
   ruReaderCloseout,
+  ruVideoDeclaration,
 ]
 
 export const findScenario = (name: string): ScenarioSpec | undefined =>
