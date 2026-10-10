@@ -219,14 +219,14 @@ describe('matchVocabAgainstSpanLemmas', () => {
       vocab: [row],
       spanLemmas: new Set(['run']),
       contextByLemma: new Map([['run', 'I run fast.']]),
-      occurrencesByLemma: new Map([['run', [{ surface: 'run', context: 'I run fast.', segmentIndex: 0 }]]]),
+      occurrencesByLemma: new Map([['run', [{ surface: 'run', context: 'I run fast.', segmentIndex: 0, offset: 2 }]]]),
       spanTokens: new Set(['run']),
       targetLanguage: 'en',
     })
     expect(matched).toHaveLength(1)
     expect(matched[0]!.matchedLemmas).toEqual(new Set(['run']))
     expect(matched[0]!.contextSegmentText).toBe('I run fast.')
-    expect(matched[0]!.occurrences).toEqual([{ surface: 'run', context: 'I run fast.', segmentIndex: 0 }])
+    expect(matched[0]!.occurrences).toEqual([{ surface: 'run', context: 'I run fast.', segmentIndex: 0, offset: 2 }])
   })
 
   test('an MWE headword does not single-token match', () => {
