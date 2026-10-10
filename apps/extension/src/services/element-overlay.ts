@@ -1,4 +1,4 @@
-import { SUBTITLE_SCALE_VAR, SUBTITLE_SCALE_REFERENCE_WIDTH } from '@asbplayer-fork/common/util'
+import { SUBTITLE_SCALE_VAR, SUBTITLE_SCALE_REFERENCE_WIDTH, subtitleScaleWidth } from '@asbplayer-fork/common/util'
 
 // Tags the single React content host placed inside a subtitle container by
 // `mountPersistentHost`. The caller attaches a shadow + React root to it.
@@ -322,21 +322,25 @@ export class CachingElementOverlay implements ElementOverlay {
       return
     }
 
-    // Scale subtitle glyph sizes with the rendered video width. computeStyles emits
+    // Scale subtitle glyph sizes with the rendered video size. computeStyles emits
     // its px sizes as calc(...px * var(--asb-video-scale, 1)); we feed the ratio here
     // off the rect we already measured, so the font tracks window/fullscreen size.
-    container.style.setProperty(SUBTITLE_SCALE_VAR, String(rect.width / SUBTITLE_SCALE_REFERENCE_WIDTH))
+    const scaleWidth = subtitleScaleWidth(rect.width, rect.height)
+    container.style.setProperty(SUBTITLE_SCALE_VAR, String(scaleWidth / SUBTITLE_SCALE_REFERENCE_WIDTH))
 
     container.style.left = rect.left + rect.width / 2 + 'px'
 
     // Width is a CAP, not a fixed size: the inline-block container shrink-wraps to
     // the subtitle text and only grows up to this max, so short lines ("Rachel")
     // get a snug background box while long lines wrap at the configured width.
-    // -1 caps at the full video width; a percentage caps at that fraction of it.
+    // -1 caps at the full video width; a percentage caps at that fraction of the
+    // width the glyphs are scaled against, so lines hold about the same number of
+    // characters on any video shape, and never extends past the video itself.
     if (this.contentWidthPercentage === -1) {
       container.style.maxWidth = rect.width + 'px'
     } else {
-      container.style.maxWidth = Math.min(window.innerWidth, (rect.width * this.contentWidthPercentage) / 100) + 'px'
+      container.style.maxWidth =
+        Math.min(window.innerWidth, rect.width, (scaleWidth * this.contentWidthPercentage) / 100) + 'px'
     }
     container.style.width = ''
 

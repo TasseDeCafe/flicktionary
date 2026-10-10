@@ -576,6 +576,15 @@ overlay's width cap. The `\n` stays in the DOM text (tokenizer offsets, save
 coordinates and the contentHash all see the original), it just renders as a
 collapsible space; `text-balance` evens out the soft-wrapped lines.
 
+Glyph sizes (font, outline, shadow) **scale with the rendered video**: the
+overlay positioning code sets `--asb-video-scale` to `subtitleScaleWidth` / 1920
+and `computeStyles` multiplies its px sizes by it. `subtitleScaleWidth` is the
+real width for 16:9 and wider video; a narrower (portrait, 4:3) video is sized
+three quarters of the way (geometrically) towards a landscape video of the same
+height, so its subtitles stay readable without long cues wrapping into a block
+that covers the picture. The `subtitlesWidth` cap is a percentage of that same
+scale width, clamped to the video's real width.
+
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
   (selection + context line + the video's detected target language when known,
   else server-detected from the context line — see the query-key note below)
