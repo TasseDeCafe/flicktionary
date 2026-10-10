@@ -60,11 +60,10 @@ export default class NotificationController {
   }
 
   // The `close` handler the in-realm app calls: undo the force-hides put up while
-  // the dialog showed, restore the controls, hide the dialog, and fire onClose.
+  // the dialog showed, hide the dialog, and fire onClose.
   private _onClose = () => {
     this._context.subtitleController.forceHideSubtitles = false
     this._context.videoOverlayController.forceHide = false
-    this._context.controlsController.show()
     this._resetState()
     this._showing = false
     this.onClose?.()
