@@ -75,7 +75,7 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
 
 - No in-movie sync. The app is for triage and lookup, not playback.
 - The mid-source screen is a scrollable list of segments under the reader header. Movie segments show a timestamp; text segments don't. Search sits behind a magnifier icon in the header: opening it swaps the whole header for the search field + `Cancel` (`track-search-header.tsx`; the close X is hidden in this mode so dismissing search can't leave the session, and `Cancel` clears the query). Search filters **client-side** over the already-loaded track (no server round-trip, no result cap; results keep document order) using the shared fuzzy matcher (`@flicktionary/core/utils/search-match`): case-, accent- and joiner-punctuation-insensitive ("pantywaist" finds "panty-waist"), full-phrase substring first (which also gives prefix matching and covers scripts without word boundaries), then per-query-word AND with one edit of typo tolerance for words of 4+ letters ("vixin" finds "vixen"). Meaning-bearing marks (Japanese dakuten, Indic viramas/vowel signs) are never stripped. There is no stemming — searching an inflection finds that inflection (or anything within a typo/prefix of it), not its other conjugations.
-- **Reading progress + reading mode.** A 3px bar under the header shows where the viewport is in the text (`reading-progress-bar.tsx`: scroll position over scroll range, written straight to the DOM on scroll; a book part's bar covers that part). It follows rereads, unlike the saved pointer; while searching the track stays and the fill hides. Scrolling down ~32px of sustained travel collapses the header and footer; ~64px of scrolling up (or being within 56px of the top) brings them back (`use-auto-hide-chrome.ts`). The bars collapse in the layout (`VerticalCollapse`, a 0fr ↔ 1fr grid row, `inert` while collapsed) rather than overlaying the text, so scrollTop never moves on a toggle and resume alignment, visible-range tracking and edge auto-scroll keep measuring the real viewport. Programmatic scrolls (resume, jumps) fall inside the reader's scroll-suppression window and don't toggle. Explicit ways back: on an iOS Home Screen install, tapping the text-free strip at the top (status-bar blur padding + the bar's margin; an invisible `Show controls` button in `reading-progress-bar.tsx`); on desktop, a mouse reaching the window's top edge (the top 4px, or leaving the page through the top) with no button held, or Esc. The mouse edge stays off while the gloss sheet is open — revealing pushes the text down, which would move the looked-up word and the sheet anchored to it — and the band is thin enough never to overlap the first line of text. Revealing resets the scroll accumulator so the next pixel of scroll doesn't re-hide. The chrome is forced visible while searching, during bookmark placement, while a sweep's Undo strip is up, and once the text's end is reached (the close-out flow needs the footer). On an iOS Home Screen install the bar drops below the status-bar blur band while the header is hidden.
+- **Reading progress + reading mode.** A 3px bar under the header shows where the viewport is in the text (`reading-progress-bar.tsx`: scroll position over scroll range, written straight to the DOM on scroll; a book part's bar covers that part). It follows rereads, unlike the saved pointer; while searching the track stays and the fill hides. Scrolling down ~32px of sustained travel collapses the header and footer; ~64px of scrolling up (or being within 56px of the top) brings them back (`use-auto-hide-chrome.ts`). The bars collapse in the layout (`VerticalCollapse`, a 0fr ↔ 1fr grid row, `inert` while collapsed) rather than overlaying the text, so scrollTop never moves on a toggle and resume alignment, visible-range tracking and edge auto-scroll keep measuring the real viewport. Programmatic scrolls (resume, jumps) fall inside the reader's scroll-suppression window and don't toggle. Explicit ways back: on an iOS Home Screen install, tapping the text-free strip at the top (status-bar blur padding + the bar's margin; an invisible `Show controls` button in `reading-progress-bar.tsx`); on desktop, a mouse reaching the window's top edge (the top 4px, or leaving the page through the top) with no button held, or Esc. The mouse edge stays off while the gloss sheet is open — revealing pushes the text down, which would move the looked-up word and the sheet anchored to it — and the band is thin enough never to overlap the first line of text. Revealing resets the scroll accumulator so the next pixel of scroll doesn't re-hide. The chrome is forced visible while searching, during bookmark placement, and once the text's end is reached (the close-out flow needs the footer). On an iOS Home Screen install the bar drops below the status-bar blur band while the header is hidden.
 - Tap-to-select on plain segment text opens a small **floating gloss sheet** anchored to the selection, in PREVIEW mode — looking is free; nothing persists until the explicit **Save** (desktop popover, capped to the viewport's available height with internal scroll so an expanded sheet never clips; its main action footer is sticky below the scrollable body, and wheel/touch overscroll is contained so the page behind it does not scroll; mobile bottom drawer with a transparent overlay so the source line stays visible — the drawer always docks at the bottom and opens collapsed, showing the header (term, gloss, IPA, register chips) pinned in full plus a short peek of the detail region below it — collapsed height is capped (`min(34rem, 35dvh)`) so the source text stays visible, with the peek absorbing the squeeze, but never below the measured grabber + header + footer, so content that lands late (the word-family insight) grows the sheet upward instead of pushing the footer off-screen (the cap follows the content in the same frame — only an explicit expand/collapse animates it, since an animated cap lets the footer dip below the screen edge while it catches up); the action footer is a distinct pinned bar (top border, plus a soft upward shadow only while collapsed so the peeking content reads as tucking under it). Dragging from the handle **or** the header follows the finger continuously — the sheet grows/shrinks between the collapsed and expanded detents (rubber-banding past the expanded cap) and snaps to the nearest one on release by final position + flick velocity; a downward drag past the collapsed edge dismisses. The detail region scrolls internally only once expanded). A single click/tap selects one `Intl.Segmenter` word in the session's target language; press-and-drag extends to a contiguous word range, including multi-line / multi-segment ranges. Selectable words show a subtle accent-tint hover affordance (hover-capable fine pointers only — touch browsers emulate `:hover` from the last tap point and re-resolve it on DOM changes, which painted phantom "preselected" words); the selection paints a sky wash (outer corners rounded) that PERSISTS while the sheet is open — it shows what the sheet refers to — and clears on sheet close or the next press. Tapping another word while the sheet is open swaps its content in place (no close/reopen flash) — the sheet's `ignoreOutsidePointerDownSelector` keeps the tap on a word/highlight span from dismissing it. Native browser text selection is disabled in the segment list so the gesture vocabulary stays consistent. Clicking an existing yellow highlight opens the existing-highlight sheet instead. The sheet fetches a fast one-line gloss + POS + register tag; on Save, that already-shown preview gloss is sent to `highlights.create` and persisted on the new highlight so saved mode does not run a second first-gloss LLM pass. A re-tap on the same span is instant. Opening the preview sheet on a word also fires `glosses.recordLookup` (fire-and-forget, silent on failure): an explicit lookup is a new-term demand signal (docs/SRS.md §4 "Lookups as demand"); the practice LookupSheet does the same. There is no backdrop tint and no separate tap-to-translate opt-out (the old setting was retired when the sheet became unobtrusive enough to be always-on). **Right-click is the save/remove toggle** (extension parity): on a bare word it saves immediately — no selection, no sheet — and on a saved highlight it removes it; with the sheet open it saves in preview mode and removes in saved mode, so repeated right-clicks cycle save → remove. The open sheet SURVIVES the toggle and morphs in place (right-button pointerdown is never a dismiss gesture for the floating sheet): preview → saved on save, and saved → preview on remove when the sheet holds a live selection (the gloss on screen stays — no second stateless gloss or lookup signal) (a sheet opened from a highlight click has no selection to preview, so a remove closes it). Saving and removing show **no success toast** — the span's yellow wash appearing/disappearing is the feedback (a toast per word gets noisy at volume and overlapped controls on mobile); failures still toast. **Saves paint optimistically** (extension parity): `useCreateHighlight` inserts a temp row (`optimistic-` id prefix) into the highlights cache in `onMutate`, so the yellow wash appears the moment the user saves; the create response swaps in the real row, errors roll back, and the settle-time invalidate keeps the server's view the truth. Interactions keyed on a highlight id (the right-click remove, clicking a highlight span, the sheet's saved-row dedup) skip optimistic rows until the real id lands. The sheet's IPA line renders the **server-picked `ipaDisplay`** from the fastGloss responses (the backend resolves the user's per-language IPA dialect pref — English GA/RP, Spanish Castilian/Latin American, Portuguese Brazilian/European), so web and extension show the same dialect for the same word; the `ipa` bag stays in the contract for older clients. IPA is Wiktionary-only: the surface form's own pronunciation is used when it exists, otherwise the lookup falls back to the form's lemma (via form-of resolution; the `wiktionary_forms` index carries no per-form IPA, and English inflected forms deliberately do **not** inherit the lemma's). On that fallback the response also carries `ipaLemma` (the lemma the IPA belongs to), and the sheet labels the line with it — `beheben /bəˈheːbən/` under a `behoben` selection — so an inflected surface form is never implied to be pronounced like its lemma; `ipaLemma` is null when the IPA is the surface's own (and never shown next to the "No Wiktionary IPA" fallback).
 - **Word-family line + guess-before-reveal** (`ru` only — `WORD_FAMILY_LANGUAGES` in `packages/core/src/constants/language-grammar.ts`; design in `docs/proposals/word-family-hints.md`). The preview sheet's stateless gloss passes `includeWordFamily: true`, and a saved highlight's `highlights.fastGloss` always builds it too (`loadGlossedWordFamily`, from the gloss persisted at Save), so the line — and its insight — stays identical across Save and reopen; the backend fills `wordFamily` only for word-family languages with the per-language `word_family_hints_enabled` pref on, for single-word selections (multi-word expressions are skipped). The deterministic layer: the selection's kaikki entries are loaded alongside the fast-gloss call, then the gloss's POS picks among homographs first, a headword equal to the tapped token beats paradigm hits (ru verb paradigms list their aspect partner), and a participle / adverbial participle / passive / verbal-noun stub beats its own verb; when every entry of the gloss POS is bare (no form-of, no etymology), the same headword's form-of entries join them — Haiku tags a lexicalized participle like сложившийся as an adjective, whose kaikki entry has no structure, so the line still reads `participle of сложиться`; anything still ambiguous gets no line. The line (`packages/ui/src/components/word-family-line.tsx`, between the IPA row and the gloss; the extension's popovers render the same component without the hold — `apps/extension/EXTENSION-SPEC.md` — and so do practice flashcard backs, via the non-generating `glosses.wordFamily` — `docs/SRS.md`) shows the **structure** — `participle of замёрзнуть · за- + мёрзнуть`, or `from X` for a deverbal / back-formation; a form-of stub borrows its target verb's breakdown — and up to 3 **anchors**: family members in the user's vocabulary (`known_lemmas` ∪ live saved terms via `user_headword_lemma_keys`), ordered parent → shared root (incl. words derived from the tapped one) → stem-filtered related, then known before saved (a live saved term beats a known mark), then `lemma_ranks` frequency; rendered as plain text `You know: … · Saved: …`. A structure that says nothing on its own (a bare `X + -ся`) only shows next to an anchor; no structure and no anchor → no line. When at least one anchor exists, the translation line is replaced by a **Show translation** button (POS/register chips, study picker, Save, Add note, right-click save all unchanged); reveal via the button, **Space** on desktop (capture-phase, ignored inside text inputs), or a **second tap on the same word** while the sheet is open. The reveal is ephemeral — keyed to the selection, reset on every (re)open, nothing persisted. Saved mode never holds. **LLM insight** (`word_family_insights` + `word_family_insight_explanations`, see `docs/DATA-MODEL.md`): per lemma, shared by every user, only for noun/verb/adj/adv picks. `wordFamilyInsightPass` (`MODEL_WORD_FAMILY`, Opus at low effort, `WORD_FAMILY_MODEL` override) returns a learner breakdown with what each part contributes in this word (never the whole word's meaning, and never a spelling: no target-language word, transliteration or donor-language word, since production flashcard fronts show these meanings — `docs/SRS.md`), parents kaikki lacks (kept only when they are real kaikki lemmas; the breakdown's base words count), kaikki ancestors a learner can't see, and cognates in the explanation language (native language, or the target language for translations-off learners — then none). When the insight isn't cached for the reader's explanation language, the fastGloss response carries `insightPending: true` (returned even when the deterministic line has nothing to show yet); the sheet (preview or saved mode) then queries `glosses.wordFamilyInsight` (same selection + the gloss POS, so the result fetched in preview is reused after Save; generates and caches on first request, ~2-6s — composing a practice queue also warms the insights of its flashcards' headwords, `docs/SRS.md`; generations are chained per breakdown (target language + lemma + POS) in-process, so a concurrent request in the same or another explanation language waits and re-reads the cache instead of paying for a competing breakdown; silent on failure; invalidated by the native-language, show-translations and word-family-hints prefs) and swaps the rendered line for the returned one. When cached, fastGloss applies it directly: the insight's breakdown replaces kaikki's (empty = opaque, no breakdown), hidden ancestors are dropped from every tier (and before shared roots are looked up), missing parents join as depth-1 ancestors. The line renders part meanings inline (`за- *into a state* + мёрзнуть *to freeze*`) and `Looks like: …` for cognates. The hold is always decided by the fastGloss response's anchors — the async swap never adds or removes the Show translation button. The **Word-family hints** switch sits in each word-family language's card on the Languages settings page (`userPrefs.setWordFamilyHintsForLanguage`); off hides the line, the hold, and the insight endpoint.
 - The sheet shows an always-visible **study-target picker** (shared `StudySkillCards`, wrapped by `StudyOptionsSection`, also used by the practice lookup sheet and the extension's in-video popover): three monochrome, pressable icon-cards — Recognition (eye) / Production (pencil) / Pronunciation (mic), selected = dark border + filled-check badge, desktop tooltip = a shared Radix Tooltip opened on hover and positioned above the card — its `onFocusCapture` swallows the focus the popover fires when it autofocuses a card on mount, so the tooltip never self-opens just because the popover appeared (radix-ui/primitives#2248); in the extension it portals into the in-shadow popover container, which is marked `dark` and at the popover's max z-index so the tooltip is styled, dark-themed, and stacks above the popover instead of under it — plus a **Base form | Exact form** segmented control (Exact form shows the highlighted surface as its subtitle). The control is **exclusive**, not additive: it chooses WHICH target the selected skills attach to — *Base form* studies the lemma (citation facets), *Exact form* studies the encountered inflection (form facets), leaving the lemma a skill-less base anchor (it still exists as the term + vocab row + the focus view's citation chip; the form is shown beside it). `formScope: 'lemma' | 'form'`; `'form'` collapses to `'lemma'` server-side when the surface IS the headword. The cards are mono semantic tokens so they invert cleanly on the extension's dark video overlay. FULL-SET semantics — an untouched draft sends no `studyIntent` (the backend keep-time default applies); a touched draft sends exactly the checked set, riding `highlights.create` and applied by the enrichment job. **Nothing is pre-checked and 0 selected is allowed** in the popover (an empty set sends no intent → a `needs_data` card with no pre-configured facet; the keep-time default then enables recognition). The Base/Exact control locks until at least one skill is selected (skills need a target to attach to); Pronunciation is ALWAYS offerable (the preview's IPA is a Wiktionary-only lookup — enrichment generates IPA for every saved selection, and IPA-less facets are defended backend-side; see `docs/SRS.md`). On Save the sheet morphs in place into saved mode, where the **same study-target picker stays visible but is locked read-only** — it keeps its preview layout, uniformly dimmed + non-interactive (`pointer-events-none`, no per-control disabling so there's no half-greyed mismatch), with a lock caption pointing at the term view. It *displays* the saved skills + scope: from the highlight's stored `study_intent` pre-enrich, then from the term's live facets once a `chunkId` resolves — the DTO withholds it while an `enrich_highlight` job for the highlight is still pending/processing, since the card is materialized before grounding and the study-intent run (`chunks.getStudyTargets`, read-only — the sheet still polls `highlights.listBySession` only to switch that display source). The study-target choice is a SAVE-TIME decision: the only places to change it are the preview picker (before saving) and the focus / term view afterwards (or deleting the highlight). This is deliberate — switching scope post-enrich means creating/deleting durable form facets, which the compact sheet can't represent, so editing lives in the focus view alone.
@@ -160,8 +160,8 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
   - **Declaration pill** (footer): the sticky footer is one fixed-height row —
     the pill on the left, the sole primary `Session vocabulary` on the right;
     nothing in it ever expands in place (the reading surface must never
-    shift). The pill is the single ambient entry to the merged declaration
-    sheet, and its face is a priority ladder (pure derivation in
+    shift). The pill is the ambient entry to the declaration sheet (the
+    close-out card is the other), and its face is a priority ladder (pure derivation in
     `declaration-pill-state.ts`, unit-tested): the sweep's markable word
     count (an animated digit roll on each ~6s debounced preview update, no
     floor — it's a passive meter); else **checkpoint mode** (`BookmarkCheck`
@@ -176,61 +176,64 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
     preview so it matches the close-out card's number. Anchored to the
     **furthest-read pointer, never the viewport**.
   - **Declaration sheet** (`checkpoint-sweep-sheet.tsx`, ResponsiveOverlay;
-    step machine in `checkpoint-sweep-sheet-state.ts`, unit-tested): pressing
-    the pill opens the merged checkpoint + sweep flow as an overlay (mobile
-    drawer / desktop dialog — the transcript never moves), remounted per run.
-    One **frontier snapshot** per run — the live pointer at open — feeds both
-    writes, and the sweep step's count comes from a dedicated exact-span
-    preview for that snapshot (the pill's debounced count can lag). Steps are
-    included only when applicable, with a "Step X of Y" kicker when both are:
-    **checkpoint** (`I understood up to here` — the old (i)-popover copy
-    folded into the body, the pending count, the user-guide
-    `#checkpoint-reviews` link; Confirm collects) → **sweep** ("Mark N words
-    as known?" with Skip; a count that resolves to 0 skips itself) → **done**
-    ("Checkpoint saved" + credited/marked counts, a secondary combined
-    **Undo**, auto-close ~4s). No success toast — the done step IS the
-    confirmation. The combined Undo reverts sweep then checkpoint
-    sequentially and never silently swallows a partial failure: an
-    `undoError` state names what wasn't reverted (a stale checkpoint —
-    `undone: false`, a newer checkpoint exists — is explained, not
-    retryable; network-failed parts get Retry). Dismissal is blocked while a
-    mutation is in flight; before the first write it's a plain cancel; after
-    a successful collect it means "skip the rest" (the checkpoint stays).
-    CONFLICT renders an inline retry that re-snapshots the frontier first.
-    Backlog candidates from a sheet collect are **queued**: the claims sheet
-    opens only after the declaration sheet closes (never stacked on top),
-    and a successful in-sheet checkpoint undo clears the queue.
+    step machine in `checkpoint-sweep-sheet-state.ts`, unit-tested): the ONE
+    flow behind every checkpoint entry — the pill and the close-out card open
+    the same overlay (mobile drawer / desktop dialog — the transcript never
+    moves), remounted per run. One **frontier snapshot** per run — the live
+    pointer and the previewed-gloss spans at open — feeds the reviews list,
+    the collect and the sweep. Steps appear only when they have something to
+    offer:
+    - **Reviews** (`I understood up to here`): the due saved words the
+      collect would credit, from `getCheckpointCandidates` (fetched per run,
+      never cached), each row with its evidence line and a checkbox, in
+      reading order, all selected. The CTA reads `Collect N reviews` (or
+      `Save checkpoint` at zero); deselected words are sent as
+      `excludedUserLookupIds` and stay due. The list skips the LLM passes, so
+      it can overstate what the collect credits (see `docs/SRS.md` §6b) —
+      the toast carries the real count. A failed list load still allows the
+      collect (every due word counts). CONFLICT re-snapshots the frontier,
+      reloads the list and asks for a fresh confirm; other failures are an
+      inline retry.
+    - **Saved but never practiced**: the collect's backlog candidates as the
+      same checklist (`candidate-checklist.tsx`, always rendered in full),
+      `Mark N words as known` / `Skip`. Asserting clears the client's batch
+      (re-asserting it would just skip).
+    - **Sweep**: "Mark the N remaining words as known?" with Skip; the count
+      comes from a dedicated exact-span preview for the snapshot (the pill's
+      debounced count can lag), and a count that resolves to 0 skips the
+      step.
+    There is no done screen: the run closes and confirms in the declaration
+    toast (below). Dismissal is blocked while a mutation is in flight; before
+    the first write it is a plain cancel; after one it means "skip the rest"
+    and still confirms what was written. A **claims re-entry** run (the
+    close-out card's button) opens directly on the never-practiced step with
+    the candidates a previous checkpoint left unasserted.
+  - **Declaration toast**: every declaration write — a finished sheet run, or
+    a one-tap sweep from the welcome-back card / close-out rider — confirms
+    in one sonner toast (8s): `Checkpoint saved` with the collected /
+    asserted / marked counts as its description, or the first count as the
+    title when no checkpoint was saved. Its **Undo** reverts sweep, then the
+    known-assertions, then the checkpoint — three independent endpoints. A
+    failed part gets the mutation's own error toast and the confirmation
+    comes back carrying only what is still un-reverted, so Undo stays
+    retryable; a stale checkpoint (`undone: false`, a newer one exists) is
+    explained, not retried. A successful checkpoint undo drops that
+    checkpoint's claims re-entry (and closes an open re-entry sheet); an
+    assertion undo that reverted something restores the batch — undo means
+    reconsider — unless its checkpoint is gone or a newer collect replaced
+    it.
   - **Preview counts** come from `getCheckpointPreview`, queried against a
     **debounced** furthest-read index (the raw index would mint a query key
     per scrolled segment). The preview cannot see the client's previewed-gloss
     spans and counts multi-sense headwords optimistically, so the pill may
     slightly overcount — the collect result shows the real number.
-  - **Collect** posts the client-tracked `previewedSpans` (every span the
+  - **Collect** posts the run's `previewedSpans` snapshot (every span the
     preview gloss sheet opened on this mount — the stateless gloss endpoint
     persists nothing, so the client is the only source; the list is NOT
     cleared on checkpoint undo, so a re-collection stays suppressed; each
     span's text is truncated to the contract's 200 chars so one over-long
-    selection can't fail validation on every later collect). The two
-    surfaces share the mutation but present it differently: the **close-out
-    card** keeps the original toast presentation — success → sonner toast
-    (`# reviews collected`) with an **Undo** action, CONFLICT → error toast
-    with Retry (session + preview refetch automatically), backlog candidates
-    open the claims sheet immediately; the **declaration sheet** presents
-    success as its done step and handles CONFLICT/undo inline as above. A
-    successful undo on either path clears that checkpoint's claims re-entry
-    (sheet + close-out card), since a reverted checkpoint no longer accepts
-    assertions.
-  - **Claims sheet** (`checkpoint-claims-sheet.tsx`, ResponsiveOverlay): "N
-    words you saved but never practiced" with the candidate list
-    (server-capped at 200 — see `docs/SRS.md` §6b — and collapsed behind a
-    disclosure past 8), one confirm CTA for the whole group, and its own undo
-    toast (`undoKnownAssertions`). Never automatic — the sheet is the opt-in
-    second step, always dismissible. A confirm clears the client's claims
-    batch (re-asserting the same batch would just skip), but an assertion
-    undo that actually reverted something restores it — undo means
-    reconsider — unless a newer collect replaced the batch or the checkpoint
-    itself was reverted in the meantime (a dead checkpoint rejects
-    re-asserts).
+    selection can't fail validation on every later collect) plus the
+    deselected reviews.
   - **Close-out card** (`checkpoint-closeout-card.tsx`): rendered after the
     last segment once the reader reaches the end of the track — keyed on the
     LIVE viewport (deepest visible segment) while tracking is on, not on the
@@ -239,12 +242,13 @@ Users' own content can be published into a public, cross-user catalog (`shared_c
     reaching the last line also flushes the progress write immediately
     (bypassing the 3s throttle) so the pointer the collect uses catches up.
     Hidden while searching; deep-link opens don't count as reaching the end.
-    Offers the same collect action with a
-    fuller presentation (keeping the (i) info popover), and is available even at pendingCount 0 — a
-    zero-review close-out can still surface backlog claims, the discovery path
-    the count-gated footer button can't provide. After everything is
+    Its `I understood everything` button opens the declaration sheet (the
+    card keeps the (i) info popover), and is available even at pendingCount
+    0 — a zero-review close-out can still surface never-practiced words, the
+    discovery path the count-gated pill can't provide. After everything is
     collected it flips to a passive "Reviews collected" state, keeping a
-    claims re-entry whenever candidates remain — the batch from this mount's
+    claims re-entry (`N words you may already know`, reopening the sheet on
+    its never-practiced step) whenever candidates remain — the batch from this mount's
     collect, or, when no local collect/assert has happened yet (reload,
     navigation back), the server-rehydrated copy from `getCheckpointClaims`
     (see `docs/SRS.md` §6c), so a reload can't strand unclaimed candidates.
@@ -589,8 +593,8 @@ stat is always a live query — never pre-aggregated or snapshotted.
     itself lives in the declaration sheet's sweep step.
   - **Close-out rider**: the checkpoint close-out card carries an "Already
     know the N remaining words?" section with an outline mark-as-known
-    button. Any non-zero count shows — a surface the reader deliberately
-    reached needs no floor.
+    button — a one-tap whole-text sweep, outside the sheet. Any non-zero
+    count shows — a surface the reader deliberately reached needs no floor.
   - **Welcome-back card**: once per mount, on returning to a partially-read
     session with at least the floor's worth (20) of unswept words up to the
     resume anchor: an inline card below the divider — "N words from last
@@ -608,12 +612,9 @@ stat is always a live query — never pre-aggregated or snapshotted.
     is the sitting-open one at the same anchor (a manual set hides it). "Not
     yet" and Mark as known dismiss it for the sitting; deep-link opens skip
     the fetch entirely.
-  - **Post-sweep confirmation**: welcome-back and close-out sweeps don't
-    toast — a footer strip takes the pill's slot ("N words marked as known"
-    + the batch-scoped **Undo**) for ~8 seconds, then the footer returns to
-    resting. Declaration-sheet sweeps confirm in the sheet's done step
-    instead (with the combined Undo). The difficulty sheet's own sweeps keep
-    their toast.
+  - **Post-sweep confirmation**: welcome-back and close-out sweeps confirm
+    in the declaration toast (count + the batch-scoped **Undo**), like a
+    sheet run. The difficulty sheet's own sweeps keep their toast.
 - **Gloss-sheet chip**: when a selection's candidate lemmas intersect the
   user's `known_lemmas` (the fastGloss responses' `knownLemmaCandidates`),
   both the reader gloss sheet and the practice lookup sheet show a "Marked as
