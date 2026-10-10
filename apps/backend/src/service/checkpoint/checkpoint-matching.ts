@@ -19,6 +19,9 @@ export type TokenOccurrence = {
   surface: string
   context: string
   segmentIndex: number
+  // Where the surface starts in its segment's text — orders sightings that
+  // share a segment.
+  offset: number
 }
 
 // Occurrences kept per folded token / per matched candidate. More than one
@@ -103,6 +106,7 @@ export const tokenizeSegments = (
             surface: segment.text.slice(start, end),
             context: windowAroundRange(segment.text, start, end),
             segmentIndex: segment.index,
+            offset: start,
           })
           occurrencesByToken.set(folded, occurrences)
         }

@@ -406,8 +406,15 @@ export const listCheckpointCandidates = async (
   const partition = partitionMatches([...span.matched, ...span.mweCandidates], new Date())
   const { creditable } = applySuppression(partition, span.suppressedLemmas, span.backlogExcludedLemmas)
   // In reading order, so the list retraces the text the reader just finished.
-  const firstSeenAt = (m: MatchedVocabRow): number => m.occurrences[0]?.segmentIndex ?? Number.MAX_SAFE_INTEGER
-  const ordered = [...creditable].sort((a, b) => firstSeenAt(a) - firstSeenAt(b))
+  const firstSeenAt = (m: MatchedVocabRow): [number, number] => [
+    m.occurrences[0]?.segmentIndex ?? Number.MAX_SAFE_INTEGER,
+    m.occurrences[0]?.offset ?? Number.MAX_SAFE_INTEGER,
+  ]
+  const ordered = [...creditable].sort((a, b) => {
+    const [segmentA, offsetA] = firstSeenAt(a)
+    const [segmentB, offsetB] = firstSeenAt(b)
+    return segmentA - segmentB || offsetA - offsetB
+  })
   return { ok: true, candidates: ordered.map(toCandidate) }
 }
 
