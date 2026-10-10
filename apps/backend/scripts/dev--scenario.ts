@@ -77,6 +77,7 @@ const main = async (): Promise<void> => {
 
   try {
     let userId: string
+    let readingSessionId: string | null = null
     if (spec) {
       const wordFamilyDeps = {
         wordFamilyRepository: WordFamilyRepository(),
@@ -93,7 +94,7 @@ const main = async (): Promise<void> => {
       if (error && error.code !== 'email_exists' && !/already.*registered/i.test(error.message)) throw error
       userId = await findUserId(sql, args.email)
 
-      await seedScenario({ userId, prepared })
+      ;({ readingSessionId } = await seedScenario({ userId, prepared }))
       console.log(`Seeded ${spec.name} for ${args.email} (${userId}).\n\n${spec.description}\n`)
 
       const problems = await verifyScenarioFamilies({ userId, prepared }, wordFamilyDeps)
@@ -106,14 +107,15 @@ const main = async (): Promise<void> => {
       userId = await findUserId(sql, args.email)
     }
 
-    // Lands on the language's practice screen after Verify. The token is
+    // Lands on the scenario's reading session when it seeded one, else on the
+    // language's practice screen, after Verify. The token is
     // single-use and expires with GoTrue's OTP lifetime; --link mints another.
     const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: args.email })
     if (error) throw error
     const language = spec?.targetLanguage ?? 'ru'
     const params = new URLSearchParams({
       token_hash: data.properties.hashed_token,
-      redirect: `/practice/language/${language}`,
+      redirect: readingSessionId ? `/sessions/${readingSessionId}` : `/practice/language/${language}`,
     })
     console.log(`\nSign in (open, then press Verify):\n  ${args.webUrl}/login/email/verify?${params.toString()}`)
     console.log(`\nAdvance a day:  pnpm db:advance-day --email ${args.email}`)

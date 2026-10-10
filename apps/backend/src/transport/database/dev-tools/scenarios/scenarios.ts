@@ -352,6 +352,62 @@ const ruCaptureStates: ScenarioSpec = {
   ],
 }
 
+// The reader's declaration flow: every lane of a checkpoint in one short text.
+const ruReaderCloseout: ScenarioSpec = {
+  name: 'ru-reader-closeout',
+  description:
+    'An unread Russian text for the reader close-out: three saved words due for review appear in it, three saved words were never practiced, one was saved too recently to offer, and the rest of its words are unmarked.',
+  targetLanguage: 'ru',
+  nativeLanguage: 'en',
+  cefr: 'B1',
+  terms: [
+    // Due and in the text → the reviews list.
+    dueRecognition(собака, -6, 'failed'),
+    dueRecognition(окно, -4, 'failed'),
+    dueRecognition(водопад, -2, 'failed'),
+    // In the text but not due → listed nowhere.
+    { term: читать, recognition: notDue, savedDaysAgo: 45 },
+    // Never practiced, saved long ago → the "saved but never practiced" step.
+    // Each appears in its dictionary form: an inflected-only match would go
+    // through the LLM confirm pass, whose verdict varies between runs.
+    { term: писатель, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    { term: дюжина, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    { term: решение, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 20 },
+    // Never practiced but saved two days ago: a recent save is evidence the
+    // word was NOT known, so it is not offered.
+    { term: улица, recognition: { state: 'unseen' }, bank: RECOGNITION_LADDER, insight: 'fill', savedDaysAgo: 2 },
+  ],
+  knownLemmas: [],
+  reading: {
+    title: 'Dev scenario · Сосед-писатель',
+    segments: [
+      'Вчера утром я вышел на улицу и увидел соседскую собаку.',
+      'Она сидела у дороги и смотрела на моё окно.',
+      'Мой сосед — писатель, он живёт в пригороде уже много лет.',
+      'Он рассказал мне, что у него вышла уже дюжина рассказов о горах.',
+      'В одном из них герой долго идёт к водопаду.',
+      'Погода портится, но он принимает решение не возвращаться.',
+      'Я люблю читать такие истории по вечерам.',
+      'Вечером я открыл окно и снова услышал, как лает собака.',
+      'Писателя я больше в тот день не видел.',
+      'Наверное, он работал над новой книгой.',
+    ],
+  },
+  expectations: {
+    preview: { new: 4, warmup: 0, learning: 0, review: 3 },
+  },
+  tryIt: [
+    'The link opens the text. The close-out card sits under the last line; the footer pill counts the unmarked words (give the word profile a few seconds to build on first open).',
+    '"I understood everything" → the reviews list: собака, окно, водопад, each with its sentence. читать is in the text but not due, so it is absent.',
+    'Uncheck окно → "Collect 2 reviews". Practice → Russian then still shows окно due.',
+    'Next step: писатель, дюжина, решение (saved but never practiced). улица is missing — it was saved two days ago.',
+    'Last step: "Mark the N remaining words as known?", then one toast with Undo for the whole run.',
+    'Skip the never-practiced step instead: the close-out card keeps a "words you may already know" button that reopens it, also after a reload.',
+    'Gloss a word (tap собаку) before collecting: it drops out of the reviews list.',
+    'Re-run pnpm dev:scenario ru-reader-closeout to start over.',
+  ],
+}
+
 export const SCENARIOS: readonly ScenarioSpec[] = [
   ruFamilyDue,
   ruLeechEdge,
@@ -359,6 +415,7 @@ export const SCENARIOS: readonly ScenarioSpec[] = [
   ruProductionHints,
   ruProductionFamily,
   ruCaptureStates,
+  ruReaderCloseout,
 ]
 
 export const findScenario = (name: string): ScenarioSpec | undefined =>

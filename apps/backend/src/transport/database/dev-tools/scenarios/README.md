@@ -14,7 +14,7 @@ database: cards, `study_facets` SRS state, rating-event history, banked exercise
 lemmas, and word-family insights. It makes no LLM calls and doesn't need the backend
 running. It does need the dev-tunnel Supabase stack (`pnpm db:dev:tunnel`) and, for
 `ru-family-due`, the ru kaikki load. Open the printed link and press **Verify**. It lands on the
-language's practice screen. The token is single-use and expires with GoTrue's OTP lifetime.
+language's practice screen, or in the reader for a scenario with a reading text. The token is single-use and expires with GoTrue's OTP lifetime.
 
 Every practice timestamp is relative to `NOW()`/`CURRENT_DATE`, the clocks all day logic
 compares against (docs/SRS.md), so `pnpm db:advance-day` moves a seeded account like real
@@ -30,6 +30,7 @@ data.
 | `ru-production-hints` | Six production cards due. Five have a banked production hint (`mc_cloze`); сравнивать has none. |
 | `ru-production-family` | The `ru-family-due` words as 8 production cards due, same anchors and curated insights. Five offer the meaning-only production Clue (#517), the three opaque ones don't; писатель, водопад and дюжина have a banked hint. |
 | `ru-capture-states` | One saved word per "Translate & add" row state, each found by searching its English meaning: собака ("dog", due in 23 days → Review tomorrow), окно (due tomorrow), водопад (learning), читать (no production card), перевод (production paused), писатель (never started → Moved up). Searching дюжина in Russian tests recognition (due in 23 days). |
+| `ru-reader-closeout` | An unread text in the reader for the declaration flow (the sign-in link opens it). собака, окно, водопад are due and appear in it (the reviews list); читать appears but isn't due; писатель, дюжина, решение were saved but never practiced; улица was saved two days ago, too recent to offer. The other words are unmarked, for the sweep. Needs the ru kaikki load and ranks, and the backend running so the session's word profile builds. |
 
 ## Safety
 

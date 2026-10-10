@@ -110,6 +110,11 @@ export type ScenarioSpec = {
   terms: ScenarioTerm[]
   // Lemmas marked known (known_lemmas, folded), e.g. word-family anchors.
   knownLemmas: string[]
+  // An unread text to open in the reader, one segment per line, in its own
+  // content source: a word with a card in the same source is never offered as
+  // "saved but never practiced", so it can't share the terms' example source.
+  // The sign-in link then lands on this session instead of the practice screen.
+  reading?: { title: string; segments: string[] }
   expectations: {
     // The language landing's session-plan counts (practice.previewPracticeQueue).
     preview: { new: number; warmup: number; learning: number; review: number }
