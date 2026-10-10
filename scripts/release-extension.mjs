@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 // Interactive release driver for the browser extension (apps/extension).
 //
-// The release itself is tag-driven: pushing vX.Y.Z fires
-// .github/workflows/release-extension.yaml, which builds the zips, creates a
-// GitHub Release, and submits to both the Chrome Web Store and Firefox
-// Add-ons (AMO). This script automates everything around that tag: detecting
-// where the release stands, shipping the version bump as a PR (main is
-// branch-protected), tagging once the bump is merged, and watching the run.
+// The release is tag-driven and the tag IS the version: pushing vX.Y.Z fires
+// .github/workflows/release-extension.yaml, which stamps X.Y.Z into the
+// extension's package.json for that build, creates a GitHub Release, and
+// submits to both the Chrome Web Store and Firefox Add-ons (AMO). Nothing is
+// committed to cut a release — the committed "version" is a 0.0.0 placeholder —
+// so this script only validates the version against the tags already
+// published, tags origin/main HEAD, and watches the run.
 // Setup/credential problems are documented in apps/extension/RELEASING.md.
 //
-// Usage (from the repo root, needs `gh` auth):
-//   pnpm release:extension X.Y.Z             # interactive: detects state, prompts before the tag push
+// Usage (from anywhere in the repo, any branch — needs `gh` auth):
+//   pnpm release:extension X.Y.Z             # interactive: prompts before the tag push
 //   pnpm release:extension X.Y.Z --watch     # just watch the latest run for the existing vX.Y.Z tag
 //   pnpm release:extension X.Y.Z --recut     # move an existing tag whose run failed before releasing
 //   pnpm release:extension X.Y.Z --confirm   # non-interactive stand-in for the "yes" prompt (agents:
@@ -18,11 +19,9 @@
 //                                            # triggers LIVE store submissions)
 
 import { spawnSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 
 const WORKFLOW = 'release-extension.yaml'
-const PKG_PATH = 'apps/extension/package.json'
 
 const fail = (message) => {
   console.error(`\nerror: ${message}`)
@@ -38,7 +37,7 @@ const run = (cmd, args, { allowFailure = false } = {}) => {
   return { status: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' }
 }
 
-// Long-running commands whose live output the user should see (pre-push hook, gh run watch).
+// Long-running commands whose live output the user should see (git push, gh run watch).
 const runVisible = (cmd, args) => spawnSync(cmd, args, { stdio: 'inherit' }).status ?? 1
 
 const interactive = process.stdin.isTTY && process.stdout.isTTY
@@ -103,10 +102,6 @@ const KNOWN_FAILURES = [
     `A previous Chrome Web Store submission is still in review. Wait for it to resolve, then re-run the failed job (gh run rerun <id> --failed) — no re-tag needed.`,
   ],
   [
-    'does not match apps/extension/package.json',
-    'The tag and package.json on the tagged commit disagree — the wrong commit was tagged.',
-  ],
-  [
     'messages.ts',
     "i18n catalogs weren't compiled — the workflow's own compile step should prevent this; if it fired, that step regressed.",
   ],
@@ -160,16 +155,28 @@ const tag = `v${version}`
 run('gh', ['auth', 'status'])
 const repo = JSON.parse(run('gh', ['repo', 'view', '--json', 'nameWithOwner']).stdout).nameWithOwner
 
-const dirty = run('git', ['status', '--porcelain']).stdout.trim()
-if (dirty) fail(`working tree is not clean — commit or stash first:\n${dirty}`)
-
 console.log('Fetching origin/main and tags…')
-run('git', ['fetch', 'origin', 'main', '--tags'])
-const mainVersion = JSON.parse(run('git', ['show', `origin/main:${PKG_PATH}`]).stdout).version
-const tagOnRemote = run('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`]).stdout.trim() !== ''
+run('git', ['fetch', 'origin', 'main'])
+// The remote is the source of truth for what was released: a local tag may never have been pushed.
+const releasedVersions = run('git', ['ls-remote', '--tags', 'origin', 'refs/tags/v*'])
+  .stdout.split('\n')
+  .map((line) => line.match(/refs\/tags\/v(\d+\.\d+\.\d+)$/)?.[1])
+  .filter(Boolean)
+  .sort(compareSemver)
+const latestReleased = releasedVersions.at(-1) ?? null
+const tagOnRemote = releasedVersions.includes(version)
+const sha = run('git', ['rev-parse', '--short', 'origin/main']).stdout.trim()
 console.log(
-  `Target ${version} · origin/main is at ${mainVersion} · tag ${tag} ${tagOnRemote ? 'EXISTS' : 'not cut yet'}`
+  `Target ${version} · latest released is ${latestReleased ?? 'none'} · tag ${tag} ${tagOnRemote ? 'EXISTS' : 'not cut yet'}`
 )
+
+// Tags origin/main HEAD directly, so the release never depends on (or touches) the local checkout.
+const tagAndPush = () => {
+  // -f: a stale local tag was either never pushed or just deleted from the remote — recreate it fresh.
+  run('git', ['tag', '-f', tag, 'origin/main'])
+  // --no-verify skips the pre-push hook: a tag push carries no new code, and the workflow re-runs its own checks.
+  pushWithRetry(['origin', tag, '--no-verify'])
+}
 
 // --- Tag already exists: watch or re-cut ------------------------------------
 
@@ -189,26 +196,20 @@ if (tagOnRemote) {
   } else if (action === 'r') {
     // Re-cutting is only safe while nothing was published: the workflow creates
     // the GitHub Release after typecheck/build, so an existing Release means
-    // artifacts (and possibly store submissions) are out — bump a fresh patch instead.
+    // artifacts (and possibly store submissions) are out — cut a fresh patch instead.
     if (releaseExists)
       fail(`a GitHub Release already exists for ${tag} — cut a new patch version instead of moving the tag`)
     if (latestRun && latestRun.conclusion !== 'failure') {
       fail(`the latest run for ${tag} is ${latestRun.status}/${latestRun.conclusion} — only re-cut after a failed run`)
     }
-    if (mainVersion !== version)
-      fail(`origin/main is at ${mainVersion}, not ${version} — re-cutting would tag the wrong version`)
     const ok = await confirmed(
-      `Re-cut ${tag}: delete the tag, recreate it on current origin/main HEAD, and push — this re-triggers the release\n` +
-        'workflow and its LIVE submissions to the Chrome Web Store and Firefox Add-ons (AMO).'
+      `Re-cut ${tag}: delete the tag, recreate it on current origin/main HEAD (${sha}), and push — this re-triggers the\n` +
+        'release workflow and its LIVE submissions to the Chrome Web Store and Firefox Add-ons (AMO).'
     )
     if (!ok) fail('aborted — nothing was changed')
-    run('git', ['tag', '-d', tag], { allowFailure: true })
-    // Deleting the remote tag does NOT re-trigger the workflow; only the push below does.
+    // Deleting the remote tag does NOT re-trigger the workflow; only the push in tagAndPush does.
     run('git', ['push', 'origin', `:refs/tags/${tag}`, '--no-verify'])
-    run('git', ['checkout', 'main'])
-    run('git', ['pull', '--ff-only'])
-    run('git', ['tag', tag])
-    pushWithRetry(['origin', tag, '--no-verify'])
+    tagAndPush()
     await watchRun()
   } else {
     console.log('\nNothing done. Re-run with --watch or --recut (or pick interactively).')
@@ -217,78 +218,31 @@ if (tagOnRemote) {
   process.exit(0)
 }
 
-// --- Sanity: the target must be strictly greater than main -------------------
+// --- New release: validate, tag origin/main, push (gated) -------------------
 
-const order = compareSemver(version, mainVersion)
-if (order < 0) {
+if (latestReleased && compareSemver(version, latestReleased) < 0) {
   fail(
-    `${version} is LOWER than the ${mainVersion} already on main — Chrome requires strictly increasing versions (typo?)`
+    `${version} is LOWER than the ${latestReleased} already released — Chrome requires strictly increasing versions (typo?)`
   )
 }
 
-// --- State A: the bump isn't on main yet → ship it as a PR, then stop --------
-
-if (order > 0) {
-  const openPrs = JSON.parse(
-    run('gh', ['pr', 'list', '--base', 'main', '--state', 'open', '--json', 'number,title,headRefName,url']).stdout
-  )
-  const existing = openPrs.find((pr) => pr.title.includes(version) || pr.headRefName.includes(version))
-  if (existing) {
-    fail(
-      `an open PR already carries ${version}: #${existing.number} — ${existing.url}\nMerge it, then re-run this script.`
-    )
-  }
-
-  const branch = `chore/release-extension-${tag}`
-  console.log(`\nVersion bump not on main yet — opening a PR from ${branch}.`)
-  run('git', ['checkout', '-b', branch, 'origin/main'])
-  const pkg = readFileSync(PKG_PATH, 'utf8')
-  const bumped = pkg.replace(/"version": "[^"]+"/, `"version": "${version}"`)
-  if (bumped === pkg) fail(`could not find a "version" field to bump in ${PKG_PATH}`)
-  writeFileSync(PKG_PATH, bumped)
-  run('git', ['add', PKG_PATH])
-  run('git', ['commit', '-m', `chore(extension): bump extension version to ${version}`])
-  console.log('Pushing — the pre-push hook runs the full suite, this takes a few minutes…\n')
-  pushWithRetry(['-u', 'origin', branch])
-  const body =
-    `Bumps \`${PKG_PATH}\` to ${version}. Merging this unlocks cutting the \`${tag}\` release tag, which triggers ` +
-    'the release workflow (GitHub Release + Chrome Web Store + Firefox AMO submissions).\n\n' +
-    '🤖 Generated with [Claude Code](https://claude.com/claude-code)'
-  const prUrl = run('gh', [
-    'pr',
-    'create',
-    '--base',
-    'main',
-    '--title',
-    `chore(extension): bump extension version to ${version}`,
-    '--body',
-    body,
-  ]).stdout.trim()
-  console.log(`\n✅ Bump PR opened: ${prUrl}`)
-  console.log(
-    `Review and merge it (your checks run there), then re-run \`pnpm release:extension ${version}\` to tag and publish.`
-  )
-  process.exit(0)
+const range = latestReleased ? `v${latestReleased}..origin/main` : 'origin/main'
+const commits = run('git', ['log', '--oneline', range, '--', 'apps/extension', 'packages'], { allowFailure: true })
+  .stdout.trim()
+  .split('\n')
+  .filter(Boolean)
+if (latestReleased) {
+  console.log(`\n${commits.length} commit(s) touching apps/extension or packages since v${latestReleased}:`)
+  for (const line of commits.slice(0, 20)) console.log(`  ${line}`)
+  if (commits.length > 20) console.log(`  … and ${commits.length - 20} more`)
 }
-
-// --- State B: main carries the version → tag + push (gated) ------------------
-
-run('git', ['checkout', 'main'])
-run('git', ['pull', '--ff-only'])
-const localVersion = JSON.parse(readFileSync(PKG_PATH, 'utf8')).version
-if (localVersion !== version) fail(`checked-out main reads ${localVersion}, expected ${version} — refusing to tag`)
-const sha = run('git', ['rev-parse', '--short', 'HEAD']).stdout.trim()
 
 const ok = await confirmed(
-  `About to tag ${tag} on ${sha} and push it. This triggers LIVE submissions to both the Chrome Web Store and\n` +
-    'Firefox Add-ons (AMO) — each auto-publishes when its review passes. Do NOT proceed if a previous CWS\n' +
-    'submission is still in review (the API rejects with ITEM_NOT_UPDATABLE).'
+  `About to tag ${tag} on origin/main HEAD (${sha}) and push it. This triggers LIVE submissions to both the Chrome\n` +
+    'Web Store and Firefox Add-ons (AMO) — each auto-publishes when its review passes. Do NOT proceed if a previous\n' +
+    'CWS submission is still in review (the API rejects with ITEM_NOT_UPDATABLE).'
 )
 if (!ok) fail('aborted — nothing was tagged or pushed')
 
-// A stale local tag here was never pushed (the remote check above said so) — recreate it fresh.
-if (run('git', ['tag', '-l', tag]).stdout.trim() !== '') run('git', ['tag', '-d', tag])
-run('git', ['tag', tag])
-// --no-verify skips the pre-push hook: a tag push carries no new code, and the workflow re-runs all checks anyway.
-pushWithRetry(['origin', tag, '--no-verify'])
+tagAndPush()
 await watchRun()
