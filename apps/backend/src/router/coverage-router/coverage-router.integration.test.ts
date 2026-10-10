@@ -154,7 +154,7 @@ describe('coverage router', () => {
     })
   })
 
-  test('getTopLemmas returns the build-stamped head of the list; unknown language is 404', async () => {
+  test('getTopLemmas returns the build-stamped ranked list; unknown language is 404', async () => {
     const { token } = await setupCheckpointUser(testApp)
     const language = await seedLanguage([
       ['beta', 2, 0.3],

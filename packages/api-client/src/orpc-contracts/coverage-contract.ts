@@ -57,7 +57,7 @@ export const coverageContract = {
       })
     ),
 
-  // The head of the frequency list (index = rank − 1) for the detail view's
+  // The whole frequency-ranked list (index = rank − 1) for the detail view's
   // dot tooltips. The requested buildVersion is part of the query-cache key;
   // the response carries the build actually read so the client can still
   // refuse labels when a publication landed between the two requests.
