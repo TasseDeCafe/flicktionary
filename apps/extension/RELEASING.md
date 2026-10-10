@@ -7,27 +7,32 @@ rejected.
 
 ## Normal release flow
 
-`pnpm release:extension X.Y.Z` (an interactive script, `scripts/release-extension.mjs`)
-drives this end to end (bump → PR → tag → watch the run), detecting on its own which
-phase you're in; it prompts before the tag push and maps known run failures to the
-troubleshooting notes below. The `/release-extension X.Y.Z` skill is a thin agent
-wrapper around the same script. The manual steps below are what it automates —
-follow them by hand if you're not using either.
+The tag is the version. Nothing is committed to cut a release: `version` in
+`apps/extension/package.json` is a `0.0.0` placeholder (what local and dev builds
+report), and the release workflow stamps the tag's version into it for that build.
 
-1. Bump `version` in `apps/extension/package.json` (Chrome requires strictly increasing versions).
-2. Tag and push — the tag (minus `v`) must match the package version:
+`pnpm release:extension X.Y.Z` (an interactive script, `scripts/release-extension.mjs`)
+does the whole thing in one run, from any branch: it checks `X.Y.Z` against the tags
+already published (Chrome requires strictly increasing versions), lists what changed
+since the last release, prompts, tags `origin/main` HEAD, pushes the tag, watches the
+run, and maps known run failures to the troubleshooting notes below. The
+`/release-extension X.Y.Z` skill is a thin agent wrapper around the same script. By
+hand, the equivalent is:
+
+1. Tag `main` and push:
 
    ```bash
-   git tag v0.0.2 && git push origin v0.0.2
+   git fetch origin main && git tag v0.0.2 origin/main && git push origin v0.0.2
    ```
 
-3. `.github/workflows/release-extension.yaml` then: typechecks, builds both zips under
-   `doppler run` (project `extension`, config `prd` — the real prod env vars), creates a
-   GitHub release with the zips attached, and submits both stores — the Chrome zip to the
-   Chrome Web Store (via `publish-browser-extension`) and the Firefox zip to
-   addons.mozilla.org (via `web-ext sign --channel listed`). Each store step skips itself
-   with a notice if its credentials aren't set, so one store missing keys never blocks the
-   other. Publishing happens automatically when each store's review passes.
+2. `.github/workflows/release-extension.yaml` then: stamps the version, typechecks,
+   builds both zips under `doppler run` (project `extension`, config `prd` — the real
+   prod env vars), creates a GitHub release with the zips attached, and submits both
+   stores — the Chrome zip to the Chrome Web Store (via `publish-browser-extension`)
+   and the Firefox zip to addons.mozilla.org (via `web-ext sign --channel listed`).
+   Each store step skips itself with a notice if its credentials aren't set, so one
+   store missing keys never blocks the other. Publishing happens automatically when
+   each store's review passes.
 
 **Don't tag while a previous CWS submission is still in review** — the API rejects
 uploads with `ITEM_NOT_UPDATABLE` until the pending review resolves (including the very
