@@ -35,6 +35,7 @@ import {
 import type { AnthropicPassesInterface } from '../../transport/third-party/anthropic/anthropic-passes'
 import {
   collectCheckpoint,
+  listCheckpointCandidates,
   previewCheckpoint,
   type CheckpointDependencies,
 } from '../../service/checkpoint/collect-checkpoint'
@@ -339,6 +340,23 @@ export const StudySessionsRouter = (
       }
     }),
 
+    getCheckpointCandidates: implementer.getCheckpointCandidates.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await listCheckpointCandidates(
+        {
+          sessionId: input.sessionId,
+          userId,
+          toSegmentIndex: input.toSegmentIndex,
+          previewedSpans: input.previewedSpans,
+        },
+        checkpointDependencies
+      )
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      return { data: { candidates: result.candidates } }
+    }),
+
     collectCheckpoint: implementer.collectCheckpoint.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const result = await collectCheckpoint(
@@ -347,6 +365,7 @@ export const StudySessionsRouter = (
           userId,
           toSegmentIndex: input.toSegmentIndex,
           previewedSpans: input.previewedSpans,
+          excludedUserLookupIds: input.excludedUserLookupIds,
         },
         checkpointDependencies
       )

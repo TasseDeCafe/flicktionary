@@ -432,10 +432,44 @@ const insertTerm = async (
   return lookup.id
 }
 
-export const seedScenario = async (params: { userId: string; prepared: PreparedScenario }): Promise<void> => {
+const insertReadingSession = async (
+  tx: postgres.Sql,
+  params: { userId: string; spec: ScenarioSpec; reading: NonNullable<ScenarioSpec['reading']> }
+): Promise<string> => {
+  const { userId, spec, reading } = params
+  const [source] = (await tx`
+    INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+    VALUES ('text', ${reading.title}, ${spec.targetLanguage},
+            ${tx.json({ [SCENARIO_METADATA_KEY]: spec.name })}, ${userId})
+    RETURNING id
+  `) as [{ id: string }]
+  const hash = createHash('sha256').update(reading.segments.join('\n')).digest('hex')
+  const [track] = (await tx`
+    INSERT INTO public.text_tracks (content_source_id, source, language, hash)
+    VALUES (${source.id}, 'paste', ${spec.targetLanguage}, ${hash})
+    RETURNING id
+  `) as [{ id: string }]
+  await tx`
+    INSERT INTO public.text_segments (text_track_id, index, text)
+    SELECT ${track.id}, t.ord - 1, t.text
+    FROM unnest(${reading.segments}::text[]) WITH ORDINALITY AS t(text, ord)
+  `
+  const [session] = (await tx`
+    INSERT INTO public.study_sessions
+      (user_id, content_source_id, text_track_id, native_language, target_language, cefr_level)
+    VALUES (${userId}, ${source.id}, ${track.id}, ${spec.nativeLanguage}, ${spec.targetLanguage}, ${spec.cefr})
+    RETURNING id
+  `) as [{ id: string }]
+  return session.id
+}
+
+export const seedScenario = async (params: {
+  userId: string
+  prepared: PreparedScenario
+}): Promise<{ readingSessionId: string | null }> => {
   const { userId, prepared } = params
   const { spec } = prepared
-  await beginTx(async (tx) => {
+  return beginTx(async (tx) => {
     await resetUser(tx, userId)
 
     await tx`
@@ -501,6 +535,10 @@ export const seedScenario = async (params: { userId: string; prepared: PreparedS
         mode: placed.insight,
         insight: placed.term.insight,
       })
+    }
+
+    return {
+      readingSessionId: spec.reading ? await insertReadingSession(tx, { userId, spec, reading: spec.reading }) : null,
     }
   })
 }

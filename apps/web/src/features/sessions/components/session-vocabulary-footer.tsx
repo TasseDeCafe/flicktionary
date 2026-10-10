@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BookmarkCheck, Check, ChevronUp, Loader2, WholeWord } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
-import { plural } from '@lingui/core/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import { useProcessStudySession } from '../api/sessions-hooks'
@@ -19,11 +18,6 @@ type Props = {
   // deriveDeclarationPillState.
   pillState: DeclarationPillState
   onOpenDeclarationSheet?: () => void
-  // Post-sweep confirmation for the welcome-back card and close-out sweeps
-  // (the sheet's own sweeps confirm in-sheet): takes the pill's slot for a few
-  // seconds with a sweep-scoped Undo. onUndo is null when the sweep produced
-  // no batch to revert.
-  sweepConfirmation?: { count: number; onUndo: (() => void) | null } | null
 }
 
 // Rolls the pill's count to a new value: the old number slides up and out
@@ -126,7 +120,6 @@ export const SessionVocabularyFooter = ({
   onOpenSessionVocabulary,
   pillState,
   onOpenDeclarationSheet,
-  sweepConfirmation = null,
 }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
@@ -142,29 +135,13 @@ export const SessionVocabularyFooter = ({
 
   // One fixed-height row: the reading surface must never shift because of the
   // footer, so nothing here expands in place — the pill opens an overlay. The
-  // left slot shows exactly one thing at a time (confirmation > generating >
-  // pill) to keep the row stable.
+  // left slot shows exactly one thing at a time (generating > pill) to keep
+  // the row stable.
   return (
     <StickyFooter className='px-3'>
       <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
         <span className='text-muted-foreground flex min-w-0 items-center text-sm'>
-          {sweepConfirmation ? (
-            <span className='flex items-center gap-2'>
-              <span className='flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300'>
-                <Check className='size-4 shrink-0' />
-                {plural(sweepConfirmation.count, { one: '# word marked as known', other: '# words marked as known' })}
-              </span>
-              {sweepConfirmation.onUndo && (
-                <button
-                  type='button'
-                  className='hover:text-foreground active:text-foreground cursor-pointer font-medium underline underline-offset-2 transition-colors'
-                  onClick={sweepConfirmation.onUndo}
-                >
-                  {t`Undo`}
-                </button>
-              )}
-            </span>
-          ) : isGeneratingCandidates ? (
+          {isGeneratingCandidates ? (
             <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
               <Loader2 className='size-3.5 animate-spin' />
               {t`Finding suggestions…`}

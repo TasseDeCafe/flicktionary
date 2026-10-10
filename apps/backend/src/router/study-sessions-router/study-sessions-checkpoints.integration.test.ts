@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import { buildAuthorizationHeaders, buildTestApp } from '../../test/test-utils'
@@ -224,6 +225,83 @@ describe('study-sessions checkpoints', () => {
     const facet = await getRecognitionFacet(id)
     expect(facet!.srs_state).toBe('review')
     expect(facet!.srs_reps).toBe(3)
+  })
+
+  test('candidates list the due terms with evidence; a deselected one is left uncredited and due', async () => {
+    const suf = uniqueCyrillicSuffix()
+    const { userId, token } = await setupCheckpointUser(testApp)
+    const kept = `лес${suf}`
+    const deselected = `поле${suf}`
+    const glossed = `луг${suf}`
+    const notDue = `сад${suf}`
+    const idKept = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', kept, 'forest')
+    const idDeselected = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', deselected, 'field')
+    const idGlossed = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', glossed, 'meadow')
+    const idNotDue = await saveOldAdhocTerm(testApp, token, basicDataPass, 'ru', notDue, 'garden')
+    await patchRecognitionFacet(idKept, { state: 'review', dueOffsetDays: -1 })
+    await patchRecognitionFacet(idDeselected, { state: 'review', dueOffsetDays: -1 })
+    await patchRecognitionFacet(idGlossed, { state: 'review', dueOffsetDays: -1 })
+    await patchRecognitionFacet(idNotDue, { state: 'review', dueOffsetDays: 5 })
+    for (const word of [kept, deselected, glossed, notDue]) await insertWiktionaryLemma(word, [`${word}а`])
+    const session = await createReadingSession(userId, 'ru')
+    await appendSegment(session.text_track_id, `Вот ${kept}а и ${deselected}а.`)
+    const lastIndex = await appendSegment(session.text_track_id, `Тут ${glossed}а и ${notDue}а.`)
+    const previewedSpans = [{ segmentIndex: lastIndex, selectionText: `${glossed}а` }]
+
+    const unauthenticated = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoint-candidates`)
+      .set({ Authorization: 'Bearer wrong-token' })
+      .send({ toSegmentIndex: lastIndex, previewedSpans })
+    expect(unauthenticated.status).toBe(401)
+
+    const missing = await request(testApp)
+      .post(`/api/v1/study-sessions/${randomUUID()}/checkpoint-candidates`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans })
+    expect(missing.status).toBe(404)
+
+    // Due terms only, minus the glossed one; each row carries where it was seen.
+    const listed = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoint-candidates`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans })
+    expect(listed.status).toBe(200)
+    const byId = new Map(
+      (listed.body.data.candidates as Array<{ userLookupId: string }>).map((c) => [c.userLookupId, c])
+    )
+    // Listed in reading order.
+    expect([...byId.keys()]).toEqual([idKept, idDeselected])
+    expect(byId.get(idKept)).toEqual({
+      userLookupId: idKept,
+      headword: kept,
+      sense: 'forest',
+      matchedSurface: `${kept}а`,
+      context: `Вот ${kept}а и ${deselected}а.`,
+    })
+
+    const collected = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoints`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans, excludedUserLookupIds: [idDeselected] })
+    expect(collected.status).toBe(200)
+    expect(collected.body.data.creditedCount).toBe(1)
+    const events = (await sql`
+      SELECT user_lookup_id FROM public.practice_rating_events
+      WHERE checkpoint_id = ${collected.body.data.checkpointId}
+    `) as Array<{ user_lookup_id: string }>
+    expect(events.map((e) => e.user_lookup_id)).toEqual([idKept])
+    // Deselected ≠ punished: untouched and still due.
+    const facet = await getRecognitionFacet(idDeselected)
+    expect(facet!.srs_state).toBe('review')
+    expect(facet!.srs_reps).toBe(3)
+    expect(new Date(facet!.srs_due!).getTime()).toBeLessThan(Date.now())
+
+    // The span is collected, so nothing is left to list.
+    const after = await request(testApp)
+      .post(`/api/v1/study-sessions/${session.id}/checkpoint-candidates`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: lastIndex, previewedSpans: [] })
+    expect(after.body.data.candidates).toEqual([])
   })
 
   test('two concurrent collects: exactly one credits', async () => {

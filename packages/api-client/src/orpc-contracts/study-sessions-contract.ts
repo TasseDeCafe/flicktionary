@@ -48,6 +48,17 @@ const CheckpointBacklogCandidateSchema = z.object({
   context: z.string().nullable(),
 })
 
+// Preview-gloss selections tracked by the client (the gloss endpoint stores
+// nothing), sent so the terms they cover are suppressed rather than credited.
+const PreviewedSpansSchema = z
+  .array(
+    z.object({
+      segmentIndex: z.number().int().nonnegative(),
+      selectionText: z.string().max(200),
+    })
+  )
+  .max(500)
+
 export const studySessionsContract = {
   list: oc
     .route({ method: 'GET', path: '/study-sessions', successStatus: 200 })
@@ -161,6 +172,28 @@ export const studySessionsContract = {
       })
     ),
 
+  // The reviews a collect up to `toSegmentIndex` would credit, one row per due
+  // saved term with its evidence, for the declaration sheet's deselectable
+  // list. POST because it carries the client's `previewedSpans` (glossed terms
+  // are suppressed here exactly as in the collect). No LLM pass runs, so the
+  // list can overstate what the collect credits (every saved sense of a
+  // multi-sense headword, unconfirmed multi-word expressions) but never
+  // understate it. Unsupported languages return an empty list.
+  getCheckpointCandidates: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/checkpoint-candidates', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        toSegmentIndex: z.number().int().nonnegative(),
+        previewedSpans: PreviewedSpansSchema,
+      })
+    )
+    .output(z.object({ data: z.object({ candidates: z.array(CheckpointBacklogCandidateSchema) }) })),
+
   // The checkpoint press: credit implicit `good` ratings to saved due terms in
   // the span (reviewedUntil, toSegmentIndex], advance the monotonic pointer,
   // and return the backlog known-assertion candidates for the claims sheet.
@@ -187,14 +220,10 @@ export const studySessionsContract = {
       z.object({
         sessionId: z.string().uuid(),
         toSegmentIndex: z.number().int().nonnegative(),
-        previewedSpans: z
-          .array(
-            z.object({
-              segmentIndex: z.number().int().nonnegative(),
-              selectionText: z.string().max(200),
-            })
-          )
-          .max(500),
+        previewedSpans: PreviewedSpansSchema,
+        // Due terms deselected in the declaration sheet's reviews list: left
+        // uncredited and still due. Ids outside the span are ignored.
+        excludedUserLookupIds: z.array(z.string().uuid()).max(1000).default([]),
       })
     )
     .output(

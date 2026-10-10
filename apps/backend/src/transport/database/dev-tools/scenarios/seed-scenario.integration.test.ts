@@ -120,6 +120,48 @@ describe('dev scenarios', () => {
     }
   )
 
+  test('a reading scenario seeds an unread session in its own content source', async () => {
+    const spec = SCENARIOS.find((candidate) => candidate.reading)!
+    const { userId, token } = await freshUser()
+    const prepared = await prepareScenario(spec, wordFamilyDeps, { requireDictionary: false })
+    const { readingSessionId } = await seedScenario({ userId, prepared })
+    expect(readingSessionId).not.toBeNull()
+
+    const [row] = (await sql`
+      SELECT s.furthest_read_segment_index, s.reviewed_until_segment_index,
+        (SELECT count(*)::int FROM public.text_segments g WHERE g.text_track_id = s.text_track_id) AS segments,
+        (SELECT count(*)::int FROM public.cards c
+           JOIN public.study_sessions o ON o.id = c.study_session_id
+          WHERE o.content_source_id = s.content_source_id) AS cards_in_source
+      FROM public.study_sessions s WHERE s.id = ${readingSessionId}
+    `) as [
+      {
+        furthest_read_segment_index: number | null
+        reviewed_until_segment_index: number | null
+        segments: number
+        cards_in_source: number
+      },
+    ]
+    expect(row.segments).toBe(spec.reading!.segments.length)
+    expect(row.furthest_read_segment_index).toBeNull()
+    expect(row.reviewed_until_segment_index).toBeNull()
+    // A card in the reading's source would exclude its word from the
+    // never-practiced offer.
+    expect(row.cards_in_source).toBe(0)
+
+    const candidates = await request(testApp)
+      .post(`/api/v1/study-sessions/${readingSessionId}/checkpoint-candidates`)
+      .set(buildAuthorizationHeaders(token))
+      .send({ toSegmentIndex: spec.reading!.segments.length - 1, previewedSpans: [] })
+    expect(candidates.status).toBe(200)
+
+    // Reseeding replaces the reading session rather than piling up copies.
+    const again = await seedScenario({ userId, prepared })
+    const sessions = await sql`SELECT id FROM public.study_sessions WHERE user_id = ${userId}`
+    expect(sessions).toHaveLength(2)
+    expect(again.readingSessionId).not.toBe(readingSessionId)
+  })
+
   test('reseeding resets the account to the same state and leaves other users alone', async () => {
     const [familySpec, leechSpec] = SCENARIOS
     const target = await freshUser()

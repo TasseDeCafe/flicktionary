@@ -54,25 +54,31 @@ msgstr "(non défini)"
 msgid "{0, plural, one {# highlight} other {# highlights}}"
 msgstr "{0, plural, one {# surlignage} other {# surlignages}}"
 
-#. placeholder {0}: state.checkpoint.creditedCount
 #. placeholder {0}: state.checkpoint?.creditedCount ?? 0
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{0, plural, one {# review collected} other {# reviews collected}}"
 msgstr "{0, plural, one {# avis collecté} other {# avis collectés}}"
 
 #. placeholder {0}: state.sweep.markedCount
-#. placeholder {0}: state.sweep?.markedCount ?? 0
-#. placeholder {0}: sweepConfirmation.count
+#. placeholder {0}: sweep.markedCount
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
-#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
 msgid "{0, plural, one {# word marked as known} other {# words marked as known}}"
 msgstr "{0, plural, one {# mot marqué comme connu} other {# mots marqués comme connus}}"
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "{assertedCount, plural, one {# word marked as known} other {# words marked as known}}"
-msgstr "{assertedCount, plural, one {# mot marqué comme connu} other {# mots marqués comme connus}}"
+#. placeholder {0}: claimCandidates.length
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "{0, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
+msgstr "{0, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}}"
+
+#. placeholder {0}: selectedClaims.length
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "{0, plural, one {Mark # word as known} other {Mark # words as known}}"
+msgstr "{0, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
+
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "{assertedCount, plural, one {# saved word marked as known} other {# saved words marked as known}}"
+msgstr "{assertedCount, plural, one {# mot enregistré marqué comme connu} other {# mots enregistrés marqués comme connus}}"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "{bandPct}% of this band's text share"
@@ -94,17 +100,9 @@ msgstr "{chapterChars} caract."
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
 
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
-msgid "{checkpointPendingCount, plural, one {# review ready to collect.} other {# reviews ready to collect.}}"
-msgstr "{checkpointPendingCount, plural, one {# révision prête à collecter.} other {# révisions prêtes à collecter.}}"
-
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 msgid "{claimsCount, plural, one {# word you may already know} other {# words you may already know}}"
 msgstr "{claimsCount, plural, one {# mot que vous connaissez peut-être déjà} other {# mots que vous connaissez peut-être déjà}}"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "{collectedCount, plural, one {# review collected} other {# reviews collected}}"
-msgstr "{collectedCount, plural, one {# révision collectée} other {# révisions collectées}}"
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/session-recap-view.tsx
@@ -119,13 +117,13 @@ msgstr "{count, plural, one {# mot de la dernière fois (jusqu'à {untilLabel}) 
 msgid "{count, plural, one {# word from last time isn't marked as known yet.} other {# words from last time aren't marked as known yet.}}"
 msgstr "{count, plural, one {# mot de la dernière fois n'est pas encore marqué comme connu.} other {# mots de la dernière fois ne sont pas encore marqués comme connus.}}"
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "{count, plural, one {# word you saved but never practiced} other {# words you saved but never practiced}}"
-msgstr "{count, plural, one {# mot que vous avez enregistré mais jamais pratiqué} other {# mots que vous avez enregistrés mais jamais pratiqués}}"
-
 #: apps/web/src/features/sessions/components/show-group-card.tsx
 msgid "{count} episodes"
 msgstr "{count} épisodes"
+
+#: apps/web/src/features/sessions/components/session-view.tsx
+msgid "{creditedCount, plural, one {# review collected} other {# reviews collected}}"
+msgstr "{creditedCount, plural, one {# révision collectée} other {# révisions collectées}}"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "{discount}% off with your referral for {durationLimit} months!"
@@ -156,9 +154,12 @@ msgid "{episodeCount} episodes"
 msgstr "{episodeCount} épisodes"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "{exactCount, plural, one {Mark # word as known?} other {Mark # words as known?}}"
 msgstr "{exactCount, plural, one {Marquer # mot comme connu ?} other {Marquer # mots comme connus ?}}"
+
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "{exactCount, plural, one {Mark the # remaining word as known?} other {Mark the # remaining words as known?}}"
+msgstr "{exactCount, plural, one {Marquer le # mot restant comme connu ?} other {Marquer les # mots restants comme connus ?}}"
 
 #: apps/web/src/features/books/components/book-priority-card.tsx
 msgid "{failedPartCount} chapters couldn't be analyzed."
@@ -272,13 +273,13 @@ msgstr "{removedCount, plural, one {# marque connue supprimée} other {# marques
 msgid "{savedCount, plural, one {# more word from this book is already in your vocabulary.} other {# more words from this book are already in your vocabulary.}}"
 msgstr "{savedCount, plural, one {# mot supplémentaire de ce livre est déjà dans votre vocabulaire.} other {# mots supplémentaires de ce livre sont déjà dans votre vocabulaire.}}"
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "{selectedCount, plural, one {Mark # word as known} other {Mark # words as known}}"
-msgstr "{selectedCount, plural, one {Marquer # mot comme connu} other {Marquer # mots comme connus}}"
-
 #: apps/web/src/features/books/components/book-import-wizard.tsx
 msgid "{selectedCount} of {chapterCount} chapters selected"
 msgstr "{selectedCount} chapitres sélectionnés sur {chapterCount}"
+
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "{selectedReviewCount, plural, one {Collect # review} other {Collect # reviews}}"
+msgstr "Collecter {selectedReviewCount, plural, one {# révision} other {# révisions}}"
 
 #: apps/web/src/features/lesson-import/components/lesson-import-wizard.tsx
 msgid "{selectedSheetCount} of {sheetCount} sheets selected"
@@ -1153,7 +1154,7 @@ msgid "Checking…"
 msgstr "Vérification…"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Checkpoint saved"
 msgstr "Point de contrôle enregistré"
 
@@ -1236,13 +1237,11 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/web/src/features/navigation/components/modal-screen.tsx
 #: apps/web/src/features/review/components/chat-panel.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 msgid "Close"
 msgstr "Fermer"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Closes automatically"
 msgstr "Se ferme automatiquement"
 
@@ -1261,10 +1260,6 @@ msgstr "Indice utilisé — Facile est désactivé pour cette carte."
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Collecting reviews while you read"
 msgstr "Collecter des révisions en lisant"
-
-#: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
-msgid "Collecting…"
-msgstr "Collecte en cours…"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Collocations"
@@ -1304,7 +1299,6 @@ msgstr "Lecture condensée : Activée"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Confirm"
 msgstr "Confirmer"
 
@@ -1553,6 +1547,10 @@ msgstr "Impossible de générer les données de la forme"
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
+
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "Couldn't load the list of words. You can still save the checkpoint — every due word that appeared will count as reviewed."
+msgstr "Impossible de charger la liste de mots. Vous pouvez toujours enregistrer le point de contrôle — chaque mot attendu qui est apparu sera compté comme révisé."
 
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 msgid "Couldn't load your practice queue."
@@ -2030,6 +2028,10 @@ msgstr "Européen"
 msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
 msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement inconditionnel. Il suffit de nous le faire savoir en cliquant sur le bouton « Nous contacter » ci-dessus."
 
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "Every word in what you've read that isn't saved or marked yet. You can un-mark any word later."
+msgstr "Chaque mot de ce que vous avez lu qui n'est ni sauvegardé ni marqué. Vous pouvez annuler le marquage de n'importe quel mot plus tard."
+
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Everything"
 msgstr "Tout"
@@ -2037,14 +2039,6 @@ msgstr "Tout"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Everything you save lands in the web app, where you can review your sessions, browse your vocabulary, and practice what you collected."
 msgstr "Tout ce que vous enregistrez apparaît dans l'application web, où vous pouvez consulter vos sessions, parcourir votre vocabulaire et pratiquer ce que vous avez collecté."
-
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
-msgid "Everything you've read so far. You can un-mark any word later."
-msgstr "Tout ce que vous avez lu jusqu'à présent. Vous pourrez retirer la marque de n'importe quel mot plus tard."
-
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
-msgid "Everything you've read up to the checkpoint. You can un-mark any word later."
-msgstr "Tout ce que vous avez lu jusqu'au point de contrôle. Vous pourrez retirer la marque de n'importe quel mot plus tard."
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 msgid "Everything you've watched up to the checkpoint. You can un-mark any word later."
@@ -2140,10 +2134,6 @@ msgstr "Impossible d'ajouter le mot"
 #: apps/web/src/features/admin/api/dev-tools-hooks.ts
 msgid "Failed to advance the practice clock"
 msgstr "Échec de l'avancement de l'horloge de pratique"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Failed to collect reviews"
-msgstr "Échec de la collecte des révisions"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to complete onboarding"
@@ -3402,7 +3392,6 @@ msgid "Marked known {knownLabel}"
 msgstr "Marqué comme connu {knownLabel}"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 #: apps/web/src/features/sessions/components/checkpoint-closeout-card.tsx
 #: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
@@ -3673,6 +3662,10 @@ msgstr "Aucune carte de reconnaissance"
 msgid "No reviews are due right now."
 msgstr "Aucune révision à faire pour le moment."
 
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "No saved words were due for review in what you read. Saving the checkpoint still marks this part as read."
+msgstr "Aucun mot enregistré n'était dû pour révision dans ce que vous avez lu. Enregistrer le point de contrôle marque quand même cette partie comme lue."
+
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "No seasons found."
 msgstr "Aucune saison trouvée."
@@ -3745,7 +3738,6 @@ msgstr "non disponible"
 
 #: apps/extension/src/ui/video-overlay/guest-signup-dialog.tsx
 #: apps/web/src/features/auth/components/guest-source-limit-overlay-content.tsx
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
 msgid "Not now"
 msgstr "Pas maintenant"
 
@@ -4705,7 +4697,6 @@ msgstr "Repris ici"
 #: apps/web/src/features/books/components/book-priority-card.tsx
 #: apps/web/src/features/dashboard/components/daily-mix-banner.tsx
 #: apps/web/src/features/review/components/session-vocabulary-row.tsx
-#: apps/web/src/features/sessions/components/session-view.tsx
 #: apps/web/src/features/vocab-chat/components/chat-proposal-list.tsx
 msgid "Retry"
 msgstr "Réessayer"
@@ -4806,6 +4797,10 @@ msgstr "Enregistrez un terme en regardant ou en lisant dans une session. Flickti
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source nécessaire"
 
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "Save checkpoint"
+msgstr "Enregistrer le point de sauvegarde"
+
 #: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Save note"
@@ -4862,6 +4857,10 @@ msgstr "Enregistré dans le chat de cette carte — supprimez le surlignage pour
 msgid "Saved to your vocabulary"
 msgstr "Enregistré dans votre vocabulaire"
 
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "Saved words that were due for review and appeared in what you read. Confirming counts each checked word as a successful review — uncheck any you didn't understand and they simply stay due. Words you looked up along the way are left out."
+msgstr "Mots sauvegardés qui étaient dus pour révision et qui sont apparus dans ce que vous avez lu. Confirmer compte chaque mot coché comme une révision réussie — décochez ceux que vous n'avez pas compris et ils resteront simplement dus. Les mots que vous avez recherchés en cours de route sont exclus."
+
 #: packages/ui/src/components/word-family-line.tsx
 msgid "Saved: {savedList}"
 msgstr "Enregistré : {savedList}"
@@ -4869,10 +4868,6 @@ msgstr "Enregistré : {savedList}"
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 msgid "Saves a checkpoint at your current position. Saved words that appeared in the subtitles so far and were due for review count as successful reviews — words you looked up along the way are never penalized."
 msgstr "Enregistre un point de contrôle à votre position actuelle. Les mots sauvegardés qui sont apparus dans les sous-titres jusqu'ici et qui étaient dus pour révision comptent comme des révisions réussies — les mots que vous avez recherchés en chemin ne sont jamais pénalisés."
-
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
-msgid "Saves a checkpoint at your current reading position. Saved words that appeared in what you read and were due for review count as successful reviews — words you looked up along the way are never penalized."
-msgstr "Enregistre un point de contrôle à votre position de lecture actuelle. Les mots enregistrés qui sont apparus dans ce que vous avez lu et qui étaient prêts pour révision comptent comme des révisions réussies — les mots que vous avez recherchés en cours de route ne sont jamais pénalisés."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/mix-interstitial.tsx
@@ -5166,10 +5161,6 @@ msgstr "Révisions à court terme, de retour dans quelques jours"
 msgid "Show"
 msgstr "Série"
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-msgid "Show all {count} words"
-msgstr "Afficher les {count} mots"
-
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/recap-typed-exercise.tsx
@@ -5403,7 +5394,6 @@ msgid "Status"
 msgstr "Statut"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Step {stepCurrent} of {stepTotal}"
 msgstr "Étape {stepCurrent} sur {stepTotal}"
 
@@ -5737,12 +5727,11 @@ msgid "The book upload failed. Please try again."
 msgstr "Le téléversement du livre a échoué. Veuillez réessayer."
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+#: apps/web/src/features/sessions/components/session-view.tsx
 msgid "The collected reviews were kept — a newer checkpoint exists."
 msgstr "Les révisions collectées ont été conservées — un point de contrôle plus récent existe."
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "The collected reviews weren't reverted."
 msgstr "Les révisions collectées n'ont pas été annulées."
 
@@ -5764,7 +5753,6 @@ msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "The known-word marks weren't removed."
 msgstr "Les marques de mots connus n'ont pas été supprimées."
 
@@ -5786,7 +5774,7 @@ msgstr "Il y a eu une erreur. Veuillez contacter le support."
 msgid "There's no way to sign back in to a guest session. If you sign out now, everything you've saved — sessions, vocabulary, and practice progress — will be permanently lost. Create a free account first to keep it."
 msgstr "Il n'y a aucun moyen de se reconnecter à une session invité. Si vous vous déconnectez maintenant, tout ce que vous avez enregistré — sessions, vocabulaire et progression — sera définitivement perdu. Créez d'abord un compte gratuit pour le conserver."
 
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "These saved words appeared in what you just read. Uncheck any that don't look right, then mark the rest as known to skip their learning ramp — each one gets a first check-in in about three weeks, and you can undo right after."
 msgstr "Ces mots enregistrés sont apparus dans ce que vous venez de lire. Décochez ceux qui ne semblent pas corrects, puis marquez les autres comme connus pour passer leur phase d'apprentissage — chacun aura une première révision dans environ trois semaines, et vous pourrez annuler juste après."
 
@@ -6102,7 +6090,6 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle la
 #: apps/web/src/features/lesson-import/components/lesson-import-confirm-view.tsx
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/session-plan-card.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Try again"
 msgstr "Réessayer"
 
@@ -6185,22 +6172,17 @@ msgstr "Comprendre lorsque vous le lisez ou l'entendez"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/web/src/features/books/components/book-prelearn-section.tsx
-#: apps/web/src/features/sessions/components/checkpoint-claims-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 #: apps/web/src/features/sessions/components/session-difficulty-sheet.tsx
 #: apps/web/src/features/sessions/components/session-view.tsx
-#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 #: apps/web/src/features/vocab-chat/components/capture-match-row.tsx
 msgid "Undo"
 msgstr "Annuler"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Undo didn't finish"
 msgstr "L'annulation n'a pas abouti"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Undoing…"
 msgstr "Annulation…"
 
@@ -6650,8 +6632,8 @@ msgid "Which pronunciation to show for Spanish vocabulary cards."
 msgstr "Quelle prononciation afficher pour les cartes de vocabulaire espagnol."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
-msgid "While you read a session, a button labeled <0>I understood up to here</0> appears (at the end of the text: <1>I understood everything</1>). Pressing it tells Flicktionary you read and understood everything up to that point. Words you saved earlier that appeared in that stretch of text and were due for review are credited as successful reviews automatically — reading counts as practice, so they won't come up as flashcards that day. Words you looked up or saved while reading are simply left out; looking something up never counts against you."
-msgstr "Pendant que vous lisez une session, un bouton intitulé <0>J'ai compris jusqu'ici</0> apparaît (à la fin du texte : <1>J'ai tout compris</1>). En appuyant dessus, vous indiquez à Flicktionary que vous avez lu et compris tout jusqu'à ce point. Les mots que vous avez sauvegardés précédemment qui sont apparus dans cette portion de texte et qui étaient dus pour révision sont automatiquement crédités comme des révisions réussies — la lecture compte comme pratique, ils n'apparaîtront donc pas comme cartes mémoire ce jour-là. Les mots que vous avez recherchés ou sauvegardés pendant la lecture sont simplement exclus ; rechercher quelque chose ne compte jamais contre vous."
+msgid "While you read a session, a button labeled <0>I understood up to here</0> appears (at the end of the text: <1>I understood everything</1>). Pressing it tells Flicktionary you read and understood everything up to that point. You then see the words you saved earlier that appeared in that stretch of text and were due for review, each with the sentence it appeared in. Confirming credits them as successful reviews — reading counts as practice, so they won't come up as flashcards that day. Uncheck any word you didn't actually understand and it simply stays due. Words you looked up or saved while reading are left out; looking something up never counts against you."
+msgstr "Pendant que vous lisez une session, un bouton intitulé <0>J'ai compris jusqu'ici</0> apparaît (à la fin du texte : <1>J'ai tout compris</1>). En appuyant dessus, vous indiquez à Flicktionary que vous avez lu et compris tout jusqu'à ce point. Vous voyez ensuite les mots que vous aviez enregistrés précédemment qui sont apparus dans cette partie du texte et qui étaient dus pour révision, chacun avec la phrase dans laquelle il est apparu. En confirmant, ils sont comptabilisés comme révisions réussies — la lecture compte comme pratique, donc ils n'apparaîtront pas comme cartes mémoire ce jour-là. Décochez tout mot que vous n'avez pas réellement compris et il restera simplement dû. Les mots que vous avez recherchés ou enregistrés pendant la lecture sont exclus ; rechercher quelque chose ne compte jamais contre vous."
 
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Why does it appear in this particular form here?"
@@ -6898,12 +6880,11 @@ msgstr "Votre carte de production sera dans la pratique de demain, avant les aut
 msgid "Your progress is saved"
 msgstr "Votre progression est sauvegardée"
 
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Your reading position changed — try again"
-msgstr "Votre position de lecture a changé — réessayez"
+#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
+msgid "Your reading position changed — check the list and confirm again."
+msgstr "Votre position de lecture a changé — vérifiez la liste et confirmez à nouveau."
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
-#: apps/web/src/features/sessions/components/checkpoint-sweep-sheet.tsx
 msgid "Your reading position changed — try again."
 msgstr "Votre position de lecture a changé — réessayez."
 

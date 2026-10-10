@@ -180,10 +180,11 @@ export const UserGuideView = () => {
             <Trans>
               While you read a session, a button labeled <b>I understood up to here</b> appears (at the end of the text:{' '}
               <b>I understood everything</b>). Pressing it tells Flicktionary you read and understood everything up to
-              that point. Words you saved earlier that appeared in that stretch of text and were due for review are
-              credited as successful reviews automatically — reading counts as practice, so they won't come up as
-              flashcards that day. Words you looked up or saved while reading are simply left out; looking something up
-              never counts against you.
+              that point. You then see the words you saved earlier that appeared in that stretch of text and were due
+              for review, each with the sentence it appeared in. Confirming credits them as successful reviews — reading
+              counts as practice, so they won't come up as flashcards that day. Uncheck any word you didn't actually
+              understand and it simply stays due. Words you looked up or saved while reading are left out; looking
+              something up never counts against you.
             </Trans>
           </p>
           <p>

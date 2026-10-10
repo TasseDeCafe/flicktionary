@@ -694,7 +694,7 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
     evidence the user did NOT know the word, so a reappearance soon after
     can't turn it into a known-assertion (`isBacklogOfferable`). Stored and
     returned capped at 200 (`MAX_BACKLOG_CANDIDATES` — the assert contract's
-    max batch, so the claims sheet's single confirm can never exceed it);
+    max batch, so the claims step's single confirm can never exceed it);
     the preview's backlog count is capped to match. Candidates past the cap
     re-surface in any later span they appear in. Capped candidates matched
     ONLY through inflected forms (no matched lemma is itself a span token;
@@ -709,7 +709,7 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
     pass-rejected candidate does not free a cap slot (accepted: realistic
     counts sit far below 200). Deliberate residual: a verbatim-headword hit
     whose in-context word is a different same-spelling lexeme (saved «стих»
-    "poem" vs «ветер стих») skips the pass — the claims sheet's per-row
+    "poem" vs «ветер стих») skips the pass — the claims step's per-row
     evidence is the mitigation for that class.
 - **Suppression, never punishment.** A term glossed (preview glosses included —
   client-tracked `previewedSpans`, since the gloss endpoint is stateless) or
@@ -753,12 +753,23 @@ contract (`getCheckpointPreview` / `collectCheckpoint` / `undoCheckpoint`).
   would-be credits/backlog for a span without writing. It cannot see the
   client's previewed-gloss spans and skips every LLM pass (multi-sense, MWE,
   and backlog confirmation all counted optimistically) — a documented slight
-  overcount; the collect toast and claims sheet show the real numbers.
+  overcount; the collect toast and claims step show the real numbers.
+- **Candidates + exclusions.** `getCheckpointCandidates` (POST — it carries
+  `previewedSpans`, so glossed terms are suppressed exactly as in the
+  collect) lists the creditable terms for a span with the backlog-candidate
+  evidence shape (`matchedSurface`, `context`), in reading order, for the
+  declaration sheet's deselectable reviews list (`listCheckpointCandidates`).
+  Like the preview it runs no LLM pass, so it can overstate the collect
+  (every saved sense of a multi-sense headword, unconfirmed MWEs) but never
+  understate it. `collectCheckpoint` takes `excludedUserLookupIds` (default
+  empty): excluded terms are dropped from the creditable set before the
+  write — no event, no penalty, still due — while their content encounter
+  is still recorded. Ids outside the span are ignored.
 
 ## 6c. Backlog known-assertions ("I already know this")
 
 The opt-in second step behind a checkpoint (never on the primary press): the
-claims sheet offers the checkpoint's backlog candidates — saved terms whose
+declaration sheet's never-practiced step offers the checkpoint's backlog candidates — saved terms whose
 recognition facet was never introduced — and one confirm seeds the selected
 terms straight into review state. Service:
 `apps/backend/src/service/checkpoint/assert-known.ts`; endpoints
