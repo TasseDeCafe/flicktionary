@@ -79,8 +79,8 @@ msgid "{assertedCount, plural, one {# saved word marked as known} other {# saved
 msgstr "{assertedCount, plural, one {# saved word marked as known} other {# saved words marked as known}}"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "{bandPct}% of this band's text share"
-msgstr "{bandPct}% of this band's text share"
+msgid "{bandPct}% of this level's text share"
+msgstr "{bandPct}% of this level's text share"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
@@ -437,6 +437,10 @@ msgstr "A video element must be synced with Flicktionary before it can be mined.
 #: apps/web/src/features/vocab-chat/components/capture-view.tsx
 msgid "A word or phrase, in any language"
 msgstr "A word or phrase, in any language"
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "A1–B2 · {defaultRangeLabel}"
+msgstr "A1–B2 · {defaultRangeLabel}"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "About"
@@ -1037,8 +1041,8 @@ msgid "Build your own"
 msgstr "Build your own"
 
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "By frequency band"
-msgstr "By frequency band"
+msgid "By level"
+msgstr "By level"
 
 #: apps/extension/src/ui/video-overlay/declaration-sheet.tsx
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
@@ -3269,6 +3273,10 @@ msgstr "Lesson notes"
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Lessons"
 msgstr "Lessons"
+
+#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
+msgid "Levels are approximate: each one is a slice of the frequency list about the size of the vocabulary usually expected at that level."
+msgstr "Levels are approximate: each one is a slice of the frequency list about the size of the vocabulary usually expected at that level."
 
 #: apps/extension/common/components/UiSettings.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
@@ -6002,10 +6010,6 @@ msgstr "Top"
 #: apps/web/src/features/coverage/components/coverage-detail-view.tsx
 msgid "Top {toLabel}"
 msgstr "Top {toLabel}"
-
-#: apps/web/src/features/coverage/components/coverage-detail-view.tsx
-msgid "Top {topRangeLabel}"
-msgstr "Top {topRangeLabel}"
 
 #: apps/web/src/features/coverage/components/coverage-card.tsx
 msgid "Top {wallSizeLabel} words"
