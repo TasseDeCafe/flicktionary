@@ -278,7 +278,7 @@ export function download(blob: Blob, name: string) {
   a.remove()
 }
 
-// CSS custom property carrying the video-size scale factor (rendered video width
+// CSS custom property carrying the video-size scale factor (subtitleScaleWidth
 // / SUBTITLE_SCALE_REFERENCE_WIDTH). Set on the subtitle/notification overlay
 // container by the element-overlay positioning code, which already measures the
 // video rect. computeStyles multiplies its px-valued sizes by this so subtitles
@@ -289,6 +289,21 @@ export const SUBTITLE_SCALE_VAR = '--asb-video-scale'
 // The video width at which subtitleSize is taken literally (so subtitleSize=36
 // renders as 36px on a 1920-wide video, and scales proportionally elsewhere).
 export const SUBTITLE_SCALE_REFERENCE_WIDTH = 1920
+
+// How far a video narrower than 16:9 moves from width-based sizing (0) towards
+// the glyph size of a landscape video of the same height (1). Full height
+// matching makes long cues wrap into a tall block on a narrow video, so this
+// stops short of it.
+const SUBTITLE_NARROW_VIDEO_COMPENSATION = 0.75
+
+// The width subtitle sizing is measured against. It equals the real width for
+// 16:9 and wider video; for narrower shapes it sits between the real width and
+// the width of the 16:9 box containing the video, so a portrait video's
+// subtitles aren't sized off its narrow width alone.
+export const subtitleScaleWidth = (width: number, height: number) => {
+  const landscapeWidth = Math.max(width, (height * 16) / 9)
+  return width > 0 ? width * Math.pow(landscapeWidth / width, SUBTITLE_NARROW_VIDEO_COMPENSATION) : width
+}
 
 // The configured subtitle-background alpha, emitted as a custom property so the
 // hover-boost below can be added to it in CSS.
