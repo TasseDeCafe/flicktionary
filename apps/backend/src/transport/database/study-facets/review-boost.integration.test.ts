@@ -48,6 +48,12 @@ describe('review boost', () => {
     return rows[0]!
   }
 
+  // boosted_at is Postgres NOW() (microseconds) while a review time is a JS
+  // Date (milliseconds): a review within the same millisecond would truncate
+  // to before the boost. Real reviews come a day later, so space the two apart.
+  const ageBoost = (userLookupId: string) =>
+    sql`UPDATE public.study_facets SET boosted_at = boosted_at - INTERVAL '1 second' WHERE user_lookup_id = ${userLookupId}`
+
   const rate = (userLookupId: string, dueInDays: number) =>
     repo.applyFsrsResultForFacet({
       userLookupId,
@@ -106,6 +112,7 @@ describe('review boost', () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const id = await reviewTerm(userId, 'revisar', 23)
     await repo.boostFacet({ userId, userLookupId: id, skill })
+    await ageBoost(id)
 
     await rate(id, 40)
     expect((await facet(id)).boost_active).toBe(false)
@@ -117,6 +124,7 @@ describe('review boost', () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const id = await reviewTerm(userId, 'puente', 23)
     await repo.boostFacet({ userId, userLookupId: id, skill })
+    await ageBoost(id)
 
     const lookup = (await userLookupsRepository.findByIdForUser(id, userId))!
     const withTransaction: WithTransaction = (fn) => beginTx(fn) as ReturnType<typeof fn>
