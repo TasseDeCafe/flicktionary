@@ -20,7 +20,7 @@ import {
   type DeclarationSheetEvent,
   type DeclarationSheetState,
 } from '@flicktionary/core/utils/checkpoint-sweep-sheet-state'
-import { CandidateChecklist, type CheckpointCandidate } from './candidate-checklist'
+import { CandidateChecklist, type CheckpointCandidate } from '@flicktionary/ui/components/candidate-checklist'
 
 export type PreviewedSpan = { segmentIndex: number; selectionText: string }
 

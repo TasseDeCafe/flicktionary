@@ -15,7 +15,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Card } from '@flicktionary/ui/components/card'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
-import { EvidenceLine } from '@/features/sessions/components/evidence-line'
+import { EvidenceLine } from '@flicktionary/ui/components/evidence-line'
 import {
   useGetPrelearnCandidates,
   useGetPrelearnGlosses,
