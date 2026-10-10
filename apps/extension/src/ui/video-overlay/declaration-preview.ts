@@ -2,12 +2,15 @@
 // out of the component file so the exact-count rule stays unit-testable
 // without the UI dependencies.
 
+import type { CheckpointCandidate } from '@flicktionary/ui/components/candidate-checklist'
+
 export type DeclarationPreview =
   | { status: 'loading' }
   | {
       status: 'ready'
-      // Null when the checkpoint preview failed — the sheet collects blind.
-      pendingCount: number | null
+      // The due saved words the collect would credit. Null when the list
+      // failed to load — the sheet then collects without one.
+      reviewCandidates: CheckpointCandidate[] | null
       markKnownStatus: 'ready' | 'pending' | 'failed' | 'unsupported'
       markableLemmaCount: number
     }
@@ -33,4 +36,12 @@ export const declarationExactCount = (preview: DeclarationPreview): number | nul
     return null
   }
   return preview.markKnownStatus === 'ready' ? preview.markableLemmaCount : 0
+}
+
+// What a finished run wrote. A null part was skipped or not reached.
+export type DeclarationResult = {
+  // A null id is an empty-span collect: nothing was saved.
+  checkpoint: { checkpointId: string | null; creditedCount: number } | null
+  claims: { checkpointId: string; assertedCount: number } | null
+  sweep: { markedCount: number; sweepBatchId: string | null } | null
 }

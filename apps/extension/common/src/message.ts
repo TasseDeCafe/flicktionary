@@ -498,6 +498,20 @@ export interface FlicktionaryCollectCheckpointMessage extends MessageWithId {
   readonly command: 'flicktionary-collect-checkpoint'
   readonly segmentIndex: number
   readonly flicktionaryVideo: SaveWordFlicktionaryVideoContext
+  // Due words unchecked in the sheet's reviews list: left uncredited, still
+  // due.
+  readonly excludedUserLookupIds: string[]
+}
+
+// One saved word a declaration step acts on, with where it was seen.
+// Structurally identical to the backend contract's candidate — re-declared
+// because this common module stays dependency-free.
+export interface FlicktionaryCheckpointCandidate {
+  readonly userLookupId: string
+  readonly headword: string
+  readonly sense: string
+  readonly matchedSurface: string | null
+  readonly context: string | null
 }
 
 export interface FlicktionaryCollectCheckpointResponse {
@@ -514,6 +528,36 @@ export interface FlicktionaryCollectCheckpointResponse {
   // Null when the span was empty (nothing newly read since the last press).
   readonly checkpointId?: string | null
   readonly creditedCount?: number
+  // The saved-but-never-practiced words seen in the span — the sheet's second
+  // step.
+  readonly backlogCandidates?: FlicktionaryCheckpointCandidate[]
+}
+
+// The sheet's "saved but never practiced" step: seed the checked words
+// straight into review state. Only ids in the checkpoint's stored candidate
+// set are accepted server-side.
+export interface FlicktionaryAssertKnownBacklogMessage extends MessageWithId {
+  readonly command: 'flicktionary-assert-known-backlog'
+  readonly sessionId: string
+  readonly checkpointId: string
+  readonly userLookupIds: string[]
+}
+
+export interface FlicktionaryAssertKnownBacklogResponse {
+  readonly success: boolean
+  readonly error?: string
+  readonly assertedCount?: number
+}
+
+export interface FlicktionaryUndoKnownAssertionsMessage extends MessageWithId {
+  readonly command: 'flicktionary-undo-known-assertions'
+  readonly sessionId: string
+  readonly checkpointId: string
+}
+
+export interface FlicktionaryUndoKnownAssertionsResponse {
+  readonly success: boolean
+  readonly error?: string
 }
 
 export interface FlicktionaryUndoCheckpointMessage extends MessageWithId {
@@ -544,7 +588,7 @@ export interface FlicktionaryCheckpointAvailabilityResponse {
 
 // Fuels the declaration sheet on open: resolves the session (find-or-create —
 // the tap is an explicit user act, exactly like a collect press) and returns
-// both preview lanes in one round trip.
+// the reviews list and the sweep count in one round trip.
 export interface FlicktionaryDeclarationPreviewMessage extends MessageWithId {
   readonly command: 'flicktionary-declaration-preview'
   readonly segmentIndex: number
@@ -569,8 +613,10 @@ export interface FlicktionaryDeclarationPreviewResponse {
   // SUCCESS, so the overlay must read this field (not just error codes) to
   // hide the affordance. Absent when the checkpoint preview itself failed.
   readonly checkpointSupported?: boolean
-  // Absent when the checkpoint preview failed — the sheet then collects blind.
-  readonly pendingCount?: number
+  // The due saved words a collect up to the segment would credit. Absent on a
+  // read-only probe and when the list failed to load — the sheet then
+  // collects without a list (every due word counts).
+  readonly reviewCandidates?: FlicktionaryCheckpointCandidate[]
   // 'failed' also stands in for a transport failure of the preview call: the
   // sweep is an optional offer, so it silently drops for this run (a re-tap
   // retries) instead of blocking the checkpoint lane.

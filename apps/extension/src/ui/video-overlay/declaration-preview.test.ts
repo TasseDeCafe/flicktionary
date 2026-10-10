@@ -10,7 +10,7 @@ describe('declarationExactCount', () => {
     expect(
       declarationExactCount({
         status: 'ready',
-        pendingCount: 3,
+        reviewCandidates: [],
         markKnownStatus: 'ready',
         markableLemmaCount: 235,
       })
@@ -21,7 +21,7 @@ describe('declarationExactCount', () => {
     expect(
       declarationExactCount({
         status: 'ready',
-        pendingCount: null,
+        reviewCandidates: null,
         markKnownStatus: status,
         markableLemmaCount: 42,
       })

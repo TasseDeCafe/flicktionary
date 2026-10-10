@@ -50,6 +50,8 @@ import CheckpointAvailabilityHandler from '@/handlers/flicktionary/checkpoint-av
 import DeclarationPreviewHandler from '@/handlers/flicktionary/declaration-preview-handler'
 import MarkKnownHandler from '@/handlers/flicktionary/mark-known-handler'
 import UnmarkKnownHandler from '@/handlers/flicktionary/unmark-known-handler'
+import AssertKnownBacklogHandler from '@/handlers/flicktionary/assert-known-backlog-handler'
+import UndoKnownAssertionsHandler from '@/handlers/flicktionary/undo-known-assertions-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import { isVideoPlatformUrl } from '@/services/pages'
@@ -138,6 +140,8 @@ export default defineBackground(() => {
     new DeclarationPreviewHandler(),
     new MarkKnownHandler(),
     new UnmarkKnownHandler(),
+    new AssertKnownBacklogHandler(),
+    new UndoKnownAssertionsHandler(),
     new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),

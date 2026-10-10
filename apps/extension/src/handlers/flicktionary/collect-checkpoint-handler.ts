@@ -18,9 +18,11 @@ import { i18n } from '../../ui/lingui'
 // session (cache → lookup probe → find-or-create; the press is an explicit
 // user act, so cold-start creation is allowed exactly like a first save) and
 // collect implicit recognition credits up to the content-computed segment
-// index. The extension sends no previewedSpans — its gloss popover has no
-// stateless preview lane tracked per span; saved highlights are suppressed
-// server-side from the DB.
+// index, minus the words unchecked in the sheet's reviews list. The extension
+// sends no previewedSpans — its gloss popover has no stateless preview lane
+// tracked per span; saved highlights are suppressed server-side from the DB.
+// The reviews list (declaration-preview-handler.ts) sends the same empty
+// snapshot.
 export default class CollectCheckpointHandler {
   get sender(): string[] {
     return ['asbplayer-video-tab']
@@ -51,6 +53,7 @@ export default class CollectCheckpointHandler {
           sessionId: session.sessionId,
           toSegmentIndex: message.segmentIndex,
           previewedSpans: [],
+          excludedUserLookupIds: message.excludedUserLookupIds,
         })
         sendResponse({
           success: true,
@@ -58,6 +61,7 @@ export default class CollectCheckpointHandler {
           targetLanguage: session.targetLanguage,
           checkpointId: data.checkpointId,
           creditedCount: data.creditedCount,
+          backlogCandidates: data.backlogCandidates,
         })
       } catch (error) {
         // The 409 carries no domain code in its payload, so the generic
