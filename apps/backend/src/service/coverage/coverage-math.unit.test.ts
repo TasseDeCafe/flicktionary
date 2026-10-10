@@ -67,14 +67,18 @@ describe('computeCoverage', () => {
     expect(result.verifiedMass).toBe(0)
   })
 
-  test('band split respects the 1000/3000/10000 boundaries inclusively', () => {
+  test('band split respects the level boundaries inclusively', () => {
     const entries: Array<[string, number, number]> = [
-      ['a', 1000, 0.1],
-      ['b', 1001, 0.2],
-      ['c', 3000, 0.3],
-      ['d', 3001, 0.4],
-      ['e', 10000, 0.5],
-      ['f', 10001, 0.6],
+      ['a', 750, 0.1],
+      ['b', 751, 0.2],
+      ['c', 1500, 0.3],
+      ['d', 1501, 0.4],
+      ['e', 2500, 0.5],
+      ['f', 2501, 0.6],
+      ['g', 8000, 0.7],
+      ['h', 8001, 0.8],
+      ['i', 15000, 0.9],
+      ['j', 15001, 1],
     ]
     const result = computeCoverage({
       vocab: entries.map(([lemma]) => ({ headword: lemma, hasVerifiedReview: false })),
@@ -82,11 +86,13 @@ describe('computeCoverage', () => {
       ranksByLemma: ranks(entries),
       targetLanguage: 'en',
     })
-    expect(result.bandCoveredMasses).toHaveLength(4)
+    expect(result.bandCoveredMasses).toHaveLength(6)
     expect(result.bandCoveredMasses[0]).toBeCloseTo(0.1)
     expect(result.bandCoveredMasses[1]).toBeCloseTo(0.5)
     expect(result.bandCoveredMasses[2]).toBeCloseTo(0.9)
-    expect(result.bandCoveredMasses[3]).toBeCloseTo(0.6)
+    expect(result.bandCoveredMasses[3]).toBeCloseTo(1.3)
+    expect(result.bandCoveredMasses[4]).toBeCloseTo(1.7)
+    expect(result.bandCoveredMasses[5]).toBeCloseTo(1)
   })
 
   test('en "to run" is a dot (particle strips away), not an expression', () => {

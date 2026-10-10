@@ -8,6 +8,7 @@ import { useQualifyingCoverage, type LanguageCoverage } from '@/features/coverag
 import { CoverageDotGrid } from '@/features/coverage/components/coverage-canvas'
 import { buildStateArray, CARD_COMPACT_RULE } from '@/features/coverage/utils/coverage-render'
 import { getLocalizedCoverageLanguageName } from '@/features/coverage/utils/coverage-language-names'
+import { getDefaultWallEndRank } from '@/features/coverage/utils/coverage-wall-range'
 import { useActivity } from '../api/stats-hooks'
 import { DailyActivityCharts } from './daily-activity-charts'
 import { ActivityCalendarCard } from '@/features/dashboard/components/activity-calendar-card'
@@ -121,7 +122,13 @@ const StatsCoverageBlock = ({ coverage }: { coverage: LanguageCoverage }) => {
         aria-label={t`Open the full coverage view`}
         className='mt-3 block transition-opacity hover:opacity-90 active:opacity-75'
       >
-        <CoverageDotGrid states={states} endRank={10000} cell={4} gap={1} compactRule={CARD_COMPACT_RULE} />
+        <CoverageDotGrid
+          states={states}
+          endRank={getDefaultWallEndRank(coverage)}
+          cell={4}
+          gap={1}
+          compactRule={CARD_COMPACT_RULE}
+        />
       </Link>
     </div>
   )

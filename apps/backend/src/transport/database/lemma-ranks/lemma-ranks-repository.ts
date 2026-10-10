@@ -56,24 +56,29 @@ export type LemmaRankCoverageData = {
 const getCoverageData = async (params: {
   targetLanguage: string
   lemmas: readonly string[]
-  bandUpperBounds: readonly [number, number, number]
+  bandUpperBounds: readonly number[]
 }): Promise<LemmaRankCoverageData | null> => {
-  const [b1, b2, b3] = params.bandUpperBounds
+  // width_bucket counts the thresholds at or below the rank, so shifting each
+  // inclusive upper bound by one makes its result the band index.
+  const bandLowerBounds = params.bandUpperBounds.map((bound) => bound + 1)
   const rows = (await sql`
-    WITH aggregate AS (
+    WITH band_masses AS (
+      SELECT width_bucket(rank, ${sql.array(bandLowerBounds)}::int[]) AS band,
+        sum(freq_mass) AS mass
+      FROM public.lemma_ranks
+      WHERE target_language = ${params.targetLanguage}
+      GROUP BY 1
+    ),
+    aggregate AS (
       SELECT b.version, b.row_count,
-        sum(freq_mass) AS total_mass,
-        sum(freq_mass) FILTER (WHERE rank <= ${b1}) AS cum_1,
-        sum(freq_mass) FILTER (WHERE rank <= ${b2}) AS cum_2,
-        sum(freq_mass) FILTER (WHERE rank <= ${b3}) AS cum_3
+        (SELECT sum(mass) FROM band_masses) AS total_mass,
+        (SELECT jsonb_object_agg(band, mass) FROM band_masses) AS band_masses
       FROM public.lemma_rank_builds b
-      JOIN public.lemma_ranks all_r
-        ON all_r.target_language = b.target_language
       WHERE b.target_language = ${params.targetLanguage}
-      GROUP BY b.version, b.row_count
+        AND EXISTS (SELECT 1 FROM band_masses)
     )
     SELECT aggregate.version, aggregate.row_count, aggregate.total_mass,
-      aggregate.cum_1, aggregate.cum_2, aggregate.cum_3,
+      aggregate.band_masses,
       requested.lemma, requested.rank, requested.freq_mass
     FROM aggregate
     LEFT JOIN LATERAL (
@@ -86,9 +91,7 @@ const getCoverageData = async (params: {
     version: number
     row_count: number
     total_mass: number
-    cum_1: number | null
-    cum_2: number | null
-    cum_3: number | null
+    band_masses: Record<string, number>
     lemma: string | null
     rank: number | null
     freq_mass: number | null
@@ -96,22 +99,22 @@ const getCoverageData = async (params: {
   const first = rows[0]
   if (!first) return null
 
-  const total = Number(first.total_mass)
-  const cum1 = Number(first.cum_1 ?? 0)
-  const cum2 = Number(first.cum_2 ?? 0)
-  const cum3 = Number(first.cum_3 ?? 0)
   const ranksByLemma = new Map<string, LemmaRankInfo>()
   for (const row of rows) {
     if (row.lemma !== null && row.rank !== null && row.freq_mass !== null) {
       ranksByLemma.set(row.lemma, { rank: row.rank, freqMass: Number(row.freq_mass) })
     }
   }
+  const bandMasses: number[] = []
+  for (let band = 0; band <= params.bandUpperBounds.length; band++) {
+    bandMasses.push(Number(first.band_masses[band] ?? 0))
+  }
   return {
     aggregate: {
       version: first.version,
       rowCount: first.row_count,
-      totalMass: total,
-      bandMasses: [cum1, cum2 - cum1, cum3 - cum2, total - cum3],
+      totalMass: Number(first.total_mass),
+      bandMasses,
     },
     ranksByLemma,
   }
@@ -162,7 +165,7 @@ export interface LemmaRanksRepositoryInterface {
   getCoverageData: (params: {
     targetLanguage: string
     lemmas: readonly string[]
-    bandUpperBounds: readonly [number, number, number]
+    bandUpperBounds: readonly number[]
   }) => Promise<LemmaRankCoverageData | null>
   getTopLemmasBuild: (params: { targetLanguage: string; limit: number }) => Promise<TopLemmasBuild | null>
 }

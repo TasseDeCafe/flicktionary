@@ -5,7 +5,7 @@ import type { LemmaRanksRepositoryInterface } from '../../transport/database/lem
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { logError } from '../../transport/error-monitoring/error-monitoring'
-import { COVERAGE_BANDS, computeCoverage } from './coverage-math'
+import { COVERAGE_BAND_LEVELS, COVERAGE_BANDS, computeCoverage, type CoverageBandLevel } from './coverage-math'
 
 // The whole-language coverage read behind coverage.getCoverage: one batched
 // response for every practiced language (the dashboard card's chips and the
@@ -16,6 +16,8 @@ import { COVERAGE_BANDS, computeCoverage } from './coverage-math'
 // synthetic language codes).
 
 export type CoverageBandDto = {
+  // The CEFR level this rank range approximates.
+  level: CoverageBandLevel
   fromRank: number
   // null = the open-ended tail band.
   toRank: number | null
@@ -99,20 +101,12 @@ export const getUserCoverage = async (
 
     const coveragePct = aggregate.totalMass > 0 ? (100 * computation.coveredMass) / aggregate.totalMass : 0
     const verifiedPct = aggregate.totalMass > 0 ? (100 * computation.verifiedMass) / aggregate.totalMass : 0
-    const bands: CoverageBandDto[] = COVERAGE_BANDS.map((bound, i) => ({
+    const bands: CoverageBandDto[] = COVERAGE_BAND_LEVELS.map((level, i) => ({
+      level,
       fromRank: i === 0 ? 1 : COVERAGE_BANDS[i - 1] + 1,
-      toRank: bound,
+      toRank: COVERAGE_BANDS[i] ?? null,
       coveragePct: aggregate.bandMasses[i] > 0 ? (100 * computation.bandCoveredMasses[i]) / aggregate.bandMasses[i] : 0,
     }))
-    const tailIndex = COVERAGE_BANDS.length
-    bands.push({
-      fromRank: COVERAGE_BANDS[tailIndex - 1] + 1,
-      toRank: null,
-      coveragePct:
-        aggregate.bandMasses[tailIndex] > 0
-          ? (100 * computation.bandCoveredMasses[tailIndex]) / aggregate.bandMasses[tailIndex]
-          : 0,
-    })
 
     results.push({
       targetLanguage: language,

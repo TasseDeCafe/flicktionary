@@ -7,6 +7,9 @@ import { BackendErrorResponseSchema } from './common/error-response-schema'
 // supported:false with empty/null fields so the client hides them.
 
 const CoverageBandSchema = z.object({
+  // The CEFR level this rank range approximates — a frequency proxy shared by
+  // every language, not a real CEFR word list.
+  level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
   fromRank: z.number().int(),
   // null = the open-ended tail band.
   toRank: z.number().int().nullable(),

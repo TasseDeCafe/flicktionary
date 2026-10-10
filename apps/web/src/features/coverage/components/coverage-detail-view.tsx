@@ -10,22 +10,25 @@ import { buildStateArray, STATE_KNOWN, STATE_STUDIED } from '../utils/coverage-r
 import { CoverageDotGrid, CoverageSkyline, type DotHover } from './coverage-canvas'
 import { CoverageLegend } from './coverage-legend'
 import { getLocalizedCoverageLanguageName } from '../utils/coverage-language-names'
+import { getDefaultWallEndRank } from '../utils/coverage-wall-range'
 
 const routeApi = getRouteApi('/_authenticated/_app/coverage/$lang')
 
-// Per-band waffle metrics: the head gets bigger cells (those lemmas matter
+// Per-level waffle metrics: the head gets bigger cells (those lemmas matter
 // more), the tail packs tight.
 const BAND_CELLS = [
   { cell: 8, gap: 2 },
+  { cell: 8, gap: 2 },
   { cell: 6, gap: 2 },
   { cell: 4, gap: 1 },
+  { cell: 3, gap: 1 },
   { cell: 3, gap: 1 },
 ]
 
 const TOOLTIP_LEMMA_LIMIT = 5000
 
 // The full coverage view behind the dashboard card: the pixel wall (with a
-// top-10k / full-denominator toggle and lemma tooltips), the frequency-band
+// through-B2 / full-denominator toggle and lemma tooltips), the per-level
 // waffles, and the aggregated skyline — all renderings of one cached
 // getCoverage response.
 export const CoverageDetailView = () => {
@@ -103,9 +106,10 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
   const coveragePct = Math.round(coverage.coveragePct ?? 0)
   const verifiedPct = Math.round(coverage.verifiedPct ?? 0)
   const format = (value: number) => value.toLocaleString()
-  const topRangeLabel = format(10000)
+  const defaultWallEndRank = getDefaultWallEndRank(coverage)
+  const defaultRangeLabel = format(defaultWallEndRank)
   const denominatorLabel = format(denominator)
-  const wallEndRank = showAll ? denominator : Math.min(10000, denominator)
+  const wallEndRank = showAll ? denominator : defaultWallEndRank
 
   return (
     <div className='flex-1 overflow-y-auto'>
@@ -119,10 +123,10 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
           {t`One dot per word, ordered by frequency — the most common words sit top-left. This measures vocabulary only.`}
         </p>
 
-        {denominator > 10000 && (
+        {denominator > defaultWallEndRank && (
           <div className='mt-4 inline-flex overflow-hidden rounded-lg border'>
             <RangeToggleButton active={!showAll} onClick={() => setShowAll(false)}>
-              {t`Top ${topRangeLabel}`}
+              {t`A1–B2 · ${defaultRangeLabel}`}
             </RangeToggleButton>
             <RangeToggleButton active={showAll} onClick={() => setShowAll(true)}>
               {t`All ${denominatorLabel}`}
@@ -141,7 +145,10 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
           mweCount={coverage.mweCount ?? 0}
         />
 
-        <h2 className='mt-8 font-semibold'>{t`By frequency band`}</h2>
+        <h2 className='mt-8 font-semibold'>{t`By level`}</h2>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          {t`Levels are approximate: each one is a slice of the frequency list about the size of the vocabulary usually expected at that level.`}
+        </p>
         <div className='mt-3 flex flex-col gap-5'>
           {coverage.bands.map((band, index) => {
             const from = band.fromRank
@@ -153,14 +160,17 @@ const CoverageDetailBody = ({ coverage }: { coverage: LanguageCoverage }) => {
             return (
               <div key={from}>
                 <div className='flex items-baseline justify-between text-sm tabular-nums'>
-                  <span className='font-medium'>
-                    {band.toRank === null
-                      ? `${format(from)}+`
-                      : from === 1
-                        ? t`Top ${toLabel}`
-                        : `${format(from)} – ${toLabel}`}
+                  <span className='flex items-baseline gap-2'>
+                    <span className='font-semibold'>{band.level}</span>
+                    <span className='text-muted-foreground'>
+                      {band.toRank === null
+                        ? `${format(from)}+`
+                        : from === 1
+                          ? t`Top ${toLabel}`
+                          : `${format(from)} – ${toLabel}`}
+                    </span>
                   </span>
-                  <span className='text-muted-foreground'>{t`${bandPct}% of this band's text share`}</span>
+                  <span className='text-muted-foreground'>{t`${bandPct}% of this level's text share`}</span>
                 </div>
                 <div className='mt-1.5'>
                   <CoverageDotGrid
